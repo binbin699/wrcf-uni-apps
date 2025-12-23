@@ -1,0 +1,189 @@
+{
+  "pages": [
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "%pages.login%",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/webview/webview",
+      "style": {
+        "navigationBarTitleText": "%pages.webview%",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/login/register",
+      "style": {
+        "navigationBarTitleText": "%pages.register%",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "%index.my_agents%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/agent/create",
+      "style": {
+        "navigationBarTitleText": "%pages.create_agent%",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/agent/edit",
+      "style": {
+        "navigationBarTitleText": "%pages.edit_agent%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "%pages.profile%",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/profile/delete-account",
+      "style": {
+        "navigationBarTitleText": "%pages.delete_account%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/device/device",
+      "style": {
+        "navigationBarTitleText": "%pages.device%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/bluetooth-config/bluetooth-config",
+      "style": {
+        "navigationBarTitleText": "%pages.bluetooth_config%",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/mock-test/mock-test",
+      "style": {
+        "navigationBarTitleText": "%pages.mock_test%",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/square/square",
+      "style": {
+        "navigationBarTitleText": "%pages.square%",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/voice/clone",
+      "style": {
+        "navigationBarTitleText": "%pages.voice_clone%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/voice/manage",
+      "style": {
+        "navigationBarTitleText": "%pages.voice_manage%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/voice/bind-voiceprint",
+      "style": {
+        "navigationBarTitleText": "%pages.bind_voiceprint%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/net-config/net-config",
+      "style": {
+        "navigationBarTitleText": "%pages.net_config%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "%app.global_title%",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#FFFFFF"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#717784",
+    "selectedColor": "#335CFF",
+    "borderStyle": "white",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "iconPath": "static/tab-agent.png",
+        "selectedIconPath": "static/tab-agent-active.png",
+        "text": "%tabbar.agent%"
+      },
+      {
+        "pagePath": "pages/agent/create",
+        "iconPath": "static/tab-create.png",
+        "selectedIconPath": "static/tab-create-active.png",
+        "text": "%tabbar.create%"
+      },
+      {
+        "pagePath": "pages/square/square",
+        "iconPath": "static/tab-square.png",
+        "selectedIconPath": "static/tab-square-active.png",
+        "text": "%tabbar.square%"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "iconPath": "static/tab-profile.png",
+        "selectedIconPath": "static/tab-profile-active.png",
+        "text": "%tabbar.profile%"
+      }
+    ]
+  }
+}

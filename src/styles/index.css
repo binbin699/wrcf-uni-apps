@@ -1,0 +1,24 @@
+@import './button.css';
+@import './layout.css';
+@import './text.css';
+@import './tabbar.css';
+
+/* 全局字体设置 - 解决 iOS 字体不一致问题 */
+page,
+view,
+text,
+button,
+input,
+textarea {
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        'Helvetica Neue',
+        Helvetica,
+        'PingFang SC',
+        'Hiragino Sans GB',
+        'Microsoft YaHei',
+        '微软雅黑',
+        Arial,
+        sans-serif;
+}
