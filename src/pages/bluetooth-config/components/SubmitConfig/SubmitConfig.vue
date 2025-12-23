@@ -1,86 +1,75 @@
 <template>
   <view class="submit-config">
     <!-- 配网进行中状态 -->
-    <view v-if="isSubmitting" class="status-section connecting">
-      <view class="status-icon-wrapper">
+    <view v-if="isSubmitting" class="status-container">
+      <view class="status-content">
         <view class="connecting-animation">
           <view class="pulse-ring"></view>
           <view class="pulse-ring delay-1"></view>
           <view class="pulse-ring delay-2"></view>
-          <wd-icon name="wifi" size="64rpx" color="#3b82f6" />
+          <wd-icon name="wifi" size="80rpx" color="#3b82f6" />
         </view>
-      </view>
-      <view class="status-title">{{ $t('bluetooth.submit.title') }}</view>
-      <view class="status-desc">{{ $t('bluetooth.submit.waiting') }}</view>
-      <view class="waiting-time">{{ waitingTime }}s</view>
-      
-      <!-- 进度停滞提示 -->
-      <view v-if="showStuckWarning" class="warning-card">
-        <wd-icon name="warning" size="36rpx" color="#f59e0b" />
-        <text>{{ $t('bluetooth.submit.stuck_warning') || '配网进度较慢，请检查WiFi密码和网络状态' }}</text>
+        <text class="status-title">{{ $t('bluetooth.submit.title') }}</text>
+        <text class="status-desc">{{ $t('bluetooth.submit.waiting') }}</text>
+        <text class="waiting-time">{{ waitingTime }}s</text>
+        
+        <!-- 进度停滞提示 -->
+        <view v-if="showStuckWarning" class="warning-card">
+          <wd-icon name="warning" size="36rpx" color="#f59e0b" />
+          <text>{{ $t('bluetooth.submit.stuck_warning') }}</text>
+        </view>
       </view>
     </view>
 
     <!-- 配网成功状态 -->
-    <view v-else-if="isConfigSuccess" class="status-section success">
-      <view class="status-icon-wrapper success-icon">
-        <wd-icon name="check" size="80rpx" color="#fff" />
-      </view>
-      <view class="status-title">{{ $t('bluetooth.submit.success_title') }}</view>
-      <view class="status-desc">{{ $t('bluetooth.submit.success_desc') }}</view>
-      
-      <!-- 配网信息摘要 -->
-      <view class="info-card">
-        <view class="info-item">
-          <text class="info-label">{{ $t('net_config.wifi_name') }}</text>
-          <text class="info-value">{{ selectedWifi && selectedWifi.SSID }}</text>
+    <view v-else-if="isConfigSuccess" class="status-container">
+      <view class="status-content">
+        <view class="success-icon-wrapper">
+          <wd-icon name="check" size="100rpx" color="#fff" />
         </view>
-        <view class="info-item">
-          <text class="info-label">{{ $t('device.name_prefix') }}</text>
-          <text class="info-value">{{ deviceDisplayName }}</text>
+        <text class="status-title success-text">{{ $t('bluetooth.submit.success_title') }}</text>
+        <text class="status-desc">{{ $t('bluetooth.submit.success_desc') }}</text>
+        
+        <!-- 配网信息摘要 -->
+        <view class="info-card">
+          <view class="info-item">
+            <text class="info-label">{{ $t('net_config.wifi_name') }}</text>
+            <text class="info-value">{{ selectedWifi && selectedWifi.SSID }}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">{{ $t('device.name_prefix') }}</text>
+            <text class="info-value">{{ deviceDisplayName }}</text>
+          </view>
         </view>
       </view>
     </view>
 
     <!-- 配网失败状态 -->
-    <view v-else-if="configError" class="status-section error">
-      <view class="status-icon-wrapper error-icon">
-        <wd-icon name="close" size="80rpx" color="#fff" />
-      </view>
-      <view class="status-title">{{ $t('bluetooth.submit.failed_title') }}</view>
-      <view class="status-desc error-message">{{ configError }}</view>
-
-      <!-- WiFi密码错误提示 -->
-      <view v-if="isWifiPasswordError" class="hint-card">
-        <view class="hint-title">
-          <wd-icon name="info-outline" size="32rpx" color="#3b82f6" />
-          <text>{{ $t('common.tip') }}</text>
-        </view>
-        <view class="hint-list">
-          <text class="hint-item">• 检查WiFi密码是否正确</text>
-          <text class="hint-item">• 确认WiFi网络是否正常工作</text>
-          <text class="hint-item">• 尝试重新输入WiFi密码</text>
-        </view>
+    <view v-else-if="configError" class="status-container">
+      <view class="status-content">
+        <image class="status-image" src="/static/icons/config-failed.svg" mode="aspectFit" />
+        <text class="status-title error-text">{{ $t('bluetooth.submit.failed_title') }}</text>
+        <text class="status-desc">{{ configError || '设备响应超时，请检查设备状态' }}</text>
       </view>
     </view>
 
-    <!-- 准备提交状态 -->
-    <view v-else class="status-section ready">
-      <view class="status-icon-wrapper ready-icon">
-        <wd-icon name="wifi" size="64rpx" color="#3b82f6" />
-      </view>
-      <view class="status-title">{{ $t('bluetooth.submit.title') || '准备配网' }}</view>
-      <view class="status-desc">{{ $t('bluetooth.submit.ready_desc') || '确认信息无误后，开始配网' }}</view>
-      
-      <!-- 配置信息摘要 -->
-      <view class="info-card">
-        <view class="info-item">
-          <text class="info-label">{{ $t('net_config.wifi_name') }}</text>
-          <text class="info-value">{{ selectedWifi && selectedWifi.SSID }}</text>
-        </view>
-        <view class="info-item">
-          <text class="info-label">{{ $t('device.name_prefix') }}</text>
-          <text class="info-value">{{ deviceDisplayName }}</text>
+    <!-- 准备状态 -->
+    <view v-else class="status-container">
+      <view class="status-content">
+        <image class="status-image" src="/static/icons/wifi-scan.svg" mode="aspectFit" />
+        <text class="status-title">{{ $t('bluetooth.submit.title') }}</text>
+        <text class="status-desc">{{ $t('bluetooth.submit.ready_desc') }}</text>
+        
+        <!-- 配置信息摘要 -->
+        <view class="info-card">
+          <view class="info-item">
+            <text class="info-label">{{ $t('net_config.wifi_name') }}</text>
+            <text class="info-value">{{ selectedWifi && selectedWifi.SSID }}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">{{ $t('device.name_prefix') }}</text>
+            <text class="info-value">{{ deviceDisplayName }}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -94,25 +83,17 @@
 
       <!-- 成功状态 -->
       <button v-else-if="isConfigSuccess" class="action-btn success" @click="finishConfig">
-        <wd-icon name="check" size="36rpx" color="#fff" />
         <text>{{ $t('bluetooth.submit.finish') }}</text>
       </button>
 
       <!-- 失败状态 -->
-      <view v-else-if="configError" class="action-group">
-        <button class="action-btn secondary" @click="goBackToWifiConfig">
-          <text>{{ $t('bluetooth.submit.modify_config') }}</text>
-        </button>
-        <button class="action-btn primary" @click="retryConfigSubmission">
-          <wd-icon name="refresh" size="32rpx" color="#fff" />
-          <text>{{ $t('bluetooth.submit.retry') }}</text>
-        </button>
-      </view>
+      <button v-else-if="configError" class="action-btn primary" @click="retryConfigSubmission">
+        <text>{{ $t('bluetooth.submit.retry') }}</text>
+      </button>
 
       <!-- 准备状态 -->
       <button v-else class="action-btn primary" @click="startConfigSubmission">
-        <wd-icon name="wifi" size="36rpx" color="#fff" />
-        <text>{{ $t('bluetooth.wifi.connect') || '开始配网' }}</text>
+        <text>{{ $t('bluetooth.wifi.connect') }}</text>
       </button>
     </view>
   </view>
@@ -173,7 +154,7 @@ export default {
         icon: 'none',
         duration: 2000
       });
-      this.goBackToInputPwd();
+      this.goBackToWifiConfig();
       return;
     }
 
@@ -183,16 +164,6 @@ export default {
     });
   },
   methods: {
-    /**
-     * 切换密码可见性
-     */
-    togglePasswordVisibility() {
-      bluetoothConfigManager.setPasswordState({
-        ...this.passwordState,
-        isVisible: !this.passwordState.isVisible
-      });
-    },
-
     /**
      * 清理定时器
      */
@@ -221,6 +192,10 @@ export default {
       // 启动等待计时器
       this.waitingTimer = setInterval(() => {
         this.waitingTime++;
+        // 超过20秒显示警告
+        if (this.waitingTime > 20) {
+          this.wifiConnectionStuck = true;
+        }
       }, 1000);
 
       try {
@@ -257,14 +232,12 @@ export default {
         console.error('配网失败:', error);
 
         // 根据错误类型提供更具体的提示
-        let errorMessage = '配网失败，请重试';
-        let toastTitle = '配网失败';
+        let errorMessage = this.$t('bluetooth.submit.device_timeout');
 
         if (error.message && error.message.includes('超时')) {
           // 检查是否可能是WiFi密码错误
           if (this.wifiConnectionStuck) {
             errorMessage = 'WiFi连接超时，请检查WiFi密码是否正确';
-            toastTitle = 'WiFi密码可能错误';
           }
         } else if (error.message) {
           errorMessage = error.message;
@@ -273,7 +246,7 @@ export default {
         this.configError = errorMessage;
 
         uni.showToast({
-          title: toastTitle,
+          title: this.$t('bluetooth.submit.failed_title'),
           icon: 'none',
           duration: 3000
         });
@@ -300,7 +273,7 @@ export default {
       // 返回上一页
       setTimeout(() => {
         uni.navigateBack();
-      }, 2000);
+      }, 500);
     },
 
     /**
@@ -311,7 +284,6 @@ export default {
 
       try {
         // 绑定设备到用户账号
-        const timestamp = new Date().toISOString();
         // 优先使用 macAddress 字段（iOS 上 deviceId 是 UUID 格式）
         const macAddr = this.selectedDevice.macAddress || this.selectedDevice.deviceId;
         const deviceData = {
@@ -371,57 +343,65 @@ export default {
 
 <style lang="scss" scoped>
 .submit-config {
-  padding: 24rpx;
-  padding-bottom: 200rpx;
   min-height: 100%;
-  display: flex;
-  flex-direction: column;
+  padding-bottom: 200rpx;
+  background-color: #fff;
 }
 
-/* 状态区域 */
-.status-section {
-  flex: 1;
+/* 状态容器 */
+.status-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: calc(100vh - 300rpx);
   padding: 48rpx 32rpx;
-  text-align: center;
 }
 
-.status-icon-wrapper {
-  width: 160rpx;
-  height: 160rpx;
+.status-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  border-radius: 50%;
+  text-align: center;
+  width: 100%;
+  max-width: 600rpx;
+}
+
+.status-image {
+  width: 280rpx;
+  height: 280rpx;
   margin-bottom: 40rpx;
-  position: relative;
 }
 
-.ready-icon {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+.status-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16rpx;
 }
 
-.success-icon {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 8rpx 32rpx rgba(16, 185, 129, 0.3);
+.status-title.success-text {
+  color: #10b981;
 }
 
-.error-icon {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 0 8rpx 32rpx rgba(239, 68, 68, 0.3);
+.status-title.error-text {
+  color: #1f2937;
+}
+
+.status-desc {
+  font-size: 28rpx;
+  color: #6b7280;
+  line-height: 1.5;
 }
 
 /* 连接动画 */
 .connecting-animation {
   position: relative;
-  width: 160rpx;
-  height: 160rpx;
+  width: 200rpx;
+  height: 200rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 40rpx;
 }
 
 .pulse-ring {
@@ -444,7 +424,7 @@ export default {
 
 @keyframes pulse {
   0% {
-    transform: scale(0.8);
+    transform: scale(0.6);
     opacity: 0.8;
   }
   100% {
@@ -453,39 +433,33 @@ export default {
   }
 }
 
-.status-title {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 16rpx;
-}
-
-.status-desc {
-  font-size: 28rpx;
-  color: #6b7280;
-  line-height: 1.5;
-  max-width: 500rpx;
-}
-
-.error-message {
-  color: #ef4444;
-}
-
 .waiting-time {
-  font-size: 48rpx;
+  font-size: 56rpx;
   font-weight: 600;
   color: #3b82f6;
-  margin-top: 32rpx;
+  margin-top: 24rpx;
   font-variant-numeric: tabular-nums;
+}
+
+/* 成功图标 */
+.success-icon-wrapper {
+  width: 160rpx;
+  height: 160rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 16rpx 48rpx rgba(16, 185, 129, 0.3);
+  margin-bottom: 40rpx;
 }
 
 /* 信息卡片 */
 .info-card {
   width: 100%;
-  max-width: 600rpx;
   background-color: #f9fafb;
   border-radius: 20rpx;
-  padding: 28rpx 32rpx;
+  padding: 24rpx 28rpx;
   margin-top: 40rpx;
 }
 
@@ -517,7 +491,6 @@ export default {
   align-items: center;
   gap: 16rpx;
   width: 100%;
-  max-width: 600rpx;
   padding: 24rpx;
   background-color: #fffbeb;
   border: 1rpx solid #fde68a;
@@ -526,40 +499,6 @@ export default {
   font-size: 26rpx;
   color: #92400e;
   text-align: left;
-}
-
-/* 提示卡片 */
-.hint-card {
-  width: 100%;
-  max-width: 600rpx;
-  padding: 28rpx;
-  background-color: #eff6ff;
-  border: 1rpx solid #bfdbfe;
-  border-radius: 16rpx;
-  margin-top: 32rpx;
-  text-align: left;
-}
-
-.hint-title {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #1e40af;
-  margin-bottom: 16rpx;
-}
-
-.hint-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12rpx;
-}
-
-.hint-item {
-  font-size: 26rpx;
-  color: #1e40af;
-  line-height: 1.5;
 }
 
 /* 底部操作按钮 */
@@ -571,7 +510,6 @@ export default {
   padding: 24rpx 32rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
   background-color: #fff;
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
 }
 
 .action-hint {
@@ -581,17 +519,12 @@ export default {
   padding: 28rpx 0;
 }
 
-.action-group {
-  display: flex;
-  gap: 20rpx;
-}
-
 .action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12rpx;
-  flex: 1;
+  width: 100%;
   height: 96rpx;
   border-radius: 48rpx;
   font-size: 32rpx;
@@ -610,67 +543,9 @@ export default {
   box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.3);
 }
 
-.action-btn.secondary {
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
 .action-btn.success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #fff;
   box-shadow: 0 8rpx 24rpx rgba(16, 185, 129, 0.3);
-}
-
-/* 响应式设计 */
-@media screen and (max-width: 750rpx) {
-  .submit-config {
-    padding: 20rpx;
-    padding-bottom: 180rpx;
-  }
-
-  .status-section {
-    padding: 40rpx 24rpx;
-  }
-
-  .status-icon-wrapper {
-    width: 140rpx;
-    height: 140rpx;
-    margin-bottom: 32rpx;
-  }
-
-  .connecting-animation {
-    width: 140rpx;
-    height: 140rpx;
-  }
-
-  .status-title {
-    font-size: 36rpx;
-  }
-
-  .status-desc {
-    font-size: 26rpx;
-  }
-
-  .waiting-time {
-    font-size: 44rpx;
-  }
-
-  .info-card {
-    padding: 24rpx 28rpx;
-  }
-
-  .info-label,
-  .info-value {
-    font-size: 26rpx;
-  }
-
-  .bottom-action {
-    padding: 20rpx 24rpx;
-  }
-
-  .action-btn {
-    height: 88rpx;
-    font-size: 30rpx;
-  }
 }
 </style>

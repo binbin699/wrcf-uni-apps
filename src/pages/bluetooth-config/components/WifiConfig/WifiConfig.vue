@@ -1,73 +1,45 @@
 <template>
   <view class="wifi-config">
-    <!-- 页面标题区域 -->
-    <view class="header-section">
-      <view class="header-title">{{ $t('bluetooth.wifi.title') }}</view>
-      <view class="header-desc">{{ $t('bluetooth.wifi.desc') }}</view>
+    <!-- 加载/空状态 -->
+    <view v-if="isLoadingWifi && wifiList.length === 0" class="empty-container">
+      <view class="empty-content">
+        <image class="empty-image" src="/static/icons/wifi-scan.svg" mode="aspectFit" />
+        <text class="empty-text">{{ $t('bluetooth.wifi.scanning') }}</text>
+      </view>
     </view>
 
-    <!-- WiFi列表卡片 -->
-    <view class="card wifi-card">
-      <view class="card-header">
-        <view class="card-title">
-          <wd-icon name="wifi" size="36rpx" color="#3b82f6" />
-          <text>WiFi {{ $t('net_config.wifi_list_title') }}</text>
-        </view>
+    <!-- 空列表状态 -->
+    <view v-else-if="!isLoadingWifi && wifiList.length === 0" class="empty-container">
+      <view class="empty-content">
+        <image class="empty-image" src="/static/icons/wifi-scan.svg" mode="aspectFit" />
+        <text class="empty-text">{{ $t('bluetooth.wifi.no_networks') }}</text>
+        <text class="empty-hint">{{ $t('bluetooth.wifi.no_networks_hint') }}</text>
+      </view>
+    </view>
+
+    <!-- WiFi列表 -->
+    <view v-else class="wifi-list-container">
+      <scroll-view scroll-y class="wifi-scroll-list" :style="{ maxHeight: scrollHeight }">
         <view
-          class="scan-btn"
-          :class="{ disabled: isLoadingWifi }"
-          @click="startWifiScan">
-          <wd-icon v-if="!isLoadingWifi" name="refresh" size="28rpx" color="#3b82f6" />
-          <view v-else class="mini-spinner"></view>
-          <text>{{ isLoadingWifi ? $t('bluetooth.wifi.scanning') : $t('bluetooth.wifi.scan_retry') }}</text>
-        </view>
-      </view>
-
-      <!-- WiFi列表内容 -->
-      <view class="wifi-list-container">
-        <!-- 加载状态 -->
-        <view v-if="isLoadingWifi && wifiList.length === 0" class="loading-state">
-          <view class="loading-spinner"></view>
-          <text class="loading-text">{{ $t('bluetooth.wifi.scanning') }}</text>
-        </view>
-
-        <!-- WiFi列表 -->
-        <scroll-view
-          v-else-if="wifiList.length > 0"
-          scroll-y
-          class="wifi-scroll-list"
-          :style="{ maxHeight: scrollHeight }">
-          <view
-            v-for="wifi in wifiList"
-            :key="wifi.SSID"
-            class="wifi-item"
-            :class="{ selected: selectedWifi && selectedWifi.SSID === wifi.SSID }"
-            @click="handleSelectWifi(wifi)">
-            <view class="wifi-info">
-              <view class="wifi-name">{{ wifi.SSID }}</view>
-              <view class="wifi-meta">
-                <wd-icon v-if="wifi.secure" name="lock-on" size="24rpx" color="#6b7280" />
-                <text class="wifi-security">
-                  {{ wifi.secure ? $t('net_config.secure_network') : $t('net_config.open_network') }}
-                </text>
-              </view>
-            </view>
-            <view class="wifi-signal">
-              <WifiSignal :strength="wifi.signalStrength" />
-            </view>
-            <view v-if="selectedWifi && selectedWifi.SSID === wifi.SSID" class="wifi-check">
-              <wd-icon name="check" size="32rpx" color="#3b82f6" />
-            </view>
+          v-for="wifi in wifiList"
+          :key="wifi.SSID"
+          class="wifi-card"
+          :class="{ selected: selectedWifi && selectedWifi.SSID === wifi.SSID }"
+          @click="handleSelectWifi(wifi)">
+          <view class="wifi-icon">
+            <wd-icon name="wifi" size="40rpx" :color="selectedWifi && selectedWifi.SSID === wifi.SSID ? '#fff' : '#9ca3af'" />
           </view>
-        </scroll-view>
-
-        <!-- 空状态 -->
-        <view v-else class="empty-state">
-          <wd-icon name="wifi" size="80rpx" color="#d1d5db" />
-          <view class="empty-text">{{ $t('bluetooth.wifi.no_networks') }}</view>
-          <view class="empty-hint">{{ $t('bluetooth.wifi.no_networks_hint') }}</view>
+          <view class="wifi-info">
+            <text class="wifi-name">{{ wifi.SSID }}</text>
+          </view>
+          <view v-if="wifi.secure" class="wifi-lock">
+            <wd-icon name="lock-on" size="32rpx" :color="selectedWifi && selectedWifi.SSID === wifi.SSID ? '#fff' : '#9ca3af'" />
+          </view>
+          <view class="wifi-arrow">
+            <wd-icon name="arrow-right" size="32rpx" :color="selectedWifi && selectedWifi.SSID === wifi.SSID ? '#fff' : '#9ca3af'" />
+          </view>
         </view>
-      </view>
+      </scroll-view>
 
       <!-- 手动配置切换按钮 -->
       <button class="manual-config-toggle" @click="toggleManualConfig">
@@ -129,47 +101,46 @@
       </view>
     </view>
 
-    <!-- 密码输入卡片（仅当从列表选择WiFi且需要密码时显示） -->
-    <view v-if="selectedWifi && selectedWifi.secure && !showManualConfig" class="card password-card">
-      <view class="card-header">
-        <view class="card-title">
-          <wd-icon name="lock-on" size="36rpx" color="#3b82f6" />
-          <text>{{ $t('net_config.wifi_password') }}</text>
-        </view>
-      </view>
+    <!-- 底部按钮 -->
+    <view class="bottom-action">
+      <button
+        v-if="canConnect"
+        class="connect-btn"
+        @click="handleConnect">
+        <text>{{ $t('common.confirm') }}</text>
+      </button>
+      <button
+        v-else
+        class="scan-btn"
+        :class="{ disabled: isLoadingWifi }"
+        :disabled="isLoadingWifi"
+        @click="startWifiScan">
+        <text>{{ $t('bluetooth.wifi.scan_retry') }}</text>
+      </button>
+    </view>
 
-      <view class="password-section">
-        <view class="selected-wifi-info">
-          <text class="wifi-label">{{ $t('net_config.wifi_name') }}:</text>
-          <text class="wifi-value">{{ selectedWifi.SSID }}</text>
-        </view>
-
-        <view class="password-input-wrapper">
+    <!-- 密码输入弹窗 -->
+    <view v-if="showPasswordModal" class="password-modal-overlay" @click="closePasswordModal">
+      <view class="password-modal" @click.stop>
+        <view class="modal-title">{{ pendingWifi && pendingWifi.SSID }}</view>
+        <view class="modal-input-wrapper">
           <input
             v-model="password"
-            class="password-input"
+            class="modal-input"
             type="text"
             :password="!isPasswordVisible"
             :placeholder="$t('bluetooth.wifi.password_placeholder')"
             :maxlength="64"
-            @input="handlePasswordInput" />
+            :focus="showPasswordModal"
+            @confirm="confirmPassword" />
           <view class="toggle-visibility" @click.stop="togglePasswordVisibility">
             <wd-icon :name="isPasswordVisible ? 'view' : 'eye-close'" size="40rpx" color="#9ca3af" />
           </view>
         </view>
+        <button class="modal-confirm-btn" @click="confirmPassword">
+          {{ $t('common.confirm') }}
+        </button>
       </view>
-    </view>
-
-    <!-- 底部操作按钮 -->
-    <view class="bottom-action">
-      <button
-        class="connect-btn"
-        :class="{ disabled: !canConnect }"
-        :disabled="!canConnect"
-        @click="handleConnect">
-        <wd-icon name="wifi" size="36rpx" color="#fff" />
-        <text>{{ $t('bluetooth.wifi.connect') }}</text>
-      </button>
     </view>
   </view>
 </template>
@@ -192,7 +163,10 @@ export default {
       selectedWifi: null,
       password: '',
       isPasswordVisible: false,
-      scrollHeight: '400rpx',
+      scrollHeight: '600rpx',
+      // 密码弹窗
+      showPasswordModal: false,
+      pendingWifi: null,
       // 手动配置相关
       showManualConfig: false,
       manualSsid: '',
@@ -257,9 +231,9 @@ export default {
   methods: {
     calculateScrollHeight() {
       const systemInfo = uni.getSystemInfoSync();
-      // 计算可用高度，减去导航栏、进度条、标题、密码卡片、底部按钮等
-      const availableHeight = systemInfo.windowHeight - 400;
-      this.scrollHeight = Math.max(300, availableHeight) + 'rpx';
+      // 计算可用高度
+      const availableHeight = systemInfo.windowHeight - 300;
+      this.scrollHeight = Math.max(400, availableHeight) + 'rpx';
     },
 
     async startWifiScan() {
@@ -305,31 +279,49 @@ export default {
 
     handleSelectWifi(wifi) {
       console.log('选择WiFi:', wifi);
-      this.selectedWifi = wifi;
-      bluetoothConfigManager.setSelectedWifi(wifi);
-
-      // 如果是开放网络，清空密码
-      if (!wifi.secure) {
-        this.password = '';
-      }
-
+      
       // 选择WiFi时关闭手动配置模式
       this.showManualConfig = false;
+      
+      // 如果需要密码，显示密码弹窗
+      if (wifi.secure) {
+        this.pendingWifi = wifi;
+        this.password = '';
+        this.showPasswordModal = true;
+      } else {
+        // 开放网络，直接选中
+        this.selectedWifi = wifi;
+        this.password = '';
+        bluetoothConfigManager.setSelectedWifi(wifi);
+      }
     },
 
-    handlePasswordInput() {
+    closePasswordModal() {
+      this.showPasswordModal = false;
+      this.pendingWifi = null;
+    },
+
+    confirmPassword() {
+      if (!this.password.trim() && this.pendingWifi && this.pendingWifi.secure) {
+        uni.showToast({
+          title: this.$t('bluetooth.wifi.password_required'),
+          icon: 'none',
+          duration: 2000
+        });
+        return;
+      }
+
+      this.selectedWifi = this.pendingWifi;
+      bluetoothConfigManager.setSelectedWifi(this.selectedWifi);
       bluetoothConfigManager.setPasswordState({
         password: this.password,
         isVisible: this.isPasswordVisible
       });
+      this.showPasswordModal = false;
     },
 
     togglePasswordVisibility() {
       this.isPasswordVisible = !this.isPasswordVisible;
-      bluetoothConfigManager.setPasswordState({
-        password: this.password,
-        isVisible: this.isPasswordVisible
-      });
     },
 
     // 手动配置相关方法
@@ -397,7 +389,7 @@ export default {
           // 为手动配置创建一个虚拟的 selectedWifi 对象
           const manualWifi = {
             SSID: ssid,
-            secure: this.securityIndex !== -1, // 假设有加密
+            secure: this.securityIndex !== -1,
             signalStrength: 100
           };
           bluetoothConfigManager.setSelectedWifi(manualWifi);
@@ -469,171 +461,88 @@ export default {
 
 <style lang="scss" scoped>
 .wifi-config {
-  padding: 24rpx;
-  padding-bottom: 200rpx;
   min-height: 100%;
-}
-
-/* 头部区域 */
-.header-section {
-  margin-bottom: 32rpx;
-  padding: 0 8rpx;
-}
-
-.header-title {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 12rpx;
-}
-
-.header-desc {
-  font-size: 28rpx;
-  color: #6b7280;
-  line-height: 1.5;
-}
-
-/* 卡片通用样式 */
-.card {
+  padding-bottom: 200rpx;
   background-color: #fff;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  border: 1rpx solid #f3f4f6;
 }
 
-.card-header {
+/* 空状态容器 */
+.empty-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24rpx;
+  justify-content: center;
+  min-height: calc(100vh - 300rpx);
+  padding: 48rpx 32rpx;
 }
 
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-/* 扫描按钮 */
-.scan-btn {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 12rpx 24rpx;
-  font-size: 24rpx;
-  color: #3b82f6;
-  background-color: #eff6ff;
-  border-radius: 999rpx;
-  transition: all 0.2s;
-
-  &:active {
-    background-color: #dbeafe;
-  }
-
-  &.disabled {
-    opacity: 0.6;
-    pointer-events: none;
-  }
-}
-
-.mini-spinner {
-  width: 24rpx;
-  height: 24rpx;
-  border: 3rpx solid #bfdbfe;
-  border-top: 3rpx solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-/* WiFi列表容器 */
-.wifi-list-container {
-  min-height: 200rpx;
-}
-
-.wifi-scroll-list {
-  max-height: 500rpx;
-}
-
-/* 加载状态 */
-.loading-state {
+.empty-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 80rpx 0;
-}
-
-.loading-spinner {
-  width: 64rpx;
-  height: 64rpx;
-  border: 4rpx solid #e5e7eb;
-  border-top: 4rpx solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 24rpx;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-text {
-  font-size: 28rpx;
-  color: #6b7280;
-}
-
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64rpx 0;
   text-align: center;
 }
 
+.empty-image {
+  width: 280rpx;
+  height: 280rpx;
+  margin-bottom: 32rpx;
+}
+
 .empty-text {
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: 500;
-  color: #6b7280;
-  margin-top: 24rpx;
-  margin-bottom: 8rpx;
+  color: #1f2937;
+  margin-bottom: 12rpx;
 }
 
 .empty-hint {
   font-size: 26rpx;
   color: #9ca3af;
+  line-height: 1.5;
 }
 
-/* WiFi列表项 */
-.wifi-item {
+/* WiFi列表 */
+.wifi-list-container {
+  padding: 24rpx;
+}
+
+.wifi-scroll-list {
+  max-height: 600rpx;
+}
+
+.wifi-card {
   display: flex;
   align-items: center;
-  padding: 24rpx 20rpx;
-  border-radius: 16rpx;
-  margin-bottom: 12rpx;
-  background-color: #f9fafb;
-  border: 2rpx solid transparent;
+  padding: 28rpx 24rpx;
+  margin-bottom: 20rpx;
+  background-color: #fff;
+  border-radius: 20rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
+  border: 1rpx solid #f3f4f6;
   transition: all 0.2s;
 
-  &:last-child {
-    margin-bottom: 0;
-  }
-
   &:active {
-    background-color: #f3f4f6;
+    transform: scale(0.99);
   }
 
   &.selected {
-    background-color: #eff6ff;
-    border-color: #3b82f6;
+    background: linear-gradient(135deg, #3b82f6 0%, #335CFF 100%);
+    border-color: transparent;
+
+    .wifi-name {
+      color: #fff;
+    }
   }
+}
+
+.wifi-icon {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
 }
 
 .wifi-info {
@@ -642,81 +551,108 @@ export default {
 }
 
 .wifi-name {
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: 500;
   color: #1f2937;
-  margin-bottom: 6rpx;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.wifi-meta {
+.wifi-lock {
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+
+.wifi-arrow {
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+
+/* 底部按钮 */
+.bottom-action {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  background-color: #fff;
+}
+
+.scan-btn,
+.connect-btn {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-}
-
-.wifi-security {
-  font-size: 24rpx;
-  color: #6b7280;
-}
-
-.wifi-signal {
-  margin-left: 16rpx;
-  margin-right: 8rpx;
-}
-
-.wifi-check {
-  margin-left: 8rpx;
-}
-
-/* 密码输入区域 */
-.password-section {
-  padding-top: 8rpx;
-}
-
-.selected-wifi-info {
-  display: flex;
-  align-items: center;
+  justify-content: center;
   gap: 12rpx;
-  padding: 16rpx 20rpx;
-  background-color: #f9fafb;
-  border-radius: 12rpx;
-  margin-bottom: 20rpx;
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, #3b82f6 0%, #335CFF 100%);
+  border-radius: 48rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.3);
+  transition: all 0.2s;
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 4rpx 16rpx rgba(59, 130, 246, 0.3);
+  }
+
+  &.disabled {
+    opacity: 0.6;
+  }
 }
 
-.wifi-label {
-  font-size: 26rpx;
-  color: #6b7280;
+/* 密码弹窗 */
+.password-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
 
-.wifi-value {
-  font-size: 28rpx;
-  font-weight: 500;
+.password-modal {
+  width: 600rpx;
+  background-color: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx 32rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.15);
+}
+
+.modal-title {
+  font-size: 34rpx;
+  font-weight: 600;
   color: #1f2937;
+  text-align: center;
+  margin-bottom: 32rpx;
 }
 
-.password-input-wrapper {
+.modal-input-wrapper {
   display: flex;
   align-items: center;
   background-color: #f9fafb;
   border-radius: 16rpx;
   border: 2rpx solid #e5e7eb;
   overflow: hidden;
-  transition: border-color 0.2s;
+  margin-bottom: 32rpx;
 
   &:focus-within {
     border-color: #3b82f6;
     background-color: #fff;
   }
-
-  &.manual-password-wrapper {
-    background-color: #fff;
-  }
 }
 
-.password-input {
+.modal-input {
   flex: 1;
   padding: 28rpx 24rpx;
   font-size: 30rpx;
@@ -740,81 +676,18 @@ export default {
   }
 }
 
-/* 底部操作按钮 */
-.bottom-action {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 24rpx 32rpx;
-  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
-  background-color: #fff;
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
-}
-
-.connect-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12rpx;
+.modal-confirm-btn {
   width: 100%;
-  height: 96rpx;
+  height: 88rpx;
   background: linear-gradient(135deg, #3b82f6 0%, #335CFF 100%);
-  border-radius: 48rpx;
-  font-size: 32rpx;
+  border-radius: 44rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: #fff;
   border: none;
-  box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.3);
-  transition: all 0.2s;
 
   &:active {
     transform: scale(0.98);
-    box-shadow: 0 4rpx 16rpx rgba(59, 130, 246, 0.3);
-  }
-
-  &.disabled {
-    background: #d1d5db;
-    box-shadow: none;
-    pointer-events: none;
-  }
-}
-
-/* 响应式设计 */
-@media screen and (max-width: 750rpx) {
-  .wifi-config {
-    padding: 20rpx;
-    padding-bottom: 180rpx;
-  }
-
-  .header-title {
-    font-size: 36rpx;
-  }
-
-  .header-desc {
-    font-size: 26rpx;
-  }
-
-  .card {
-    padding: 28rpx;
-    border-radius: 20rpx;
-  }
-
-  .wifi-item {
-    padding: 20rpx 16rpx;
-  }
-
-  .wifi-name {
-    font-size: 28rpx;
-  }
-
-  .bottom-action {
-    padding: 20rpx 24rpx;
-  }
-
-  .connect-btn {
-    height: 88rpx;
-    font-size: 30rpx;
   }
 }
 
@@ -822,12 +695,12 @@ export default {
 .manual-config-toggle {
   width: 100%;
   margin-top: 24rpx;
-  padding: 12rpx 24rpx;
-  font-size: 26rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
   color: #3b82f6;
   background-color: #eff6ff;
   border: 2rpx solid #bfdbfe;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   text-align: center;
   transition: all 0.2s;
 
@@ -912,5 +785,31 @@ export default {
 .picker-arrow {
   font-size: 36rpx;
   color: #9ca3af;
+}
+
+.password-input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 12rpx;
+  border: 2rpx solid #e5e7eb;
+  overflow: hidden;
+
+  &:focus-within {
+    border-color: #3b82f6;
+  }
+}
+
+.password-input {
+  flex: 1;
+  padding: 24rpx;
+  font-size: 30rpx;
+  color: #1f2937;
+  background-color: transparent;
+  border: none;
+
+  &::placeholder {
+    color: #9ca3af;
+  }
 }
 </style>
