@@ -166,7 +166,7 @@ function initAudioManager() {
         playingVoiceId.value = null;
         console.error('音频播放失败:', error);
         uni.showToast({
-          title: $t('voice_manage.play_failed') || '播放失败',
+          title: $t('voice_manage.play_failed'),
           icon: 'none'
         });
       }

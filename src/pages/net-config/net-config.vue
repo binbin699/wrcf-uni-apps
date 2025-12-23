@@ -1189,7 +1189,7 @@ function initAudioManager() {
       onError: (error, audio) => {
         isPlaying.value = false;
         console.error('音频播放失败:', error);
-        toast.warning({ msg: $t('device.voiceprint.play_failed') || '播放失败', duration: 2000 });
+        toast.warning({ msg: $t('device.voiceprint.play_failed'), duration: 2000 });
         // 停止进度更新并重置
         stopProgressUpdate();
         resetProgress();

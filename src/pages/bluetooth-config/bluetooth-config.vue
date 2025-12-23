@@ -31,9 +31,6 @@
       </view>
     </view>
 
-    <!-- 三段式进度条 -->
-    <StepProgress :current-step="state.currentStep" />
-
     <!-- 步骤内容 -->
     <view class="step-content">
       <!-- 选择设备步骤 -->
@@ -57,7 +54,6 @@ import { useNotify } from '@/uni_modules/wot-design-uni';
 import bluetoothConfigManager, { CONFIG_STEPS } from './store/bluetoothConfigStore';
 // @ts-ignore
 import { configProtocol } from './utils/configProtocol';
-import StepProgress from './components/StepProgress/StepProgress.vue';
 import SelectDevice from './components/SelectDevice/SelectDevice.vue';
 import WifiConfig from './components/WifiConfig/WifiConfig.vue';
 import SubmitConfig from './components/SubmitConfig/SubmitConfig.vue';
