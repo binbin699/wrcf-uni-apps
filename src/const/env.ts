@@ -115,6 +115,9 @@ export const ENV = import.meta.env as Record<string, string> & {
   VITE_PRIVACY_URL?: string;
   VITE_APP_SETUP_MODE?: 'qrcode' | 'bluetooth' | 'both';
   VITE_APP_USE_VOICEPRINT?: string;
+  VITE_ARMS_PID?: string;
+  VITE_ARMS_ENDPOINT?: string;
+  VITE_ARMS_ENV?: 'prod' | 'gray' | 'pre' | 'daily' | 'local';
 };
 
 // 蓝牙配网是否启用设备名称筛选，默认 true

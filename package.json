@@ -37,6 +37,8 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@arms/rum-core": "0.1.1",
+    "@babel/runtime": "^7.28.4",
     "@dcloudio/uni-app": "3.0.0-4080520251106001",
     "@dcloudio/uni-app-harmony": "3.0.0-4080520251106001",
     "@dcloudio/uni-app-plus": "3.0.0-4080520251106001",
@@ -53,6 +55,7 @@
     "@dcloudio/uni-mp-weixin": "3.0.0-4080520251106001",
     "@dcloudio/uni-mp-xhs": "3.0.0-4080520251106001",
     "@dcloudio/uni-quickapp-webview": "3.0.0-4080520251106001",
+    "extends": "link:@babel/runtime/helpers/extends",
     "pinia": "2.0.36",
     "pinia-plugin-persistedstate": "3.2.1",
     "text-decoding": "^1.0.0",

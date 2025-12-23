@@ -1,0 +1,33 @@
+{
+  "name": "@arms/rum-uniapp",
+  "version": "0.1.1",
+  "description": "arms rum javascript sdk for uniapp native",
+  "author": "guangli.fj <guangli.fj@alibaba-inc.com>",
+  "license": "ISC",
+  "main": "lib/index.js",
+  "module": "es/index.js",
+  "directories": {
+    "lib": "lib",
+    "es": "es",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib",
+    "es",
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "start": "build-scripts build --config build.dev.json",
+    "build": "build-scripts build --skip-demo",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@arms/rum-core": "0.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4"
+  }
+}

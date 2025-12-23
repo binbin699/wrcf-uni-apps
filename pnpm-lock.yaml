@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@arms/rum-core':
+        specifier: 0.1.1
+        version: 0.1.1(@babel/runtime@7.28.4)
+      '@babel/runtime':
+        specifier: ^7.28.4
+        version: 7.28.4
       '@dcloudio/uni-app':
         specifier: 3.0.0-4080520251106001
         version: 3.0.0-4080520251106001(@dcloudio/types@3.4.19)(postcss@8.5.6)(rollup@4.50.1)(vue@3.5.21(typescript@5.9.2))
@@ -56,6 +62,9 @@ importers:
       '@dcloudio/uni-quickapp-webview':
         specifier: 3.0.0-4080520251106001
         version: 3.0.0-4080520251106001(postcss@8.5.6)(rollup@4.50.1)(vue@3.5.21(typescript@5.9.2))
+      extends:
+        specifier: link:@babel/runtime/helpers/extends
+        version: link:@babel/runtime/helpers/extends
       pinia:
         specifier: 2.0.36
         version: 2.0.36(typescript@5.9.2)(vue@3.5.21(typescript@5.9.2))
@@ -117,6 +126,11 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
+
+  '@arms/rum-core@0.1.1':
+    resolution: {integrity: sha512-p/lcqj75iDlNVA1d/P3jBIh42P9zaA7JeL77etsmocN8R+4PeaNqnqUhOjULDEwylk8ofzlKv0THXGKJysR+sw==}
+    peerDependencies:
+      '@babel/runtime': ^7.24.5
 
   '@babel/code-frame@7.24.7':
     resolution: {integrity: sha512-BcYH1CVJBO9tvyIZ2jVeXgSIMvGZ2FDRvDdOIVQyuklNKSsx+eppDEBq/g47Ayw+RqNFE+URvOShmf+f/qwAlA==}
@@ -3795,6 +3809,10 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.30
+
+  '@arms/rum-core@0.1.1(@babel/runtime@7.28.4)':
+    dependencies:
+      '@babel/runtime': 7.28.4
 
   '@babel/code-frame@7.24.7':
     dependencies:

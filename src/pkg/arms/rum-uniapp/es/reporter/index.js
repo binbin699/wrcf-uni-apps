@@ -1,0 +1,3 @@
+import _inheritsLoose from"@babel/runtime/helpers/inheritsLoose";import{Reporter}from"@arms/rum-core";import{sdk,fixAttrs}from"../utils/platform";/**
+ * uni-app reporter
+ */var UniReporter=/*#__PURE__*/function(a){function b(){for(var b,c=arguments.length,d=Array(c),e=0;e<c;e++)d[e]=arguments[e];return b=a.call.apply(a,[this].concat(d))||this,b.name="uni-reporter",b}_inheritsLoose(b,a);var c=b.prototype;return c.init=function(){var a=this;sdk.onAppHide(function(){a.flushEventQueue()})},c.request=function(a,b){var c=a.getConfig();fixAttrs(b).then(function(a){sdk.request({url:c.endpoint,method:"POST",dataType:"text",data:JSON.stringify(a)})})["catch"](function(a){console.warn("[arms] sendRequest fail",a)})},b}(Reporter);export default UniReporter;

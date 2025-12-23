@@ -1,0 +1,1 @@
+import armsRum,{ArmsRum}from"./shell";export{ArmsRum};export default armsRum;
