@@ -3,7 +3,6 @@ import type { BaseResponse, UploadOptions, UploadResponse } from '@/types/reques
 import { PageMap, Pages } from './route';
 import { getLocale } from '@/locale/index';
 import i18n from '@/locale';
-import { getBaseUrl } from '@/configs/';
 
 const $t = i18n.global.t;
 
@@ -35,7 +34,7 @@ class Request {
   private tokenStore: ReturnType<typeof useTokenStore> | null;
 
   constructor() {
-    this.baseURL = getBaseUrl();
+    this.baseURL = APP_CONFIG.BASE_API_URL;
     this.timeout = 10000;
     this.retryCount = new Map();
     this.tokenStore = null;

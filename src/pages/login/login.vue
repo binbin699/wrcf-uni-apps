@@ -33,7 +33,7 @@
       <view class="login-section">
         <!-- 微信小程序手机号登录 -->
         <!-- #ifdef MP-WEIXIN -->
-        <template v-if="loginConfig.enableWxMpPhone">
+        <template v-if="appConfig.SUPPORT_LOGIN_TYPE_WX_MP_PHONE">
           <button
             v-if="agreeChecked"
             class="phone login-btn primary"
@@ -60,7 +60,7 @@
           class="guest login-btn secondary"
           :class="{ 'need-agree': !agreeChecked }"
           @click="handleGuestLogin"
-          v-if="loginConfig.enableGuest_MP"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_GUEST_MP"
           :loading="userStore.isLoading"
           :disabled="userStore.isLoading">
           <text class="btn-text">{{ $t('login.guest_login') }}</text>
@@ -71,7 +71,7 @@
           class="guest login-btn secondary"
           :class="{ 'need-agree': !agreeChecked }"
           @click="handleGuestLogin"
-          v-if="loginConfig.enableGuest_APP"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_GUEST"
           :loading="userStore.isLoading"
           :disabled="userStore.isLoading">
           <text class="btn-text">{{ $t('login.guest_login') }}</text>
@@ -84,7 +84,7 @@
           class="google login-btn"
           :class="{ 'need-agree': !agreeChecked }"
           @click="handleGoogleLogin"
-          v-if="loginConfig.enableGoogle && !isIos"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_GOOGLE"
           :loading="userStore.isLoading"
           :disabled="userStore.isLoading">
           <text class="btn-text">{{ $t('login.google_login') }}</text>
@@ -97,7 +97,7 @@
           class="apple-signin-btn"
           :class="{ 'need-agree': !agreeChecked }"
           @click="handleAppleLogin"
-          v-if="loginConfig.enableApple && isIos"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_APPLE"
           :loading="userStore.isLoading"
           :disabled="userStore.isLoading">
           <image src="/static/icons/apple-logo-white.svg" class="apple-logo" mode="aspectFit"></image>
@@ -110,7 +110,7 @@
         <button
           class="wx login-btn"
           :class="{ 'need-agree': !agreeChecked }"
-          v-if="loginConfig.enableWeChatOAuth && isWechatExist()"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_WECHAT_OAUTH && isWechatExist()"
           @click="handleWxAppLogin"
           :loading="userStore.isLoading"
           :disabled="userStore.isLoading">
@@ -123,7 +123,7 @@
         <button
           class="sms login-btn secondary"
           :class="{ 'need-agree': !agreeChecked }"
-          v-if="loginConfig.enableSms"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_SMS"
           @click="openSmsModal"
           :loading="userStore.isLoading"
           :disabled="userStore.isLoading">
@@ -135,7 +135,7 @@
         <button
           class="email login-btn secondary"
           :class="{ 'need-agree': !agreeChecked }"
-          v-if="loginConfig.enableEmail"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_EMAIL"
           @click="openEmailModal"
           :loading="userStore.isLoading"
           :disabled="userStore.isLoading">
@@ -149,13 +149,16 @@
           class="password login-btn"
           :class="{ 'need-agree': !agreeChecked }"
           @click="handlePasswordLogin"
-          v-if="loginConfig.enablePassword"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_PASSWORD"
           :loading="userStore.isLoading"
           :disabled="userStore.isLoading">
           <text class="btn-text">{{ $t('login.password_login') }}</text>
         </button>
         <!-- 注册账号链接-->
-        <text class="register-link" v-if="loginConfig.enablePassword" @click="goToRegister">
+        <text
+          class="register-link"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_PASSWORD"
+          @click="goToRegister">
           {{ $t('login.register_account') }}
         </text>
         <!-- 微信手机号快捷登录自动注册提示 -->
@@ -298,7 +301,6 @@ import { usePrivacyStore } from '@/store/privacy';
 import { PageMap, Pages } from '@/utils/route';
 import type { IPasswordLoginForm } from '@/api/types/login';
 import storage from '@/utils/storage';
-import { LoginConfig, AppConfig } from '@/configs/';
 import { isWechatExist } from '@/utils/isWechatExist';
 // #ifdef APP-PLUS
 import PrivacyPolicyModal from '@/components/PrivacyPolicyModal.vue';
@@ -384,8 +386,7 @@ const emailForm = ref({
   password: ''
 });
 const showEmailPassword = ref(false);
-const loginConfig = LoginConfig;
-const isIos = uni.getSystemInfoSync().platform === 'ios';
+const appConfig = APP_CONFIG;
 
 // 短信登录相关响应式数据 (仅 App 端)
 // #ifdef APP-PLUS || APP-HARMONY
@@ -401,11 +402,11 @@ function openExternal(src: string) {
 }
 
 function openTerms() {
-  openExternal(AppConfig.current.TERMS_URL);
+  openExternal(APP_CONFIG.TERMS_URL);
 }
 
 function openPrivacy() {
-  openExternal(AppConfig.current.PRIVACY_URL);
+  openExternal(APP_CONFIG.PRIVACY_URL);
 }
 
 function ensureAgreement(): boolean {

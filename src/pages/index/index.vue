@@ -169,8 +169,6 @@ import { onLoad, onShow } from '@dcloudio/uni-app';
 import { Agent, groupType, groupNameKey, AgentTemplate } from './types';
 import { collapsedGroup } from './store';
 import { useUserStore } from '@/store';
-import { AppConfig } from '@/configs/';
-import { ENV } from '@/const/env';
 import { gotoCreateAgentBy } from '../agent/create';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 import { useDeviceScan } from '@/utils/useDeviceScan';
@@ -197,9 +195,8 @@ const showBindDrawer = ref(false);
 const selectedAgent = ref<Agent | null>(null);
 const loading = ref(false);
 const isDev = process.env.NODE_ENV === 'development';
-const appConfig = AppConfig;
 const showWelcomeGuide = ref(false);
-const setupMode = ENV.VITE_APP_SETUP_MODE || 'both';
+const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
 let isCheckingDevice = false;
 
 // 生命周期钩子

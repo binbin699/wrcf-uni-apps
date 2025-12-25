@@ -1,19 +1,24 @@
 /**
- * 环境与系统探测（const/env.ts）
- * 作用：
- * - 平台探测：导出 PLATFORM（'mp' | 'app'）、isMp、isApp
- * - 系统信息：导出 OS（'android' | 'ios' | 'harmony' | 'windows' | 'mac' | 'linux' | 'unknown'）、
- *   OS_VERSION、ANDROID_API_LEVEL、isHarmony
- * - 构建期环境变量：导出 ENV（Vite import.meta.env）
- * 说明：
- * - 优先使用条件编译宏（APP-PLUS/APP-HARMONY/MP）设置平台
- * - 系统类型通过 uni.getSystemInfoSync 的 osName/romName 识别，无法识别时为 'unknown'
- * - ANDROID_API_LEVEL 仅在 Android 平台有值
+ * 环境与系统探测
+ * 
+ * 功能：
+ * 1. 平台探测
+ *    - PLATFORM: 'mp' | 'app' - 运行平台类型
+ *    - isApp: boolean - 是否为 App 端
+ *    - isMp: boolean - 是否为小程序端
+ * 
+ * 2. 操作系统信息
+ *    - OS: 'android' | 'ios' | 'harmony' | 'windows' | 'mac' | 'linux' | 'unknown'
+ *    - isHarmony: boolean - 是否为鸿蒙系统
+ *    - OS_VERSION: string - 操作系统版本号
+ *    - ANDROID_API_LEVEL: number | undefined - Android API 级别（仅 Android 平台）
+ * 
+ * 实现说明：
+ * - 平台类型通过条件编译宏（#ifdef APP-PLUS/APP-HARMONY/MP）在编译时确定
+ * - 系统信息通过 uni.getSystemInfoSync() 获取
+ * - 鸿蒙设备通过 romName 识别（部分鸿蒙设备 osName 仍为 android）
+ * - 所有获取操作均有错误兜底，避免运行时崩溃
  */
-// 运行时/编译时平台探测与导出
-// 说明：使用条件编译宏确保值在对应平台下被正确设置
-
-import { EditionKind } from '@/configs/types';
 
 export type PlatformKind = 'mp' | 'app';
 
@@ -104,24 +109,3 @@ export const ANDROID_API_LEVEL: number | undefined = (() => {
   const level = sys?.osAndroidAPILevel;
   return typeof level === 'number' ? level : undefined;
 })();
-
-// 暴露构建期环境变量（Vite）
-export const ENV = import.meta.env as Record<string, string> & {
-  VITE_APP_EDITION?: EditionKind;
-  VITE_BASE_URL?: string;
-  VITE_GOOGLE_CLIENT_ID?: string;
-  VITE_BLE_FILTER_ENABLED?: string;
-  VITE_TERMS_URL?: string;
-  VITE_PRIVACY_URL?: string;
-  VITE_APP_SETUP_MODE?: 'qrcode' | 'bluetooth' | 'both';
-  VITE_APP_USE_VOICEPRINT?: string;
-  VITE_ARMS_PID?: string;
-  VITE_ARMS_ENDPOINT?: string;
-  VITE_ARMS_ENV?: 'prod' | 'gray' | 'pre' | 'daily' | 'local';
-};
-
-// 蓝牙配网是否启用设备名称筛选，默认 true
-export const BLE_FILTER_ENABLED = ENV.VITE_BLE_FILTER_ENABLED !== 'false';
-
-// 是否支持声纹，默认 true
-export const APP_USE_VOICEPRINT = ENV.VITE_APP_USE_VOICEPRINT !== 'false';

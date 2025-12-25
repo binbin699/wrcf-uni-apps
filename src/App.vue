@@ -1,12 +1,9 @@
 <script setup lang="ts">
-// 尽早导入AppConfig以初始化
-import { AppConfig } from '@/configs/';
 import { watch, getCurrentInstance } from 'vue';
 import { onLaunch, onShow, onHide, onError } from '@dcloudio/uni-app';
 import { useI18n } from 'vue-i18n';
 import { useUserStore, usePrivacyStore } from '@/store';
 import { requestBluetoothPermissionsForAndroid12 } from '@/utils/bluetoothPermission';
-import { ENV } from '@/const/env';
 
 // 引入 ARMS SDK（H5 和 App 平台）
 // #ifndef MP
@@ -128,7 +125,7 @@ watch(
 function initArmsMonitoring() {
   // #ifndef MP
   try {
-    if (!ENV.VITE_ARMS_PID || !ENV.VITE_ARMS_ENDPOINT) {
+    if (!APP_CONFIG.ARMS_PID || !APP_CONFIG.ARMS_ENDPOINT) {
       return;
     }
 
@@ -142,9 +139,9 @@ function initArmsMonitoring() {
 
     const config = {
       vue: app,
-      pid: ENV.VITE_ARMS_PID,
-      endpoint: ENV.VITE_ARMS_ENDPOINT,
-      env: ENV.VITE_ARMS_ENV || 'prod',
+      pid: APP_CONFIG.ARMS_PID,
+      endpoint: APP_CONFIG.ARMS_ENDPOINT,
+      env: APP_CONFIG.ARMS_ENV || 'prod',
       collectors: {
         api: true,
         jsError: true,

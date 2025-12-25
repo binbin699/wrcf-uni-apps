@@ -282,7 +282,6 @@ import {
   PermissionStatus
 } from '@/utils/permission';
 import { useNotify } from '@/uni_modules/wot-design-uni';
-import { AppConfig } from '@/configs';
 
 const toast = useToast();
 const message = useMessage();

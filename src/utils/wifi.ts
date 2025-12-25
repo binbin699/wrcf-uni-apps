@@ -1,6 +1,6 @@
 import { Ref, ref } from 'vue';
 import { checkPermissionStatus, PermissionType, PermissionStatus } from './permission';
-import { AppConfig } from '@/configs';
+import { AppInfo } from '@/const';
 
 export const wifiList = ref<UniApp.WifiInfo[]>([]);
 export const isLoadingWifiList = ref(false);
@@ -98,7 +98,7 @@ export async function loadWifiList(
   }
 
   // Android App: 先检查 WLAN 服务
-  if (isAndroidApp()) {
+  if (AppInfo.isAndroidApp()) {
     const wifiEnabled = await ensureAndroidWifiEnabled();
     if (!wifiEnabled) {
       isLoadingWifiList.value = false;
@@ -107,7 +107,7 @@ export async function loadWifiList(
   }
 
   // Android App: 检查定位服务
-  if (isAndroidApp()) {
+  if (AppInfo.isAndroidApp()) {
     const locOk = await ensureAndroidLocationEnabled();
     if (!locOk) {
       isLoadingWifiList.value = false;
@@ -116,7 +116,7 @@ export async function loadWifiList(
   }
 
   // Android App: 检查权限
-  if (isAndroidApp()) {
+  if (AppInfo.isAndroidApp()) {
     const permResult = await ensureAndroidScanPermissions();
     if (!permResult.success) {
       // 即使权限检查失败，也尝试继续扫描（容错机制）
@@ -132,7 +132,7 @@ export async function loadWifiList(
   }
 
   // 微信小程序: 检查定位权限
-  if (isWeixinMP()) {
+  if (AppInfo.isWeixinMP()) {
     const weixinLocOk = await ensureWeixinLocationAuthorized();
     if (!weixinLocOk) {
       isLoadingWifiList.value = false;
@@ -154,7 +154,7 @@ export async function loadWifiList(
   } catch (_) {
     await stopWifiSafe();
     // iOS 扫描失败时，尝试回退到获取当前连接的 WiFi
-    if (isIOSApp()) {
+    if (AppInfo.isIOSApp()) {
       console.log('iOS WiFi 扫描失败，尝试获取当前连接的 WiFi');
       const fallbackList = await tryGetConnectedWifiFallback(options);
       if (fallbackList.length > 0) {
@@ -172,7 +172,7 @@ export async function loadWifiList(
 
   if (!list || list.length === 0) {
     // iOS 扫描为空时，尝试回退到获取当前连接的 WiFi
-    if (isIOSApp()) {
+    if (AppInfo.isIOSApp()) {
       console.log('iOS WiFi 扫描为空，尝试获取当前连接的 WiFi');
       const fallbackList = await tryGetConnectedWifiFallback(options);
       if (fallbackList.length > 0) {
@@ -198,37 +198,6 @@ export async function loadWifiList(
 }
 
 /**
- * 判断是否为微信小程序平台
- */
-function isWeixinMP(): boolean {
-  if (AppConfig.platform !== 'mp') {
-    return false;
-  }
-  try {
-    const sysInfo = uni.getSystemInfoSync();
-    // @ts-ignore
-    return sysInfo?.platform === 'mp-weixin' || typeof wx !== 'undefined';
-  } catch {
-    // @ts-ignore
-    return typeof wx !== 'undefined';
-  }
-}
-
-/**
- * 判断是否为 Android App 平台
- */
-function isAndroidApp(): boolean {
-  return AppConfig.platform === 'app' && AppConfig.os === 'android';
-}
-
-/**
- * 判断是否为 iOS App 平台
- */
-function isIOSApp(): boolean {
-  return AppConfig.platform === 'app' && AppConfig.os === 'ios';
-}
-
-/**
  * 判断是否支持扫描 Wi-Fi 列表。
  * - Android App、微信小程序：支持
  * - iOS App、鸿蒙 App：不支持（退化为 getConnectedWifi）
@@ -236,12 +205,12 @@ function isIOSApp(): boolean {
 function isScanSupported(): boolean {
   // 使用运行时平台判断，而不是编译时条件编译
   // Android App 平台支持扫描
-  if (isAndroidApp()) {
+  if (AppInfo.isAndroidApp()) {
     return true;
   }
 
   // 微信小程序平台支持扫描
-  if (AppConfig.platform === 'mp') {
+  if (AppInfo.isMP()) {
     return true;
   }
 
@@ -251,7 +220,7 @@ function isScanSupported(): boolean {
 
 // 微信小程序：确保地理位置权限授权（小程序 Wi‑Fi 列表扫描依赖定位授权）
 async function ensureWeixinLocationAuthorized(): Promise<boolean> {
-  if (!isWeixinMP()) {
+  if (!AppInfo.isWeixinMP()) {
     return true;
   }
 
@@ -279,7 +248,7 @@ async function ensureWeixinLocationAuthorized(): Promise<boolean> {
 // 在 Android App 上检查 WLAN 服务是否开启
 // 仅在 Android App 平台生效；其它平台直接返回 true。
 async function ensureAndroidWifiEnabled(): Promise<boolean> {
-  if (!isAndroidApp()) {
+  if (!AppInfo.isAndroidApp()) {
     return true;
   }
 
@@ -313,7 +282,7 @@ async function ensureAndroidWifiEnabled(): Promise<boolean> {
 // 在 Android App 上尽量确保系统定位服务开启（否则 Wi‑Fi 扫描常为空）
 // 仅在 Android App 平台生效；其它平台直接返回 true。
 async function ensureAndroidLocationEnabled(): Promise<boolean> {
-  if (!isAndroidApp()) {
+  if (!AppInfo.isAndroidApp()) {
     return true;
   }
 
@@ -352,7 +321,7 @@ async function ensureAndroidLocationEnabled(): Promise<boolean> {
 // 请求 Android 13+ 所需的 Wi‑Fi 相关运行时权限（NEARBY_WIFI_DEVICES）以及定位权限
 // 若运行环境不支持或调用异常，返回 { success: true, deniedAlways: false } 以不阻塞流程。
 async function ensureAndroidScanPermissions(): Promise<{ success: boolean, deniedAlways: boolean }> {
-  if (!isAndroidApp()) {
+  if (!AppInfo.isAndroidApp()) {
     return { success: true, deniedAlways: false };
   }
 
@@ -375,9 +344,9 @@ async function ensureAndroidScanPermissions(): Promise<{ success: boolean, denie
     }
 
     // Android 13+ (API Level 33+) 需要请求附近设备权限
-    const needNearbyPermission = AppConfig.androidApiLevel !== undefined
-      ? AppConfig.androidApiLevel >= 33
-      : (AppConfig.osVersion ? parseFloat(AppConfig.osVersion) >= 13 : false);
+    const needNearbyPermission = AppInfo.androidApiLevel !== undefined
+      ? AppInfo.androidApiLevel >= 33
+      : (AppInfo.osVersion ? parseFloat(AppInfo.osVersion) >= 13 : false);
 
     if (needNearbyPermission) {
       console.log('[WiFi扫描] Android 13+ 需要请求附近设备权限');
@@ -498,10 +467,10 @@ export async function stopWifiSafe(): Promise<void> {
 // 统一封装：取消 Wi‑Fi 列表监听（兼容 App‑Plus 与微信小程序）
 function offGetWifiListCompat(handler: Function) {
   try {
-    if (isWeixinMP()) {
+    if (AppInfo.isWeixinMP()) {
       // 微信小程序需要传入相同的回调以解除监听
       uni.offGetWifiList(handler as any);
-    } else if (AppConfig.platform === 'app') {
+    } else if (AppInfo.isApp()) {
       // App平台(Android/iOS)不需要传参；传参会导致类型不匹配异常
       uni.offGetWifiList();
     }

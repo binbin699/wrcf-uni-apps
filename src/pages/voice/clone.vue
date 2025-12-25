@@ -466,17 +466,17 @@ async function upload(audioPath: string): Promise<string> {
 
   // 临时修复：替换 localhost 为实际服务器地址
   // 因为后端上传配置返回的是 localhost，训练服务无法访问
-  let uploadUrl = uploadResult.data.url;
-  if (uploadUrl && uploadUrl.includes('localhost')) {
-    const { getBaseUrl } = await import('@/configs/');
-    const baseUrl = getBaseUrl();
-    // 提取 baseUrl 的协议和主机部分
-    const baseUrlMatch = baseUrl.match(/^(https?:\/\/[^/]+)/);
-    if (baseUrlMatch) {
-      uploadUrl = uploadUrl.replace(/https?:\/\/localhost(:\d+)?/, baseUrlMatch[1]);
-      console.log('URL 已替换:', uploadUrl);
-    }
-  }
+  const uploadUrl = uploadResult.data.url;
+  // todo: ???
+  // if (uploadUrl && uploadUrl.includes('localhost')) {
+  //   const baseUrl = APP_CONFIG.BASE_API_URL;
+  //   // 提取 baseUrl 的协议和主机部分
+  //   const baseUrlMatch = baseUrl.match(/^(https?:\/\/[^/]+)/);
+  //   if (baseUrlMatch) {
+  //     uploadUrl = uploadUrl.replace(/https?:\/\/localhost(:\d+)?/, baseUrlMatch[1]);
+  //     console.log('URL 已替换:', uploadUrl);
+  //   }
+  // }
 
   return uploadUrl;
 }

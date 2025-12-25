@@ -105,7 +105,6 @@ import AudioPlayerManager from '@/utils/audioPlayer';
 import { Pages, PageMap } from '@/utils/route';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import type { Device, VoiceprintRecord } from '@/pages/device/types';
-import { APP_USE_VOICEPRINT } from '@/const/env';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
@@ -219,7 +218,7 @@ function deleteDevice(device: Device) {
 }
 
 function handleSelectDevice(device: Device) {
-  if (!APP_USE_VOICEPRINT) return;
+  if (!APP_CONFIG.APP_USE_VOICEPRINT) return;
   selectDevice.value = device;
   showVoiceprintPopup.value = true;
 }

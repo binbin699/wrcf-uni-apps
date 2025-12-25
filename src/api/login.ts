@@ -14,12 +14,11 @@ import type {
 } from './types/login';
 import { GoogleOauthRes } from './types/OAuth';
 import i18n from '@/locale';
-import { getGoogleClientId } from '@/configs/';
 
 const $t = i18n.global.t;
 
 // Google OAuth client id (web)
-const GOOGLE_CLIENT_ID = getGoogleClientId();
+const GOOGLE_CLIENT_ID = APP_CONFIG.GOOGLE_OAUTH_CLIENT_ID_WEB;
 
 /**
  * 数据转换工具函数
