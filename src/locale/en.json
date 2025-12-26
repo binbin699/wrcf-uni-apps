@@ -1,7 +1,7 @@
 {
-  "app.name": "Linx AI",
-  "app.description": "Linx AI Device Binding Management",
-  "app.global_title": "Linx AI Management",
+  "app.name": "HiKbao",
+  "app.description": "Dive in AI-Pet's Universe",
+  "app.global_title": "HiKbao",
   "app.location_permission_desc": "Your location information will be used for WiFi configuration to get nearby WiFi list",
 
   "pages.login": "Login",
@@ -26,8 +26,8 @@
   "tabbar.square": "Square",
   "tabbar.profile": "Profile",
 
-  "login.app_name": "Linx AI",
-  "login.app_desc": "Linx AI Device Binding Management",
+  "login.app_name": "HiKbao",
+  "login.app_desc": "Dive in AI-Pet's Universe",
   "login.phone_login": "Quick Phone Login",
   "login.account_login": "Sign in to Existing Account",
   "login.account_label": "Account",
@@ -114,7 +114,7 @@
   "index.delete_failed": "Delete failed",
   "index.template_hint": "No agents created yet, click the template to create one",
   "index.get_templates_failed": "Failed to get template agents",
-  "welcome.guide_title": "Welcome to Linx!\nAdd your device to start",
+  "welcome.guide_title": "Welcome to HiKbao!\nAdd your device to start",
   "welcome.setup_qrcode": "QR Code",
   "welcome.setup_bluetooth": "Bluetooth",
   "welcome.skip_for_now": "Skip for now",
@@ -229,7 +229,7 @@
   "profile.notice_section_1_item_4": "• If this is a corporate/organization account or minor's account, complete required guardian confirmation and official documentation verification.",
   "profile.notice_section_2_title": "II. Rights and Data After Deletion",
   "profile.notice_section_2_intro": "Once your account is deleted, you will experience the following irreversible consequences:",
-  "profile.notice_section_2_item_1": "• You will no longer be able to log in to Linx AI products or related services. Re-registering with the same email/phone will create a new account with no connection to the original.",
+  "profile.notice_section_2_item_1": "• You will no longer be able to log in to HiKbao products or related services. Re-registering with the same email/phone will create a new account with no connection to the original.",
   "profile.notice_section_2_item_2": "• All account data will be permanently deleted or anonymized (in compliance with Personal Information Protection Law), including but not limited to personal profile, transaction records, points, memberships, vouchers, etc., and cannot be recovered.",
   "profile.notice_section_2_item_3": "• All followed official accounts and friend relationships will be automatically removed, and others will not be able to contact you through this account.",
   "profile.notice_section_2_item_4": "• Legal responsibilities and behavior records prior to deletion will not be waived or reduced due to account deletion.",
@@ -832,7 +832,7 @@
   "permission.bluetooth_request_failed": "Failed to request Bluetooth permission",
 
   "privacy_modal.title": "User Agreement & Privacy Policy",
-  "privacy_modal.content": "Welcome to Linx AI! Before using our services, please read and agree to the following agreements:",
+  "privacy_modal.content": "Welcome to HiKbao! Before using our services, please read and agree to the following agreements:",
   "privacy_modal.summary": "By clicking \"Agree\", you confirm that you have read and agree to the above agreements. If you do not agree, we regret that we will not be able to provide services to you.",
   "privacy_modal.agree": "Agree",
   "privacy_modal.disagree": "Disagree",

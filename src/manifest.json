@@ -1,9 +1,9 @@
 {
     "name" : "%app.name%",
-    "appid" : "__UNI__53D46D3",
+    "appid" : "__UNI__0510B30",
     "description" : "%app.description%",
-    "versionName" : "1.1.0",
-    "versionCode" : 10030,
+    "versionName" : "1.1.1",
+    "versionCode" : 101011,
     "transformPx" : false,
     "app-plus" : {
         "usingComponents" : true,
@@ -30,7 +30,7 @@
         },
         "locales" : {
             "zh" : {
-                "name" : "灵矽 AI",
+                "name" : "HiKbao",
                 "ios" : {
                     "privacyDescription" : {
                         "NSCameraUsageDescription" : "允许获得您的相机权限，以便扫描二维码，绑定设备",
@@ -44,7 +44,7 @@
                 }
             },
             "en" : {
-                "name" : "Linx AI",
+                "name" : "HiKbao",
                 "ios" : {
                     "privacyDescription" : {
                         "NSCameraUsageDescription" : "Allow access to your camera to scan QR codes and bind devices",
@@ -88,7 +88,9 @@
                     "<uses-permission android:name=\"android.permission.READ_MEDIA_IMAGES\"/>"
                 ],
                 "abiFilters" : [ "armeabi-v7a", "arm64-v8a" ],
-                "minSdkVersion" : 21
+                "minSdkVersion" : 21,
+                "targetSdkVersion" : 35,
+                "excludePermissions" : []
             },
             "ios" : {
                 "dSYMs" : false,
@@ -106,14 +108,14 @@
             "sdkConfigs" : {
                 "oauth" : {
                     "google" : {
-                        "clientid" : "668197306109-hju8pngu20hqve9f0ee0bmq3ho7cmh9o.apps.googleusercontent.com"
+                        "clientid" : "287792291942-ld52uvi7pr431bqna0e0b8v6j8um80rk.apps.googleusercontent.com"
                     },
                     "weixin" : {
-                        "appid" : "null",
-                        "UniversalLinks" : ""
+                        "appid" : "wxda3a97fbe2ab02ea",
+                        "UniversalLinks" : "https://mengdiantansuo.com.cn/"
                     },
                     "apple" : {
-                        "UniversalLinks" : ""
+                        "UniversalLinks" : "https://mengdiantansuo.com.cn/"
                     }
                 },
                 "geolocation" : {
@@ -162,7 +164,7 @@
     },
     "quickapp" : {},
     "mp-weixin" : {
-        "appid" : "wx888aaf67e7fa9643",
+        "appid" : "wxda3a97fbe2ab02ea",
         "setting" : {
             "urlCheck" : false,
             "es6" : true,
@@ -192,7 +194,7 @@
     "fallbackLocale" : "en",
     "app-harmony" : {
         "distribute" : {
-            "bundleName" : "com.qiniu.linx",
+            "bundleName" : "com.tansuo.mengdian",
             "icons" : {
                 "foreground" : "src/static/logo.png",
                 "background" : "src/static/logo-white.png"
