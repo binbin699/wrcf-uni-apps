@@ -1,11 +1,7 @@
 <template>
   <!-- 隐私政策弹窗 - SecGuard 合规要求 (仅 Android) -->
   <!-- #ifdef APP-PLUS -->
-  <PrivacyPolicyModal
-    :visible="showPrivacyModal"
-    @agree="onPrivacyAgree"
-    @disagree="onPrivacyDisagree"
-  />
+  <PrivacyPolicyModal :visible="showPrivacyModal" @agree="onPrivacyAgree" @disagree="onPrivacyDisagree" />
   <!-- #endif -->
 
   <wd-toast />
@@ -19,7 +15,7 @@
       <view class="header">
         <view class="logo-container">
           <view class="logo">
-            <image src="/static/logo.jpg" alt="" class="logo-img"></image>
+            <image src="/static/login-logo.png" alt="" class="logo-img"></image>
           </view>
         </view>
         <view class="app-info">
@@ -33,21 +29,12 @@
         <!-- 微信小程序手机号登录 -->
         <!-- #ifdef MP-WEIXIN -->
         <template v-if="appConfig.SUPPORT_LOGIN_TYPE_WX_MP_PHONE">
-          <button
-            v-if="agreeChecked"
-            class="phone login-btn primary"
-            open-type="getPhoneNumber"
-            @getphonenumber="handlePhoneLogin"
-            :loading="userStore.isLoading"
-            :disabled="userStore.isLoading">
+          <button v-if="agreeChecked" class="phone login-btn primary" open-type="getPhoneNumber"
+            @getphonenumber="handlePhoneLogin" :loading="userStore.isLoading" :disabled="userStore.isLoading">
             {{ $t('login.phone_login') }}
           </button>
-          <button
-            v-else
-            class="phone login-btn primary need-agree"
-            @click="handlePhoneLoginBlocked"
-            :loading="userStore.isLoading"
-            :disabled="userStore.isLoading">
+          <button v-else class="phone login-btn primary need-agree" @click="handlePhoneLoginBlocked"
+            :loading="userStore.isLoading" :disabled="userStore.isLoading">
             {{ $t('login.phone_login') }}
           </button>
         </template>
@@ -55,50 +42,30 @@
 
         <!-- 游客按钮 -->
         <!-- #ifdef MP-WEIXIN -->
-        <button
-          class="guest login-btn secondary"
-          :class="{ 'need-agree': !agreeChecked }"
-          @click="handleGuestLogin"
-          v-if="appConfig.SUPPORT_LOGIN_TYPE_GUEST_MP"
-          :loading="userStore.isLoading"
-          :disabled="userStore.isLoading">
+        <button class="guest login-btn secondary" :class="{ 'need-agree': !agreeChecked }" @click="handleGuestLogin"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_GUEST_MP" :loading="userStore.isLoading" :disabled="userStore.isLoading">
           <text class="btn-text">{{ $t('login.guest_login') }}</text>
         </button>
         <!-- #endif -->
         <!-- #ifdef APP-PLUS || APP-HARMONY -->
-        <button
-          class="guest login-btn secondary"
-          :class="{ 'need-agree': !agreeChecked }"
-          @click="handleGuestLogin"
-          v-if="appConfig.SUPPORT_LOGIN_TYPE_GUEST"
-          :loading="userStore.isLoading"
-          :disabled="userStore.isLoading">
+        <button class="guest login-btn secondary" :class="{ 'need-agree': !agreeChecked }" @click="handleGuestLogin"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_GUEST" :loading="userStore.isLoading" :disabled="userStore.isLoading">
           <text class="btn-text">{{ $t('login.guest_login') }}</text>
         </button>
         <!-- #endif -->
 
         <!-- 谷歌登录 -->
         <!-- #ifdef APP-PLUS || APP-HARMONY -->
-        <button
-          class="google login-btn"
-          :class="{ 'need-agree': !agreeChecked }"
-          @click="handleGoogleLogin"
-          v-if="appConfig.SUPPORT_LOGIN_TYPE_GOOGLE"
-          :loading="userStore.isLoading"
-          :disabled="userStore.isLoading">
+        <button class="google login-btn" :class="{ 'need-agree': !agreeChecked }" @click="handleGoogleLogin"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_GOOGLE" :loading="userStore.isLoading" :disabled="userStore.isLoading">
           <text class="btn-text">{{ $t('login.google_login') }}</text>
         </button>
         <!-- #endif -->
 
         <!-- Apple登录 - 遵循Apple HIG设计规范 -->
         <!-- #ifdef APP-PLUS -->
-        <button
-          class="apple-signin-btn"
-          :class="{ 'need-agree': !agreeChecked }"
-          @click="handleAppleLogin"
-          v-if="appConfig.SUPPORT_LOGIN_TYPE_APPLE"
-          :loading="userStore.isLoading"
-          :disabled="userStore.isLoading">
+        <button class="apple-signin-btn" :class="{ 'need-agree': !agreeChecked }" @click="handleAppleLogin"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_APPLE" :loading="userStore.isLoading" :disabled="userStore.isLoading">
           <image src="/static/icons/apple-logo-white.svg" class="apple-logo" mode="aspectFit"></image>
           <text class="apple-btn-text">{{ $t('login.apple_login') }}</text>
         </button>
@@ -106,37 +73,25 @@
 
         <!-- 微信Oauth登录 -->
         <!-- #ifdef APP-PLUS || APP-HARMONY -->
-        <button
-          class="wx login-btn"
-          :class="{ 'need-agree': !agreeChecked }"
-          v-if="appConfig.SUPPORT_LOGIN_TYPE_WECHAT_OAUTH && isWechatExist()"
-          @click="handleWxAppLogin"
-          :loading="userStore.isLoading"
-          :disabled="userStore.isLoading">
+        <button class="wx login-btn" :class="{ 'need-agree': !agreeChecked }"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_WECHAT_OAUTH && isWechatExist()" @click="handleWxAppLogin"
+          :loading="userStore.isLoading" :disabled="userStore.isLoading">
           <text class="btn-text">{{ $t('login.wx_login') }}</text>
         </button>
         <!-- #endif -->
 
         <!-- 短信验证码登录 (仅 App 端) -->
         <!-- #ifdef APP-PLUS || APP-HARMONY -->
-        <button
-          class="sms login-btn secondary"
-          :class="{ 'need-agree': !agreeChecked }"
-          v-if="appConfig.SUPPORT_LOGIN_TYPE_SMS"
-          @click="openSmsModal"
-          :loading="userStore.isLoading"
+        <button class="sms login-btn secondary" :class="{ 'need-agree': !agreeChecked }"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_SMS" @click="openSmsModal" :loading="userStore.isLoading"
           :disabled="userStore.isLoading">
           {{ $t('login.sms_login') }}
         </button>
         <!-- #endif -->
 
         <!-- 邮箱登录 -->
-        <button
-          class="email login-btn secondary"
-          :class="{ 'need-agree': !agreeChecked }"
-          v-if="appConfig.SUPPORT_LOGIN_TYPE_EMAIL"
-          @click="openEmailModal"
-          :loading="userStore.isLoading"
+        <button class="email login-btn secondary" :class="{ 'need-agree': !agreeChecked }"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_EMAIL" @click="openEmailModal" :loading="userStore.isLoading"
           :disabled="userStore.isLoading">
           {{ $t('login.account_login') }}
         </button>
@@ -144,25 +99,17 @@
         <!-- App账号密码登录与注册 -->
         <!-- #ifdef APP-PLUS || APP-HARMONY -->
         <!-- 账号密码登录按钮 -->
-        <button
-          class="password login-btn"
-          :class="{ 'need-agree': !agreeChecked }"
-          @click="handlePasswordLogin"
-          v-if="appConfig.SUPPORT_LOGIN_TYPE_PASSWORD"
-          :loading="userStore.isLoading"
-          :disabled="userStore.isLoading">
+        <button class="password login-btn" :class="{ 'need-agree': !agreeChecked }" @click="handlePasswordLogin"
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_PASSWORD" :loading="userStore.isLoading" :disabled="userStore.isLoading">
           <text class="btn-text">{{ $t('login.password_login') }}</text>
         </button>
         <!-- 注册账号链接-->
-        <text
-          class="register-link"
-          v-if="appConfig.SUPPORT_LOGIN_TYPE_PASSWORD"
-          @click="goToRegister">
+        <text class="register-link" v-if="appConfig.SUPPORT_LOGIN_TYPE_PASSWORD" @click="goToRegister">
           {{ $t('login.register_account') }}
         </text>
         <!-- 微信手机号快捷登录自动注册提示 -->
         <!-- #endif -->
-           <!-- 自动注册提示 -->
+        <!-- 自动注册提示 -->
         <!-- <text class="register-tip">{{ $t('login.register_tip') }}</text> -->
       </view>
     </view>
@@ -193,23 +140,15 @@
         <view class="modal-content">
           <view class="form-item">
             <text class="label">{{ $t('register.unionid_label') }}</text>
-            <input
-              class="input"
-              type="text"
-              :placeholder="$t('register.unionid_placeholder')"
-              v-model="passwordForm.unionid"
-              maxlength="20" />
+            <input class="input" type="text" :placeholder="$t('register.unionid_placeholder')"
+              v-model="passwordForm.unionid" maxlength="20" />
           </view>
 
           <view class="form-item">
             <text class="label">{{ $t('register.password_label') }}</text>
             <view class="password-input">
-              <input
-                class="input"
-                :type="showPassword ? 'text' : 'password'"
-                :placeholder="$t('register.password_placeholder')"
-                v-model="passwordForm.password"
-                maxlength="20" />
+              <input class="input" :type="showPassword ? 'text' : 'password'"
+                :placeholder="$t('register.password_placeholder')" v-model="passwordForm.password" maxlength="20" />
               <text class="eye-icon" @click="togglePasswordVisibility">
                 {{ showPassword ? '👁️' : '👁️‍🗨️' }}
               </text>
@@ -219,9 +158,7 @@
 
         <view class="modal-actions">
           <button class="cancel-btn" @click="closePasswordModal">{{ $t('login.cancel') }}</button>
-          <button
-            class="confirm-btn primary"
-            @click="submitPasswordLogin"
+          <button class="confirm-btn primary" @click="submitPasswordLogin"
             :disabled="userStore.isLoading || !agreeChecked">
             {{ userStore.isLoading ? $t('login.logging_in') : $t('login.login') }}
           </button>
@@ -240,24 +177,15 @@
         <view class="modal-content">
           <view class="form-item">
             <text class="label">{{ $t('login.account_label') }}</text>
-            <input
-              class="input"
-              type="text"
-              inputmode="email"
-              :placeholder="$t('login.account_placeholder')"
-              v-model="emailForm.email"
-              maxlength="64" />
+            <input class="input" type="text" inputmode="email" :placeholder="$t('login.account_placeholder')"
+              v-model="emailForm.email" maxlength="64" />
           </view>
 
           <view class="form-item">
             <text class="label">{{ $t('register.password_label') }}</text>
             <view class="password-input">
-              <input
-                class="input"
-                :type="showEmailPassword ? 'text' : 'password'"
-                :placeholder="$t('register.password_placeholder')"
-                v-model="emailForm.password"
-                maxlength="20" />
+              <input class="input" :type="showEmailPassword ? 'text' : 'password'"
+                :placeholder="$t('register.password_placeholder')" v-model="emailForm.password" maxlength="20" />
               <text class="eye-icon" @click="toggleEmailPasswordVisibility">
                 {{ showEmailPassword ? '👁️' : '👁️‍🗨️' }}
               </text>
@@ -267,9 +195,7 @@
 
         <view class="modal-actions">
           <button class="cancel-btn" @click="closeEmailModal">{{ $t('login.cancel') }}</button>
-          <button
-            class="confirm-btn primary"
-            @click="submitEmailLogin"
+          <button class="confirm-btn primary" @click="submitEmailLogin"
             :disabled="userStore.isLoading || !agreeChecked">
             {{ userStore.isLoading ? $t('login.logging_in') : $t('login.login') }}
           </button>
@@ -279,12 +205,8 @@
 
     <!-- 短信登录弹窗 (仅 App 端) -->
     <!-- #ifdef APP-PLUS || APP-HARMONY -->
-    <SmsLoginModal
-      v-model:visible="showSmsModal"
-      :agree-checked="agreeChecked"
-      :is-loading="userStore.isLoading"
-      @onSubmit="handleSmsLoginSubmit"
-    />
+    <SmsLoginModal v-model:visible="showSmsModal" :agree-checked="agreeChecked" :is-loading="userStore.isLoading"
+      @onSubmit="handleSmsLoginSubmit" />
     <!-- #endif -->
   </view>
 </template>
@@ -340,10 +262,10 @@ onMounted(() => {
 async function onPrivacyAgree() {
   console.log('[登录页] 用户同意隐私政策，开始初始化...');
   showPrivacyModal.value = false;
-  
+
   // 1. 请求 Android 12+ 蓝牙权限
   requestBluetoothPermissionsForAndroid12();
-  
+
   // 2. 初始化用户状态（恢复 Token 等）
   // 注意：需要 await 等待初始化完成，以便检查登录状态
   await userStore.initUserState();
@@ -715,7 +637,7 @@ async function handleSmsLoginSubmit(data: { phone: string; ticket: string; code:
       ticket: data.ticket,
       smsCode: data.code
     });
-    
+
     // 实际登录逻辑
     if (!success) {
       toast.warning({ msg: userStore.loginError || $t('login.login_failed'), duration: 3000 });
@@ -733,12 +655,10 @@ async function handleSmsLoginSubmit(data: { phone: string; ticket: string; code:
 <style>
 /* iOS 橡皮筋效果修复 - 页面背景 */
 page {
-  background: linear-gradient(
-    180deg,
-    rgba(161, 140, 209, 0.6) 0%,
-    rgba(143, 211, 244, 0.6) 50%,
-    rgba(251, 194, 235, 0.6) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(161, 140, 209, 0.6) 0%,
+      rgba(143, 211, 244, 0.6) 50%,
+      rgba(251, 194, 235, 0.6) 100%);
   min-height: 100vh;
   height: 100%;
 }
@@ -750,12 +670,14 @@ page {
   position: relative;
   /* 根据Figma设计稿 - 三色线性渐变背景，60%透明度 */
   background-color: #ffffff;
-  background-image: linear-gradient(
-    180deg,
-    rgba(161, 140, 209, 0.6) 0%,      /* #A18CD1 紫色 60% */
-    rgba(143, 211, 244, 0.6) 50%,     /* #8FD3F4 浅蓝色 60% */
-    rgba(251, 194, 235, 0.6) 100%     /* #FBC2EB 粉色 60% */
-  );
+  background-image: linear-gradient(180deg,
+      rgba(161, 140, 209, 0.6) 0%,
+      /* #A18CD1 紫色 60% */
+      rgba(143, 211, 244, 0.6) 50%,
+      /* #8FD3F4 浅蓝色 60% */
+      rgba(251, 194, 235, 0.6) 100%
+      /* #FBC2EB 粉色 60% */
+    );
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -767,28 +689,6 @@ page {
   padding-bottom: env(safe-area-inset-bottom);
   box-sizing: border-box;
 }
-
-/* Logo水印背景 - 使用SVG mask实现纯白色镂空效果 */
-.login-container::before {
-  content: '';
-  position: absolute;
-  width: 922rpx;
-  height: 922rpx;
-  right: -200rpx;
-  top: -200rpx;
-  transform: rotate(14.29deg);
-  opacity: 0.15;
-  /* 纯白色背景 */
-  background: #ffffff;
-  /* 使用SVG作为遮罩，眼睛部分会镂空 */
-  -webkit-mask: url('/static/logo-watermark.svg') no-repeat center;
-  mask: url('/static/logo-watermark.svg') no-repeat center;
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  z-index: 1;
-  pointer-events: none;
-}
-
 
 /* 底部装饰圆形 */
 .login-container .decoration-bottom {
@@ -968,7 +868,8 @@ page {
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   border: none;
-  border-radius: 48rpx; /* Apple规范约6pt圆角 */
+  border-radius: 48rpx;
+  /* Apple规范约6pt圆角 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1179,6 +1080,7 @@ page {
   margin-bottom: constant(safe-area-inset-bottom);
   margin-bottom: env(safe-area-inset-bottom);
 }
+
 .terms-checkbox {
   width: 48rpx;
   height: 48rpx;
@@ -1186,6 +1088,7 @@ page {
   align-items: center;
   justify-content: center;
 }
+
 .terms-box {
   width: 32rpx;
   height: 32rpx;
@@ -1197,14 +1100,17 @@ page {
   color: #fff;
   font-size: 24rpx;
 }
+
 .terms-box.checked {
   background: #335cff;
   border-color: #335cff;
 }
+
 .terms-text {
   color: #ffffff;
   font-size: 24rpx;
 }
+
 .terms-link {
   color: #ffffff;
   font-weight: 600;
