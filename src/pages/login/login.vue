@@ -2,7 +2,6 @@
   <!-- 隐私政策弹窗 - SecGuard 合规要求 (仅 Android) -->
   <!-- #ifdef APP-PLUS -->
   <PrivacyPolicyModal
-    v-if="isAndroid"
     :visible="showPrivacyModal"
     @agree="onPrivacyAgree"
     @disagree="onPrivacyDisagree"
@@ -302,21 +301,15 @@ import { PageMap, Pages } from '@/utils/route';
 import type { IPasswordLoginForm } from '@/api/types/login';
 import storage from '@/utils/storage';
 import { isWechatExist } from '@/utils/isWechatExist';
+import SmsLoginModal from './components/sms_login_modal.vue';
 // #ifdef APP-PLUS
 import PrivacyPolicyModal from '@/components/PrivacyPolicyModal.vue';
 import { requestBluetoothPermissionsForAndroid12 } from '@/utils/bluetoothPermission';
 // #endif
-// #ifdef APP-PLUS || APP-HARMONY
-import SmsLoginModal from './components/sms_login_modal.vue';
-// #endif
-
-// 运行时检测是否为 Android 平台（因为 APP-ANDROID 条件编译仅在 uts 文件中有效）
-const isAndroid = uni.getSystemInfoSync().platform === 'android';
 
 const { t: $t } = useI18n();
 const toast = useToast();
 const userStore = useUserStore();
-const tokenStore = useTokenStore();
 const privacyStore = usePrivacyStore();
 const STORAGE_LOGIN_Unionid_KEY = 'page-options-login-unionid';
 const STORAGE_LOGIN_EMAIL_KEY = 'page-options-login-email';
@@ -330,12 +323,14 @@ const showPrivacyModal = ref(false);
  * SecGuard 要求（仅 Android）：App 首次启动时必须在用户交互前展示隐私政策
  */
 onMounted(() => {
-  if (isAndroid) {
+  // #ifdef APP-PLUS
+  if (typeof plus !== 'undefined' && plus.os.name === 'Android') {
     const hasAgreed = privacyStore.checkPrivacyAgreement();
     if (!hasAgreed) {
       showPrivacyModal.value = true;
     }
   }
+  // #endif
 });
 
 /**

@@ -69,10 +69,8 @@ onLaunch(() => {
   // 在 App 首次启动时，必须先检查隐私政策同意状态
   // 只有用户同意后才能进行任何网络请求或 SDK 初始化
   // 注意：APP-ANDROID 条件编译仅在 uts 文件中有效，这里使用运行时判断
-  const systemInfo = uni.getSystemInfoSync();
-  if (systemInfo.platform === 'android') {
+  if (typeof plus !== 'undefined' && plus.os.name === 'Android') {
     const hasAgreed = privacyStore.checkPrivacyAgreement();
-
     if (!hasAgreed) {
       // 用户未同意，不进行任何网络请求或 SDK 初始化
       // 隐私政策弹窗将在登录页面中显示
@@ -97,6 +95,7 @@ onLaunch(() => {
   userStore.initUserState();
   applyLocaleResources();
 });
+
 onShow(() => {
   // #ifdef APP-PLUS
   // App 端隐藏原生 tabBar，使用自定义 tabBar
