@@ -110,8 +110,10 @@ export const agentApi = {
   },
 
   // 获取公开的智能体列表
-  getPublicAgents() {
-    return request.get('/app/agent/public');
+  // languageHeader: 'all' 获取所有智能体，不传则根据 Accept-Language 自动筛选
+  getPublicAgents(languageHeader = 'all') {
+    const headers = languageHeader ? { language: languageHeader } : {};
+    return request.get('/app/agent/public', { headers });
   },
 
   // 获取模板智能体列表

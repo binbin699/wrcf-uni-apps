@@ -22,6 +22,54 @@
         </view>
       </view>
 
+      <!-- 语言选择下拉框 -->
+      <view class="language-selector-container" v-if="availableLanguages.length > 0">
+        <view class="language-selector" :class="{ expanded: showLanguagePicker }" @click="showLanguagePicker = !showLanguagePicker">
+          <view class="language-selector-inner">
+            <text class="language-icon">🌐</text>
+            <text class="language-label">{{ selectedLanguageLabel }}</text>
+          </view>
+          <view class="language-arrow-wrapper" :class="{ rotated: showLanguagePicker }">
+            <image 
+              class="language-arrow" 
+              src="/static/icons/arrow-down.svg" 
+              mode="aspectFit" />
+          </view>
+        </view>
+        
+        <!-- 语言下拉列表 -->
+        <view class="language-dropdown" :class="{ show: showLanguagePicker }">
+          <view class="language-dropdown-inner">
+            <view 
+              v-for="(lang, index) in availableLanguages" 
+              :key="lang.langCode"
+              class="language-option"
+              :class="{ active: selectedLanguage === lang.langCode }"
+              :style="{ animationDelay: showLanguagePicker ? `${index * 30}ms` : '0ms' }"
+              @click.stop="selectLanguage(lang.langCode)">
+              <view class="language-option-content">
+                <text class="language-option-text">{{ lang.label }}</text>
+              </view>
+              <view v-if="selectedLanguage === lang.langCode" class="language-check-wrapper">
+                <view class="language-check-circle">
+                  <image 
+                    class="language-check" 
+                    src="/static/icons/check.svg" 
+                    mode="aspectFit" />
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 点击外部关闭下拉框 -->
+      <view 
+        v-if="showLanguagePicker" 
+        class="language-picker-overlay" 
+        @click="showLanguagePicker = false">
+      </view>
+
       <!-- 标签分类 -->
       <view class="tag-container">
         <scroll-view class="tag-scroll" scroll-x="true" show-scrollbar="false">
@@ -132,6 +180,7 @@ import { Agent } from '../index/types.js';
 import { Device } from '../device/types.js';
 import { completeSquareBindGuide } from '@/utils/userGuide';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
+import { getChatLanguageOptions, backendLangToLangCode, getSystemLangCode } from '../agent/lang_opts';
 
 type SquareAgent = Agent & {
   name: string;
@@ -139,27 +188,34 @@ type SquareAgent = Agent & {
   voiceName: string;
   creatorName: string;
   modalTag: string;
+  langCodes: string[]; // 前端 langCode 格式的语言数组
 };
 
 const { t: $t } = useI18n();
 const toast = useToast();
 
 // 响应式数据
-const publicAgents = ref<SquareAgent[]>([]);
+const allAgents = ref<SquareAgent[]>([]); // 所有智能体（从后端获取）
+const publicAgents = ref<SquareAgent[]>([]); // 按语言筛选后的智能体
 const showBindDrawer = ref<boolean>(false);
 const selectedAgent = ref<SquareAgent | null>(null);
 const loading = ref<boolean>(false);
 const selectedDevice = ref<any>(null);
 const searchKeyword = ref<string>('');
-const selectedTag = ref<string>('all');
+const selectedTag = ref<string>(''); // 空字符串表示不按模型筛选
 const statusBarHeight = ref<number>(20);
 const navBarHeight = ref<number>(44);
 const showSquareGuidePrompt = ref<boolean>(false);
 const isSquareBindGuideActive = ref<boolean>(false);
 const pendingGuideActivation = ref<boolean>(false);
 
+// 语言选择相关
+const selectedLanguage = ref<string>(''); // 选中的语言 langCode
+const showLanguagePicker = ref<boolean>(false); // 是否显示语言选择器
+const availableLanguages = ref<{ label: string; langCode: string }[]>([]); // 智能体中存在的语言选项
+
 const modelTags = computed(() => {
-  let tags = [{ id: 'all', name: $t('square.all') }];
+  let tags: { id: string; name: string }[] = [];
   
   // 定义所有可能的模型标签
   const allModelTags = [
@@ -202,8 +258,8 @@ const filteredAgents = computed(() => {
     );
   }
 
-  // 标签过滤
-  if (selectedTag.value !== 'all') {
+  // 标签过滤（如果选择了标签）
+  if (selectedTag.value) {
     filtered = filtered.filter((agent) => {
       const modalTag = agent.modalTag || '';
       return modalTag === selectedTag.value;
@@ -305,8 +361,9 @@ function setStatusBarHeight() {
 async function loadPublicAgents() {
   try {
     loading.value = true;
-    const res = await agentApi.getPublicAgents();
-    // console.log(" 获取公开助手:", res);
+    // 使用 language: all 获取所有公开智能体
+    const res = await agentApi.getPublicAgents('all');
+    console.log('[Square] 获取所有公开助手:', res);
     if (res.code === 1000) {
       // 定义模型关键词映射
       const modalKeyword = {
@@ -319,7 +376,7 @@ async function loadPublicAgents() {
       };
 
       // 处理后端返回的数据结构
-      publicAgents.value = (res.data || []).map((agent: Agent) => {
+      allAgents.value = (res.data || []).map((agent: Agent) => {
         const llmModelName = agent.config?.llmModelName?.toLowerCase() || '';
         let modalTag = '';
 
@@ -344,9 +401,21 @@ async function loadPublicAgents() {
           voiceName: agent.config?.voiceName || $t('square.default'),
           creatorName: agent.userName || $t('square.anonymous'),
           agentId: agent.agentId,
-          modalTag: modalTag
+          modalTag: modalTag,
+          langCodes: (agent.lang || []).map((l: string) => backendLangToLangCode(l)) // 转换为前端 langCode
         } as SquareAgent;
       });
+
+      // 提取所有智能体中存在的语言
+      extractAvailableLanguages();
+      
+      // 设置默认语言（如果还没有选择）
+      if (!selectedLanguage.value) {
+        initDefaultLanguage();
+      }
+      
+      // 根据选择的语言筛选智能体
+      filterAgentsByLanguage();
     } else {
       console.warn('获取公开助手失败:', res.message);
     }
@@ -358,6 +427,82 @@ async function loadPublicAgents() {
     refreshSquareGuideState();
   }
 }
+
+// 从所有智能体中提取存在的语言
+function extractAvailableLanguages() {
+  const langSet = new Set<string>();
+  
+  // 收集所有智能体的语言
+  allAgents.value.forEach(agent => {
+    if (agent.langCodes && Array.isArray(agent.langCodes)) {
+      agent.langCodes.forEach((langCode: string) => {
+        langSet.add(langCode);
+      });
+    }
+  });
+  
+  // 获取完整的语言选项列表
+  const allLangOptions = getChatLanguageOptions($t);
+  
+  // 筛选出智能体中存在的语言
+  availableLanguages.value = allLangOptions.filter(opt => langSet.has(opt.langCode));
+  
+  console.log('[Square] 可用语言:', availableLanguages.value);
+}
+
+// 初始化默认语言选择
+function initDefaultLanguage() {
+  const systemLangCode = getSystemLangCode();
+  console.log('[Square] 系统语言:', systemLangCode);
+  
+  // 检查系统语言是否在可用语言中
+  const hasSystemLang = availableLanguages.value.some(opt => opt.langCode === systemLangCode);
+  
+  if (hasSystemLang) {
+    selectedLanguage.value = systemLangCode;
+  } else {
+    // 回退到英文
+    const hasEnglish = availableLanguages.value.some(opt => opt.langCode === 'en_US');
+    if (hasEnglish) {
+      selectedLanguage.value = 'en_US';
+    } else if (availableLanguages.value.length > 0) {
+      // 如果连英文都没有，选择第一个可用语言
+      selectedLanguage.value = availableLanguages.value[0].langCode;
+    }
+  }
+  
+  console.log('[Square] 默认选择语言:', selectedLanguage.value);
+}
+
+// 根据选择的语言筛选智能体
+function filterAgentsByLanguage() {
+  if (!selectedLanguage.value) {
+    publicAgents.value = allAgents.value;
+    return;
+  }
+  
+  publicAgents.value = allAgents.value.filter(agent => {
+    if (!agent.langCodes || !Array.isArray(agent.langCodes)) {
+      return false;
+    }
+    return agent.langCodes.includes(selectedLanguage.value);
+  });
+  
+  console.log('[Square] 筛选后智能体数量:', publicAgents.value.length);
+}
+
+// 选择语言
+function selectLanguage(langCode: string) {
+  selectedLanguage.value = langCode;
+  showLanguagePicker.value = false;
+  filterAgentsByLanguage();
+}
+
+// 获取当前选中语言的显示名称
+const selectedLanguageLabel = computed(() => {
+  const found = availableLanguages.value.find(opt => opt.langCode === selectedLanguage.value);
+  return found ? found.label : $t('square.select_language');
+});
 
 function onSearchInput() {
   // 搜索输入处理，computed会自动更新filteredAgents
@@ -588,6 +733,180 @@ function handleBindCancel() {
   backdrop-filter: blur(20rpx);
   -webkit-backdrop-filter: blur(20rpx);
   color: #374151;
+}
+
+/* 语言选择器样式 - 与搜索框风格统一 */
+.language-selector-container {
+  padding: 0 40rpx;
+  margin-bottom: 24rpx;
+  position: relative;
+  z-index: 100;
+}
+
+.language-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 96rpx;
+  padding: 0 40rpx;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 40rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 16rpx 64rpx rgba(100, 100, 255, 0.1);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.language-selector:active {
+  transform: scale(0.98);
+}
+
+.language-selector.expanded {
+  border-color: rgba(100, 100, 255, 0.3);
+  box-shadow: 0 16rpx 64rpx rgba(100, 100, 255, 0.15);
+}
+
+.language-selector-inner {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.language-icon {
+  font-size: 32rpx;
+  opacity: 0.7;
+}
+
+.language-label {
+  font-size: 32rpx;
+  font-weight: 400;
+  color: #374151;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.language-arrow-wrapper {
+  width: 32rpx;
+  height: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.language-arrow-wrapper.rotated {
+  transform: rotate(180deg);
+}
+
+.language-arrow {
+  width: 24rpx;
+  height: 24rpx;
+  opacity: 0.5;
+}
+
+.language-dropdown {
+  position: absolute;
+  top: calc(100% + 12rpx);
+  left: 40rpx;
+  right: 40rpx;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 32rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 16rpx 64rpx rgba(100, 100, 255, 0.15);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-8rpx);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 101;
+}
+
+.language-dropdown.show {
+  max-height: 480rpx;
+  opacity: 1;
+  transform: translateY(0);
+  overflow-y: auto;
+}
+
+.language-dropdown-inner {
+  padding: 16rpx 0;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 40rpx;
+  transition: all 0.2s ease;
+  animation: optionFadeIn 0.3s ease forwards;
+  opacity: 0;
+  transform: translateY(-8rpx);
+}
+
+@keyframes optionFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.language-option:active {
+  background: rgba(100, 100, 255, 0.06);
+}
+
+.language-option.active {
+  background: rgba(100, 100, 255, 0.08);
+}
+
+.language-option-content {
+  flex: 1;
+}
+
+.language-option-text {
+  font-size: 30rpx;
+  color: #374151;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.language-option.active .language-option-text {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.language-check-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.language-check-circle {
+  width: 32rpx;
+  height: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2563eb;
+  border-radius: 50%;
+}
+
+.language-check {
+  width: 18rpx;
+  height: 18rpx;
+  filter: brightness(10);
+}
+
+.language-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+  background: transparent;
 }
 
 /* 标签样式 */

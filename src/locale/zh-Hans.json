@@ -497,6 +497,7 @@
   "square.loading": "加载中...",
   "square.load_failed": "加载失败",
   "square.retry": "重试",
+  "square.select_language": "选择语言",
   "guide.square_prompt_title": "绑定智能体，马上体验",
   "guide.square_prompt_desc": "这里是智能体广场，点击卡片上的「绑定到设备」按钮，即可让设备使用该智能体。",
   "guide.square_prompt_action": "知道了",

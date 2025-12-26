@@ -64,3 +64,79 @@ export function langCodeToVoiceLanguage(langCode: string): string {
   };
   return mapping[langCode] || 'zh';
 }
+
+/**
+ * 将后端返回的 lang 值（如 'zh-cn', 'en'）映射到前端 langCode（如 'zh_CN', 'en_US'）
+ */
+export function backendLangToLangCode(backendLang: string): string {
+  const mapping: Record<string, string> = {
+    'zh-cn': 'zh_CN',
+    'zh-tw': 'zh_TW',
+    'en': 'en_US',
+    'ja': 'ja_JP',
+    'ko': 'ko_KR',
+    'yue': 'yue_CN',
+    'ne': 'ne_CN',
+    'es': 'es_ES',
+    'de': 'de_DE',
+    'fr': 'fr_FR',
+    'hi': 'hi_IN',
+    'it': 'it_IT',
+    'nl': 'nl_NL',
+    'pt': 'pt_PT',
+    'ru': 'ru_RU',
+    'tr': 'tr_TR',
+    'vi': 'vi_VN',
+    'km': 'km_KH',
+    'th': 'th_TH',
+    'id': 'id_ID',
+    'mn': 'mn_MN',
+    'ar': 'ar_SA',
+    'pl': 'pl_PL',
+    'uk': 'uk_UA',
+  };
+  return mapping[backendLang.toLowerCase()] || backendLang;
+}
+
+/**
+ * 获取系统语言对应的 langCode
+ */
+export function getSystemLangCode(): string {
+  const systemInfo = uni.getSystemInfoSync();
+  const systemLang = (systemInfo.language || 'zh-Hans').toLowerCase();
+  
+  // 映射系统语言到 langCode
+  if (systemLang.includes('zh') && (systemLang.includes('hans') || systemLang.includes('cn'))) {
+    return 'zh_CN';
+  } else if (systemLang.includes('zh') && (systemLang.includes('hant') || systemLang.includes('tw') || systemLang.includes('hk'))) {
+    return 'zh_TW';
+  } else if (systemLang.includes('en')) {
+    return 'en_US';
+  } else if (systemLang.includes('ja')) {
+    return 'ja_JP';
+  } else if (systemLang.includes('ko')) {
+    return 'ko_KR';
+  } else if (systemLang.includes('es')) {
+    return 'es_ES';
+  } else if (systemLang.includes('de')) {
+    return 'de_DE';
+  } else if (systemLang.includes('fr')) {
+    return 'fr_FR';
+  } else if (systemLang.includes('ru')) {
+    return 'ru_RU';
+  } else if (systemLang.includes('pt')) {
+    return 'pt_PT';
+  } else if (systemLang.includes('it')) {
+    return 'it_IT';
+  } else if (systemLang.includes('ar')) {
+    return 'ar_SA';
+  } else if (systemLang.includes('th')) {
+    return 'th_TH';
+  } else if (systemLang.includes('vi')) {
+    return 'vi_VN';
+  } else if (systemLang.includes('id')) {
+    return 'id_ID';
+  }
+  
+  return 'en_US'; // 默认英文
+}

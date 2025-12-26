@@ -499,6 +499,7 @@
   "square.loading": "Loading...",
   "square.load_failed": "Load failed",
   "square.retry": "Retry",
+  "square.select_language": "Select Language",
   "guide.square_prompt_title": "Bind an agent to get started",
   "guide.square_prompt_desc": "This is the Agent Square. Tap the 'Bind to Device' button on a card to bind that agent to your device.",
   "guide.square_prompt_action": "Got it",
