@@ -17,6 +17,7 @@
           <input
             class="search-input"
             :placeholder="$t('square.search')"
+            placeholder-style="color: #374151;"
             v-model="searchKeyword"
             @input="onSearchInput" />
         </view>
@@ -709,7 +710,7 @@ function handleBindCancel() {
   align-items: center;
 }
 
-.search-input::before {
+.search-box::before {
   content: '';
   position: absolute;
   left: 42rpx;
@@ -718,7 +719,9 @@ function handleBindCancel() {
   width: 32rpx;
   height: 32rpx;
   background: url('/static/icons/search.svg') no-repeat center center;
-  background-size: cover;
+  background-size: contain;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .search-input {
@@ -735,6 +738,18 @@ function handleBindCancel() {
   color: #374151;
 }
 
+/* 搜索框 placeholder 样式 - 与语言选择器文字颜色一致 */
+.search-input::placeholder {
+  color: #374151;
+  opacity: 1;
+}
+
+/* 微信小程序 placeholder 样式 */
+.search-input .uni-input-placeholder,
+.search-input .input-placeholder {
+  color: #374151;
+}
+
 /* 语言选择器样式 - 与搜索框风格统一 */
 .language-selector-container {
   padding: 0 40rpx;
@@ -748,7 +763,7 @@ function handleBindCancel() {
   align-items: center;
   justify-content: space-between;
   height: 96rpx;
-  padding: 0 40rpx;
+  padding: 0 40rpx 0 42rpx;
   background: rgba(255, 255, 255, 0.7);
   border-radius: 40rpx;
   border: 2rpx solid rgba(255, 255, 255, 0.8);
@@ -771,7 +786,7 @@ function handleBindCancel() {
 .language-selector-inner {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 30rpx;
 }
 
 .language-icon {
