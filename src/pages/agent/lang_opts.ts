@@ -29,6 +29,10 @@ export function getChatLanguageOptions($t: (key: string) => string): ChatLanguag
     { label: $t('create_agent.language_ar'), language: '阿拉伯语', langCode: 'ar_SA' },
     { label: $t('create_agent.language_pl'), language: '波兰语', langCode: 'pl_PL' },
     { label: $t('create_agent.language_uk'), language: '乌克兰语', langCode: 'uk_UA' },
+    { label: $t('create_agent.language_bg'), language: '保加利亚语', langCode: 'bg_BG' },
+    { label: $t('create_agent.language_ro'), language: '罗马尼亚语', langCode: 'ro_RO' },
+    { label: $t('create_agent.language_hu'), language: '匈牙利语', langCode: 'hu_HU' },
+    { label: $t('create_agent.language_ms'), language: '马来语', langCode: 'ms_MY' },
   ];
 }
 
@@ -61,6 +65,10 @@ export function langCodeToVoiceLanguage(langCode: string): string {
     'ar_SA': 'ar',
     'pl_PL': 'pl',
     'uk_UA': 'uk',
+    'bg_BG': 'bg',
+    'ro_RO': 'ro',
+    'hu_HU': 'hu',
+    'ms_MY': 'ms',
   };
   return mapping[langCode] || 'zh';
 }
@@ -94,6 +102,10 @@ export function backendLangToLangCode(backendLang: string): string {
     'ar': 'ar_SA',
     'pl': 'pl_PL',
     'uk': 'uk_UA',
+    'bg': 'bg_BG',
+    'ro': 'ro_RO',
+    'hu': 'hu_HU',
+    'ms': 'ms_MY',
   };
   return mapping[backendLang.toLowerCase()] || backendLang;
 }
@@ -104,7 +116,7 @@ export function backendLangToLangCode(backendLang: string): string {
 export function getSystemLangCode(): string {
   const systemInfo = uni.getSystemInfoSync();
   const systemLang = (systemInfo.language || 'zh-Hans').toLowerCase();
-  
+
   // 映射系统语言到 langCode
   if (systemLang.includes('zh') && (systemLang.includes('hans') || systemLang.includes('cn'))) {
     return 'zh_CN';
@@ -136,7 +148,15 @@ export function getSystemLangCode(): string {
     return 'vi_VN';
   } else if (systemLang.includes('id')) {
     return 'id_ID';
+  } else if (systemLang.includes('bg')) {
+    return 'bg_BG';
+  } else if (systemLang.includes('ro')) {
+    return 'ro_RO';
+  } else if (systemLang.includes('hu')) {
+    return 'hu_HU';
+  } else if (systemLang.includes('ms')) {
+    return 'ms_MY';
   }
-  
+
   return 'en_US'; // 默认英文
 }
