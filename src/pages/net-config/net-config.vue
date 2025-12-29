@@ -350,6 +350,7 @@ const showReverseQrPopup = ref(false);
 const reverseQrValue = ref('');
 const reverseQrImage = ref<string | null>(null);
 
+
 function nextStep() {
   switch (curStep.value) {
     // 配置WiFi信息
@@ -796,7 +797,7 @@ function cleanupWifiScan() {
 async function promptWifiPassword(ssid: string) {
   try {
     const result = await message.prompt({
-      title: $t('net_config.enter_password_title'),
+      title: ssid,
       inputType: 'password' as any,
       inputPlaceholder: $t('net_config.wifi_password_placeholder'),
       confirmButtonText: $t('common.confirm'),
@@ -1930,5 +1931,12 @@ watch(
       }
     }
   }
+}
+</style>
+
+<style lang="scss">
+/* 修改 message-box 密码输入框眼睛图标大小 */
+.wd-message-box {
+  --wot-input-icon-size: 20px;
 }
 </style>
