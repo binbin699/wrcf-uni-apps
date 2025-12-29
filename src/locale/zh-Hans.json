@@ -1,7 +1,7 @@
 {
-  "app.name": "HiKbao",
-  "app.description": "打开AI萌宠内心",
-  "app.global_title": "HiKbao",
+  "app.name": "灵矽 AI",
+  "app.description": "灵矽AI与设备绑定管理",
+  "app.global_title": "灵矽AI管理",
   "app.location_permission_desc": "您的位置信息将用于WiFi配网功能，获取附近的WiFi列表",
   "pages.login": "登录",
   "pages.create_agent": "创建智能体",
@@ -24,8 +24,8 @@
   "tabbar.square": "广场",
   "tabbar.profile": "我的",
 
-  "login.app_name": "HiKbao",
-  "login.app_desc": "打开AI萌宠内心",
+  "login.app_name": "灵矽AI",
+  "login.app_desc": "灵矽 AI 与设备绑定管理",
   "login.phone_login": "手机号快捷登录",
   "login.account_login": "登录已有账号",
   "login.account_label": "账号",
@@ -114,7 +114,7 @@
   "index.template_hint": "还没有智能体，点击以下模板快速创建",
   "index.get_templates_failed": "获取模板智能体失败",
 
-  "welcome.guide_title": "欢迎使用 HiKbao！\n添加设备以开始使用",
+  "welcome.guide_title": "欢迎使用灵矽App！\n添加设备以开始使用",
   "welcome.setup_qrcode": "扫码添加",
   "welcome.setup_bluetooth": "蓝牙添加",
   "welcome.skip_for_now": "稍后再说",
@@ -233,7 +233,7 @@
   "profile.notice_section_1_item_4": "• 若账号为企业/机构账号或未成年人账号，需按要求完成监护人确认、公章签署等额外验证流程。",
   "profile.notice_section_2_title": "二、注销后权益与数据说明",
   "profile.notice_section_2_intro": "账号注销成功后，你将面临以下结果，且无法撤销：",
-  "profile.notice_section_2_item_1": "• 无法再使用该账号登录HiKbao产品及关联服务，相同邮箱/手机号重新注册将生成新账号，与原账号无关联。",
+  "profile.notice_section_2_item_1": "• 无法再使用该账号登录灵矽AI产品及关联服务，相同邮箱/手机号重新注册将生成新账号，与原账号无关联。",
   "profile.notice_section_2_item_2": "• 账号内所有数据将被永久删除或匿名化处理（符合《个人信息保护法》要求），包括但不限于个人资料、交易记录、积分、会员权益、卡券等，均无法找回。",
   "profile.notice_section_2_item_3": "• 已关注的官方账号、好友关系将自动解除，他人无法再通过该账号联系你。",
   "profile.notice_section_2_item_4": "• 账号注销前的行为记录、法律责任不会因注销而豁免或减轻。",
@@ -836,7 +836,7 @@
   "permission.bluetooth_request_failed": "请求蓝牙权限失败",
 
   "privacy_modal.title": "用户协议与隐私政策",
-  "privacy_modal.content": "欢迎使用 HiKbao！在您使用我们的服务前，请仔细阅读并同意以下协议：",
+  "privacy_modal.content": "欢迎使用灵矽AI！在您使用我们的服务前，请仔细阅读并同意以下协议：",
   "privacy_modal.summary": "点击\"同意\"即表示您已阅读并同意上述协议。如您不同意，我们将无法为您提供服务。",
   "privacy_modal.agree": "同意",
   "privacy_modal.disagree": "不同意",
