@@ -393,6 +393,10 @@ async function loadPublicAgents() {
           }
         }
 
+        // 优先使用 config 中的 langCode，因为它比顶级 lang 字段更稳定且始终存在
+        const langSource = agent.config?.langCode || (Array.isArray(agent.lang) ? agent.lang[0] : agent.lang) || '';
+        const langCodes = langSource ? [backendLangToLangCode(langSource)] : [];
+
         return {
           ...agent,
           id: agent.id,
@@ -403,7 +407,7 @@ async function loadPublicAgents() {
           creatorName: agent.userName || $t('square.anonymous'),
           agentId: agent.agentId,
           modalTag: modalTag,
-          langCodes: (agent.lang || []).map((l: string) => backendLangToLangCode(l)) // 转换为前端 langCode
+          langCodes: langCodes // 转换为前端标准 langCode 数组
         } as SquareAgent;
       });
 

@@ -74,40 +74,75 @@ export function langCodeToVoiceLanguage(langCode: string): string {
 }
 
 /**
- * 将后端返回的 lang 值（如 'zh-cn', 'en'）映射到前端 langCode（如 'zh_CN', 'en_US'）
+ * 将后端返回的 lang 或 langCode 值（如 'zh', 'en', 'ja_JP', 'zh-cn'）映射到前端标准 langCode
  */
 export function backendLangToLangCode(backendLang: string): string {
+  if (!backendLang) return 'zh_CN';
+
+  // 标准化处理：转小写，将中划线转为下划线
+  const normalized = backendLang.toLowerCase().replace('-', '_');
+
   const mapping: Record<string, string> = {
-    'zh-cn': 'zh_CN',
-    'zh-tw': 'zh_TW',
+    'zh': 'zh_CN',
+    'zh_cn': 'zh_CN',
+    'zh_hans': 'zh_CN',
+    'zh_tw': 'zh_TW',
+    'zh_hant': 'zh_TW',
     'en': 'en_US',
+    'en_us': 'en_US',
     'ja': 'ja_JP',
+    'ja_jp': 'ja_JP',
     'ko': 'ko_KR',
+    'ko_kr': 'ko_KR',
     'yue': 'yue_CN',
+    'yue_cn': 'yue_CN',
     'ne': 'ne_CN',
+    'ne_cn': 'ne_CN',
     'es': 'es_ES',
+    'es_es': 'es_ES',
     'de': 'de_DE',
+    'de_de': 'de_DE',
     'fr': 'fr_FR',
+    'fr_fr': 'fr_FR',
     'hi': 'hi_IN',
+    'hi_in': 'hi_IN',
     'it': 'it_IT',
+    'it_it': 'it_IT',
     'nl': 'nl_NL',
+    'nl_nl': 'nl_NL',
     'pt': 'pt_PT',
+    'pt_pt': 'pt_PT',
     'ru': 'ru_RU',
+    'ru_ru': 'ru_RU',
     'tr': 'tr_TR',
+    'tr_tr': 'tr_TR',
     'vi': 'vi_VN',
+    'vi_vn': 'vi_VN',
     'km': 'km_KH',
+    'km_kh': 'km_KH',
     'th': 'th_TH',
+    'th_th': 'th_TH',
     'id': 'id_ID',
+    'id_id': 'id_ID',
     'mn': 'mn_MN',
+    'mn_mn': 'mn_MN',
     'ar': 'ar_SA',
+    'ar_sa': 'ar_SA',
     'pl': 'pl_PL',
+    'pl_pl': 'pl_PL',
     'uk': 'uk_UA',
+    'uk_ua': 'uk_UA',
     'bg': 'bg_BG',
+    'bg_bg': 'bg_BG',
     'ro': 'ro_RO',
+    'ro_ro': 'ro_RO',
     'hu': 'hu_HU',
+    'hu_hu': 'hu_HU',
     'ms': 'ms_MY',
+    'ms_my': 'ms_MY',
   };
-  return mapping[backendLang.toLowerCase()] || backendLang;
+
+  return mapping[normalized] || backendLang;
 }
 
 /**
