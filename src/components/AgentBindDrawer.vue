@@ -75,7 +75,6 @@
 import { PageMap, Pages } from '@/utils/route';
 import { agentApi, deviceApi } from '../api/index.js';
 import { gotoCreateAgentBy } from '@/pages/agent/create';
-import { ENV } from '@/const/env';
 
 export default {
   name: 'AgentBindDrawer',
@@ -215,7 +214,7 @@ export default {
     },
 
     handleAddDevice() {
-      const setupMode = ENV.VITE_APP_SETUP_MODE || 'both';
+      const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
       // 跳转到添加设备/网络配置页面
       const url =
         setupMode === 'bluetooth'

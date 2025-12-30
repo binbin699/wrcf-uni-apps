@@ -7,6 +7,7 @@
 ```txt
 MINIPROGRAM
 │  .env.example            环境变量示例
+│  app.config.ts           应用功能配置(根据版本和平台返回不同的功能配置)
 │  
 ├─.hbuilderx
 │      launch.json
@@ -38,10 +39,9 @@ MINIPROGRAM
 │  │      AgentCard.vue          智能体卡片组件
 │  │      VoiceSelector.vue      音色选择器组件
 │  │      
-│  ├─configs/                    应用配置，包含国内国外版本控制
-│  │      
 │  ├─const       
 │  │      env.ts                 环境变量管理
+│  │      index.ts               应用信息管理(AppInfo对象，包含平台信息与平台判断方法)
 │  │      
 │  ├─js_sdk                      引入的js-sdk
 │  │  └─wa-permission
@@ -128,26 +128,15 @@ touch .env
 
 ```env
 # 版本控制：'full' | 'cn' | 'intl'
+# full: 全功能版本，支持所有功能（部分功能可能受平台限制）
+# cn: 国内版，适配国内登录方式和服务
+# intl: 国际版，使用海外服务器和登录方式
 VITE_APP_EDITION=cn
-
-# 后端服务器地址（可选，未设置时使用配置文件中的默认值）
-# VITE_BASE_URL=http://localhost:8001
-
-# Google OAuth Client ID（可选，仅当启用 Google 登录时需要）
-# VITE_GOOGLE_CLIENT_ID=
-
-# 蓝牙设备名称筛选开关（可选，默认为 true）
-# VITE_BLE_FILTER_ENABLED=true
-
-# 用户协议和隐私政策 URL（必填）
-VITE_TERMS_URL=https://www.qiniu.com/agreements/user-agreement
-VITE_PRIVACY_URL=https://www.qiniu.com/agreements/privacy-right
 ```
 
 **说明：**
-- 环境变量优先级高于配置文件中的默认值
-- `VITE_TERMS_URL` 和 `VITE_PRIVACY_URL` 用于配置用户协议和隐私政策的链接
-- 如果不设置这些环境变量，将使用配置文件中的默认值
+- `VITE_APP_EDITION` 控制应用的功能版本，不同版本会启用不同的登录方式、API 地址等配置
+- 具体配置详见 `app.config.ts` 文件
 
 ### 应用打包配置
 
@@ -165,16 +154,23 @@ VITE_PRIVACY_URL=https://www.qiniu.com/agreements/privacy-right
 
 ### 应用功能配置
 
-分发到国内、过外时，需要的登录方式往往不同，本项目通过在 [config](./src/configs/index.ts) 中
-定义3个模板，来控制后端url (request baseUrl)、需要支持的登录方式。
+分发到国内、国外时，需要的登录方式往往不同，本项目通过 [app.config.ts](./app.config.ts) 
+定义配置函数，根据平台和版本返回不同的功能配置，包括后端 URL (request baseUrl)、支持的登录方式、蓝牙配网设置等。
 
-- full: 全功能版本: 尽可能多的支持功能，但并非所有功能可用，如微信登录
-- cn: 国内版
-- intl: 国外版
+版本类型：
+- **full**: 全功能版本，尽可能多的支持功能（部分功能可能受平台限制，如微信登录）
+- **cn**: 国内版，适配国内登录方式和服务
+- **intl**: 国际版，使用海外服务器和登录方式
 
-具体的版本细节参考具体的配置文件。
+主要配置项：
+- API 地址（国内/国外不同）
+- 各种登录方式的支持情况（微信小程序手机号、游客登录、Google、Apple、密码、邮箱、短信等）
+- 蓝牙配网相关设置
+- 用户协议和隐私政策 URL
+- Google OAuth Client ID
+- ARMS 监控配置
 
-版本取值可以通过环境变量`VITE_APP_EDITION`来控制。
+版本取值通过环境变量 `VITE_APP_EDITION` 来控制，具体的版本细节请参考 `app.config.ts` 文件。
 
 ### 其他
 

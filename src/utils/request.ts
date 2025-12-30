@@ -3,7 +3,6 @@ import type { BaseResponse, UploadOptions, UploadResponse } from '@/types/reques
 import { PageMap, Pages } from './route';
 import { getLocale } from '@/locale/index';
 import i18n from '@/locale';
-import { getBaseUrl } from '@/configs/';
 
 const $t = i18n.global.t;
 
@@ -35,7 +34,7 @@ class Request {
   private tokenStore: ReturnType<typeof useTokenStore> | null;
 
   constructor() {
-    this.baseURL = getBaseUrl();
+    this.baseURL = APP_CONFIG.BASE_API_URL;
     this.timeout = 10000;
     this.retryCount = new Map();
     this.tokenStore = null;
@@ -242,13 +241,28 @@ class Request {
 
   /**
    * GET请求
+   * @param url 请求地址
+   * @param options 可选参数，可以是 data 或者 { data, headers }
    */
-  get<T = any>(url: string, data: any = {}): Promise<RequestResponse<T>> {
-    return this.request<T>({
-      url,
-      method: 'GET',
-      data
-    });
+  get<T = any>(url: string, options: any = {}): Promise<RequestResponse<T>> {
+    // 兼容旧调用方式：request.get(url, data)
+    // 新调用方式：request.get(url, { data, headers })
+    const hasHeaders = options && typeof options === 'object' && ('headers' in options || 'data' in options);
+    
+    if (hasHeaders) {
+      return this.request<T>({
+        url,
+        method: 'GET',
+        data: options.data || {},
+        header: options.headers
+      });
+    } else {
+      return this.request<T>({
+        url,
+        method: 'GET',
+        data: options
+      });
+    }
   }
 
   /**

@@ -1,59 +1,62 @@
 <template>
   <wd-notify />
   <view class="select-device">
-    <!-- 页面标题区域 -->
-    <view class="header-section">
-      <view class="header-title">{{ $t('bluetooth.step.select_device') }}</view>
-      <view class="header-desc">{{ $t('bluetooth.device_list.check_power') }}</view>
-    </view>
-
-    <!-- 设备列表卡片 -->
-    <view class="card device-card">
-      <!-- 初始状态或无设备状态 -->
-      <view v-if="deviceList === null || deviceList.length === 0" class="empty-state">
-        <view class="empty-icon-wrapper">
-          <wd-icon name="scan" size="120rpx" color="#d1d5db" />
-        </view>
+    <!-- 初始/扫描中/无设备 状态 -->
+    <view v-if="deviceList === null || deviceList.length === 0" class="empty-container">
+      <view class="empty-content">
+        <image
+          v-if="deviceList === null && !isLoadingDevices"
+          class="empty-image"
+          src="/static/icons/bluetooth-scan.svg"
+          mode="aspectFit" />
+        <image
+          v-else-if="isLoadingDevices"
+          class="empty-image"
+          src="/static/icons/bluetooth-scan.svg"
+          mode="aspectFit" />
+        <image
+          v-else
+          class="empty-image"
+          src="/static/icons/no-device.svg"
+          mode="aspectFit" />
         <text class="empty-text">
-          {{
-            isLoadingDevices
-              ? $t('bluetooth.select_device.scanning_placeholder')
-              : $t('bluetooth.select_device.empty_placeholder')
-          }}
+          {{ getEmptyText() }}
+        </text>
+        <text v-if="!isLoadingDevices && deviceList !== null && deviceList.length === 0" class="empty-hint">
+          {{ $t('bluetooth.device_list.check_power') }}
         </text>
       </view>
+    </view>
 
-      <!-- 设备列表状态 -->
-      <view v-else class="device-list-wrapper">
-        <view class="list-header">
-          <view class="list-title">
-            <wd-icon name="bluetooth" size="32rpx" color="#3b82f6" />
-            <text>{{ $t('bluetooth.device_list.devices_found') }}</text>
-            <text class="device-count">({{ deviceList.length }})</text>
+    <!-- 设备列表 -->
+    <view v-else class="device-list-container">
+      <scroll-view scroll-y class="device-scroll-list">
+        <view
+          v-for="device in deviceList"
+          :key="device.deviceId"
+          class="device-card"
+          @click="handleSelectDevice(device)">
+          <view class="device-icon">
+            <image class="icon-img" src="/static/icons/phone.svg" mode="aspectFit" />
           </view>
-        </view>
-        <scroll-view scroll-y class="device-scroll-list">
-          <view
-            v-for="device in deviceList"
-            :key="device.deviceId"
-            class="device-item"
-            @click="handleSelectDevice(device)">
-            <view class="device-icon">
-              <wd-icon name="bluetooth" size="40rpx" color="#3b82f6" />
-            </view>
-            <view class="device-info">
-              <view class="device-name">{{ device.name || device.deviceId }}</view>
-              <view class="device-meta">
-                <!-- 优先显示 Wi-Fi MAC，与设备管理页面保持一致 -->
-                <text class="device-id">{{ device.macAddress || device.deviceId }}</text>
+          <view class="device-info">
+            <view class="device-name">{{ device.name || 'DTXZ_' + (device.macAddress || device.deviceId).slice(-8) }}</view>
+            <view class="device-id">ID：{{ device.macAddress || device.deviceId }}</view>
+            <view class="device-signal">
+              <text class="signal-label">{{ $t('bluetooth.device_list.signal_strength') }}：</text>
+              <view class="signal-progress">
+                <view class="signal-progress-bg"></view>
+                <view class="signal-progress-fill" :style="{ width: getSignalWidth(device.RSSI) }"></view>
+                <view class="signal-divider" style="left: 20rpx;"></view>
+                <view class="signal-divider" style="left: 44rpx;"></view>
               </view>
             </view>
-            <view class="device-arrow">
-              <wd-icon name="arrow-right" size="32rpx" color="#9ca3af" />
-            </view>
           </view>
-        </scroll-view>
-      </view>
+          <view class="device-arrow">
+            <wd-icon name="arrow-right" size="36rpx" color="#9ca3af" />
+          </view>
+        </view>
+      </scroll-view>
     </view>
 
     <!-- 底部按钮 -->
@@ -64,7 +67,6 @@
         :loading="isLoadingDevices"
         :disabled="isLoadingDevices"
         @click="startDeviceScan">
-        <wd-icon v-if="!isLoadingDevices" name="scan" size="36rpx" color="#fff" />
         <text>{{ getButtonText() }}</text>
       </button>
     </view>
@@ -125,6 +127,46 @@ export default {
     console.log('设备类型:', isIOS ? 'iOS' : 'Android');
   },
   methods: {
+    /**
+     * 获取空状态文本
+     */
+    getEmptyText() {
+      if (this.isLoadingDevices) {
+        return this.$t('bluetooth.select_device.scanning_placeholder');
+      }
+      if (this.deviceList === null) {
+        return this.$t('bluetooth.select_device.empty_placeholder');
+      }
+      return this.$t('bluetooth.select_device.no_devices');
+    },
+
+    /**
+     * 根据 RSSI 获取信号强度等级 (1-3)
+     */
+    getSignalLevel(rssi) {
+      if (!rssi) return 2;
+      // RSSI 通常是负数，越接近0信号越强
+      // -50 到 0: 强信号 (3格)
+      // -70 到 -50: 中等信号 (2格)
+      // 低于 -70: 弱信号 (1格)
+      if (rssi >= -50) return 3;
+      if (rssi >= -70) return 2;
+      return 1;
+    },
+
+    /**
+     * 根据 RSSI 获取进度条宽度
+     */
+    getSignalWidth(rssi) {
+      const level = this.getSignalLevel(rssi);
+      // 1级: 约 33%
+      // 2级: 约 66%
+      // 3级: 100% (满)
+      if (level === 3) return '100%';
+      if (level === 2) return '66%';
+      return '33%';
+    },
+
     /**
      * 开始设备扫描
      */
@@ -290,9 +332,6 @@ export default {
         });
 
         bluetoothConfigManager.setCurrentStep(CONFIG_STEPS.SELECT_WIFI);
-        // // 跳转到下一步
-        // setTimeout(() => {
-        // }, 800);
       } catch (error) {
         // 隐藏加载提示
         uni.hideLoading();
@@ -340,113 +379,69 @@ export default {
 
 <style lang="scss" scoped>
 .select-device {
-  padding: 24rpx;
-  padding-bottom: 200rpx;
   min-height: 100%;
-}
-
-/* 头部区域 */
-.header-section {
-  margin-bottom: 32rpx;
-  padding: 0 8rpx;
-}
-
-.header-title {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 12rpx;
-}
-
-.header-desc {
-  font-size: 28rpx;
-  color: #6b7280;
-  line-height: 1.5;
-}
-
-/* 卡片样式 */
-.card {
+  padding-bottom: 200rpx;
   background-color: #fff;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  border: 1rpx solid #f3f4f6;
 }
 
-.device-card {
-  min-height: 400rpx;
+/* 空状态容器 */
+.empty-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 300rpx);
+  padding: 48rpx 32rpx;
 }
 
-/* 空状态 */
-.empty-state {
+.empty-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 80rpx 32rpx;
   text-align: center;
 }
 
-.empty-icon-wrapper {
-  width: 160rpx;
-  height: 160rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f9fafb;
-  border-radius: 50%;
+.empty-image {
+  width: 280rpx;
+  height: 280rpx;
   margin-bottom: 32rpx;
 }
 
 .empty-text {
-  font-size: 30rpx;
-  color: #6b7280;
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 12rpx;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: #9ca3af;
   line-height: 1.5;
 }
 
 /* 设备列表 */
-.device-list-wrapper {
-  width: 100%;
-}
-
-.list-header {
-  margin-bottom: 20rpx;
-}
-
-.list-title {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.device-count {
-  font-weight: 400;
-  color: #6b7280;
+.device-list-container {
+  padding: 24rpx;
 }
 
 .device-scroll-list {
-  max-height: 600rpx;
+  max-height: calc(100vh - 350rpx);
 }
 
-.device-item {
+.device-card {
   display: flex;
   align-items: center;
-  padding: 24rpx 20rpx;
-  border-radius: 16rpx;
-  margin-bottom: 12rpx;
-  background-color: #f9fafb;
+  padding: 28rpx 24rpx;
+  margin-bottom: 20rpx;
+  background-color: #fff;
+  border-radius: 20rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
+  border: 1rpx solid #f3f4f6;
   transition: all 0.2s;
 
-  &:last-child {
-    margin-bottom: 0;
-  }
-
   &:active {
-    background-color: #eff6ff;
     transform: scale(0.99);
+    background-color: #f9fafb;
   }
 }
 
@@ -456,9 +451,13 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #eff6ff;
-  border-radius: 16rpx;
   margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.icon-img {
+  width: 48rpx;
+  height: 48rpx;
 }
 
 .device-info {
@@ -467,29 +466,73 @@ export default {
 }
 
 .device-name {
-  font-size: 30rpx;
-  font-weight: 500;
+  font-size: 32rpx;
+  font-weight: 600;
   color: #1f2937;
-  margin-bottom: 6rpx;
+  margin-bottom: 8rpx;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.device-meta {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
 .device-id {
   font-size: 24rpx;
   color: #9ca3af;
+  margin-bottom: 12rpx;
   font-family: monospace;
 }
 
+.device-signal {
+  display: flex;
+  align-items: center;
+}
+
+.signal-label {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+/* 信号强度进度条 */
+.signal-progress {
+  position: relative;
+  width: 88rpx;
+  height: 24rpx;
+  margin-left: 8rpx;
+}
+
+.signal-progress-bg {
+  position: absolute;
+  width: 88rpx;
+  height: 24rpx;
+  left: 0;
+  top: 0;
+  background: #E0FAEC;
+  border-radius: 40rpx;
+}
+
+.signal-progress-fill {
+  position: absolute;
+  height: 24rpx;
+  left: 0;
+  top: 0;
+  background: #3CCD62;
+  border-radius: 40rpx;
+  transition: width 0.3s ease;
+}
+
+.signal-divider {
+  position: absolute;
+  width: 2rpx;
+  height: 16rpx;
+  top: 4rpx;
+  background: #FFFFFF;
+  opacity: 0.4;
+  border-radius: 40rpx;
+}
+
 .device-arrow {
-  margin-left: 12rpx;
+  margin-left: 16rpx;
+  flex-shrink: 0;
 }
 
 /* 底部操作按钮 */
@@ -501,7 +544,6 @@ export default {
   padding: 24rpx 32rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
   background-color: #fff;
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
 }
 
 .scan-btn {
@@ -531,63 +573,6 @@ export default {
 
   &[disabled] {
     opacity: 0.8;
-  }
-}
-
-/* 响应式设计 */
-@media screen and (max-width: 750rpx) {
-  .select-device {
-    padding: 20rpx;
-    padding-bottom: 180rpx;
-  }
-
-  .header-title {
-    font-size: 36rpx;
-  }
-
-  .header-desc {
-    font-size: 26rpx;
-  }
-
-  .card {
-    padding: 28rpx;
-    border-radius: 20rpx;
-  }
-
-  .device-card {
-    min-height: 350rpx;
-  }
-
-  .empty-icon-wrapper {
-    width: 140rpx;
-    height: 140rpx;
-  }
-
-  .empty-text {
-    font-size: 28rpx;
-  }
-
-  .device-item {
-    padding: 20rpx 16rpx;
-  }
-
-  .device-icon {
-    width: 64rpx;
-    height: 64rpx;
-    margin-right: 16rpx;
-  }
-
-  .device-name {
-    font-size: 28rpx;
-  }
-
-  .bottom-action {
-    padding: 20rpx 24rpx;
-  }
-
-  .scan-btn {
-    height: 88rpx;
-    font-size: 30rpx;
   }
 }
 </style>

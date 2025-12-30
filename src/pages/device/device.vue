@@ -105,7 +105,6 @@ import AudioPlayerManager from '@/utils/audioPlayer';
 import { Pages, PageMap } from '@/utils/route';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import type { Device, VoiceprintRecord } from '@/pages/device/types';
-import { APP_USE_VOICEPRINT } from '@/const/env';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
@@ -163,7 +162,7 @@ function initAudioManager() {
       onError: (error, audio) => {
         isPlaying.value = false;
         console.error('音频播放失败:', error);
-        toast.warning({ msg: $t('device.voiceprint.play_failed') || '播放失败', duration: 2000, zIndex: 2005 });
+        toast.warning({ msg: $t('device.voiceprint.play_failed'), duration: 2000, zIndex: 2005 });
       }
     }
   );
@@ -219,7 +218,7 @@ function deleteDevice(device: Device) {
 }
 
 function handleSelectDevice(device: Device) {
-  if (!APP_USE_VOICEPRINT) return;
+  if (!APP_CONFIG.APP_USE_VOICEPRINT) return;
   selectDevice.value = device;
   showVoiceprintPopup.value = true;
 }

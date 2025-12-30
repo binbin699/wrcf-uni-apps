@@ -1,118 +1,163 @@
 <template>
   <wd-notify />
-  <view class="voice-clone-container">
-    <!-- 合并的Tab切换和音频预览区域 -->
-    <view class="combined-section">
-      <view class="section-title-container mt-20" v-if="audioSrcOptions.length > 1">
-        <text class="section-title">{{ $t('voice_clone.select_audio_source') }}</text>
-        <text class="section-desc">{{ $t('voice_clone.select_audio_desc') }}</text>
+  <view class="voice-clone-page">
+    <!-- Tab 切换 -->
+    <view class="tab-wrapper">
+      <view
+        class="tab-item"
+        :class="{ active: curAudioSrc === audioSrc.Upload }"
+        @click="curAudioSrc = audioSrc.Upload">
+        {{ $t('voice_clone.select_file') }}
       </view>
-      <view class="tab-container" v-if="audioSrcOptions.length > 1">
-        <wd-segmented
-          :options="audioSrcOptions"
-          v-model:value="curAudioSrc"
-          @change="onAudioSrcChange"
-          size="large"
-          class="tab-segmented">
-          <template #label="{ option }">
-            <view class="tab-item">{{ audioSrcName[option.value as audioSrc] }}</view>
-          </template>
-        </wd-segmented>
+      <view
+        class="tab-item"
+        :class="{ active: curAudioSrc === audioSrc.Record }"
+        @click="curAudioSrc = audioSrc.Record">
+        {{ $t('voice_clone.record') }}
       </view>
-      <!-- 当没有选择音频文件或录音时显示Tab切换 -->
-      <view v-if="!audioFile && !recordedAudio">
-        <!-- 选择文件内容 -->
-        <view v-if="curAudioSrc === audioSrc.Upload" class="tab-content">
-          <view class="upload-card">
-            <text class="upload-title">{{ $t('voice_clone.select_audio_file') }}</text>
-            <text class="upload-desc">{{ $t('voice_clone.audio_format_desc') }}</text>
-            <button class="action-btn primary" @click="selectAudioFile">
-              <text class="btn-text">{{ $t('voice_clone.select_file') }}</text>
-            </button>
+    </view>
+
+    <!-- 内容区域 -->
+    <view class="content-area">
+      <!-- 选择文件模式 -->
+      <view v-if="curAudioSrc === audioSrc.Upload" class="upload-section">
+        <!-- 未选择文件时显示上传区域 -->
+        <view v-if="!audioFile" class="upload-area" @click="selectAudioFile">
+          <view class="upload-icon">
+            <text class="plus-icon">+</text>
           </view>
+          <text class="upload-text">{{ $t('voice_clone.click_to_upload') }}</text>
+          <text class="upload-hint">{{ $t('voice_clone.audio_format_hint') }}</text>
         </view>
 
-        <!-- 录音内容 -->
-        <view v-else-if="curAudioSrc === audioSrc.Record" class="tab-content">
-          <text class="record-title">{{ $t('voice_clone.record_voice') }}</text>
-          <text class="record-desc">{{ $t('voice_clone.record_desc') }}</text>
-
-          <!-- 录音控制 -->
-          <view class="record-controls">
-            <button
-              class="action-btn"
-              :class="{ primary: !isRecording, danger: isRecording }"
-              @click="toggleRecording">
-              <text class="btn-text">
-                {{
-                  isRecording ? $t('voice_clone.stop_recording') : $t('voice_clone.start_recording')
-                }}
-              </text>
-            </button>
-
-            <view v-if="recordDuration > 0" class="record-info">
-              <text class="duration">
-                {{ $t('voice_clone.record_duration') }}: {{ formatDuration(recordDuration) }}
-              </text>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 当已选择音频文件或录音时显示预览模式 -->
-      <view v-else class="preview-card">
-        <wd-card :title="$t('voice_clone.audio_preview')">
-          <view class="audio-info">
-            <view class="file-info-row">
-              <text class="file-name">
-                {{ audioFileName }}
-              </text>
-              <wd-icon name="/static/icons/voice-play.svg" @click.stop="togglePlayDemo"></wd-icon>
+        <!-- 已选择文件时显示文件信息 -->
+        <view v-else class="file-preview-card">
+          <view class="file-info">
+            <view class="file-name-row">
+              <text class="file-name">{{ audioFileName }}</text>
+              <view class="audio-wave-icon" @click.stop="togglePlayDemo">
+                <!-- 静态图标 -->
+                <image v-if="!isPlaying" src="/static/icons/voice-play.svg" class="wave-img" mode="aspectFit" />
+                <!-- 播放中的声波动画 -->
+                <view v-else class="wave-animation">
+                  <view class="wave-bar" style="animation-delay: 0s;"></view>
+                  <view class="wave-bar" style="animation-delay: 0.15s;"></view>
+                  <view class="wave-bar" style="animation-delay: 0.3s;"></view>
+                  <view class="wave-bar" style="animation-delay: 0.45s;"></view>
+                  <view class="wave-bar" style="animation-delay: 0.6s;"></view>
+                </view>
+              </view>
             </view>
             <text class="file-size">{{ audioFileSize }}</text>
           </view>
-
-          <view class="reselect-controls">
-            <button class="action-btn secondary" @click="resetForm">
-              <text class="btn-text">{{ $t('voice_clone.reselect_audio') }}</text>
-            </button>
-          </view>
-        </wd-card>
+          <button class="reselect-btn" @click="resetAudio">
+            {{ $t('voice_clone.reselect') }}
+          </button>
+        </view>
       </view>
 
-      <wd-divider color="#335CFF"></wd-divider>
+      <!-- 录音模式 -->
+      <view v-else-if="curAudioSrc === audioSrc.Record" class="record-section">
+        <!-- 未录音时显示录音提示 -->
+        <view v-if="!recordedAudio" class="record-card">
+          <text class="record-title">{{ $t('voice_clone.record_voice') }}</text>
+          <text class="record-desc">{{ $t('voice_clone.record_hint') }}</text>
+          <button class="record-btn primary" @click="openRecordPopup">
+            {{ $t('voice_clone.start_recording') }}
+          </button>
+        </view>
+
+        <!-- 已录音时显示录音信息 -->
+        <view v-else class="file-preview-card">
+          <view class="file-info">
+            <view class="file-name-row">
+              <text class="file-name">{{ audioFileName }}</text>
+              <view class="audio-wave-icon" @click.stop="togglePlayDemo">
+                <!-- 静态图标 -->
+                <image v-if="!isPlaying" src="/static/icons/voice-play.svg" class="wave-img" mode="aspectFit" />
+                <!-- 播放中的声波动画 -->
+                <view v-else class="wave-animation">
+                  <view class="wave-bar" style="animation-delay: 0s;"></view>
+                  <view class="wave-bar" style="animation-delay: 0.15s;"></view>
+                  <view class="wave-bar" style="animation-delay: 0.3s;"></view>
+                  <view class="wave-bar" style="animation-delay: 0.45s;"></view>
+                  <view class="wave-bar" style="animation-delay: 0.6s;"></view>
+                </view>
+              </view>
+            </view>
+            <text class="file-size">{{ audioFileSize }}</text>
+          </view>
+          <button class="reselect-btn" @click="resetAudio">
+            {{ $t('voice_clone.re_record') }}
+          </button>
+        </view>
+      </view>
 
       <!-- 音色名称输入 -->
-      <wd-card :title="$t('voice_clone.voice_name')">
-        <wd-input
+      <view class="name-input-card">
+        <text class="input-label">{{ $t('voice_clone.voice_name') }}</text>
+        <input
+          class="name-input"
           v-model="voiceName"
-          :maxlength="20"
-          show-word-limit
-          :placeholder="$t('voice_clone.voice_name_placeholder')"></wd-input>
-      </wd-card>
-
-      <!-- 提交按钮 -->
-      <view class="submit-section">
-        <view v-if="!canSubmit" class="submit-tip">
-          <text class="tip-text">{{ $t('voice_clone.complete_form_tip') }}</text>
+          :placeholder="$t('voice_clone.voice_name_placeholder')"
+          :maxlength="20" />
+        <view v-if="voiceName" class="clear-icon" @click="voiceName = ''">
+          <wd-icon name="close-fill" size="32rpx" color="#c8c9cc" />
         </view>
-        <button
-          class="action-btn primary"
-          :class="{ loading: uploading, disabled: !canSubmit }"
-          :disabled="uploading || !canSubmit"
-          @click="uploadAndCreateVoice">
-          <text class="btn-text">
-            {{
-              uploading
-                ? isEditMode
-                  ? $t('voice_clone.updating')
-                  : $t('voice_clone.creating')
-                : isEditMode
-                  ? $t('voice_clone.update_voice')
-                  : $t('voice_clone.create_voice')
-            }}
-          </text>
-        </button>
+      </view>
+    </view>
+
+    <!-- 底部按钮 -->
+    <view class="bottom-action">
+      <button
+        class="submit-btn"
+        :class="{ active: canSubmit, loading: uploading }"
+        :disabled="uploading || !canSubmit"
+        @click="uploadAndCreateVoice">
+        {{
+          uploading
+            ? isEditMode
+              ? $t('voice_clone.updating')
+              : $t('voice_clone.creating')
+            : isEditMode
+              ? $t('voice_clone.update_voice')
+              : $t('voice_clone.create_voice')
+        }}
+      </button>
+    </view>
+
+    <!-- 录音弹窗 -->
+    <view v-if="showRecordPopup" class="record-popup-overlay" @click.self="closeRecordPopup">
+      <view class="record-popup">
+        <view class="popup-header">
+          <text class="popup-title">{{ $t('voice_clone.record_voice') }}</text>
+          <view class="popup-close" @click="closeRecordPopup">
+            <wd-icon name="close" size="40rpx" color="#333" />
+          </view>
+        </view>
+
+        <view class="popup-content">
+          <!-- 波形动画 -->
+          <view class="waveform-container">
+            <view class="waveform">
+              <view
+                v-for="i in 30"
+                :key="i"
+                class="wave-bar"
+                :class="{ active: isRecording }"
+                :style="{ animationDelay: `${i * 0.05}s`, height: getWaveHeight(i) }" />
+            </view>
+          </view>
+
+          <!-- 录音时间 -->
+          <text class="record-time">{{ formatDuration(recordDuration) }}</text>
+        </view>
+
+        <view class="popup-action">
+          <button class="popup-btn" :class="{ stop: isRecording }" @click="toggleRecording">
+            {{ isRecording ? $t('voice_clone.stop_recording') : $t('voice_clone.start_recording') }}
+          </button>
+        </view>
       </view>
     </view>
   </view>
@@ -144,6 +189,7 @@ const audioFileSize = ref('');
 const recordedAudio = ref<string | null>(null);
 const isRecording = ref(false);
 const recordDuration = ref(0);
+const showRecordPopup = ref(false);
 
 const isPlaying = ref(false);
 
@@ -173,6 +219,12 @@ const canSubmit = computed(() => {
     !isRecording.value
   );
 });
+
+// 获取波形高度（模拟动画）
+function getWaveHeight(index: number) {
+  const heights = [20, 35, 25, 45, 30, 50, 35, 40, 25, 55, 30, 45, 35, 50, 25, 40, 30, 55, 35, 45, 25, 50, 30, 40, 35, 55, 25, 45, 30, 35];
+  return `${heights[index % heights.length]}rpx`;
+}
 
 onLoad((options: any) => {
   // 检查是否为编辑模式
@@ -253,8 +305,10 @@ function initManagers() {
         console.log('录音结束', result);
         isRecording.value = false;
         recordedAudio.value = result.tempFilePath;
-        audioFileName.value = `${new Date().getTime()}.${result.fileExtension || 'wav'}`;
+        audioFileName.value = `录音_${new Date().getTime()}.${result.fileExtension || 'wav'}`;
         audioFileSize.value = AudioRecorderManager.formatFileSize(result.fileSize);
+        // 关闭录音弹窗
+        showRecordPopup.value = false;
       },
       onError: (error) => {
         isRecording.value = false;
@@ -272,20 +326,25 @@ function initManagers() {
   );
 }
 
-// Tab切换 - 不清理音频相关状态
-function onAudioSrcChange(tab: { value: audioSrc }) {
-  console.log('onAudioSrcChange', tab);
+// 打开录音弹窗
+async function openRecordPopup() {
+  // 请求权限
+  const permissionResult = await requestRecordPermission({
+    show: showNotify,
+    close: closeNotify
+  });
+  if (!permissionResult.granted) {
+    return;
+  }
+  showRecordPopup.value = true;
+}
 
-  // // 切换tab时只清除音频相关状态，保留音色名称
-  // audioFile.value = null;
-  // recordedAudio.value = null;
-  // audioFileName.value = '';
-  // audioFileSize.value = '';
-
-  // // 清除录音结果
-  // if (audioRecorder.value) {
-  //   audioRecorder.value.clearRecordResult();
-  // }
+// 关闭录音弹窗
+function closeRecordPopup() {
+  if (isRecording.value && audioRecorder.value) {
+    audioRecorder.value.stop();
+  }
+  showRecordPopup.value = false;
 }
 
 // 切换录音状态
@@ -306,7 +365,6 @@ async function toggleRecording() {
     close: closeNotify
   });
   if (!permissionResult.granted) {
-    // 权限请求工具已经显示了相应的提示
     return;
   }
 
@@ -318,6 +376,27 @@ function togglePlayDemo() {
   const audioPath = audioFile.value || recordedAudio.value;
   if (audioPath && audioPlayer.value) {
     audioPlayer.value.toggle({ src: audioPath, name: audioFileName.value });
+  }
+}
+
+// 重置音频（重新选择/重新录制）
+function resetAudio() {
+  audioFile.value = null;
+  recordedAudio.value = null;
+  audioFileName.value = '';
+  audioFileSize.value = '';
+  isPlaying.value = false;
+
+  if (audioPlayer.value) {
+    audioPlayer.value.stop();
+  }
+  if (audioRecorder.value) {
+    audioRecorder.value.clearRecordResult();
+  }
+
+  // 如果是录音模式，打开录音弹窗
+  if (curAudioSrc.value === audioSrc.Record) {
+    openRecordPopup();
   }
 }
 
@@ -340,7 +419,6 @@ function chooseAudioForWX() {
     fail: (err: any) => {
       if (!err.errMsg.includes('fail cancel')) {
         console.error('选择文件失败', err);
-        // 不是用户取消的情况才显示错误提示
         throw err;
       }
     }
@@ -348,30 +426,193 @@ function chooseAudioForWX() {
 }
 // #endif
 
+// #ifdef APP-PLUS || APP-HARMONY
 function chooseAudioForApp() {
-  // uni.chooseFile({
-  //   count: 1,
-  //   type: 'all',
-  //   extension: supportedAudioExts,
-  //   success: (res) => {
-  //     console.log('选择文件成功:', res);
-  //     const file = res.tempFiles[0];
-  //     console.log('选中的文件:', file);
-  //     handleChooseAudio({
-  //       filename: file.name,
-  //       filesize: file.size,
-  //       filepath: file.path
-  //     });
-  //   },
-  //   fail: (err: any) => {
-  //     if (!err.errMsg.includes('fail cancel')) {
-  //       console.error('选择文件失败', err);
-  //       // 不是用户取消的情况才显示错误提示
-  //       throw err;
-  //     }
-  //   }
-  // });
+  // APP端文件选择逻辑
+  // @ts-ignore - plus API 类型定义不完整
+  plus.io.chooseFile(
+    {
+      filter: 'audio',
+      multiple: false
+    },
+    (e: any) => {
+      console.log('APP选择文件成功:', e);
+      if (e.files && e.files.length > 0) {
+        const filePath = e.files[0];
+        
+        // Android content:// URI 需要特殊处理
+        if (filePath.startsWith('content://')) {
+          // 使用 compressImage 作为中转来获取真实路径（这是个 workaround）
+          // 或者直接将文件复制到本地临时目录
+          console.log('检测到 content:// URI，尝试复制文件');
+          
+          // 生成临时文件名
+          const timestamp = Date.now();
+          const tempFileName = `audio_${timestamp}.mp3`;
+          const tempPath = `_doc/temp/${tempFileName}`;
+          
+          // 确保临时目录存在
+          // @ts-ignore
+          plus.io.resolveLocalFileSystemURL(
+            '_doc/',
+            (docEntry: any) => {
+              docEntry.getDirectory(
+                'temp',
+                { create: true },
+                () => {
+                  // 复制文件到临时目录
+                  // @ts-ignore
+                  plus.io.resolveLocalFileSystemURL(
+                    filePath,
+                    (srcEntry: any) => {
+                      // @ts-ignore
+                      plus.io.resolveLocalFileSystemURL(
+                        '_doc/temp/',
+                        (destDir: any) => {
+                          srcEntry.copyTo(
+                            destDir,
+                            tempFileName,
+                            (newEntry: any) => {
+                              console.log('文件复制成功:', newEntry.fullPath);
+                              newEntry.file((file: any) => {
+                                handleChooseAudio({
+                                  filename: tempFileName,
+                                  filesize: file.size || 0,
+                                  filepath: newEntry.fullPath
+                                });
+                              });
+                            },
+                            (copyErr: any) => {
+                              console.error('文件复制失败:', copyErr);
+                              // 复制失败时直接使用原路径
+                              handleChooseAudioDirect(filePath, tempFileName);
+                            }
+                          );
+                        },
+                        (destErr: any) => {
+                          console.error('获取目标目录失败:', destErr);
+                          handleChooseAudioDirect(filePath, tempFileName);
+                        }
+                      );
+                    },
+                    (srcErr: any) => {
+                      console.error('解析源文件失败:', srcErr);
+                      handleChooseAudioDirect(filePath, tempFileName);
+                    }
+                  );
+                },
+                (dirErr: any) => {
+                  console.error('创建临时目录失败:', dirErr);
+                  handleChooseAudioDirect(filePath, `audio_${timestamp}.mp3`);
+                }
+              );
+            },
+            (docErr: any) => {
+              console.error('获取_doc目录失败:', docErr);
+              handleChooseAudioDirect(filePath, `audio_${timestamp}.mp3`);
+            }
+          );
+        } else {
+          // 普通文件路径
+          // @ts-ignore
+          plus.io.resolveLocalFileSystemURL(
+            filePath,
+            (entry: any) => {
+              entry.file((file: any) => {
+                console.log('APP文件信息:', file);
+                handleChooseAudio({
+                  filename: file.name || filePath.split('/').pop() || 'audio.mp3',
+                  filesize: file.size,
+                  filepath: filePath
+                });
+              });
+            },
+            (err: any) => {
+              console.error('获取文件信息失败:', err);
+              handleChooseAudio({
+                filename: filePath.split('/').pop() || 'audio.mp3',
+                filesize: 0,
+                filepath: filePath
+              });
+            }
+          );
+        }
+      }
+    },
+    (err: any) => {
+      if (err.code !== 12) {
+        // 12 是用户取消
+        console.error('APP选择文件失败:', err);
+        uni.showToast({
+          title: $t('voice_clone.select_file_failed'),
+          icon: 'none'
+        });
+      }
+    }
+  );
 }
+
+// 直接使用 content:// URI（跳过文件信息获取）
+function handleChooseAudioDirect(filePath: string, defaultFileName: string) {
+  console.log('使用直接路径处理:', filePath);
+  audioFile.value = filePath;
+  audioFileName.value = defaultFileName;
+  recordedAudio.value = null;
+  
+  // 尝试通过 Android 原生 API 获取文件大小
+  try {
+    // @ts-ignore - plus.android API
+    const main = plus.android.runtimeMainActivity();
+    // @ts-ignore
+    plus.android.importClass('android.content.ContentResolver');
+    // @ts-ignore
+    const Uri = plus.android.importClass('android.net.Uri');
+    // @ts-ignore
+    plus.android.importClass('android.database.Cursor');
+    // @ts-ignore
+    const OpenableColumns = plus.android.importClass('android.provider.OpenableColumns');
+    
+    // @ts-ignore
+    const resolver = main.getContentResolver();
+    // @ts-ignore
+    const uri = Uri.parse(filePath);
+    // @ts-ignore
+    const cursor = resolver.query(uri, null, null, null, null);
+    
+    // @ts-ignore
+    if (cursor && cursor.moveToFirst()) {
+      // @ts-ignore
+      const sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
+      // @ts-ignore
+      const nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+      
+      if (sizeIndex >= 0) {
+        // @ts-ignore
+        const fileSize = cursor.getLong(sizeIndex);
+        audioFileSize.value = formatFileSize(fileSize);
+        console.log('获取到文件大小:', fileSize, audioFileSize.value);
+      }
+      
+      if (nameIndex >= 0) {
+        // @ts-ignore
+        const displayName = cursor.getString(nameIndex);
+        if (displayName) {
+          audioFileName.value = displayName;
+          console.log('获取到文件名:', displayName);
+        }
+      }
+      
+      // @ts-ignore
+      cursor.close();
+    } else {
+      audioFileSize.value = '';
+    }
+  } catch (err) {
+    console.error('获取文件信息失败:', err);
+    audioFileSize.value = '';
+  }
+}
+// #endif
 
 function handleChooseAudio({
   filename,
@@ -391,7 +632,7 @@ function handleChooseAudio({
     throw new Error($t('voice_clone.unsupported_format'));
   }
   // 验证文件大小（限制10MB）
-  const maxSize = 10 * 1024 * 1024; // 10MB
+  const maxSize = 10 * 1024 * 1024;
   console.log('文件大小:', filesize, '最大限制:', maxSize);
   if (filesize > maxSize) {
     console.error('文件过大:', filesize);
@@ -401,7 +642,7 @@ function handleChooseAudio({
   audioFile.value = filepath;
   audioFileName.value = filename;
   audioFileSize.value = formatFileSize(filesize);
-  recordedAudio.value = null; // 清除录音
+  recordedAudio.value = null;
 
   console.log('音频文件设置完成:', {
     audioFile: audioFile.value,
@@ -420,9 +661,11 @@ function selectAudioFile() {
     // #ifdef APP-PLUS || APP-HARMONY
     chooseAudioForApp();
     // #endif
+    // #ifdef H5
+    chooseAudioForH5();
+    // #endif
   } catch (err) {
     console.error('选择音频文件失败', err);
-    // todo useToast
     uni.showToast({
       title: $t('voice_clone.select_file_failed'),
       icon: 'none'
@@ -430,27 +673,29 @@ function selectAudioFile() {
   }
 }
 
-// // 播放演示音频
-// function playDemo(url: string, voiceId: string) {
-//   if (!url) {
-//     uni.showToast({
-//       title: $t('voice_clone.invalid_audio_url'),
-//       icon: 'none'
-//     });
-//     return;
-//   }
-
-//   if (audioPlayer.value) {
-//     audioPlayer.value.play({ src: url, name: `demo_${voiceId}` });
-//   }
-// }
-
-// // 停止播放
-// function stopDemo() {
-//   if (audioPlayer.value) {
-//     audioPlayer.value.stop();
-//   }
-// }
+// #ifdef H5
+function chooseAudioForH5() {
+  // H5端使用 input 文件选择
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = supportedAudioFormats.map((ext) => `.${ext}`).join(',');
+  input.onchange = (e: any) => {
+    const file = e.target.files[0];
+    if (file) {
+      console.log('H5选择文件成功:', file);
+      const fileUrl = URL.createObjectURL(file);
+      handleChooseAudio({
+        filename: file.name,
+        filesize: file.size,
+        filepath: fileUrl
+      });
+      // 保存原始文件对象，用于后续上传
+      (window as any).__selectedAudioFile = file;
+    }
+  };
+  input.click();
+}
+// #endif
 
 // 上传音频文件
 async function upload(audioPath: string): Promise<string> {
@@ -464,30 +709,14 @@ async function upload(audioPath: string): Promise<string> {
     throw new Error(uploadResult.message || '文件上传失败');
   }
 
-  // 临时修复：替换 localhost 为实际服务器地址
-  // 因为后端上传配置返回的是 localhost，训练服务无法访问
-  let uploadUrl = uploadResult.data.url;
-  if (uploadUrl && uploadUrl.includes('localhost')) {
-    const { getBaseUrl } = await import('@/configs/');
-    const baseUrl = getBaseUrl();
-    // 提取 baseUrl 的协议和主机部分
-    const baseUrlMatch = baseUrl.match(/^(https?:\/\/[^/]+)/);
-    if (baseUrlMatch) {
-      uploadUrl = uploadUrl.replace(/https?:\/\/localhost(:\d+)?/, baseUrlMatch[1]);
-      console.log('URL 已替换:', uploadUrl);
-    }
-  }
-
-  return uploadUrl;
+return uploadResult.data.url;
 }
 
 // 创建音色栏位
 async function createVoice() {
-  // toast提示
   uni.showLoading({
     title: $t('voice_clone.creating_voice')
   });
-  // 创建音色栏位
   const createResult = await voiceApi.createVoice({
     name: voiceName.value.trim(),
     description: `${$t('voice_clone.user_created_voice')}：${voiceName.value.trim()}`,
@@ -503,7 +732,6 @@ async function createVoice() {
 
 // 训练音色
 async function trainVoice() {
-  // toast 提示
   if (isEditMode.value) {
     uni.showLoading({ title: $t('voice_clone.updating_voice') });
   } else {
@@ -518,7 +746,6 @@ async function trainVoice() {
     voiceName.value.trim()
   );
 
-  // 训练音色
   const trainResult = await voiceApi.trainVoice({
     voiceId: voiceId.value,
     audioUrl: lastUploadUrl.value,
@@ -540,7 +767,6 @@ async function uploadAndCreateVoice() {
     return;
   }
 
-  // 检查是否有音频文件
   const audioPath = audioFile.value || recordedAudio.value;
   if (!audioPath) {
     uni.showToast({
@@ -552,28 +778,22 @@ async function uploadAndCreateVoice() {
 
   uploading.value = true;
   try {
-    // 上传音频文件
     if (lastUploadFile.value !== audioPath) {
       lastUploadUrl.value = await upload(audioPath);
       lastUploadFile.value = audioPath;
     }
 
-    // 创建模式：创建音色栏位
     if (!voiceId.value) {
       voiceId.value = await createVoice();
     }
 
-    // 触发训练任务（异步，不阻塞主流程）
-    // 训练状态通过音色列表 API 返回，用户可在音色管理页面查看
     try {
       await trainVoice();
       console.log('训练任务已提交');
     } catch (trainError) {
-      // 训练任务提交失败不影响创建成功
       console.warn('训练任务提交失败，可稍后在音色管理页面重试:', trainError);
     }
 
-    // 成功提示
     uni.hideLoading();
     resetForm();
 
@@ -600,7 +820,6 @@ async function uploadAndCreateVoice() {
       ? $t('voice_clone.update_failed')
       : $t('voice_clone.create_failed');
 
-    // 根据错误类型提供更具体的提示
     if (error.errMsg && error.errMsg.includes('createUploadTask:fail')) {
       errorMessage = $t('voice_clone.upload_failed_check_network');
     } else if (error.message && error.message.includes('voice name already exists')) {
@@ -657,7 +876,7 @@ function formatFileSize(bytes: number) {
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + sizes[i];
 }
 
 // 格式化时长
@@ -668,280 +887,465 @@ function formatDuration(seconds: number) {
 }
 </script>
 
-<style scoped>
-.voice-clone-container {
-  padding: 40rpx;
-  background: #f8f9fa;
+<style scoped lang="scss">
+.voice-clone-page {
   min-height: 100vh;
+  background: #fff;
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 60rpx;
-}
-
-.title {
-  display: block;
-  font-size: 48rpx;
-  font-weight: bold;
-  color: #1a1a1a;
-  margin-bottom: 20rpx;
-}
-
-.subtitle {
-  display: block;
-  font-size: 28rpx;
-  color: #666;
-  line-height: 1.5;
-}
-
-/* 合并区域样式 */
-.combined-section {
-  margin-bottom: 40rpx;
-  background: white;
+/* Tab 切换 - 按设计稿样式 */
+.tab-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 8rpx;
+  gap: 8rpx;
+  margin: 32rpx;
+  background: #F5F7FA;
   border-radius: 20rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
-  overflow: hidden;
 }
 
-.section-title-container {
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 14rpx 8rpx;
+  border-radius: 12rpx;
+  font-weight: 500;
+  font-size: 28rpx;
+  line-height: 40rpx;
   text-align: center;
-  padding: 30rpx;
-  border-bottom: 2rpx solid #f0f0f0;
+  letter-spacing: -0.006em;
+  color: #99A0AE;
+  transition: all 0.25s ease;
+
+  &.active {
+    background: #FFFFFF;
+    box-shadow: 0px 12rpx 20rpx rgba(14, 18, 27, 0.06), 0px 4rpx 8rpx rgba(14, 18, 27, 0.03);
+    color: #0E121B;
+  }
 }
 
-.section-title {
-  display: block;
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 12rpx;
-}
-
-.section-desc {
-  display: block;
-  font-size: 26rpx;
-  color: #666;
-  line-height: 1.4;
-}
-
-/* Tab切换区域 */
-.tab-container {
-  padding: 20rpx;
-}
-
-.is-active {
-  background: #335CFF;
-}
-
-.tab-content {
-  padding: 40rpx 20rpx;
-  text-align: center;
+/* 内容区域 */
+.content-area {
+  padding: 20rpx 32rpx 0;
 }
 
 /* 上传区域 */
-.upload-card {
-  text-align: center;
+.upload-section {
+  margin-bottom: 32rpx;
+}
+
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx 32rpx;
+  background: #FFFFFF;
+  box-shadow: 0px 4rpx 24rpx rgba(0, 0, 0, 0.1);
+  border-radius: 32rpx;
+  transition: all 0.3s;
+
+  &:active {
+    transform: scale(0.99);
+    box-shadow: 0px 2rpx 12rpx rgba(0, 0, 0, 0.08);
+  }
 }
 
 .upload-icon {
-  font-size: 80rpx;
-  margin-bottom: 30rpx;
+  position: relative;
+  width: 108rpx;
+  height: 108rpx;
+  margin-bottom: 24rpx;
+
+  /* 横线 */
+  &::before {
+    content: '';
+    position: absolute;
+    width: 67rpx;
+    height: 0;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-top: 8rpx solid #335CFF;
+  }
+
+  /* 竖线 */
+  &::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 67rpx;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-left: 8rpx solid #335CFF;
+  }
 }
 
-.upload-title {
-  display: block;
-  font-size: 36rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 20rpx;
+.plus-icon {
+  display: none;
 }
 
-.upload-desc {
-  display: block;
-  font-size: 26rpx;
-  color: #666;
-  margin-bottom: 40rpx;
-  line-height: 1.5;
+.upload-text {
+  font-weight: 400;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  color: #717784;
+  margin-bottom: 8rpx;
 }
 
-.action-btn {
+.upload-hint {
+  font-weight: 400;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  color: #99A0AE;
+}
+
+/* 文件预览卡片 */
+.file-preview-card {
+  background: #FFFFFF;
+  box-shadow: 0px 4rpx 24rpx rgba(0, 0, 0, 0.1);
+  border-radius: 32rpx;
+  padding: 40rpx 32rpx;
+}
+
+.file-info {
+  margin-bottom: 32rpx;
+}
+
+.file-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
+}
+
+.file-name {
+  font-weight: 500;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  color: #0E121B;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-wave-icon {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wave-img {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* 播放中的声波动画 */
+.wave-animation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+  height: 40rpx;
+}
+
+.audio-wave-icon .wave-bar {
+  width: 4rpx;
+  height: 100%;
+  background: #335CFF;
+  border-radius: 4rpx;
+  animation: wave-pulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes wave-pulse {
+  0% {
+    transform: scaleY(0.3);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+.file-size {
+  font-weight: 400;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  color: #717784;
+}
+
+.reselect-btn {
   width: 100%;
-  padding: 24rpx;
+  height: 88rpx;
+  background: #9DA4AE;
+  border-radius: 16rpx;
+  font-weight: 500;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  color: #FFFFFF;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    background: #8a919a;
+  }
 }
 
 /* 录音区域 */
-.record-icon {
-  font-size: 80rpx;
-  margin-bottom: 30rpx;
-  transition: all 0.3s ease;
+.record-section {
+  margin-bottom: 32rpx;
 }
 
-.record-icon.recording {
-  animation: pulse 1.5s infinite;
-  color: #ff3b30;
+.record-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 40rpx 32rpx;
+  gap: 40rpx;
+  background: #FFFFFF;
+  box-shadow: 0px 4rpx 24rpx rgba(0, 0, 0, 0.1);
+  border-radius: 32rpx;
 }
 
 .record-title {
   display: block;
-  font-size: 36rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 20rpx;
+  font-weight: 500;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  color: #0E121B;
+  margin-bottom: 8rpx;
 }
 
 .record-desc {
   display: block;
-  font-size: 26rpx;
-  color: #666;
-  margin-bottom: 40rpx;
-  line-height: 1.5;
-}
-
-.record-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20rpx;
+  font-weight: 400;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  color: #717784;
 }
 
 .record-btn {
-  padding: 24rpx;
-  font-size: 32rpx;
   width: 100%;
-  transition: all 0.3s ease;
-}
-
-.record-info {
-  margin-top: 30rpx;
-}
-
-.duration {
-  font-size: 28rpx;
-  color: #666;
-}
-
-/* 预览模式区域 */
-.preview-mode {
-  padding: 30rpx;
-}
-
-.preview-card {
-  background: white;
+  min-height: 96rpx;
+  height: 96rpx;
   border-radius: 16rpx;
-  padding: 30rpx;
-}
-
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30rpx;
-}
-
-.preview-title {
+  font-weight: 500;
   font-size: 32rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.play-btn {
-  background: transparent;
+  line-height: 44rpx;
   border: none;
-  font-size: 40rpx;
-  padding: 0;
-  margin: 0;
-  line-height: 1;
-}
-
-.audio-info {
-  padding: 30rpx;
-  background: #f8f9fa;
-  border-radius: 16rpx;
-  margin-bottom: 30rpx;
-}
-
-.file-info-row {
   display: flex;
   align-items: center;
-  gap: 20rpx;
-  margin-bottom: 10rpx;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+
+  &.primary {
+    background: #335CFF;
+    color: #FFFFFF;
+  }
 }
 
-.file-name {
+/* 音色名称输入 */
+.name-input-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 32rpx;
+  gap: 24rpx;
+  height: 108rpx;
+  box-sizing: border-box;
+  background: #FFFFFF;
+  box-shadow: 0px 4rpx 24rpx rgba(0, 0, 0, 0.1);
+  border-radius: 32rpx;
+  margin-bottom: 32rpx;
+}
+
+.input-label {
+  font-weight: 500;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  color: #0E121B;
+  flex-shrink: 0;
+}
+
+.name-input {
   flex: 1;
+  height: 44rpx;
+  font-weight: 400;
   font-size: 28rpx;
-  color: #333;
-  word-break: break-all;
-  /* padding-right: 20rpx; */
+  line-height: 44rpx;
+  color: #0E121B;
+
+  &::placeholder {
+    color: #717784;
+  }
 }
 
-.file-size {
-  display: block;
-  font-size: 24rpx;
-  color: #666;
+.clear-icon {
+  padding: 8rpx;
+  flex-shrink: 0;
 }
 
-.reselect-controls {
-  margin-top: 20rpx;
-}
-
-.no-audio-tip {
-  padding: 60rpx 0;
-  text-align: center;
-}
-
-.tip-icon {
-  display: block;
-  font-size: 60rpx;
-  margin-bottom: 20rpx;
-  color: #ccc;
-}
-
-.tip-text {
-  font-size: 28rpx;
-  color: #999;
-}
-
-/* 提交按钮区域 */
-.submit-section {
-  margin-top: 60rpx;
+/* 底部按钮 */
+.bottom-action {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+  background: #FFFFFF;
 }
 
 .submit-btn {
-  padding: 30rpx;
   width: 100%;
-  transition: all 0.3s ease;
-}
+  height: 96rpx;
+  border-radius: 200rpx;
+  font-weight: 500;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  border: none;
+  background: #F5F7FA;
+  color: #CACFD8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
 
-.submit-btn.disabled {
-  background: #ccc;
-  opacity: 0.7;
-}
-
-.submit-btn.loading {
-  opacity: 0.8;
-}
-
-.submit-tip {
-  text-align: center;
-  margin-top: 20rpx;
-}
-
-.tip-text {
-  font-size: 26rpx;
-  color: #ff3b30;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 1;
+  &.active {
+    background: #335CFF;
+    color: #FFFFFF;
   }
-  50% {
-    opacity: 0.6;
+
+  &.loading {
+    opacity: 0.7;
+  }
+}
+
+/* 录音弹窗 */
+.record-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  z-index: 9999;
+}
+
+.record-popup {
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 40rpx 32rpx;
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 48rpx;
+}
+
+.popup-title {
+  font-weight: 600;
+  font-size: 36rpx;
+  line-height: 50rpx;
+  color: #0E121B;
+}
+
+.popup-close {
+  padding: 8rpx;
+}
+
+.popup-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0;
+}
+
+/* 波形动画 */
+.waveform-container {
+  width: 100%;
+  height: 120rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+
+.waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  height: 100%;
+}
+
+.wave-bar {
+  width: 6rpx;
+  background: #E5E7EB;
+  border-radius: 6rpx;
+  transition: all 0.2s;
+
+  &.active {
+    background: linear-gradient(180deg, #335CFF 0%, #6B8CFF 100%);
+    animation: wave 0.8s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes wave {
+  0% {
+    transform: scaleY(0.4);
   }
   100% {
-    opacity: 1;
+    transform: scaleY(1);
   }
+}
+
+.record-time {
+  font-weight: 600;
+  font-size: 64rpx;
+  line-height: 90rpx;
+  color: #0E121B;
+  font-variant-numeric: tabular-nums;
+}
+
+.popup-action {
+  margin-top: 48rpx;
+}
+
+.popup-btn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 22rpx 40rpx;
+  gap: 17rpx;
+  width: 346rpx;
+  height: 88rpx;
+  background: #335CFF;
+  border-radius: 16rpx;
+  border: none;
+  font-weight: 500;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  color: #FFFFFF;
+  margin: 0 auto;
 }
 </style>

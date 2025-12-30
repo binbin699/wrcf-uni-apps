@@ -73,14 +73,11 @@ import { PageMap, Pages } from '@/utils/route';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useToast } from '@/uni_modules/wot-design-uni/components/wd-toast';
 import { useNotify } from '@/uni_modules/wot-design-uni';
-import { AppConfig } from '@/configs/';
 import { useDeviceScan } from '@/utils/useDeviceScan';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
-import { ENV } from '@/const/env';
 // @ts-ignore
 import { deviceApi } from '@/api/index.js';
 import CustomTabBar from '@/components/CustomTabBar.vue';
-import { APP_USE_VOICEPRINT } from '@/const/env';
 
 const toast = useToast();
 const { showNotify, closeNotify } = useNotify();
@@ -118,7 +115,7 @@ function setStatusBarHeight() {
   const systemInfo = uni.getSystemInfoSync();
   statusBarHeight.value = systemInfo.statusBarHeight || 44;
 }
-const setupMode = ENV.VITE_APP_SETUP_MODE || 'both';
+const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
 
 interface MenuItem {
   id: string;
@@ -155,7 +152,7 @@ const menuItems = computed(() => {
         handleScanAndBindDevice();
       }
     },
-    APP_USE_VOICEPRINT ? {
+    APP_CONFIG.APP_USE_VOICEPRINT ? {
       id: 'voice_manage',
       title: $t('profile.voice_manage'),
       icon: '/static/icons/voice-manage.svg',
@@ -164,7 +161,7 @@ const menuItems = computed(() => {
           url: PageMap[Pages.VoiceManage].url
         })
     } : undefined,
-    APP_USE_VOICEPRINT ? {
+    APP_CONFIG.APP_USE_VOICEPRINT ? {
       id: 'voice_clone',
       title: $t('profile.voice_clone'),
       icon: '/static/icons/voice-clone.svg',
@@ -177,13 +174,13 @@ const menuItems = computed(() => {
       id: 'user_agreement',
       title: $t('profile.user_agreement'),
       icon: '/static/icons/setting.svg',
-      handleClick: () => openExternal(AppConfig.current.TERMS_URL)
+      handleClick: () => openExternal(APP_CONFIG.TERMS_URL)
     },
     {
       id: 'privacy_policy',
       title: $t('profile.privacy_policy'),
       icon: '/static/icons/setting.svg',
-      handleClick: () => openExternal(AppConfig.current.PRIVACY_URL)
+      handleClick: () => openExternal(APP_CONFIG.PRIVACY_URL)
     }
   ];
 

@@ -282,7 +282,6 @@ import {
   PermissionStatus
 } from '@/utils/permission';
 import { useNotify } from '@/uni_modules/wot-design-uni';
-import { AppConfig } from '@/configs';
 
 const toast = useToast();
 const message = useMessage();
@@ -350,6 +349,7 @@ const progressPercent = ref(0);
 const showReverseQrPopup = ref(false);
 const reverseQrValue = ref('');
 const reverseQrImage = ref<string | null>(null);
+
 
 function nextStep() {
   switch (curStep.value) {
@@ -797,7 +797,7 @@ function cleanupWifiScan() {
 async function promptWifiPassword(ssid: string) {
   try {
     const result = await message.prompt({
-      title: $t('net_config.enter_password_title'),
+      title: ssid,
       inputType: 'password' as any,
       inputPlaceholder: $t('net_config.wifi_password_placeholder'),
       confirmButtonText: $t('common.confirm'),
@@ -1189,7 +1189,7 @@ function initAudioManager() {
       onError: (error, audio) => {
         isPlaying.value = false;
         console.error('音频播放失败:', error);
-        toast.warning({ msg: $t('device.voiceprint.play_failed') || '播放失败', duration: 2000 });
+        toast.warning({ msg: $t('device.voiceprint.play_failed'), duration: 2000 });
         // 停止进度更新并重置
         stopProgressUpdate();
         resetProgress();
@@ -1931,5 +1931,12 @@ watch(
       }
     }
   }
+}
+</style>
+
+<style lang="scss">
+/* 修改 message-box 密码输入框眼睛图标大小 */
+.wd-message-box {
+  --wot-input-icon-size: 20px;
 }
 </style>

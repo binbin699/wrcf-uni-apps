@@ -38,7 +38,6 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { AppConfig } from '@/configs/';
 import { usePrivacyStore } from '@/store/privacy';
 
 defineProps<{
@@ -65,14 +64,14 @@ function openExternal(src: string) {
  * 打开用户协议
  */
 function openTerms() {
-  openExternal(AppConfig.current.TERMS_URL);
+  openExternal(APP_CONFIG.TERMS_URL);
 }
 
 /**
  * 打开隐私政策
  */
 function openPrivacy() {
-  openExternal(AppConfig.current.PRIVACY_URL);
+  openExternal(APP_CONFIG.PRIVACY_URL);
 }
 
 /**

@@ -20,7 +20,8 @@
             <block v-if="messageState.type === 'prompt'">
               <wd-input
                 v-model="messageState.inputValue"
-                :type="messageState.inputType"
+                :type="(messageState.inputType as any) === 'password' ? 'text' : messageState.inputType"
+                :show-password="(messageState.inputType as any) === 'password'"
                 :size="messageState.inputSize"
                 :placeholder="messageState.inputPlaceholder"
                 @input="inputValChange"
