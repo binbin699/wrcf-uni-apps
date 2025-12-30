@@ -1,21 +1,29 @@
 import { createI18n } from 'vue-i18n';
 import zhHans from './zh-Hans.json';
 import en from './en.json';
+import ja from './ja.json';
+import ru from './ru.json';
 import { ref, type Ref } from 'vue';
 
 const messages = {
   zh: zhHans,
   'zh-Hans': zhHans,
-  en
+  en,
+  ja,
+  ru
 };
 
-type supportLang = 'zh-Hans' | 'en';
+type supportLang = 'zh-Hans' | 'en' | 'ja' | 'ru';
 
-// 只有简体中文使用中文，其他一律英文
+// 根据系统语言自动选择
 const systemLocale = uni.getLocale();
 const locale: Ref<supportLang> = ref(
   systemLocale === 'zh-Hans' || systemLocale === 'zh'
     ? 'zh-Hans'
+    : systemLocale === 'ja' || systemLocale === 'ja-JP'
+    ? 'ja'
+    : systemLocale === 'ru' || systemLocale === 'ru-RU'
+    ? 'ru'
     : 'en'
 );
 
