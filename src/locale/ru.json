@@ -743,6 +743,8 @@
   "agent_bind_drawer.cancel": "Отмена",
   "agent_bind_drawer.confirm": "Подтвердить",
   "agent_bind_drawer.add_device": "Добавить устройство",
+  "agent_bind_drawer.scan_add": "Сканировать",
+  "agent_bind_drawer.bluetooth_add": "Bluetooth",
   "agent_bind_drawer.confirm_bind": "Подтвердить",
   "agent_bind_drawer.bind_success": "Привязка успешна",
   "agent_bind_drawer.bind_failed": "Ошибка привязки",

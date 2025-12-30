@@ -743,6 +743,8 @@
   "agent_bind_drawer.cancel": "キャンセル",
   "agent_bind_drawer.confirm": "確認",
   "agent_bind_drawer.add_device": "デバイスを追加",
+  "agent_bind_drawer.scan_add": "スキャンで追加",
+  "agent_bind_drawer.bluetooth_add": "Bluetoothで追加",
   "agent_bind_drawer.confirm_bind": "確認",
   "agent_bind_drawer.bind_success": "バインド成功",
   "agent_bind_drawer.bind_failed": "バインド失敗",

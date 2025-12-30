@@ -48,24 +48,40 @@
 
       <!-- 底部按钮 -->
       <view class="drawer-footer">
-        <button class="footer-btn cancel-btn" @click="handleCancel">
-          {{ $t('agent_bind_drawer.cancel') }}
-        </button>
-        <!-- 有设备时显示确定按钮 -->
-        <button
-          v-if="deviceList.length > 0"
-          class="footer-btn confirm-btn"
-          @click="handleConfirm"
-          :disabled="!selectedDeviceId">
-          {{ $t('agent_bind_drawer.confirm') }}
-        </button>
-        <!-- 无设备时显示添加设备按钮 -->
-        <button
-          v-else
-          class="footer-btn confirm-btn"
-          @click="handleAddDevice">
-          {{ $t('agent_bind_drawer.add_device') }}
-        </button>
+        <!-- 有设备时：显示取消和确定按钮 -->
+        <template v-if="deviceList.length > 0">
+          <button class="footer-btn cancel-btn" @click="handleCancel">
+            {{ $t('agent_bind_drawer.cancel') }}
+          </button>
+          <button
+            class="footer-btn confirm-btn"
+            @click="handleConfirm"
+            :disabled="!selectedDeviceId">
+            {{ $t('agent_bind_drawer.confirm') }}
+          </button>
+        </template>
+        
+        <!-- 无设备时：根据 setupMode 显示不同按钮 -->
+        <template v-else>
+          <!-- both 模式：显示扫码添加和蓝牙添加两个按钮 -->
+          <template v-if="setupMode === 'both'">
+            <button class="footer-btn cancel-btn" @click="handleScanAdd">
+              {{ $t('agent_bind_drawer.scan_add') }}
+            </button>
+            <button class="footer-btn confirm-btn" @click="handleBluetoothAdd">
+              {{ $t('agent_bind_drawer.bluetooth_add') }}
+            </button>
+          </template>
+          <!-- qrcode/bluetooth 模式：显示取消和添加设备 -->
+          <template v-else>
+            <button class="footer-btn cancel-btn" @click="handleCancel">
+              {{ $t('agent_bind_drawer.cancel') }}
+            </button>
+            <button class="footer-btn confirm-btn" @click="handleAddDevice">
+              {{ $t('agent_bind_drawer.add_device') }}
+            </button>
+          </template>
+        </template>
       </view>
     </view>
   </view>
@@ -75,6 +91,8 @@
 import { PageMap, Pages } from '@/utils/route';
 import { agentApi, deviceApi } from '../api/index.js';
 import { gotoCreateAgentBy } from '@/pages/agent/create';
+import { requestCameraPermission, checkPermissionStatus, PermissionType, PermissionStatus, openPermissionSetting } from '@/utils/permission';
+import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 
 export default {
   name: 'AgentBindDrawer',
@@ -102,6 +120,11 @@ export default {
       deviceList: [],
       loading: false
     };
+  },
+  computed: {
+    setupMode() {
+      return APP_CONFIG.APP_SETUP_MODE || 'both';
+    }
   },
   methods: {
     selectDevice(device) {
@@ -213,18 +236,126 @@ export default {
       gotoCreateAgentBy(this.agent);
     },
 
-    handleAddDevice() {
-      const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
-      // 跳转到添加设备/网络配置页面
-      const url =
-        setupMode === 'bluetooth'
-          ? PageMap[Pages.BluetoothConfig].url
-          : PageMap[Pages.NetConfig].url;
-
+    // 蓝牙添加设备
+    handleBluetoothAdd() {
       uni.navigateTo({
-        url: url
+        url: PageMap[Pages.BluetoothConfig].url
       });
       this.$emit('update:visible', false);
+    },
+
+    // 扫码添加设备
+    async handleScanAdd() {
+      this.$emit('update:visible', false);
+      
+      try {
+        // iOS 特殊处理
+        if (uni.getSystemInfoSync().platform === 'ios') {
+          const status = await checkPermissionStatus(PermissionType.CAMERA);
+          if (status === PermissionStatus.DENIED) {
+            uni.showModal({
+              title: this.$t('common.tip'),
+              content: this.$t('permission.camera_denied_guide'),
+              confirmText: this.$t('common.go_to_setting'),
+              cancelText: this.$t('common.cancel'),
+              success: (res) => {
+                if (res.confirm) {
+                  openPermissionSetting();
+                }
+              }
+            });
+            return;
+          }
+        } else {
+          // 非 iOS 平台请求相机权限
+          const permissionResult = await requestCameraPermission({}, true);
+          if (!permissionResult.granted) {
+            return;
+          }
+        }
+
+        // 扫码
+        uni.scanCode({
+          scanType: ['qrCode'],
+          autoZoom: false,
+          success: async (res) => {
+            // 解析二维码数据
+            let qrcodeData;
+            try {
+              qrcodeData = JSON.parse(res.result);
+            } catch (error) {
+              console.error('JSON解析错误:', error);
+              uni.showToast({
+                title: this.$t('net_config.invalid_qr'),
+                icon: 'none',
+                duration: 2000
+              });
+              return;
+            }
+
+            // 检查 s 和 m 字段是否存在
+            if (!qrcodeData || !qrcodeData.s || !qrcodeData.m) {
+              uni.showToast({
+                title: this.$t('net_config.invalid_qr'),
+                icon: 'none',
+                duration: 2000
+              });
+              return;
+            }
+
+            try {
+              uni.showLoading({ title: this.$t('net_config.binding_device') });
+
+              // 调用绑定设备接口
+              const result = await deviceApi.bindByQrcode(qrcodeData);
+              if (result && result.code === 1000) {
+                console.log('设备绑定成功', result);
+                updateSquareTabBadge();
+              } else {
+                throw new Error(result?.message || this.$t('net_config.device_bind_fail'));
+              }
+
+              uni.hideLoading();
+              uni.showToast({
+                title: this.$t('net_config.device_bind_success'),
+                icon: 'success',
+                duration: 1500
+              });
+
+              // 绑定成功，跳转到配网页面
+              setTimeout(() => {
+                uni.navigateTo({
+                  url: PageMap[Pages.NetConfig].url + '?bound=1'
+                });
+              }, 1500);
+            } catch (error) {
+              console.error('设备绑定失败:', error);
+              uni.hideLoading();
+              uni.showToast({
+                title: error.message || this.$t('net_config.device_bind_failed'),
+                icon: 'none',
+                duration: 2000
+              });
+            }
+          },
+          fail: (err) => {
+            if (err.errMsg !== 'scanCode:fail cancel') {
+              console.error('扫码失败:', err);
+            }
+          }
+        });
+      } catch (error) {
+        console.error('扫码流程异常', error);
+      }
+    },
+
+    // 添加设备（根据 setupMode 调用对应方法）
+    handleAddDevice() {
+      if (this.setupMode === 'bluetooth') {
+        this.handleBluetoothAdd();
+      } else {
+        this.handleScanAdd();
+      }
     }
   },
 

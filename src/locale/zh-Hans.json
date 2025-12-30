@@ -723,6 +723,8 @@
   "agent_bind_drawer.cancel": "取消",
   "agent_bind_drawer.confirm": "确定",
   "agent_bind_drawer.add_device": "添加设备",
+  "agent_bind_drawer.scan_add": "扫码添加",
+  "agent_bind_drawer.bluetooth_add": "蓝牙添加",
   "agent_bind_drawer.confirm_bind": "确认绑定此设备",
   "agent_bind_drawer.bind_success": "绑定成功",
   "agent_bind_drawer.bind_failed": "绑定失败",

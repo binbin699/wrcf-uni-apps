@@ -724,6 +724,8 @@
   "agent_bind_drawer.cancel": "Cancel",
   "agent_bind_drawer.confirm": "Confirm",
   "agent_bind_drawer.add_device": "Add Device",
+  "agent_bind_drawer.scan_add": "Scan to Add",
+  "agent_bind_drawer.bluetooth_add": "Bluetooth Add",
   "agent_bind_drawer.confirm_bind": "Confirm",
   "agent_bind_drawer.bind_success": "Binding successful",
   "agent_bind_drawer.bind_failed": "Binding failed",
