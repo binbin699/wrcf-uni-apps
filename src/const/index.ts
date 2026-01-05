@@ -8,13 +8,23 @@
  * - androidApiLevel: Android API 级别（仅 Android）
  */
 
-import { PLATFORM, OS, OS_VERSION, ANDROID_API_LEVEL } from './env';
+import { OsType, PLATFORM, detectOsType, detectOsVersion, getAndroidApiLevel } from './env';
 
 export const AppInfo = {
   platform: PLATFORM,
-  os: OS,
-  osVersion: OS_VERSION,
-  androidApiLevel: ANDROID_API_LEVEL,
+
+  // 添加这些属性作为 getter
+  get os(): OsType {
+    return detectOsType();
+  },
+
+  get osVersion(): string {
+    return detectOsVersion();
+  },
+
+  get androidApiLevel(): number | undefined {
+    return getAndroidApiLevel();
+  },
 
   /**
    * 判断是否为 App 平台
@@ -27,21 +37,21 @@ export const AppInfo = {
    * 判断是否为 Android App 平台
    */
   isAndroidApp: (): boolean => {
-    return PLATFORM === 'app' && OS === 'android';
+    return PLATFORM === 'app' && detectOsType() === 'android';
   },
 
   /**
    * 判断是否为 iOS App 平台
    */
   isIOSApp: (): boolean => {
-    return PLATFORM === 'app' && OS === 'ios';
+    return PLATFORM === 'app' && detectOsType() === 'ios';
   },
 
   /**
    * 判断是否为鸿蒙 App 平台
    */
   isHarmonyApp: (): boolean => {
-    return PLATFORM === 'app' && OS === 'harmony';
+    return PLATFORM === 'app' && detectOsType() === 'harmony';
   },
 
   /**
