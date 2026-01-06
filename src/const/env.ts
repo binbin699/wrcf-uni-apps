@@ -76,13 +76,9 @@ export function detectOsType(): OsType {
     if (osName === 'windows') cachedOsType = 'windows';
     if (osName === 'mac') cachedOsType = 'mac';
     if (osName === 'linux') cachedOsType = 'linux';
-    // 未识别的情况
-    cachedOsType = 'unknown';
   } catch (e) {
-    // 兜底：无法获取系统信息时默认 unknown
-    cachedOsType = 'unknown';
   }
-  return cachedOsType!;
+  return cachedOsType || 'unknown';
 }
 
 
