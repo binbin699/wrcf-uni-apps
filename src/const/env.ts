@@ -34,10 +34,6 @@ PLATFORM = 'mp';
 
 export { PLATFORM };
 
-// @ts-ignore
-export const isApp = PLATFORM === 'app';
-export const isMp = PLATFORM === 'mp';
-
 // 参考：https://en.uniapp.dcloud.io/uni-app-x/api/get-system-info.html
 export type OsType = 'android' | 'ios' | 'harmony' | 'windows' | 'mac' | 'linux' | 'unknown';
 
@@ -54,9 +50,14 @@ function getSystemInfoSafe(): any {
   return cachedSys;
 }
 
-function detectOsType(): OsType {
+let cachedOsType: OsType | undefined = undefined;
+
+export function detectOsType(): OsType {
+  if (cachedOsType !== undefined) return cachedOsType;
+
   // #ifdef APP-HARMONY || MP-HARMONY
-  return 'harmony';
+  cachedOsType = 'harmony';
+  return cachedOsType;
   // #endif
 
   try {
@@ -66,46 +67,50 @@ function detectOsType(): OsType {
 
     // 华为鸿蒙设备在部分场景下 osName 可能仍为 android，可通过 romName 识别
     if (romName.includes('harmony') || romName.includes('hongmeng')) {
-      return 'harmony';
+      cachedOsType = 'harmony';
+      return cachedOsType!;
     }
 
-    if (osName === 'ios') return 'ios';
-    if (osName === 'android') return 'android';
-    if (osName === 'windows') return 'windows';
-    if (osName === 'mac') return 'mac';
-    if (osName === 'linux') return 'linux';
-    // 未识别的情况
-    return 'unknown';
+    if (osName === 'ios') cachedOsType = 'ios';
+    if (osName === 'android') cachedOsType = 'android';
+    if (osName === 'windows') cachedOsType = 'windows';
+    if (osName === 'mac') cachedOsType = 'mac';
+    if (osName === 'linux') cachedOsType = 'linux';
   } catch (e) {
-    // 兜底：无法获取系统信息时默认 unknown
-    return 'unknown';
   }
+  return cachedOsType || 'unknown';
 }
 
-export const OS: OsType = detectOsType();
-export const isHarmony = OS === 'harmony';
 
 // 系统版本号获取：
 // - Harmony 优先使用 romVersion
 // - iOS/Android 使用 osVersion
-function detectOsVersion(): string {
+let cachedOsVersion: string | null = null;
+
+export function detectOsVersion(): string {
+  if (cachedOsVersion) return cachedOsVersion;
+
   const sys: any = getSystemInfoSafe();
   const osVersion = String(sys?.osVersion || '');
   const romName = String(sys?.romName || '').toLowerCase();
   const romVersion = String(sys?.romVersion || '');
 
   if (romName.includes('harmony') || romName.includes('hongmeng')) {
-    return romVersion || osVersion;
+    cachedOsVersion = romVersion || osVersion;
+    return cachedOsVersion;
   }
-  return osVersion;
+  cachedOsVersion = osVersion;
+  return cachedOsVersion;
 }
 
-export const OS_VERSION: string = detectOsVersion();
+let cachedAndroidApiLevel: number | undefined = undefined;
+export function getAndroidApiLevel(): number | undefined {
+  if (cachedAndroidApiLevel !== undefined) return cachedAndroidApiLevel;
+  if (detectOsType() !== 'android') return undefined;
 
-// Android 平台的 API Level（仅 Android 有值）
-export const ANDROID_API_LEVEL: number | undefined = (() => {
-  if (OS !== 'android') return undefined;
   const sys: any = getSystemInfoSafe();
   const level = sys?.osAndroidAPILevel;
-  return typeof level === 'number' ? level : undefined;
-})();
+  cachedAndroidApiLevel = typeof level === 'number' ? level : undefined;
+
+  return cachedAndroidApiLevel;
+}
