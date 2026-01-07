@@ -28,7 +28,9 @@ const initialState = {
   sequenceNumber: 0,
   // 重新开始相关状态
   isRestarting: false,
-  restartReason: null
+  restartReason: null,
+  // 仅配网模式（不绑定设备）
+  configOnly: false
 };
 
 /**
@@ -248,6 +250,14 @@ class BluetoothConfigManager {
    */
   setIsIOS(isIOS) {
     this.updateState({ isIOS });
+  }
+
+  /**
+   * 设置仅配网模式（不绑定设备）
+   * @param {boolean} configOnly - 是否仅配网
+   */
+  setConfigOnly(configOnly) {
+    this.updateState({ configOnly });
   }
 
   /**

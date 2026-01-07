@@ -127,7 +127,6 @@
             showManualConfig ? $t('net_config.hide_manual_config') : $t('net_config.manual_config')
           }}
         </button>
-        <view class="mt-20 tips h-fit">{{ $t('net_config.generate_tip') }}</view>
       </view>
 
       <!-- 声波配置区域 -->
@@ -137,7 +136,7 @@
           <wd-icon name="qrcode" size="28px" />
         </view>
         <view class="section-title">{{ $t('net_config.sound_wave_config') }}</view>
-        <view class="section-desc">{{ $t('net_config.sound_wave_config_desc') }}</view>
+        <view class="section-desc-large">{{ $t('net_config.sound_wave_config_desc') }}</view>
 
         <!-- WiFi信息显示 -->
         <view class="wifi-info mt-20">
@@ -193,10 +192,38 @@
             {{ $t('common.next_step') }}
           </wd-button>
         </view>
-
-        <view class="mt-20 tips h-fit">{{ $t('net_config.generate_tip') }}</view>
       </view>
 
+    </view>
+    
+    <!-- 配网操作指引弹窗 -->
+    <view v-if="showGuidePopup" class="guide-modal-overlay" @click.stop>
+      <view class="guide-modal">
+        <view class="guide-content">
+          <view class="guide-notice">
+            <text>{{ $t('net_config.guide_notice') }}</text>
+          </view>
+          
+          <view class="guide-section">
+            <view class="guide-section-title">
+              <text class="guide-number">1</text>
+              <text class="guide-label">{{ $t('net_config.guide_soundwave_title') }}</text>
+            </view>
+            <text class="guide-desc">{{ $t('net_config.guide_soundwave_desc') }}</text>
+          </view>
+          
+          <view class="guide-section">
+            <view class="guide-section-title">
+              <text class="guide-number">2</text>
+              <text class="guide-label">{{ $t('net_config.guide_qrcode_title') }}</text>
+            </view>
+            <text class="guide-desc">{{ $t('net_config.guide_qrcode_desc') }}</text>
+          </view>
+        </view>
+        <view class="guide-actions">
+          <button class="guide-btn" @click="closeGuidePopup">{{ $t('common.i_know') }}</button>
+        </view>
+      </view>
     </view>
     
     <!-- 反扫二维码配网弹窗 -->
@@ -350,6 +377,12 @@ const showReverseQrPopup = ref(false);
 const reverseQrValue = ref('');
 const reverseQrImage = ref<string | null>(null);
 
+// 配网操作指引弹窗状态
+const showGuidePopup = ref(false);
+
+function closeGuidePopup() {
+  showGuidePopup.value = false;
+}
 
 function nextStep() {
   switch (curStep.value) {
@@ -845,8 +878,12 @@ watch(
       if (!isIOS.value) {
         startWifiScan();
       }
-    } else if (previousStep === QR_CONFIG_STEP.config_wifi) {
-      cleanupWifiScan();
+    } else if (step === QR_CONFIG_STEP.device_config_wifi) {
+      // 进入声波配网页面时显示操作指引弹窗
+      showGuidePopup.value = true;
+      if (previousStep === QR_CONFIG_STEP.config_wifi) {
+        cleanupWifiScan();
+      }
     }
   }
 );
@@ -1402,6 +1439,43 @@ watch(
   margin-bottom: 20px;
 }
 
+.section-desc-large {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.soundwave-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  
+  .section-title {
+    margin-bottom: 0;
+  }
+  
+  .wifi-band-tip {
+    font-size: 12px;
+    color: #FA8C16;
+    background-color: #FFF7E6;
+    padding: 4px 10px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+}
+
+.wifi-tip {
+  padding: 12px 16px;
+  background-color: #FFF7E6;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #FA8C16;
+  line-height: 1.5;
+}
+
 .section-header {
   display: flex;
   align-items: flex-start;
@@ -1817,6 +1891,117 @@ watch(
     background-color: #fff;
     border: 2rpx solid #335CFF;
     border-radius: 8rpx;
+  }
+}
+
+// 配网操作指引弹窗样式
+.guide-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 40rpx;
+}
+
+.guide-modal {
+  width: 100%;
+  max-width: 600rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.3);
+  
+  .guide-content {
+    padding: 40rpx 32rpx 24rpx;
+    max-height: 70vh;
+    overflow-y: auto;
+    
+    .guide-notice {
+      padding: 20rpx 24rpx;
+      background-color: #FFF7E6;
+      border-radius: 12rpx;
+      margin-bottom: 32rpx;
+      
+      text {
+        font-size: 30rpx;
+        color: #FA8C16;
+        line-height: 1.6;
+      }
+    }
+    
+    .guide-section {
+      margin-bottom: 32rpx;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .guide-section-title {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16rpx;
+        
+        .guide-number {
+          width: 44rpx;
+          height: 44rpx;
+          border-radius: 50%;
+          background-color: #335CFF;
+          color: #fff;
+          font-size: 28rpx;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 16rpx;
+          flex-shrink: 0;
+        }
+        
+        .guide-label {
+          font-size: 34rpx;
+          font-weight: 600;
+          color: #333;
+        }
+      }
+      
+      .guide-desc {
+        font-size: 30rpx;
+        color: #666;
+        line-height: 1.8;
+        padding-left: 60rpx;
+      }
+    }
+  }
+  
+  .guide-actions {
+    display: flex;
+    border-top: 1rpx solid #f0f0f0;
+    
+    .guide-btn {
+      flex: 1;
+      height: 100rpx;
+      line-height: 100rpx;
+      text-align: center;
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #007AFF;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      
+      &::after {
+        border: none;
+      }
+      
+      &:active {
+        background: #f0f7ff;
+      }
+    }
   }
 }
 

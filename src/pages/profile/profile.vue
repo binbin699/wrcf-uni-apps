@@ -145,11 +145,30 @@ const menuItems = computed(() => {
         })
     },
     {
+      id: 'wifi_config_bluetooth',
+      title: $t('profile.wifi_config_bluetooth'),
+      icon: '/static/icons/bluetooth-config.svg',
+      handleClick: () =>
+        uni.navigateTo({
+          url: PageMap[Pages.BluetoothConfig].url + '?configOnly=1'
+        })
+    },
+    {
       id: 'net_config',
       title: $t('profile.net_config'),
       icon: '/static/icons/scan-qrcode.svg',
       handleClick: () => {
         handleScanAndBindDevice();
+      }
+    },
+    {
+      id: 'wifi_config_qrcode',
+      title: $t('profile.wifi_config_qrcode'),
+      icon: '/static/icons/wifi-config.svg',
+      handleClick: () => {
+        uni.navigateTo({
+          url: PageMap[Pages.NetConfig].url + '?bound=1'
+        });
       }
     },
     APP_CONFIG.APP_USE_VOICEPRINT ? {
@@ -186,7 +205,9 @@ const menuItems = computed(() => {
 
   return items.filter(item => item !== undefined).filter((item) => {
     if (setupMode === 'qrcode' && item.id === 'bluetooth_config') return false;
+    if (setupMode === 'qrcode' && item.id === 'wifi_config_bluetooth') return false;
     if (setupMode === 'bluetooth' && item.id === 'net_config') return false;
+    if (setupMode === 'bluetooth' && item.id === 'wifi_config_qrcode') return false;
     return true;
   });
 });

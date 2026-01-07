@@ -92,8 +92,8 @@ watch(
 );
 
 // 生命周期钩子
-onLoad(() => {
-  console.log('BluetoothConfig 页面加载');
+onLoad((options) => {
+  console.log('BluetoothConfig 页面加载', options);
 
   // 检测设备类型
   const systemInfo = uni.getSystemInfoSync();
@@ -110,6 +110,13 @@ onLoad(() => {
 
   // 初始化状态
   bluetoothConfigManager.resetState();
+  
+  // 设置仅配网模式（从 URL 参数读取）
+  if (options?.configOnly === '1') {
+    bluetoothConfigManager.setConfigOnly(true);
+    console.log('仅配网模式已启用');
+  }
+  
   state.value = bluetoothConfigManager.getState();
 
   console.log('初始状态:', {
