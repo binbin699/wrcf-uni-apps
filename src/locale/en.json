@@ -843,5 +843,13 @@
   "privacy_modal.summary": "By clicking \"Agree\", you confirm that you have read and agree to the above agreements. If you do not agree, we regret that we will not be able to provide services to you.",
   "privacy_modal.agree": "Agree",
   "privacy_modal.disagree": "Disagree",
-  "privacy_modal.exit_tip": "You need to agree to the User Agreement and Privacy Policy to use this app"
+  "privacy_modal.exit_tip": "You need to agree to the User Agreement and Privacy Policy to use this app",
+
+  "uni.scanCode.title": "Scan QR Code",
+  "uni.scanCode.album": "Album",
+  "uni.scanCode.fail": "Recognition failed",
+  "uni.scanCode.flash.on": "Tap to turn on",
+  "uni.scanCode.flash.off": "Tap to turn off",
+
+  "uni.app.quit": "Press again to exit"
 }

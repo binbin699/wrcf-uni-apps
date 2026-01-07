@@ -14,7 +14,15 @@ type Platform = 'mp-weixin' | 'app-ios' | 'app-android' | 'app-harmony';
  */
 export default function getAppConfig(platform: Platform, appEdition: 'full' | 'cn' | 'intl'): Record<string, any> {
   // 基础 API 地址
-  const BASE_API_URL = appEdition === 'intl' ? 'http://204.141.229.218:8001' : 'http://111.62.241.103:8001';
+  let BASE_API_URL: string;
+  
+  if (platform === 'mp-weixin') {
+    // 微信小程序使用 HTTPS 线上服务器
+    BASE_API_URL = 'https://lingxiwmp.qiniu.com/user';
+  } else {
+    // App 端根据版本选择服务器
+    BASE_API_URL = appEdition === 'intl' ? 'http://204.141.229.218:8001' : 'http://111.62.241.103:8001';
+  }
 
   // 是否支持微信小程序手机号登录
   const SUPPORT_LOGIN_TYPE_WX_MP_PHONE = appEdition === 'cn' || appEdition === 'full';
@@ -50,12 +58,12 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
   // 可选值: qrcode, bluetooth, both (不填默认为 both)
   const APP_SETUP_MODE = 'both';
 
-  // 是否支持声纹
-  const APP_USE_VOICEPRINT = true;
+  // 是否支持声纹（微信小程序不支持）
+  const APP_USE_VOICEPRINT = platform !== 'mp-weixin';
 
-  // 用户协议和隐私政策 URL
-  const TERMS_URL = 'https://www.qiniu.com/agreements/user-agreement';
-  const PRIVACY_URL = 'https://www.qiniu.com/agreements/privacy-right';
+  // 用户协议和隐私政策 URL（微信小程序不显示）
+  const TERMS_URL = platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/user-agreement';
+  const PRIVACY_URL = platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/privacy-right';
 
   // Google 授权登录，海外版需要配置 Google Client ID
   const GOOGLE_OAUTH_CLIENT_ID_WEB =

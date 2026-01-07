@@ -170,18 +170,18 @@ const menuItems = computed(() => {
           url: PageMap[Pages.VoiceClone].url
         })
     } : undefined,
-    {
+    APP_CONFIG.TERMS_URL ? {
       id: 'user_agreement',
       title: $t('profile.user_agreement'),
       icon: '/static/icons/setting.svg',
       handleClick: () => openExternal(APP_CONFIG.TERMS_URL)
-    },
-    {
+    } : undefined,
+    APP_CONFIG.PRIVACY_URL ? {
       id: 'privacy_policy',
       title: $t('profile.privacy_policy'),
       icon: '/static/icons/setting.svg',
       handleClick: () => openExternal(APP_CONFIG.PRIVACY_URL)
-    }
+    } : undefined
   ];
 
   return items.filter(item => item !== undefined).filter((item) => {
@@ -199,9 +199,8 @@ onLoad(() => {
 
 onShow(() => {
   updateSquareTabBadge();
-  // #ifdef APP-PLUS
+  // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
-  // #endif
 });
 
 // 刷新用户信息

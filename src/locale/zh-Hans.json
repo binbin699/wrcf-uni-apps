@@ -842,5 +842,13 @@
   "privacy_modal.summary": "点击\"同意\"即表示您已阅读并同意上述协议。如您不同意，我们将无法为您提供服务。",
   "privacy_modal.agree": "同意",
   "privacy_modal.disagree": "不同意",
-  "privacy_modal.exit_tip": "您需要同意用户协议与隐私政策才能使用本应用"
+  "privacy_modal.exit_tip": "您需要同意用户协议与隐私政策才能使用本应用",
+
+  "uni.scanCode.title": "扫一扫",
+  "uni.scanCode.album": "相册",
+  "uni.scanCode.fail": "识别失败",
+  "uni.scanCode.flash.on": "轻触照亮",
+  "uni.scanCode.flash.off": "轻触关闭",
+
+  "uni.app.quit": "再按一次退出应用"
 }

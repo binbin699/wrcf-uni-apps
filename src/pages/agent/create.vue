@@ -101,7 +101,7 @@
       :visible="voiceSelectorVisible"
       :voices="voiceOptions"
       :defaultVoice="selectedVoice"
-      :isOnTabbarPage="true"
+      :isOnTabbarPage="false"
       :fixedLanguage="currentVoiceLanguage"
       @close="hideVoiceSelector"
       @confirm="onVoiceSelected" />
@@ -222,14 +222,10 @@ watch(
 );
 
 onShow(async () => {
-  // #ifdef APP-PLUS
+  // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
-  // #endif
   await checkTemplate();
   updateSquareTabBadge();
-  // #ifdef APP-PLUS
-  uni.hideTabBar({ animation: false });
-  // #endif
 });
 
 function setStatusBarHeight() {

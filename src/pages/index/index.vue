@@ -219,9 +219,8 @@ onShow(() => {
   checkDeviceBinding();
   updateNavigationTitle();
   updateSquareTabBadge();
-  // #ifdef APP-PLUS
+  // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
-  // #endif
 });
 
 watch(

@@ -13,10 +13,10 @@
           <text class="content-text">{{ $t('privacy_modal.content') }}</text>
           
           <!-- 协议链接 -->
-          <view class="links-container">
-            <text class="link-text" @click="openTerms">{{ $t('login.user_agreement') }}</text>
-            <text class="link-separator">{{ $t('login.terms_and') }}</text>
-            <text class="link-text" @click="openPrivacy">{{ $t('login.privacy_policy') }}</text>
+          <view class="links-container" v-if="appConfig.TERMS_URL || appConfig.PRIVACY_URL">
+            <text v-if="appConfig.TERMS_URL" class="link-text" @click="openTerms">{{ $t('login.user_agreement') }}</text>
+            <text v-if="appConfig.TERMS_URL && appConfig.PRIVACY_URL" class="link-separator">{{ $t('login.terms_and') }}</text>
+            <text v-if="appConfig.PRIVACY_URL" class="link-text" @click="openPrivacy">{{ $t('login.privacy_policy') }}</text>
           </view>
 
           <text class="content-summary">{{ $t('privacy_modal.summary') }}</text>
@@ -51,6 +51,7 @@ const emit = defineEmits<{
 
 const { t: $t } = useI18n();
 const privacyStore = usePrivacyStore();
+const appConfig = APP_CONFIG;
 
 /**
  * 打开外部链接

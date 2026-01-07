@@ -276,7 +276,7 @@
   "profile.logout_confirm_title": "Подсказка",
   "profile.logout_confirm_content": "Вы уверены, что хотите выйти?",
   "profile.logout_success": "Выход выполнен",
-  "profile.scancode_config": "Настройка сканирования",
+  "profile.scancode_config": "Настройка через QR-код",
   "profile.net_config": "Добавить через QR-код",
   "profile.voiceprint_config": "Настройка голосовой подписи",
 
@@ -863,6 +863,14 @@
   "privacy_modal.summary": "Нажимая «Согласен», вы подтверждаете, что прочитали и согласны с вышеуказанными соглашениями. Если вы не согласны, мы, к сожалению, не сможем предоставить вам услуги.",
   "privacy_modal.agree": "Согласен",
   "privacy_modal.disagree": "Не согласен",
-  "privacy_modal.exit_tip": "Для использования этого приложения необходимо согласиться с пользовательским соглашением и политикой конфиденциальности"
+  "privacy_modal.exit_tip": "Для использования этого приложения необходимо согласиться с пользовательским соглашением и политикой конфиденциальности",
+
+  "uni.scanCode.title": "Сканировать QR-код",
+  "uni.scanCode.album": "Альбом",
+  "uni.scanCode.fail": "Ошибка распознавания",
+  "uni.scanCode.flash.on": "Нажмите, чтобы включить",
+  "uni.scanCode.flash.off": "Нажмите, чтобы выключить",
+
+  "uni.app.quit": "Нажмите ещё раз для выхода"
 }
 

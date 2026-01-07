@@ -276,7 +276,7 @@
   "profile.logout_confirm_title": "ヒント",
   "profile.logout_confirm_content": "ログアウトしますか？",
   "profile.logout_success": "ログアウトしました",
-  "profile.scancode_config": "スキャン設定",
+  "profile.scancode_config": "QRコード設定",
   "profile.net_config": "QRコードで追加",
   "profile.voiceprint_config": "声紋設定",
 
@@ -863,6 +863,14 @@
   "privacy_modal.summary": "「同意する」をクリックすると、上記の規約を読んで同意したことを確認します。同意しない場合、残念ながらサービスを提供することができません。",
   "privacy_modal.agree": "同意する",
   "privacy_modal.disagree": "同意しない",
-  "privacy_modal.exit_tip": "このアプリを使用するには、利用規約とプライバシーポリシーに同意する必要があります"
+  "privacy_modal.exit_tip": "このアプリを使用するには、利用規約とプライバシーポリシーに同意する必要があります",
+
+  "uni.scanCode.title": "QRコードスキャン",
+  "uni.scanCode.album": "アルバム",
+  "uni.scanCode.fail": "認識失敗",
+  "uni.scanCode.flash.on": "タップして点灯",
+  "uni.scanCode.flash.off": "タップして消灯",
+
+  "uni.app.quit": "もう一度押すと終了します"
 }
 

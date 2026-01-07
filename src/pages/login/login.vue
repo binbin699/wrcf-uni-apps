@@ -167,8 +167,8 @@
       </view>
     </view>
 
-    <!-- 用户协议与隐私政策 -->
-    <view class="terms-row">
+    <!-- 用户协议与隐私政策（URL 为空时隐藏） -->
+    <view class="terms-row" v-if="appConfig.TERMS_URL || appConfig.PRIVACY_URL">
       <view class="terms-checkbox" @click="agreeChecked = !agreeChecked">
         <view :class="['terms-box', agreeChecked ? 'checked' : '']">
           <text v-if="agreeChecked">✓</text>
@@ -176,9 +176,9 @@
       </view>
       <view class="terms-text">
         {{ $t('login.agree_terms_prefix') }}
-        <text class="terms-link" @click="openTerms">{{ $t('login.user_agreement') }}</text>
-        {{ $t('login.terms_and') }}
-        <text class="terms-link" @click="openPrivacy">{{ $t('login.privacy_policy') }}</text>
+        <text v-if="appConfig.TERMS_URL" class="terms-link" @click="openTerms">{{ $t('login.user_agreement') }}</text>
+        <template v-if="appConfig.TERMS_URL && appConfig.PRIVACY_URL">{{ $t('login.terms_and') }}</template>
+        <text v-if="appConfig.PRIVACY_URL" class="terms-link" @click="openPrivacy">{{ $t('login.privacy_policy') }}</text>
       </view>
     </view>
 
@@ -389,7 +389,9 @@ const showSmsModal = ref(false);
 // #endif
 
 // 用户是否同意协议（用于展示/跳转，默认不勾选以满足合规性）
-const agreeChecked = ref(false);
+// 如果协议 URL 都为空（不显示勾选框），默认已同意；否则需要用户勾选
+const initialAgreeStatus = !APP_CONFIG.TERMS_URL && !APP_CONFIG.PRIVACY_URL;
+const agreeChecked = ref(initialAgreeStatus);
 
 function openExternal(src: string) {
   const encoded = encodeURIComponent(src);
