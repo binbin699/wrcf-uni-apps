@@ -118,6 +118,11 @@ export const agentApi = {
   // 获取模板智能体列表
   getTemplateAgents() {
     return request.get('/app/agent/templates');
+  },
+
+  // 优化提示词（灵矽平台AI处理需要较长时间，设置60秒超时，禁用默认loading）
+  optimizePrompt(data) {
+    return request.post('/app/agent/optimize-prompt', data, { timeout: 60000, showLoading: false });
   }
 };
 

@@ -248,7 +248,7 @@ class Request {
     // 兼容旧调用方式：request.get(url, data)
     // 新调用方式：request.get(url, { data, headers })
     const hasHeaders = options && typeof options === 'object' && ('headers' in options || 'data' in options);
-    
+
     if (hasHeaders) {
       return this.request<T>({
         url,
@@ -267,12 +267,21 @@ class Request {
 
   /**
    * POST请求
+   * @param url 请求地址
+   * @param data 请求数据
+   * @param options 可选参数，包括 timeout、showLoading 等
    */
-  post<T = any>(url: string, data: any = {}): Promise<RequestResponse<T>> {
+  post<T = any>(
+    url: string,
+    data: any = {},
+    options?: { timeout?: number; showLoading?: boolean }
+  ): Promise<RequestResponse<T>> {
     return this.request<T>({
       url,
       method: 'POST',
-      data
+      data,
+      timeout: options?.timeout,
+      showLoading: options?.showLoading
     });
   }
 

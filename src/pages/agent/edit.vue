@@ -13,12 +13,11 @@
 
       <view class="form-item">
         <text class="label">{{ $t('edit_agent.agent_description') }}</text>
-        <textarea
-          class="textarea"
+        <AgentPromptPolish
           v-model="formData.systemPrompt"
-          :placeholder="$t('edit_agent.agent_description_placeholder')"
-          maxlength="2000"
-          auto-height />
+          class="agent-prompt-polish"
+          placeholder-key="edit_agent.agent_description_placeholder"
+        />
       </view>
 
       <view class="form-item">
@@ -106,6 +105,7 @@ import { onLoad } from '@dcloudio/uni-app';
 import type { LLM, Voice } from '@/pages/agent/types';
 import { relocalizeLLMOptions } from './llm';
 import { getChatLanguageOptions, langCodeToVoiceLanguage } from './lang_opts';
+import AgentPromptPolish from './components/AgentPromptPolish.vue';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
@@ -119,6 +119,7 @@ const formData = ref({
   langCode: 'zh_CN',
   language: '中文'
 });
+
 const updating = ref(false);
 const loadingVoices = ref(true);
 const loadingLLMs = ref(true);
@@ -421,6 +422,8 @@ async function updateAgent() {
 function goBack() {
   uni.navigateBack();
 }
+
+// 一键润色逻辑已抽离到 AgentPromptPolish 组件中
 </script>
 
 <style>
@@ -483,29 +486,7 @@ function goBack() {
   font-size: 32rpx;
 }
 
-.textarea {
-  width: 100%;
-  min-height: 224rpx;
-  padding: 26rpx 32rpx;
-  border: 1rpx solid #e5e5e5;
-  border-radius: 16rpx;
-  font-size: 32rpx;
-  background: white;
-  line-height: 1.4;
-  color: #171717;
-  box-sizing: border-box;
-}
-
-.textarea:focus {
-  border-color: #335CFF;
-  background: white;
-  outline: none;
-}
-
-.textarea::placeholder {
-  color: #9ca3af;
-  font-size: 32rpx;
-}
+/* 文本域容器与样式在 AgentPromptPolish 组件中定义 */
 
 .picker-display,
 .voice-selector-trigger,

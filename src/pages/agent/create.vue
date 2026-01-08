@@ -4,11 +4,6 @@
     <view class="agent-create-navbar">
       <view class="agent-create-status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="agent-create-nav-content" :style="{ height: navBarHeight + 'px' }">
-        <view class="agent-create-nav-left">
-          <view class="agent-create-nav-back" @click="handleBack">
-            <view class="agent-create-nav-back-icon"></view>
-          </view>
-        </view>
         <text class="agent-create-nav-title">{{ $t('create_agent.page_title') }}</text>
         <view class="agent-create-nav-right"></view>
       </view>
@@ -26,12 +21,11 @@
 
       <view class="form-item">
         <text class="label">{{ $t('create_agent.agent_description') }}</text>
-        <textarea
-          class="textarea"
+        <AgentPromptPolish
           v-model="formData.systemPrompt"
-          :placeholder="$t('create_agent.agent_description_placeholder')"
-          maxlength="2000"
-          auto-height />
+          class="agent-prompt-polish"
+          placeholder-key="create_agent.agent_description_placeholder"
+        />
       </view>
 
       <view class="form-item">
@@ -126,6 +120,7 @@ import { loadOptions } from './create';
 import { relocalizeLLMOptions } from './llm';
 import { getChatLanguageOptions, langCodeToVoiceLanguage } from './lang_opts';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
+import AgentPromptPolish from './components/AgentPromptPolish.vue';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
@@ -501,15 +496,6 @@ async function createAgent() {
   }
 }
 
-function handleBack() {
-  uni.navigateBack({
-    delta: 1,
-    fail: () => {
-      uni.switchTab({ url: PageMap[Pages.Index].url });
-    }
-  });
-}
-
 function handleCancel() {
   uni.switchTab({ url: PageMap[Pages.Index].url });
 }
@@ -555,36 +541,12 @@ function handleCancel() {
   position: relative;
 }
 
-.agent-create-nav-left,
 .agent-create-nav-right {
   flex: 0 0 70rpx;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  height: 100%;
-}
-
-.agent-create-nav-right {
   justify-content: flex-end;
-}
-
-.agent-create-nav-back {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  width: 56rpx;
   height: 100%;
-  border-radius: 999px;
-  padding-left: 6rpx;
-}
-
-.agent-create-nav-back-icon {
-  width: 24rpx;
-  height: 24rpx;
-  border-left: 3rpx solid #1f2937;
-  border-bottom: 3rpx solid #1f2937;
-  transform: rotate(45deg);
-  margin-left: 4rpx;
 }
 
 .agent-create-nav-title {
@@ -650,29 +612,7 @@ function handleCancel() {
   font-size: 32rpx;
 }
 
-.textarea {
-  width: 100%;
-  min-height: 224rpx;
-  padding: 26rpx 32rpx;
-  border: 1rpx solid #e5e5e5;
-  border-radius: 16rpx;
-  font-size: 32rpx;
-  background: white;
-  line-height: 1.4;
-  color: #171717;
-  box-sizing: border-box;
-}
-
-.textarea:focus {
-  border-color: #335CFF;
-  background: white;
-  outline: none;
-}
-
-.textarea::placeholder {
-  color: #9ca3af;
-  font-size: 32rpx;
-}
+/* textarea 样式已在 AgentPromptPolish 组件中定义 */
 
 .selector-trigger {
   display: flex;
