@@ -29,7 +29,7 @@
     </view>
 
     <!-- 删除按钮 -->
-    <view class="delete-button" @click="handleDelete">
+    <view class="delete-button" @click.stop="handleDelete">
       <text class="delete-text">{{ $t('common.delete') }}</text>
     </view>
   </view>
@@ -53,13 +53,14 @@ export default {
       startX: 0,
       translateX: 0,
       isSwipeLeft: false,
-      isSwiping: false
+      isSwiping: false,
+      isDeleting: false
     };
   },
   methods: {
     handleClick() {
       // console.log("点击智能体", this.agent);
-      if (!this.isSwiping && !this.isSwipeLeft) {
+      if (!this.isSwiping && !this.isSwipeLeft && !this.isDeleting) {
         this.$emit('click', this.agent);
       }
     },
@@ -105,10 +106,15 @@ export default {
     },
 
     handleDelete() {
+      // 设置标志，防止在状态重置后 handleClick 被触发
+      this.isDeleting = true;
       this.$emit('delete', this.agent);
-      // 重置状态
-      this.translateX = 0;
-      this.isSwipeLeft = false;
+      // 延迟重置状态，确保所有事件处理完成
+      setTimeout(() => {
+        this.translateX = 0;
+        this.isSwipeLeft = false;
+        this.isDeleting = false;
+      }, 100);
     }
   },
   computed: {

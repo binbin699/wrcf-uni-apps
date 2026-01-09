@@ -95,6 +95,11 @@ watch(
     if (v !== localPrompt.value) {
       localPrompt.value = v;
     }
+    // 当外部将值清空时（如创建成功后重置表单），重置润色状态
+    if (!v || v.trim() === '') {
+      polishState.value = 'idle';
+      originalPrompt.value = '';
+    }
   }
 );
 
