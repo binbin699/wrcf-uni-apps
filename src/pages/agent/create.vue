@@ -4,6 +4,7 @@
     <view class="agent-create-navbar">
       <view class="agent-create-status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="agent-create-nav-content" :style="{ height: navBarHeight + 'px' }">
+        <view class="agent-create-nav-left"></view>
         <text class="agent-create-nav-title">{{ $t('create_agent.page_title') }}</text>
         <view class="agent-create-nav-right">
           <!-- 右侧空白占位 -->
@@ -780,6 +781,10 @@ async function applyTemplate(template: any) {
   position: relative;
 }
 
+.agent-create-nav-left {
+  flex: 0 0 120rpx;
+}
+
 .agent-create-nav-right {
   flex: 0 0 120rpx; /* Increased to fit icons */
   display: flex;
@@ -834,10 +839,17 @@ async function applyTemplate(template: any) {
   margin-bottom: 0;
   margin-right: 16rpx;
   flex-shrink: 0;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
 }
 .name-card .name-input {
   flex: 1;
   text-align: left;
+  height: 48rpx;
+  line-height: 48rpx;
+  display: flex;
+  align-items: center;
 }
 
 /* Description Card */
@@ -845,12 +857,8 @@ async function applyTemplate(template: any) {
   margin-bottom: 16rpx;
 }
 
-/* 覆盖 AgentPromptPolish 组件中的 textarea 样式，使其与当前分支的卡片式设计一致 */
+/* 覆盖 AgentPromptPolish 组件中的样式，使其字体和光标颜色一致 */
 .desc-card .agent-prompt-polish .textarea {
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
   min-height: 120rpx;
   font-size: 30rpx;
   line-height: 1.5;
@@ -858,10 +866,10 @@ async function applyTemplate(template: any) {
   caret-color: #5b75fb;
 }
 
-.desc-card .agent-prompt-polish .textarea:focus {
-  border: none;
-  background: transparent;
-  outline: none;
+/* 移除对组件内部 wrapper 的强制边框覆盖（如果需要），
+   由于组件自带边框，这里我们可以让它在卡片内更自然地呈现 */
+.desc-card .agent-prompt-polish .textarea-wrapper {
+  border-color: #f1f5f9; /* 稍微淡化一下组件的边框，更符合 card 整体风格 */
 }
 
 .desc-card .agent-prompt-polish .textarea::placeholder {
@@ -890,7 +898,6 @@ async function applyTemplate(template: any) {
   color: #ff4d4f;
   margin-left: 8rpx;
   font-size: 30rpx;
-  margin-top: 6rpx;
 }
 
 /* Modern Input Styles - No background for Name and Description cards */

@@ -169,25 +169,28 @@ onUnmounted(() => {
 .agent-prompt-polish .textarea-wrapper {
   position: relative;
   width: 100%;
+  border: 1rpx solid #e5e5e5;
+  border-radius: 16rpx;
+  background: white;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .agent-prompt-polish .textarea {
   width: 100%;
-  min-height: 224rpx;
-  padding: 26rpx 32rpx 100rpx 32rpx; /* 增加底部内边距，为润色按钮腾出空间 */
-  border: 1rpx solid #e5e5e5;
-  border-radius: 16rpx;
+  min-height: 160rpx;
+  padding: 26rpx 32rpx 10rpx 32rpx;
   font-size: 32rpx;
-  background: white;
+  background: transparent;
   line-height: 1.4;
   color: #171717;
   box-sizing: border-box;
+  border: none;
 }
 
-.agent-prompt-polish .textarea:focus {
+.agent-prompt-polish .textarea-wrapper:focus-within {
   border-color: #335CFF;
-  background: white;
-  outline: none;
 }
 
 .agent-prompt-polish .textarea::placeholder {
@@ -197,11 +200,9 @@ onUnmounted(() => {
 
 /* 润色按钮容器 */
 .agent-prompt-polish .polish-container {
-  position: absolute;
-  bottom: 16rpx;
-  right: 16rpx;
-  z-index: 10;
+  padding: 12rpx 16rpx 16rpx 16rpx;
   display: flex;
+  justify-content: flex-end;
   align-items: center;
 }
 

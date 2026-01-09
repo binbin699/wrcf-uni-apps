@@ -126,7 +126,6 @@
   "welcome.skip_for_now": "後で",
 
   "agent.name_label": "エージェント名",
-  "agent.name_placeholder": "エージェント名を入力",
   "agent.desc_label": "役割の説明",
   "agent.desc_placeholder": "このエージェントの機能と目的を説明してください",
   "agent.voice_label": "音声タイプ",
@@ -140,7 +139,7 @@
   "agent.cancel": "キャンセル",
 
   "create_agent.agent_name": "エージェント名",
-  "create_agent.agent_name_placeholder": "エージェント名を入力",
+  "create_agent.agent_name_placeholder": "",
   "create_agent.agent_description": "役割の説明",
   "create_agent.agent_description_placeholder": "この役割の機能と目的を説明してください",
   "create_agent.voice_type": "音声タイプ",
@@ -148,7 +147,7 @@
   "create_agent.select_voice": "音声を選択してください",
   "create_agent.creating": "作成中...",
   "create_agent.create": "作成",
-  "create_agent.use_template": "テンプレートを使用",
+  "create_agent.use_template": "テンプレート",
   "create_agent.select_template": "テンプレートを選択",
   "create_agent.all_languages": "すべて",
   "create_agent.page_title": "エージェント作成",

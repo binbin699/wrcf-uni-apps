@@ -126,7 +126,6 @@
   "welcome.skip_for_now": "Позже",
 
   "agent.name_label": "Имя агента",
-  "agent.name_placeholder": "Введите имя агента",
   "agent.desc_label": "Описание роли",
   "agent.desc_placeholder": "Опишите функции и назначение этого агента",
   "agent.voice_label": "Тип голоса",
@@ -140,7 +139,7 @@
   "agent.cancel": "Отмена",
 
   "create_agent.agent_name": "Имя агента",
-  "create_agent.agent_name_placeholder": "Введите имя агента",
+  "create_agent.agent_name_placeholder": "",
   "create_agent.agent_description": "Описание роли",
   "create_agent.agent_description_placeholder": "Опишите функции и назначение этой роли",
   "create_agent.voice_type": "Тип голоса",
@@ -148,7 +147,7 @@
   "create_agent.select_voice": "Выберите голос",
   "create_agent.creating": "Создание...",
   "create_agent.create": "Создать",
-  "create_agent.use_template": "Использовать шаблон",
+  "create_agent.use_template": "Шаблон",
   "create_agent.select_template": "Выбрать шаблон",
   "create_agent.all_languages": "Все",
   "create_agent.page_title": "Создать агента",
