@@ -140,7 +140,6 @@ const selectedChatLanguage = computed(() => chatLanguageOptions.value[selectedCh
 const currentVoiceLanguage = computed(() => langCodeToVoiceLanguage(formData.value.langCode));
 
 // 编辑模式
-const id = ref<string | null>(null);
 const agentId = ref<string | null>(null);
 const loadingAgent = ref(false);
 
@@ -170,9 +169,8 @@ onLoad(async (options: any) => {
     return;
   }
 
-  id.value = options.id;
   agentId.value = options.agentId;
-  console.log('编辑智能体 agentId:', agentId.value, 'id:', id.value);
+  console.log('编辑智能体 agentId:', agentId.value);
 
   // 设置页面标题
   uni.setNavigationBarTitle({
@@ -207,7 +205,16 @@ watch(
 async function loadAgentData() {
   try {
     loadingAgent.value = true;
-    const result = await agentApi.getInfo(id.value);
+    
+    if (!agentId.value) {
+      toast.error({
+        msg: $t('edit_agent.missing_agent_id'),
+        duration: 2000
+      });
+      return;
+    }
+    
+    const result = await agentApi.getInfo(agentId.value);
 
     if (result.code === 1000 && result.data) {
       const agent = result.data;
