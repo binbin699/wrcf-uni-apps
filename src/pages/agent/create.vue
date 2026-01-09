@@ -5,90 +5,156 @@
       <view class="agent-create-status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="agent-create-nav-content" :style="{ height: navBarHeight + 'px' }">
         <text class="agent-create-nav-title">{{ $t('create_agent.page_title') }}</text>
-        <view class="agent-create-nav-right"></view>
-      </view>
-    </view>
-
-    <view class="form-container">
-      <view class="form-item">
-        <text class="label required">{{ $t('create_agent.agent_name') }}</text>
-        <input
-          class="input"
-          v-model="formData.agentName"
-          :placeholder="$t('create_agent.agent_name_placeholder')"
-          maxlength="20" />
-      </view>
-
-      <view class="form-item">
-        <text class="label">{{ $t('create_agent.agent_description') }}</text>
-        <AgentPromptPolish
-          v-model="formData.systemPrompt"
-          class="agent-prompt-polish"
-          placeholder-key="create_agent.agent_description_placeholder"
-        />
-      </view>
-
-      <view class="form-item">
-        <text class="label">{{ $t('create_agent.llm_type') }}</text>
-        <picker
-          @click="handleLLMPickerClick"
-          mode="selector"
-          :range="llmOptions"
-          range-key="displayName"
-          :value="selectedLLMIndex"
-          @change="onLLMChange">
-          <view class="selector-trigger">
-            <text v-if="loadingLLMs">{{ $t('common.loading') }}</text>
-            <text v-else-if="selectedLLM">
-              {{ selectedLLM.displayName || selectedLLM.name }}
-            </text>
-            <text v-else-if="llmOptions.length === 0">
-              {{ $t('create_agent.llm_load_failed') }}
-            </text>
-            <text v-else>{{ $t('create_agent.select_llm') }}</text>
-          </view>
-        </picker>
-      </view>
-
-      <view class="form-item">
-        <text class="label">{{ $t('create_agent.chat_language') }}</text>
-        <picker
-          mode="selector"
-          :range="chatLanguageOptions"
-          range-key="label"
-          :value="selectedChatLanguageIndex"
-          @change="onChatLanguageChange">
-          <view class="selector-trigger">
-            <text>{{ selectedChatLanguage?.label || $t('create_agent.select_chat_language') }}</text>
-          </view>
-        </picker>
-      </view>
-
-      <view class="form-item">
-        <text class="label">{{ $t('create_agent.voice_type') }}</text>
-        <view class="selector-trigger" @click="showVoiceSelector">
-          <text v-if="loadingVoices">{{ $t('common.loading') }}</text>
-          <text v-else-if="selectedVoice">{{ selectedVoice.voiceName }}</text>
-          <text v-else-if="voiceOptions.length === 0">
-            {{ $t('create_agent.voice_load_failed') }}
-          </text>
-          <text v-else>{{ $t('create_agent.select_voice') }}</text>
+        <view class="agent-create-nav-right">
+          <!-- 右侧空白占位 -->
         </view>
       </view>
     </view>
 
-    <view class="actions">
-      <button class="cancel-btn secondary" @click="handleCancel">
-        {{ $t('common.cancel') }}
-      </button>
-      <button
-        class="create-btn primary"
-        @click="createAgent"
-        :disabled="!canCreate"
-        :loading="creating">
-        {{ creating ? $t('create_agent.creating') : $t('create_agent.create_agent') }}
-      </button>
-    </view>
+    <scroll-view scroll-y class="scroll-content">
+      <!-- Card 1: Agent Name (inline layout) -->
+      <view class="card name-card">
+        <view class="form-item name-item">
+          <view class="label-row">
+            <text class="label">{{ $t('create_agent.agent_name') }}</text>
+            <text class="required-star">*</text>
+          </view>
+          <input
+            class="input name-input"
+            v-model="formData.agentName"
+            :placeholder="$t('create_agent.agent_name_placeholder')"
+            placeholder-class="input-placeholder"
+            maxlength="20" />
+          <text class="use-template-btn" @click="openTemplateModal">{{ $t('create_agent.use_template') }}</text>
+        </view>
+      </view>
+
+      <!-- Card 2: Description -->
+      <view class="card desc-card">
+        <view class="form-item">
+          <text class="label">{{ $t('create_agent.agent_description') }}</text>
+          <AgentPromptPolish
+            v-model="formData.systemPrompt"
+            class="agent-prompt-polish"
+            placeholder-key="create_agent.agent_description_placeholder"
+          />
+        </view>
+      </view>
+
+      <!-- Card 3: Settings (Model, Language, Voice) -->
+      <view class="card">
+        <view class="form-item">
+          <text class="label">{{ $t('create_agent.llm_type') }}</text>
+          <picker
+            @click="handleLLMPickerClick"
+            mode="selector"
+            :range="llmOptions"
+            range-key="displayName"
+            :value="selectedLLMIndex"
+            @change="onLLMChange">
+            <view class="selector-trigger">
+              <text v-if="loadingLLMs">{{ $t('common.loading') }}</text>
+              <text v-else-if="selectedLLM" class="value-text">
+                {{ selectedLLM.displayName || selectedLLM.name }}
+              </text>
+              <text v-else-if="llmOptions.length === 0" class="placeholder-text">
+                {{ $t('create_agent.llm_load_failed') }}
+              </text>
+              <text v-else class="placeholder-text">{{ $t('create_agent.select_llm') }}</text>
+              <view class="arrow-icon"></view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="label">{{ $t('create_agent.chat_language') }}</text>
+          <picker
+            mode="selector"
+            :range="chatLanguageOptions"
+            range-key="label"
+            :value="selectedChatLanguageIndex"
+            @change="onChatLanguageChange">
+            <view class="selector-trigger">
+              <text class="value-text" v-if="selectedChatLanguage">{{ selectedChatLanguage.label }}</text>
+              <text class="placeholder-text" v-else>{{ $t('create_agent.select_chat_language') }}</text>
+              <view class="arrow-icon"></view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item last-item">
+          <text class="label">{{ $t('create_agent.voice_type') }}</text>
+          <view class="selector-trigger" @click="showVoiceSelector">
+            <text v-if="loadingVoices">{{ $t('common.loading') }}</text>
+            <text v-else-if="selectedVoice" class="value-text">{{ selectedVoice.voiceName }}</text>
+            <text v-else-if="voiceOptions.length === 0" class="placeholder-text">
+              {{ $t('create_agent.voice_load_failed') }}
+            </text>
+            <text v-else class="placeholder-text">{{ $t('create_agent.select_voice') }}</text>
+            <view class="arrow-icon"></view>
+          </view>
+        </view>
+      </view>
+
+      <!-- Buttons moved inside scroll-view -->
+      <view class="actions-inline">
+        <button
+          class="create-btn"
+          hover-class="none"
+          @click="createAgent"
+          :disabled="!canCreate || creating"
+          :loading="creating">
+          {{ creating ? $t('create_agent.creating') : $t('create_agent.create') }}
+        </button>
+        <!-- <button 
+          class="cancel-btn" 
+          hover-class="none"
+          @click="handleCancel"
+          :disabled="creating">
+          {{ $t('common.cancel') }}
+        </button> -->
+      </view>
+      
+      <!-- Spacer for bottom balance -->
+      <view class="bottom-spacer-small"></view>
+    </scroll-view>
+
+    <!-- 模板选择弹窗 -->
+    <wd-popup v-model="templateModalVisible" position="bottom" custom-style="border-radius: 32rpx 32rpx 0 0; overflow: hidden;">
+      <view class="template-popup-content">
+        <view class="popup-header">
+          <text class="popup-title">{{ $t('create_agent.select_template') }}</text>
+        </view>
+        <view class="template-selector">
+          <scroll-view scroll-y class="category-list">
+            <view 
+              v-for="cat in templateCategories" 
+              :key="cat.value"
+              class="category-item"
+              :class="{ active: selectedTemplateLang === cat.value }"
+              @click="selectTemplateCategory(cat.value)">
+              <text class="category-text">{{ cat.label }}</text>
+            </view>
+          </scroll-view>
+          <scroll-view scroll-y class="template-list">
+            <view v-if="loadingTemplates" class="loading-state">
+              <text>{{ $t('common.loading') }}</text>
+            </view>
+            <view v-else-if="filteredTemplates.length === 0" class="empty-state">
+              <text>{{ $t('square.no_agents') }}</text>
+            </view>
+            <view 
+              v-else
+              v-for="item in filteredTemplates" 
+              :key="item.agentId"
+              class="template-item"
+              @click="applyTemplate(item)">
+              <text class="template-name">{{ item.agentName }}</text>
+            </view>
+          </scroll-view>
+        </view>
+      </view>
+    </wd-popup>
 
     <!-- 音色选择弹窗 -->
     <VoiceSelector
@@ -113,12 +179,12 @@ import { agentApi, voiceApi } from '@/api/index.js';
 import VoiceSelector from '@/components/VoiceSelector.vue';
 import CustomTabBar from '@/components/CustomTabBar.vue';
 import { useToast } from '@/uni_modules/wot-design-uni';
-import { onLoad, onShow } from '@dcloudio/uni-app';
+import { onLoad, onShow, onHide } from '@dcloudio/uni-app';
 import type { LLM, Voice } from '@/pages/agent/types';
 import { PageMap, Pages } from '@/utils/route';
 import { loadOptions } from './create';
 import { relocalizeLLMOptions } from './llm';
-import { getChatLanguageOptions, langCodeToVoiceLanguage } from './lang_opts';
+import { getChatLanguageOptions, langCodeToVoiceLanguage, backendLangToLangCode, getSystemLangCode } from './lang_opts';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 import AgentPromptPolish from './components/AgentPromptPolish.vue';
 
@@ -146,6 +212,53 @@ const voiceOptions = ref<Voice[]>([]);
 const voiceSelectorVisible = ref(false);
 const statusBarHeight = ref(44);
 const navBarHeight = ref(44);
+
+// 模板相关
+const templateModalVisible = ref(false);
+const allTemplates = ref<any[]>([]);
+const selectedTemplateLang = ref('all');
+const loadingTemplates = ref(false);
+
+const templateCategories = computed(() => {
+  // 1. 收集所有模板的 languageCode，转换为前端标准格式
+  const langCodeSet = new Set<string>();
+  allTemplates.value.forEach(t => {
+    if (t.languageCode) {
+      const standardLangCode = backendLangToLangCode(t.languageCode);
+      langCodeSet.add(standardLangCode);
+    }
+  });
+
+  // 2. 获取完整的语言选项列表
+  const allLangOptions = getChatLanguageOptions($t);
+
+  // 3. 筛选出模板中存在的语言（保持 getChatLanguageOptions 的顺序）
+  const availableLangOptions = allLangOptions.filter(opt =>
+    langCodeSet.has(opt.langCode)
+  );
+
+  // 4. 构建分类列表："全部"在最前面，其他语言按 getChatLanguageOptions 顺序
+  return [
+    { label: $t('create_agent.all_languages'), value: 'all' },
+    ...availableLangOptions.map(opt => ({
+      label: opt.label,
+      value: opt.langCode // 使用 langCode 作为 value（如 'zh_CN', 'en_US'）
+    }))
+  ];
+});
+
+const filteredTemplates = computed(() => {
+  if (selectedTemplateLang.value === 'all') {
+    return allTemplates.value;
+  }
+
+  // 筛选：将模板的 languageCode 转换为标准格式后比较
+  return allTemplates.value.filter(t => {
+    if (!t.languageCode) return false;
+    const standardLangCode = backendLangToLangCode(t.languageCode);
+    return standardLangCode === selectedTemplateLang.value;
+  });
+});
 const navContentStyle = computed(() => ({
   height: `${navBarHeight.value * 2}rpx`
 }));
@@ -223,6 +336,11 @@ onShow(async () => {
   updateSquareTabBadge();
 });
 
+onHide(() => {
+  // 离开页面时立即关闭弹窗，避免切回时才消失的奇怪感
+  templateModalVisible.value = false;
+});
+
 function setStatusBarHeight() {
   const systemInfo = uni.getSystemInfoSync();
   statusBarHeight.value = systemInfo.statusBarHeight || 20;
@@ -231,8 +349,8 @@ function setStatusBarHeight() {
   try {
     const menuButtonInfo =
       typeof uni.getMenuButtonBoundingClientRect === 'function'
-        ? uni.getMenuButtonBoundingClientRect()
-        : null;
+      ? uni.getMenuButtonBoundingClientRect()
+      : null;
     if (menuButtonInfo && menuButtonInfo.height) {
       const topGap = menuButtonInfo.top - statusBarHeight.value;
       navBarHeight.value = menuButtonInfo.height + Math.max(topGap, 0) * 2;
@@ -313,7 +431,6 @@ async function loadAgentData() {
     }
   } catch (error) {
     console.error('加载智能体数据失败:', error);
-    // 不再显示toast，因为request.ts已经处理了
   } finally {
     loadingAgent.value = false;
   }
@@ -383,7 +500,6 @@ async function loadVoiceOptions() {
     selectedVoice.value = null;
     formData.value.ttsVoiceId = '';
 
-    // 不再显示toast，因为request.ts已经处理了
   } finally {
     loadingVoices.value = false;
   }
@@ -470,13 +586,13 @@ async function createAgent() {
         systemPrompt: '',
         ttsVoiceId: '',
         llmModelId: '',
-        langCode: 'zh_CN',
-        language: '中文',
+        langCode: '',
+        language: '',
       };
       selectedVoice.value = null;
       selectedLLMIndex.value = null;
       selectedLLM.value = null;
-      selectedChatLanguageIndex.value = 0;
+      selectedChatLanguageIndex.value = null;
 
       // 延迟跳转，让用户看到成功提示
       setTimeout(() => {
@@ -490,7 +606,6 @@ async function createAgent() {
     }
   } catch (error) {
     console.error('创建智能体失败:', error);
-    // 不再显示toast，因为request.ts已经处理了
   } finally {
     creating.value = false;
   }
@@ -499,13 +614,138 @@ async function createAgent() {
 function handleCancel() {
   uni.switchTab({ url: PageMap[Pages.Index].url });
 }
+
+// 模板逻辑
+// 辅助函数：检查指定 langCode 是否在筛选项中存在
+function isLanguageInCategories(langCode: string): boolean {
+  return templateCategories.value.some(cat => cat.value === langCode);
+}
+
+async function openTemplateModal() {
+  templateModalVisible.value = true;
+
+  // 每次打开弹窗都获取最新的模板列表，确保筛选项能够及时更新
+  await fetchTemplates();
+
+  // 确定默认选中的筛选项（按优先级顺序检查：用户选择的对话语言 > 系统语言 > 英文 > '全部'）
+  let defaultLangValue = 'all'; // 最终兜底值
+
+  // 优先级1：用户选择的对话语言
+  const userSelectedLangCode = formData.value.langCode;
+  if (userSelectedLangCode && isLanguageInCategories(userSelectedLangCode)) {
+    defaultLangValue = userSelectedLangCode;
+  } else {
+    // 优先级2：系统语言
+    const systemLangCode = getSystemLangCode();
+    if (isLanguageInCategories(systemLangCode)) {
+      defaultLangValue = systemLangCode;
+    } else {
+      // 优先级3：英文
+      if (isLanguageInCategories('en_US')) {
+        defaultLangValue = 'en_US';
+      }
+      // 优先级4：'all' 作为兜底（已在初始化时设置）
+    }
+  }
+
+  // 设置默认选中的筛选项
+  selectedTemplateLang.value = defaultLangValue;
+}
+
+async function fetchTemplates() {
+  // 如果正在加载中，直接返回，避免并发请求（请求锁机制）
+  if (loadingTemplates.value) {
+    return;
+  }
+
+  try {
+    loadingTemplates.value = true;
+    // 传递 'all' 获取所有模板，不在后端筛选
+    const res = await agentApi.getTemplateAgents('all');
+    if (res.code === 1000) {
+      allTemplates.value = res.data || [];
+    } else {
+      // API 返回错误码
+      toast.warning({
+        msg: res.message || $t('index.get_templates_failed'),
+        duration: 2000
+      });
+    }
+  } catch (e) {
+    console.error('Fetch templates failed', e);
+    // 网络错误或其他异常
+    toast.error({
+      msg: $t('index.get_templates_failed'),
+      duration: 2000
+    });
+  } finally {
+    loadingTemplates.value = false;
+  }
+}
+
+function selectTemplateCategory(lang: string) {
+  selectedTemplateLang.value = lang;
+}
+
+async function applyTemplate(template: any) {
+  templateModalVisible.value = false;
+  
+  // 填入名称
+  formData.value.agentName = template.agentName;
+  
+  // 加载详细数据并填入剩余字段
+  try {
+    toast.loading($t('common.loading'));
+    // 使用 agentId 获取智能体详情
+    const result = await agentApi.getInfo(template.agentId);
+    if (result.code === 1000 && result.data) {
+      const agent = result.data;
+      if (agent.config) {
+        formData.value.systemPrompt = agent.config.systemPrompt || '';
+        
+        //模型
+        if (agent.config.llmModelId) {
+          const idx = llmOptions.value.findIndex(l => l.id === agent.config.llmModelId);
+          if (idx !== -1) {
+            selectedLLMIndex.value = idx;
+            selectedLLM.value = llmOptions.value[idx];
+            formData.value.llmModelId = agent.config.llmModelId;
+          }
+        }
+        
+        // 语言
+        if (agent.config.langCode) {
+          const idx = chatLanguageOptions.value.findIndex(l => l.langCode === agent.config.langCode);
+          if (idx !== -1) {
+            selectedChatLanguageIndex.value = idx;
+            formData.value.langCode = agent.config.langCode;
+            formData.value.language = chatLanguageOptions.value[idx].language;
+          }
+        }
+        
+        // 音色
+        if (agent.config.ttsVoiceId) {
+          const voice = voiceOptions.value.find(v => v.voiceId === agent.config.ttsVoiceId || v.id === agent.config.ttsVoiceId);
+          if (voice) {
+            selectedVoice.value = voice;
+            formData.value.ttsVoiceId = voice.voiceId;
+          }
+        }
+      }
+    }
+    toast.close();
+  } catch (e) {
+    console.error('Apply template failed', e);
+    toast.close();
+  }
+}
 </script>
 
 <style>
 .container {
   padding: 0;
   min-height: calc(100vh - var(--window-top));
-  background-color: #ffffff;
+  background: linear-gradient(180deg, #EFF2FF 0%, #FFFFFF 100%);
   display: flex;
   flex-direction: column;
   padding-bottom: calc(104rpx + env(safe-area-inset-bottom));
@@ -525,8 +765,7 @@ function handleCancel() {
   left: 0;
   right: 0;
   z-index: 10;
-  background-color: #ffffff;
-  border-bottom: 1rpx solid #e5e5e5;
+  background: #EFF2FF; /* Match page gradient top */
 }
 
 .agent-create-status-bar {
@@ -542,7 +781,7 @@ function handleCancel() {
 }
 
 .agent-create-nav-right {
-  flex: 0 0 70rpx;
+  flex: 0 0 120rpx; /* Increased to fit icons */
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -552,64 +791,125 @@ function handleCancel() {
 .agent-create-nav-title {
   flex: 1;
   text-align: center;
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: 600;
   color: #0f172a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.form-container {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  background: white;
-  border-radius: 32rpx;
-  padding: 48rpx 32rpx;
-  margin: 32rpx;
+.scroll-content {
+  flex: 1;
+  padding: 24rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.02);
 }
 
 .form-item {
-  margin-bottom: 48rpx;
+  margin-bottom: 32rpx;
 }
-
 .form-item:last-child {
   margin-bottom: 0;
+}
+.card .form-item.last-item {
+  margin-bottom: 0;
+}
+
+/* Name Card: Inline layout - label and input on same row */
+.name-card {
+  padding: 28rpx 32rpx;
+}
+.name-card .name-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 0;
+}
+.name-card .label-row {
+  margin-bottom: 0;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+.name-card .name-input {
+  flex: 1;
+  text-align: left;
+}
+
+/* Description Card */
+.desc-card .label {
+  margin-bottom: 16rpx;
+}
+
+/* 覆盖 AgentPromptPolish 组件中的 textarea 样式，使其与当前分支的卡片式设计一致 */
+.desc-card .agent-prompt-polish .textarea {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  min-height: 120rpx;
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: #1a1a1a;
+  caret-color: #5b75fb;
+}
+
+.desc-card .agent-prompt-polish .textarea:focus {
+  border: none;
+  background: transparent;
+  outline: none;
+}
+
+.desc-card .agent-prompt-polish .textarea::placeholder {
+  color: #c0c4cc;
+  font-size: 28rpx;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
 }
 
 .label {
   display: block;
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
-  color: #0f172a;
+  color: #333333;
   margin-bottom: 16rpx;
 }
-
-.label.required::after {
-  content: '*';
-  color: var(--red-500, #fb3748);
+.label-row .label {
+  margin-bottom: 0;
 }
 
+.required-star {
+  color: #ff4d4f;
+  margin-left: 8rpx;
+  font-size: 30rpx;
+  margin-top: 6rpx;
+}
+
+/* Modern Input Styles - No background for Name and Description cards */
 .input {
   width: 100%;
-  height: 96rpx;
-  padding: 0 32rpx;
-  border: 1rpx solid #e5e5e5;
-  border-radius: 16rpx;
-  font-size: 32rpx;
-  background: white;
-  color: #171717;
+  height: auto;
+  min-height: 48rpx;
+  padding: 0;
+  border-radius: 0;
+  font-size: 30rpx;
+  background: transparent;
+  color: #1a1a1a;
   box-sizing: border-box;
+  caret-color: #5b75fb;
+  border: none;
 }
-
-.input:focus {
-  border-color: #335CFF;
-  background: white;
-  outline: none;
-}
-
-.input::placeholder {
-  color: #9ca3af;
-  font-size: 32rpx;
+.input-placeholder {
+  color: #c0c4cc;
+  font-size: 28rpx;
 }
 
 /* textarea 样式已在 AgentPromptPolish 组件中定义 */
@@ -619,37 +919,210 @@ function handleCancel() {
   justify-content: space-between;
   align-items: center;
   height: 96rpx;
-  padding: 0 32rpx;
-  border: 1rpx solid #e5e5e5;
+  padding: 0 24rpx;
   border-radius: 16rpx;
-  background: white url('/static/icons/right-arrow.svg') no-repeat right 32rpx center;
-  background-size: 32rpx 32rpx;
-  font-size: 32rpx;
-  color: #111827;
+  background: #f7f8fa;
+  font-size: 30rpx;
   box-sizing: border-box;
 }
-
 .selector-trigger:active {
-  background: #f2f2f7 url('/static/icons/right-arrow.svg') no-repeat right 32rpx center;
-  background-size: 32rpx 32rpx;
+  background: #eff0f4;
 }
 
-.actions {
+.value-text {
+  color: #1a1a1a;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.placeholder-text {
+  color: #c0c4cc;
+  font-size: 28rpx;
+}
+
+.arrow-icon {
+  width: 32rpx;
+  height: 32rpx;
+  background: url('@/static/icons/right-arrow.svg') no-repeat center;
+  background-size: contain;
+  opacity: 0.4;
+}
+
+.bottom-spacer {
+  height: 280rpx;
+}
+
+.actions-inline {
+  padding: 32rpx 0;
   display: flex;
-  padding: 32rpx;
-  padding-bottom: 32rpx;
-  background: #ffffff;
+  flex-direction: column;
   gap: 24rpx;
 }
 
-.cancel-btn,
-.create-btn {
-  flex: 1 1 0;
-  height: 96rpx;
-  border-radius: 48rpx;
-  min-width: 0;
-  white-space: nowrap;
+.bottom-spacer-small {
+  height: 48rpx;
+}
+
+.use-template-btn {
+  font-size: 26rpx;
+  color: #3E5DEF;
+  margin-left: 16rpx;
+  background: #F0F3FF;
+  padding: 8rpx 20rpx;
+  border-radius: 12rpx;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.use-template-btn:active {
+  opacity: 0.7;
+}
+
+/* Template Popup Styles */
+.template-popup-content {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  height: 60vh;
+}
+
+.popup-header {
+  padding: 36rpx 32rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  background-color: #ffffff;
+  border-bottom: 2rpx solid #f8f9fa;
+  border-radius: 36rpx 36rpx 0 0;
+}
+
+.popup-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #111;
+}
+
+.template-selector {
+  flex: 1;
+  display: flex;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.category-list {
+  width: 220rpx;
+  background: #f8f9fb;
+  height: 100%;
+}
+
+.category-item {
+  padding: 36rpx 28rpx;
+  font-size: 28rpx;
+  color: #777;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.category-item.active {
+  background: #ffffff;
+  color: #3E5DEF;
+  font-weight: 600;
+}
+
+.category-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 30%;
+  height: 40%;
+  width: 6rpx;
+  background: #3E5DEF;
+  border-radius: 0 4rpx 4rpx 0;
+}
+
+.template-list {
+  flex: 1;
+  height: 100%;
+  background: #ffffff;
+}
+
+.template-item {
+  padding: 36rpx 32rpx;
+  border-bottom: 2rpx solid #f9f9f9;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.template-item:active {
+  background: #f7f8fa;
+}
+
+.template-name {
+  font-size: 30rpx;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+.loading-state, .empty-state {
+  padding: 100rpx 0;
+  text-align: center;
+  color: #999;
+  font-size: 28rpx;
+}
+
+.create-btn {
+  width: 100%;
+  height: 96rpx;
+  border-radius: 24rpx;
+  background: #3E5DEF;
+  color: #ffffff !important;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.create-btn::after {
+  border: none;
+}
+.create-btn[disabled], .create-btn[loading] {
+  background: #9EB0FF !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  opacity: 1;
+}
+.create-btn:active {
+  transform: scale(0.98);
+  background: #3E5DEF;
+  color: #ffffff !important;
+}
+
+.cancel-btn {
+  width: 100%;
+  height: 96rpx;
+  border-radius: 24rpx;
+  background: #E8ECFF;
+  color: #7A8BFF;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cancel-btn::after {
+  border: none;
+}
+.cancel-btn[disabled] {
+  background: #F5F7FF !important;
+  color: #B2BDFF !important;
+  opacity: 1;
+}
+.cancel-btn:active {
+  transform: scale(0.98);
+  background: #E8ECFF;
+  color: #7A8BFF !important;
 }
 </style>
