@@ -104,10 +104,10 @@
               </view>
               <view class="right-content" :class="{ 'guide-highlight-wrapper': isSquareBindGuideActive && index === 0 }">
                 <button
+                  :id="index === 0 ? 'first-bind-btn' : ''"
                   class="config-btn primary"
                   :class="{ 'guide-highlight': isSquareBindGuideActive && index === 0, 'guide-pulse': isSquareBindGuideActive && index === 0 }"
                   @click="handleGuideBindClick(agent, index)">
-                  <image src="/static/icons/setting.svg" alt="" class="btn-icon" />
                   <text class="btn-text">{{ $t('square.bind_device') }}</text>
                 </button>
                 <view
@@ -162,7 +162,85 @@
         </view>
       </view>
     </view>
-    
+
+    <!-- 新引导系统：蒙层提示（首次进入时显示） -->
+    <view v-if="showOverlayGuide" class="overlay-guide" @click.stop>
+      <view class="overlay-guide-mask"></view>
+      <view class="overlay-guide-card">
+        <!-- 背景光晕效果 -->
+        <view class="overlay-guide-bg">
+          <view class="overlay-guide-ellipse ellipse-1"></view>
+          <view class="overlay-guide-ellipse ellipse-2"></view>
+          <view class="overlay-guide-ellipse ellipse-3"></view>
+          <view class="overlay-guide-ellipse ellipse-4"></view>
+        </view>
+        <view class="overlay-guide-content">
+          <view class="overlay-guide-title">{{ $t('guide.overlay_title') }}</view>
+          <rich-text class="overlay-guide-desc" :nodes="$t('guide.overlay_desc')"></rich-text>
+          <view class="overlay-guide-illustration">
+            <image src="/static/guide-illustration.svg" mode="aspectFit" class="illustration-img" />
+          </view>
+          <view class="overlay-guide-btn" @click.stop="handleOverlayDismiss">
+            <text class="overlay-guide-btn-text">{{ $t('guide.overlay_action') }}</text>
+          </view>
+        </view>
+        <!-- 三角形箭头 -->
+        <view class="overlay-guide-arrow"></view>
+      </view>
+    </view>
+
+    <!-- 新引导系统：第二个蒙层提示（点击第一个蒙层"知道了"后显示） -->
+    <view v-if="showSecondOverlay" class="second-overlay" @click.stop>
+      <!-- 蒙层 -->
+      <view class="second-overlay-mask"></view>
+      <!-- 绑定按钮高亮区域（在蒙层之上） -->
+      <view 
+        v-if="highlightPosition && filteredAgents.length > 0" 
+        class="second-overlay-highlight"
+        :style="{
+          top: (highlightPosition.top - 8) + 'px',
+          left: (highlightPosition.left - 8) + 'px',
+        }"
+        @click="handleGuideBindClick(filteredAgents[0], 0)">
+        <button class="config-btn primary highlight-btn">
+          <text class="btn-text">{{ $t('square.bind_device') }}</text>
+        </button>
+      </view>
+      <!-- 信息条 -->
+      <view 
+        class="second-overlay-card"
+        :style="highlightPosition ? { top: (highlightPosition.top + highlightPosition.height + 20) + 'px' } : {}"
+      >
+        <!-- 背景光晕效果 -->
+        <view class="second-overlay-bg">
+          <view class="second-overlay-ellipse ellipse-1"></view>
+          <view class="second-overlay-ellipse ellipse-2"></view>
+          <view class="second-overlay-ellipse ellipse-3"></view>
+          <view class="second-overlay-ellipse ellipse-4"></view>
+        </view>
+        <view class="second-overlay-content">
+          <view class="second-overlay-text">{{ $t('guide.second_overlay_text') }}</view>
+          <view class="second-overlay-btn" @click.stop="handleSecondOverlayDismiss">
+            <text class="second-overlay-btn-text">{{ $t('guide.overlay_action') }}</text>
+          </view>
+        </view>
+      </view>
+      <!-- 三角形箭头 -->
+      <view 
+        class="second-overlay-arrow"
+        :style="highlightPosition ? { 
+          left: (highlightPosition.left + highlightPosition.width / 2 - 12) + 'px',
+          top: (highlightPosition.top + highlightPosition.height + 14) + 'px'
+        } : {}">
+      </view>
+    </view>
+
+    <!-- 信息提示条（固定在底部tab上方） -->
+    <view v-if="showInfoBar" class="info-bar">
+      <image src="/static/icons/bell.svg" class="info-bar-icon" />
+      <rich-text class="info-bar-text" :nodes="$t('guide.info_bar_text')"></rich-text>
+    </view>
+
     <!-- 自定义 TabBar -->
     <CustomTabBar :current="2" />
   </view>
@@ -179,8 +257,8 @@ import CustomTabBar from '@/components/CustomTabBar.vue';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import { Agent } from '../index/types.js';
 import { Device } from '../device/types.js';
-import { completeSquareBindGuide } from '@/utils/userGuide';
-import { updateSquareTabBadge } from '@/utils/tabBarBadge';
+import { completeSquareBindGuide, isSquareOverlayDismissed, dismissSquareOverlay, resetUserGuideState } from '@/utils/userGuide';
+import { updateSquareTabBadge, showSquareBadge } from '@/utils/tabBarBadge';
 import { getChatLanguageOptions, backendLangToLangCode, getSystemLangCode } from '../agent/lang_opts';
 
 type SquareAgent = Agent & {
@@ -209,6 +287,16 @@ const navBarHeight = ref<number>(44);
 const showSquareGuidePrompt = ref<boolean>(false);
 const isSquareBindGuideActive = ref<boolean>(false);
 const pendingGuideActivation = ref<boolean>(false);
+
+// 新引导系统状态
+// 是否显示第一个蒙层提示（首次进入且有未绑定设备时显示）
+const showOverlayGuide = ref<boolean>(false);
+// 是否显示第二个蒙层提示（点击第一个蒙层"知道了"后显示）
+const showSecondOverlay = ref<boolean>(false);
+// 绑定按钮高亮框位置
+const highlightPosition = ref<{ top: number; left: number; width: number; height: number } | null>(null);
+// 是否显示信息提示条（点击第二个蒙层"知道了"后显示，直到设备绑定智能体）
+const showInfoBar = ref<boolean>(false);
 
 // 语言选择相关
 const selectedLanguage = ref<string>(''); // 选中的语言 langCode
@@ -285,11 +373,27 @@ async function refreshSquareGuideState() {
   try {
     // 检查是否有未绑定智能体的设备
     const result = await deviceApi.getList();
+    console.log('[refreshSquareGuideState] API result:', result);
+    console.log('[refreshSquareGuideState] 设备列表:', result.data);
     if (result.code === 1000 && Array.isArray(result.data)) {
       const hasUnboundDevice = result.data.some((device: any) => !device.agentName);
+      console.log('[refreshSquareGuideState] hasUnboundDevice:', hasUnboundDevice);
       if (hasUnboundDevice) {
-        if (!isSquareBindGuideActive.value) {
-          showSquareGuidePrompt.value = true;
+        // 新引导系统逻辑
+        const overlayDismissed = isSquareOverlayDismissed();
+        console.log('[refreshSquareGuideState] overlayDismissed:', overlayDismissed);
+        if (!overlayDismissed) {
+          // 首次进入：显示蒙层提示和红点
+          console.log('[refreshSquareGuideState] 显示蒙层提示和红点');
+          showOverlayGuide.value = true;
+          showInfoBar.value = false;
+          showSquareBadge.value = true; // 显示红点
+        } else {
+          // 再次进入：只显示信息提示条，不显示红点
+          console.log('[refreshSquareGuideState] 显示信息提示条');
+          showOverlayGuide.value = false;
+          showInfoBar.value = true;
+          showSquareBadge.value = false; // 不显示红点
         }
         return;
       }
@@ -297,10 +401,13 @@ async function refreshSquareGuideState() {
   } catch (error) {
     console.warn('[refreshSquareGuideState] 获取设备列表失败:', error);
   }
-  // 没有未绑定设备，隐藏引导
+  // 没有未绑定设备，隐藏所有引导
   showSquareGuidePrompt.value = false;
   isSquareBindGuideActive.value = false;
   pendingGuideActivation.value = false;
+  showOverlayGuide.value = false;
+  showInfoBar.value = false;
+  showSquareBadge.value = false;
 }
 
 function startSquareBindGuide() {
@@ -320,6 +427,68 @@ function skipSquareBindGuide() {
   }
 }
 
+/**
+ * 获取第一个绑定按钮的位置
+ */
+function getFirstBindBtnPosition() {
+  return new Promise<void>((resolve) => {
+    uni.createSelectorQuery()
+      .select('#first-bind-btn')
+      .boundingClientRect((rect: any) => {
+        if (rect) {
+          highlightPosition.value = {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+          };
+        }
+        resolve();
+      })
+      .exec();
+  });
+}
+
+/**
+ * 关闭第一个蒙层提示（点击"知道了"按钮）
+ * - 第一个蒙层消失
+ * - 红点消失
+ * - 显示第二个蒙层（高亮绑定按钮）
+ */
+async function handleOverlayDismiss() {
+  dismissSquareOverlay(); // 记录到本地存储
+  showOverlayGuide.value = false;
+  // 隐藏红点
+  showSquareBadge.value = false;
+  uni.hideTabBarRedDot({ index: 2 });
+  
+  // 获取第一个绑定按钮的位置，然后显示第二个蒙层
+  if (filteredAgents.value.length > 0) {
+    await getFirstBindBtnPosition();
+    showSecondOverlay.value = true;
+  } else {
+    // 如果没有智能体，直接显示信息提示条
+    showInfoBar.value = true;
+  }
+}
+
+/**
+ * 关闭第二个蒙层提示（点击"知道了"按钮）
+ * - 第二个蒙层消失
+ * - 信息提示条出现
+ */
+function handleSecondOverlayDismiss() {
+  showSecondOverlay.value = false;
+  showInfoBar.value = true;
+}
+
+/**
+ * 关闭信息提示条
+ */
+function handleInfoBarDismiss() {
+  showInfoBar.value = false;
+}
+
 // 生命周期钩子
 onLoad(() => {
   loadPublicAgents();
@@ -328,6 +497,11 @@ onLoad(() => {
 
 onShow(() => {
   showBindDrawer.value = false;
+  
+  // TODO: 临时重置引导状态，需要测试时取消注释
+  // resetUserGuideState();
+  // console.log('[Square] 已重置用户引导状态');
+  
   // 页面显示时刷新数据
   loadPublicAgents();
   refreshSquareGuideState();
@@ -688,7 +862,6 @@ function handleBindCancel() {
   font-size: 18px;
   font-weight: 500;
   color: #0f172a;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .content-scroll {
@@ -801,7 +974,6 @@ function handleBindCancel() {
   font-size: 32rpx;
   font-weight: 400;
   color: #374151;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .language-arrow-wrapper {
@@ -887,7 +1059,6 @@ function handleBindCancel() {
   font-size: 30rpx;
   color: #374151;
   font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .language-option.active .language-option-text {
@@ -1005,7 +1176,6 @@ function handleBindCancel() {
   font-weight: 600;
   color: #0f172a;
   margin-bottom: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   text-align: left;
 }
 
@@ -1021,7 +1191,6 @@ function handleBindCancel() {
   -webkit-box-orient: vertical;
   padding-top: 24rpx;
   margin-bottom: 24rpx;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   text-align: justify;
   width: 100%;
   max-width: calc(100% - 32rpx);
@@ -1066,22 +1235,17 @@ function handleBindCancel() {
 .tag-text {
   font-size: 24rpx;
   color: #6b7280;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 .config-btn {
-  min-width: 240rpx;
-  width: auto;
-  height: 72rpx;
-  border-radius: 100rpx;
-  padding: 0 24rpx;
+  width: 128rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  padding: 0 16rpx;
   font-size: 28rpx;
   font-weight: 400;
-  box-shadow: 0 10rpx 30rpx rgba(67, 105, 254, 0.3);
-  border: 2rpx solid rgba(37, 99, 235, 0.8);
-  backdrop-filter: blur(10rpx);
-  -webkit-backdrop-filter: blur(10rpx);
+  background: #3E5DEF;
+  border: 1.5rpx solid #3E5DEF;
   transition: all 0.3s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1099,7 +1263,6 @@ function handleBindCancel() {
 .btn-text {
   text-align: center;
   font-size: 28rpx;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: white;
   font-weight: 400;
 }
@@ -1327,5 +1490,353 @@ function handleBindCancel() {
   display: flex;
   justify-content: space-between;
   width: 100%;
+}
+
+/* ========== 新引导系统样式 ========== */
+
+/* 蒙层提示 */
+.overlay-guide {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-guide-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.overlay-guide-card {
+  position: absolute;
+  width: 548rpx;
+  left: 50%;
+  top: 928rpx;
+  transform: translateX(-50%);
+  background: #E3EFFF;
+  border-radius: 32rpx;
+  overflow: hidden;
+}
+
+.overlay-guide-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.overlay-guide-ellipse {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70rpx);
+}
+
+.overlay-guide-ellipse.ellipse-1 {
+  width: 250rpx;
+  height: 250rpx;
+  right: -50rpx;
+  bottom: -32rpx;
+  background: #DEF4FF;
+}
+
+.overlay-guide-ellipse.ellipse-2 {
+  width: 274rpx;
+  height: 274rpx;
+  left: -94rpx;
+  top: 202rpx;
+  background: #FFFFFF;
+  opacity: 0.34;
+}
+
+.overlay-guide-ellipse.ellipse-3 {
+  width: 208rpx;
+  height: 208rpx;
+  left: -94rpx;
+  top: -80rpx;
+  background: #CBEEFF;
+  opacity: 0.34;
+}
+
+.overlay-guide-ellipse.ellipse-4 {
+  width: 364rpx;
+  height: 364rpx;
+  right: -70rpx;
+  top: -162rpx;
+  background: #A8DFFF;
+  opacity: 0.5;
+  filter: blur(82rpx);
+}
+
+.overlay-guide-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32rpx 40rpx;
+  gap: 24rpx;
+}
+
+.overlay-guide-title {
+  width: 100%;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 32rpx;
+  line-height: 48rpx;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #212730;
+}
+
+.overlay-guide-desc {
+  width: 100%;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 26rpx;
+  line-height: 40rpx;
+  color: #36404F;
+}
+
+.overlay-guide-illustration {
+  width: 468rpx;
+  height: 224rpx;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.illustration-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.overlay-guide-btn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0 24rpx;
+  width: 240rpx;
+  height: 56rpx;
+  background: #0166FF;
+  border-radius: 132rpx;
+}
+
+.overlay-guide-btn-text {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #FFFFFF;
+}
+
+.overlay-guide-arrow {
+  position: absolute;
+  width: 32rpx;
+  height: 18rpx;
+  right: 70rpx;
+  bottom: -16rpx;
+  background: #E1F1FF;
+  clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+}
+
+/* 第二个蒙层提示 */
+.second-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+}
+
+.second-overlay-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.second-overlay-highlight {
+  position: fixed;
+  z-index: 2001;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 16rpx;
+}
+
+.second-overlay-highlight .highlight-btn {
+  margin: 0;
+}
+
+.second-overlay-card {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 548rpx;
+  background: #E3EFFF;
+  border-radius: 32rpx;
+  overflow: hidden;
+  z-index: 2001;
+}
+
+.second-overlay-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.second-overlay-ellipse {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70rpx);
+}
+
+.second-overlay-ellipse.ellipse-1 {
+  width: 208rpx;
+  height: 208rpx;
+  right: -70rpx;
+  bottom: -80rpx;
+  background: #DEF4FF;
+}
+
+.second-overlay-ellipse.ellipse-2 {
+  width: 274rpx;
+  height: 274rpx;
+  left: -94rpx;
+  bottom: -120rpx;
+  background: #FFFFFF;
+  opacity: 0.34;
+}
+
+.second-overlay-ellipse.ellipse-3 {
+  width: 208rpx;
+  height: 208rpx;
+  left: -94rpx;
+  top: -80rpx;
+  background: #CBEEFF;
+  opacity: 0.34;
+}
+
+.second-overlay-ellipse.ellipse-4 {
+  width: 364rpx;
+  height: 364rpx;
+  right: -70rpx;
+  top: -162rpx;
+  background: #A8DFFF;
+  opacity: 0.5;
+  filter: blur(82rpx);
+}
+
+.second-overlay-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32rpx 40rpx;
+  gap: 24rpx;
+}
+
+.second-overlay-text {
+  width: 100%;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 26rpx;
+  line-height: 40rpx;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  color: #36404F;
+}
+
+.second-overlay-btn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0 24rpx;
+  width: 240rpx;
+  height: 56rpx;
+  background: #0166FF;
+  border-radius: 132rpx;
+}
+
+.second-overlay-btn-text {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #FFFFFF;
+}
+
+.second-overlay-arrow {
+  position: fixed;
+  z-index: 2001;
+  width: 24rpx;
+  height: 14rpx;
+  background: #CDE9FF;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+/* 信息提示条（固定在底部tab上方） */
+.info-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 160rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  gap: 16rpx;
+  min-height: 112rpx;
+  background: #EDEDF9;
+  z-index: 99;
+}
+
+.info-bar-icon {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
+}
+
+.info-bar-text {
+  flex: 1;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 26rpx;
+  line-height: 40rpx;
+  color: #3E5DEF;
 }
 </style>

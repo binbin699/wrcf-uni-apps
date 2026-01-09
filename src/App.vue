@@ -2,7 +2,7 @@
 import { watch, getCurrentInstance } from 'vue';
 import { onLaunch, onShow, onHide, onError } from '@dcloudio/uni-app';
 import { useI18n } from 'vue-i18n';
-import { useUserStore, usePrivacyStore } from '@/store';
+import { useUserStore } from '@/store';
 import { requestBluetoothPermissionsForAndroid12 } from '@/utils/bluetoothPermission';
 
 // 引入 ARMS SDK（H5 和 App 平台）
@@ -11,7 +11,6 @@ import armsRum from '@/pkg/arms/rum-uniapp/es/index';
 // #endif
 
 const userStore = useUserStore();
-const privacyStore = usePrivacyStore();
 const { t: $t, locale } = useI18n();
 
 const pageTitleKeyByRoute: Record<string, string> = {
@@ -64,28 +63,7 @@ function updateNavigationBarTitle() {
 onLaunch(() => {
   console.log('App Launch');
 
-  // #ifdef APP-PLUS
-  // *** SecGuard 合规要求（仅 Android）***
-  // 在 App 首次启动时，必须先检查隐私政策同意状态
-  // 只有用户同意后才能进行任何网络请求或 SDK 初始化
-  // 注意：APP-ANDROID 条件编译仅在 uts 文件中有效，这里使用运行时判断
-  if (typeof plus !== 'undefined' && plus.os.name === 'Android') {
-    const hasAgreed = privacyStore.checkPrivacyAgreement();
-    if (!hasAgreed) {
-      // 用户未同意，不进行任何网络请求或 SDK 初始化
-      // 隐私政策弹窗将在登录页面中显示
-      console.log('[App] Android 用户未同意隐私政策，等待用户在登录页同意');
-      // 只应用本地资源（不涉及网络请求）
-      applyLocaleResources();
-      return;
-    }
-  }
-  // #endif
-
-  // 用户已同意（或非 Android 平台），正常初始化
-  console.log('[App] 正常初始化');
-
-  // 初始化 ARMS 监控（在隐私政策检查之后）
+  // 初始化 ARMS 监控
   initArmsMonitoring();
 
   // Android 12+ 在 App 启动时立即请求蓝牙权限

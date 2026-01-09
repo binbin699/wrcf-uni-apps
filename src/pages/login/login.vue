@@ -1,13 +1,4 @@
 <template>
-  <!-- 隐私政策弹窗 - SecGuard 合规要求 (仅 Android) -->
-  <!-- #ifdef APP-PLUS -->
-  <PrivacyPolicyModal
-    :visible="showPrivacyModal"
-    @agree="onPrivacyAgree"
-    @disagree="onPrivacyDisagree"
-  />
-  <!-- #endif -->
-
   <wd-toast />
   <view class="login-container">
     <!-- 装饰性背景元素 -->
@@ -32,32 +23,21 @@
       <view class="login-section">
         <!-- 微信小程序手机号登录 -->
         <!-- #ifdef MP-WEIXIN -->
-        <template v-if="appConfig.SUPPORT_LOGIN_TYPE_WX_MP_PHONE">
-          <button
-            v-if="agreeChecked"
-            class="phone login-btn primary"
-            open-type="getPhoneNumber"
-            @getphonenumber="handlePhoneLogin"
-            :loading="userStore.isLoading"
-            :disabled="userStore.isLoading">
-            {{ $t('login.phone_login') }}
-          </button>
-          <button
-            v-else
-            class="phone login-btn primary need-agree"
-            @click="handlePhoneLoginBlocked"
-            :loading="userStore.isLoading"
-            :disabled="userStore.isLoading">
-            {{ $t('login.phone_login') }}
-          </button>
-        </template>
+        <button
+          v-if="appConfig.SUPPORT_LOGIN_TYPE_WX_MP_PHONE"
+          class="phone login-btn primary"
+          open-type="getPhoneNumber"
+          @getphonenumber="handlePhoneLogin"
+          :loading="userStore.isLoading"
+          :disabled="userStore.isLoading">
+          {{ $t('login.phone_login') }}
+        </button>
         <!-- #endif -->
 
         <!-- 游客按钮 -->
         <!-- #ifdef MP-WEIXIN -->
         <button
           class="guest login-btn secondary"
-          :class="{ 'need-agree': !agreeChecked }"
           @click="handleGuestLogin"
           v-if="appConfig.SUPPORT_LOGIN_TYPE_GUEST_MP"
           :loading="userStore.isLoading"
@@ -68,7 +48,6 @@
         <!-- #ifdef APP-PLUS || APP-HARMONY -->
         <button
           class="guest login-btn secondary"
-          :class="{ 'need-agree': !agreeChecked }"
           @click="handleGuestLogin"
           v-if="appConfig.SUPPORT_LOGIN_TYPE_GUEST"
           :loading="userStore.isLoading"
@@ -81,7 +60,6 @@
         <!-- #ifdef APP-PLUS || APP-HARMONY -->
         <button
           class="google login-btn"
-          :class="{ 'need-agree': !agreeChecked }"
           @click="handleGoogleLogin"
           v-if="appConfig.SUPPORT_LOGIN_TYPE_GOOGLE"
           :loading="userStore.isLoading"
@@ -94,7 +72,6 @@
         <!-- #ifdef APP-PLUS -->
         <button
           class="apple-signin-btn"
-          :class="{ 'need-agree': !agreeChecked }"
           @click="handleAppleLogin"
           v-if="appConfig.SUPPORT_LOGIN_TYPE_APPLE"
           :loading="userStore.isLoading"
@@ -108,7 +85,6 @@
         <!-- #ifdef APP-PLUS || APP-HARMONY -->
         <button
           class="wx login-btn"
-          :class="{ 'need-agree': !agreeChecked }"
           v-if="appConfig.SUPPORT_LOGIN_TYPE_WECHAT_OAUTH && isWechatExist()"
           @click="handleWxAppLogin"
           :loading="userStore.isLoading"
@@ -121,7 +97,6 @@
         <!-- #ifdef APP-PLUS || APP-HARMONY -->
         <button
           class="sms login-btn secondary"
-          :class="{ 'need-agree': !agreeChecked }"
           v-if="appConfig.SUPPORT_LOGIN_TYPE_SMS"
           @click="openSmsModal"
           :loading="userStore.isLoading"
@@ -133,7 +108,6 @@
         <!-- 邮箱登录 -->
         <button
           class="email login-btn secondary"
-          :class="{ 'need-agree': !agreeChecked }"
           v-if="appConfig.SUPPORT_LOGIN_TYPE_EMAIL"
           @click="openEmailModal"
           :loading="userStore.isLoading"
@@ -146,7 +120,6 @@
         <!-- 账号密码登录按钮 -->
         <button
           class="password login-btn"
-          :class="{ 'need-agree': !agreeChecked }"
           @click="handlePasswordLogin"
           v-if="appConfig.SUPPORT_LOGIN_TYPE_PASSWORD"
           :loading="userStore.isLoading"
@@ -167,20 +140,6 @@
       </view>
     </view>
 
-    <!-- 用户协议与隐私政策（URL 为空时隐藏） -->
-    <view class="terms-row" v-if="appConfig.TERMS_URL || appConfig.PRIVACY_URL">
-      <view class="terms-checkbox" @click="agreeChecked = !agreeChecked">
-        <view :class="['terms-box', agreeChecked ? 'checked' : '']">
-          <text v-if="agreeChecked">✓</text>
-        </view>
-      </view>
-      <view class="terms-text">
-        {{ $t('login.agree_terms_prefix') }}
-        <text v-if="appConfig.TERMS_URL" class="terms-link" @click="openTerms">{{ $t('login.user_agreement') }}</text>
-        <template v-if="appConfig.TERMS_URL && appConfig.PRIVACY_URL">{{ $t('login.terms_and') }}</template>
-        <text v-if="appConfig.PRIVACY_URL" class="terms-link" @click="openPrivacy">{{ $t('login.privacy_policy') }}</text>
-      </view>
-    </view>
 
     <!-- 密码登录弹窗 -->
     <view v-if="showPasswordModal" class="password-modal-overlay" @click="closePasswordModal">
@@ -222,7 +181,7 @@
           <button
             class="confirm-btn primary"
             @click="submitPasswordLogin"
-            :disabled="userStore.isLoading || !agreeChecked">
+            :disabled="userStore.isLoading">
             {{ userStore.isLoading ? $t('login.logging_in') : $t('login.login') }}
           </button>
         </view>
@@ -270,7 +229,7 @@
           <button
             class="confirm-btn primary"
             @click="submitEmailLogin"
-            :disabled="userStore.isLoading || !agreeChecked">
+            :disabled="userStore.isLoading">
             {{ userStore.isLoading ? $t('login.logging_in') : $t('login.login') }}
           </button>
         </view>
@@ -281,7 +240,6 @@
     <!-- #ifdef APP-PLUS || APP-HARMONY -->
     <SmsLoginModal
       v-model:visible="showSmsModal"
-      :agree-checked="agreeChecked"
       :is-loading="userStore.isLoading"
       @onSubmit="handleSmsLoginSubmit"
     />
@@ -290,83 +248,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onLoad } from '@dcloudio/uni-app';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import { useUserStore } from '@/store/user';
-import { useTokenStore } from '@/store/token';
-import { usePrivacyStore } from '@/store/privacy';
 import { PageMap, Pages } from '@/utils/route';
 import type { IPasswordLoginForm } from '@/api/types/login';
 import storage from '@/utils/storage';
 import { isWechatExist } from '@/utils/isWechatExist';
 import SmsLoginModal from './components/sms_login_modal.vue';
 // #ifdef APP-PLUS
-import PrivacyPolicyModal from '@/components/PrivacyPolicyModal.vue';
 import { requestBluetoothPermissionsForAndroid12 } from '@/utils/bluetoothPermission';
 // #endif
 
 const { t: $t } = useI18n();
 const toast = useToast();
 const userStore = useUserStore();
-const privacyStore = usePrivacyStore();
 const STORAGE_LOGIN_Unionid_KEY = 'page-options-login-unionid';
 const STORAGE_LOGIN_EMAIL_KEY = 'page-options-login-email';
-
-// 隐私政策弹窗显示状态（仅 App 端使用）
-const showPrivacyModal = ref(false);
-
-// #ifdef APP-PLUS
-/**
- * 检查是否需要显示隐私政策弹窗
- * SecGuard 要求（仅 Android）：App 首次启动时必须在用户交互前展示隐私政策
- */
-onMounted(() => {
-  // #ifdef APP-PLUS
-  if (typeof plus !== 'undefined' && plus.os.name === 'Android') {
-    const hasAgreed = privacyStore.checkPrivacyAgreement();
-    if (!hasAgreed) {
-      showPrivacyModal.value = true;
-    }
-  }
-  // #endif
-});
-
-/**
- * 用户同意隐私政策
- * 此时可以安全地进行网络请求和 SDK 初始化
- */
-async function onPrivacyAgree() {
-  console.log('[登录页] 用户同意隐私政策，开始初始化...');
-  showPrivacyModal.value = false;
-  
-  // 1. 请求 Android 12+ 蓝牙权限
-  requestBluetoothPermissionsForAndroid12();
-  
-  // 2. 初始化用户状态（恢复 Token 等）
-  // 注意：需要 await 等待初始化完成，以便检查登录状态
-  await userStore.initUserState();
-
-  // 3. 检查是否已登录（针对老用户更新场景）
-  // 如果初始化后发现本地有有效 Token，直接跳转首页
-  if (userStore.isLoggedIn) {
-    console.log('[登录页] 用户已登录，跳转首页');
-    toast.success({ msg: $t('login.login_success'), duration: 2000 });
-    setTimeout(() => {
-      redirectToHome();
-    }, 500);
-  }
-}
-
-/**
- * 用户拒绝隐私政策
- */
-function onPrivacyDisagree() {
-  console.log('[登录页] 用户拒绝隐私政策');
-  // privacyStore.rejectPrivacyPolicy() 会在组件内部处理退出逻辑
-}
-// #endif
 
 // 响应式数据
 const showPasswordModal = ref(false);
@@ -388,31 +288,6 @@ const appConfig = APP_CONFIG;
 const showSmsModal = ref(false);
 // #endif
 
-// 用户是否同意协议（用于展示/跳转，默认不勾选以满足合规性）
-// 如果协议 URL 都为空（不显示勾选框），默认已同意；否则需要用户勾选
-const initialAgreeStatus = !APP_CONFIG.TERMS_URL && !APP_CONFIG.PRIVACY_URL;
-const agreeChecked = ref(initialAgreeStatus);
-
-function openExternal(src: string) {
-  const encoded = encodeURIComponent(src);
-  uni.navigateTo({ url: '/pages/webview/webview?src=' + encoded });
-}
-
-function openTerms() {
-  openExternal(APP_CONFIG.TERMS_URL);
-}
-
-function openPrivacy() {
-  openExternal(APP_CONFIG.PRIVACY_URL);
-}
-
-function ensureAgreement(): boolean {
-  if (!agreeChecked.value) {
-    toast.warning({ msg: $t('login.please_agree_terms'), duration: 3000 });
-    return false;
-  }
-  return true;
-}
 
 // 生命周期钩子
 onLoad(async () => {
@@ -462,7 +337,6 @@ function handleLoginError(error: any) {
  * 请求 Google OAuth
  */
 async function handleGoogleLogin() {
-  if (!ensureAgreement()) return;
   const isSuccess = await userStore.googleLogin();
   // 登录成功
   if (isSuccess) {
@@ -481,7 +355,6 @@ async function handleGoogleLogin() {
  * 请求 Apple Login
  */
 async function handleAppleLogin() {
-  if (!ensureAgreement()) return;
   const isSuccess = await userStore.appleLogin();
   if (isSuccess) {
     handleLoginSuccess();
@@ -498,7 +371,6 @@ async function handleAppleLogin() {
  * 请求 WeChat OAuth（App端）
  */
 async function handleWxAppLogin() {
-  if (!ensureAgreement()) return;
   const isSuccess = await userStore.wxAppLogin();
   if (isSuccess) {
     handleLoginSuccess();
@@ -512,7 +384,6 @@ async function handleWxAppLogin() {
 }
 
 async function handlePhoneLogin(e: any) {
-  if (!ensureAgreement()) return;
   if (e.detail.errMsg !== 'getPhoneNumber:ok') {
     toast.warning({
       msg: $t('login.auth_failed'),
@@ -543,12 +414,7 @@ async function handlePhoneLogin(e: any) {
   }
 }
 
-function handlePhoneLoginBlocked() {
-  ensureAgreement();
-}
-
 async function handleGuestLogin() {
-  if (!ensureAgreement()) return;
   try {
     const isSuccess = await userStore.guestLogin();
     if (isSuccess) {
@@ -577,13 +443,11 @@ function redirectToHome() {
 }
 
 async function handlePasswordLogin() {
-  if (!ensureAgreement()) return;
   // 显示密码登录弹窗
   showPasswordModal.value = true;
 }
 
 function openEmailModal() {
-  if (!ensureAgreement()) return;
   showEmailModal.value = true;
 }
 
@@ -606,7 +470,6 @@ function togglePasswordVisibility() {
 }
 
 async function submitPasswordLogin() {
-  if (!ensureAgreement()) return;
   // 表单验证
   if (!passwordForm.value.unionid) {
     toast.warning({ msg: $t('login.please_enter_unionid'), duration: 3000 });
@@ -654,7 +517,6 @@ function toggleEmailPasswordVisibility() {
 }
 
 async function submitEmailLogin() {
-  if (!ensureAgreement()) return;
   // 验证邮箱是否填写
   if (!emailForm.value.email) {
     toast.warning({ msg: $t('login.account_required'), duration: 3000 });
@@ -702,7 +564,6 @@ async function submitEmailLogin() {
  * 打开短信登录弹窗
  */
 function openSmsModal() {
-  if (!ensureAgreement()) return;
   showSmsModal.value = true;
 }
 
@@ -925,10 +786,6 @@ page {
   cursor: not-allowed;
 }
 
-.login-btn.need-agree {
-  opacity: 0.75;
-}
-
 /* .login-btn::before {
   content: '';
   position: absolute;
@@ -982,10 +839,6 @@ page {
   opacity: 0.45;
   box-shadow: none;
   cursor: not-allowed;
-}
-
-.apple-signin-btn.need-agree {
-  opacity: 0.75;
 }
 
 .apple-logo {
@@ -1163,55 +1016,6 @@ page {
 
 .cancel-btn:active {
   background: #e0e0e0;
-}
-
-/* 协议行 */
-.terms-row {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  width: 100%;
-  max-width: 640rpx;
-  justify-content: center;
-  margin-top: 12rpx;
-  position: relative;
-  z-index: 10;
-  /* iOS 全面屏底部安全区域适配 */
-  margin-bottom: 0;
-  margin-bottom: constant(safe-area-inset-bottom);
-  margin-bottom: env(safe-area-inset-bottom);
-}
-.terms-checkbox {
-  width: 48rpx;
-  height: 48rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.terms-box {
-  width: 32rpx;
-  height: 32rpx;
-  border-radius: 999rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 24rpx;
-}
-.terms-box.checked {
-  background: #335cff;
-  border-color: #335cff;
-}
-.terms-text {
-  color: #ffffff;
-  font-size: 24rpx;
-}
-.terms-link {
-  color: #ffffff;
-  font-weight: 600;
-  text-decoration: underline;
-  margin: 0 6rpx;
 }
 
 /* 自动注册提示文字 */

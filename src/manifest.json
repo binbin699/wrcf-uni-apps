@@ -2,8 +2,8 @@
     "name" : "%app.name%",
     "appid" : "__UNI__53D46D3",
     "description" : "%app.description%",
-    "versionName" : "1.1.0",
-    "versionCode" : 10030,
+    "versionName" : "1.1.1",
+    "versionCode" : 101010,
     "transformPx" : false,
     "app-plus" : {
         "usingComponents" : true,
@@ -124,7 +124,7 @@
             },
             "splashscreen" : {
                 "androidStyle" : "common",
-                "useOriginalMsgbox" : false
+                "useOriginalMsgbox" : true
             },
             "icons" : {
                 "android" : {

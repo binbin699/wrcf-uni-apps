@@ -9,7 +9,7 @@
         <view class="section-header">
           <view>
             <view class="section-title">
-              {{ isIOS ? $t('net_config.manual_config') : $t('net_config.wifi_list_title') }}
+              {{ isIOS ? $t('net_config.manual_config_ios') : $t('net_config.wifi_list_title') }}
             </view>
           </view>
           <view class="rescan-wrapper" v-if="!isIOS">
@@ -191,6 +191,10 @@
           <wd-button block type="primary" @click="confirmFinishWifiConfig">
             {{ $t('common.next_step') }}
           </wd-button>
+        </view>
+        <!-- 底部2.4GHz提示 -->
+        <view class="wifi-band-notice">
+          <text>{{ $t('net_config.generate_tip') }}</text>
         </view>
       </view>
 
@@ -1473,6 +1477,14 @@ watch(
   margin-bottom: 16px;
   font-size: 14px;
   color: #FA8C16;
+  line-height: 1.5;
+}
+
+.wifi-band-notice {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #999;
   line-height: 1.5;
 }
 

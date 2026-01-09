@@ -45,7 +45,7 @@
         <button
           class="confirm-btn primary"
           @click="submitSmsLogin"
-          :disabled="isLoading || !agreeChecked">
+          :disabled="isLoading">
           {{ isLoading ? $t('login.logging_in') : $t('login.login') }}
         </button>
       </view>
@@ -63,12 +63,10 @@ import loginApi from '@/api/login';
 const props = withDefaults(
   defineProps<{
     visible?: boolean;
-    agreeChecked?: boolean;
     isLoading?: boolean;
   }>(),
   {
     visible: false,
-    agreeChecked: false,
     isLoading: false
   }
 );
@@ -187,12 +185,6 @@ async function sendVerificationCode() {
  * 提交短信登录
  */
 async function submitSmsLogin() {
-  // 验证协议
-  if (!props.agreeChecked) {
-    toast.warning({ msg: $t('login.please_agree_terms'), duration: 3000 });
-    return;
-  }
-
   // 验证手机号
   if (!smsForm.value.phone) {
     toast.warning({ msg: $t('login.phone_required'), duration: 3000 });
