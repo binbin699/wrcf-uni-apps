@@ -116,8 +116,14 @@ export const agentApi = {
   },
 
   // 获取模板智能体列表
-  getTemplateAgents() {
-    return request.get('/app/agent/templates');
+  // language: 'all' 获取所有模板，不传则根据系统语言自动筛选
+  getTemplateAgents(language = 'all') {
+    return request.get('/app/agent/templates', { data: { language } });
+  },
+
+  // 优化提示词（灵矽平台AI处理需要较长时间，设置60秒超时，禁用默认loading）
+  optimizePrompt(data) {
+    return request.post('/app/agent/optimize-prompt', data, { timeout: 60000, showLoading: false });
   }
 };
 

@@ -145,11 +145,30 @@ const menuItems = computed(() => {
         })
     },
     {
+      id: 'wifi_config_bluetooth',
+      title: $t('profile.wifi_config_bluetooth'),
+      icon: '/static/icons/bluetooth-config.svg',
+      handleClick: () =>
+        uni.navigateTo({
+          url: PageMap[Pages.BluetoothConfig].url + '?configOnly=1'
+        })
+    },
+    {
       id: 'net_config',
       title: $t('profile.net_config'),
       icon: '/static/icons/scan-qrcode.svg',
       handleClick: () => {
         handleScanAndBindDevice();
+      }
+    },
+    {
+      id: 'wifi_config_qrcode',
+      title: $t('profile.wifi_config_qrcode'),
+      icon: '/static/icons/wifi-config.svg',
+      handleClick: () => {
+        uni.navigateTo({
+          url: PageMap[Pages.NetConfig].url + '?bound=1'
+        });
       }
     },
     APP_CONFIG.APP_USE_VOICEPRINT ? {
@@ -170,23 +189,25 @@ const menuItems = computed(() => {
           url: PageMap[Pages.VoiceClone].url
         })
     } : undefined,
-    {
+    APP_CONFIG.TERMS_URL ? {
       id: 'user_agreement',
       title: $t('profile.user_agreement'),
       icon: '/static/icons/setting.svg',
       handleClick: () => openExternal(APP_CONFIG.TERMS_URL)
-    },
-    {
+    } : undefined,
+    APP_CONFIG.PRIVACY_URL ? {
       id: 'privacy_policy',
       title: $t('profile.privacy_policy'),
       icon: '/static/icons/setting.svg',
       handleClick: () => openExternal(APP_CONFIG.PRIVACY_URL)
-    }
+    } : undefined
   ];
 
   return items.filter(item => item !== undefined).filter((item) => {
     if (setupMode === 'qrcode' && item.id === 'bluetooth_config') return false;
+    if (setupMode === 'qrcode' && item.id === 'wifi_config_bluetooth') return false;
     if (setupMode === 'bluetooth' && item.id === 'net_config') return false;
+    if (setupMode === 'bluetooth' && item.id === 'wifi_config_qrcode') return false;
     return true;
   });
 });
@@ -199,9 +220,8 @@ onLoad(() => {
 
 onShow(() => {
   updateSquareTabBadge();
-  // #ifdef APP-PLUS
+  // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
-  // #endif
 });
 
 // 刷新用户信息

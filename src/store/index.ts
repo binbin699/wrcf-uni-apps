@@ -19,4 +19,3 @@ export default store;
 // 导出各个store
 export { useTokenStore } from './token';
 export { useUserStore } from './user';
-export { usePrivacyStore } from './privacy';

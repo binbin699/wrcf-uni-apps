@@ -253,22 +253,27 @@ export default {
     handleSelectDevice(device) {
       console.log('选择设备:', device);
 
-      // 检查当前设备是否已绑定
-      const selectedDevice = device;
-      if (selectedDevice && selectedDevice.deviceId) {
-        const isDeviceBound = this._devices.some(
-          (_device) =>
-            _device.macAddress &&
-            _device.macAddress.toLowerCase() === selectedDevice.deviceId.toLowerCase()
-        );
+      // 获取当前状态
+      const state = bluetoothConfigManager.getState();
 
-        if (isDeviceBound) {
-          uni.showToast({
-            title: this.$t('bluetooth.select_device.device_bound'),
-            icon: 'none',
-            duration: 2000
-          });
-          return;
+      // 检查当前设备是否已绑定（仅在非 configOnly 模式下检查）
+      if (!state.configOnly) {
+        const selectedDevice = device;
+        if (selectedDevice && selectedDevice.deviceId) {
+          const isDeviceBound = this._devices.some(
+            (_device) =>
+              _device.macAddress &&
+              _device.macAddress.toLowerCase() === selectedDevice.deviceId.toLowerCase()
+          );
+
+          if (isDeviceBound) {
+            uni.showToast({
+              title: this.$t('bluetooth.select_device.device_bound'),
+              icon: 'none',
+              duration: 2000
+            });
+            return;
+          }
         }
       }
       // 保存选中的设备

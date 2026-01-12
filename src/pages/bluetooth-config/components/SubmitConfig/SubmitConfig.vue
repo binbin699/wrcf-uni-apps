@@ -218,7 +218,12 @@ export default {
           console.log('配网成功', configResult);
           this.isConfigSuccess = true;
 
-          await this.registerDevice();
+          // 仅在非 configOnly 模式下绑定设备
+          if (!state.configOnly) {
+            await this.registerDevice();
+          } else {
+            console.log('仅配网模式，跳过设备绑定');
+          }
 
           uni.showToast({
             title: '配网成功',

@@ -1,0 +1,48 @@
+{
+  "version": "1",
+  "prompt": "template",
+  "title": "%privacy.title%",
+  "message": "%privacy.message%",
+  "buttonAccept": "%privacy.buttonAccept%",
+  "buttonRefuse": "%privacy.buttonRefuse%",
+  "hrefLoader": "system",
+  "backToExit": "false",
+  "second": {
+    "title": "%privacy.second.title%",
+    "message": "%privacy.second.message%",
+    "buttonAccept": "%privacy.second.buttonAccept%",
+    "buttonRefuse": "%privacy.second.buttonRefuse%"
+  },
+  "disagreeMode": {
+    "support": false,
+    "loadNativePlugins": false,
+    "visitorEntry": false,
+    "showAlways": false
+  },
+  "styles": {
+    "backgroundColor": "#FFFFFF",
+    "borderRadius": "16px",
+    "title": {
+      "color": "#1A1A1A",
+      "fontSize": "18px"
+    },
+    "message": {
+      "color": "#333333",
+      "fontSize": "16px"
+    },
+    "link": {
+      "color": "#3E5DEF"
+    },
+    "buttonAccept": {
+      "color": "#3E5DEF",
+      "fontSize": "16px"
+    },
+    "buttonRefuse": {
+      "color": "#999999",
+      "fontSize": "16px"
+    },
+    "buttonVisitor": {
+      "color": "#999999"
+    }
+  }
+}

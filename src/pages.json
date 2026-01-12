@@ -75,25 +75,6 @@
       }
     },
     {
-      "path": "pages/device/device",
-      "style": {
-        "navigationBarTitleText": "%pages.device%",
-        "app-plus": {
-          "bounce": "none"
-        }
-      }
-    },
-    {
-      "path": "pages/bluetooth-config/bluetooth-config",
-      "style": {
-        "navigationBarTitleText": "%pages.bluetooth_config%",
-        "navigationStyle": "custom",
-        "app-plus": {
-          "bounce": "none"
-        }
-      }
-    },
-    {
       "path": "pages/mock-test/mock-test",
       "style": {
         "navigationBarTitleText": "%pages.mock_test%",
@@ -111,33 +92,6 @@
       }
     },
     {
-      "path": "pages/voice/clone",
-      "style": {
-        "navigationBarTitleText": "%pages.voice_clone%",
-        "app-plus": {
-          "bounce": "none"
-        }
-      }
-    },
-    {
-      "path": "pages/voice/manage",
-      "style": {
-        "navigationBarTitleText": "%pages.voice_manage%",
-        "app-plus": {
-          "bounce": "none"
-        }
-      }
-    },
-    {
-      "path": "pages/voice/bind-voiceprint",
-      "style": {
-        "navigationBarTitleText": "%pages.bind_voiceprint%",
-        "app-plus": {
-          "bounce": "none"
-        }
-      }
-    },
-    {
       "path": "pages/net-config/net-config",
       "style": {
         "navigationBarTitleText": "%pages.net_config%",
@@ -145,6 +99,69 @@
           "bounce": "none"
         }
       }
+    }
+  ],
+  "subPackages": [
+    {
+      "root": "pages/bluetooth-config",
+      "pages": [
+        {
+          "path": "bluetooth-config",
+          "style": {
+            "navigationBarTitleText": "%pages.bluetooth_config%",
+            "navigationStyle": "custom",
+            "app-plus": {
+              "bounce": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/voice",
+      "pages": [
+        {
+          "path": "clone",
+          "style": {
+            "navigationBarTitleText": "%pages.voice_clone%",
+            "app-plus": {
+              "bounce": "none"
+            }
+          }
+        },
+        {
+          "path": "manage",
+          "style": {
+            "navigationBarTitleText": "%pages.voice_manage%",
+            "app-plus": {
+              "bounce": "none"
+            }
+          }
+        },
+        {
+          "path": "bind-voiceprint",
+          "style": {
+            "navigationBarTitleText": "%pages.bind_voiceprint%",
+            "app-plus": {
+              "bounce": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/device",
+      "pages": [
+        {
+          "path": "device",
+          "style": {
+            "navigationBarTitleText": "%pages.device%",
+            "app-plus": {
+              "bounce": "none"
+            }
+          }
+        }
+      ]
     }
   ],
   "globalStyle": {

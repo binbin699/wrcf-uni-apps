@@ -13,12 +13,11 @@
 
       <view class="form-item">
         <text class="label">{{ $t('edit_agent.agent_description') }}</text>
-        <textarea
-          class="textarea"
+        <AgentPromptPolish
           v-model="formData.systemPrompt"
-          :placeholder="$t('edit_agent.agent_description_placeholder')"
-          maxlength="2000"
-          auto-height />
+          class="agent-prompt-polish"
+          placeholder-key="edit_agent.agent_description_placeholder"
+        />
       </view>
 
       <view class="form-item">
@@ -106,6 +105,7 @@ import { onLoad } from '@dcloudio/uni-app';
 import type { LLM, Voice } from '@/pages/agent/types';
 import { relocalizeLLMOptions } from './llm';
 import { getChatLanguageOptions, langCodeToVoiceLanguage } from './lang_opts';
+import AgentPromptPolish from './components/AgentPromptPolish.vue';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
@@ -119,6 +119,7 @@ const formData = ref({
   langCode: 'zh_CN',
   language: '中文'
 });
+
 const updating = ref(false);
 const loadingVoices = ref(true);
 const loadingLLMs = ref(true);
@@ -139,7 +140,6 @@ const selectedChatLanguage = computed(() => chatLanguageOptions.value[selectedCh
 const currentVoiceLanguage = computed(() => langCodeToVoiceLanguage(formData.value.langCode));
 
 // 编辑模式
-const id = ref<string | null>(null);
 const agentId = ref<string | null>(null);
 const loadingAgent = ref(false);
 
@@ -169,9 +169,8 @@ onLoad(async (options: any) => {
     return;
   }
 
-  id.value = options.id;
   agentId.value = options.agentId;
-  console.log('编辑智能体 agentId:', agentId.value, 'id:', id.value);
+  console.log('编辑智能体 agentId:', agentId.value);
 
   // 设置页面标题
   uni.setNavigationBarTitle({
@@ -206,7 +205,16 @@ watch(
 async function loadAgentData() {
   try {
     loadingAgent.value = true;
-    const result = await agentApi.getInfo(id.value);
+    
+    if (!agentId.value) {
+      toast.error({
+        msg: $t('edit_agent.missing_agent_id'),
+        duration: 2000
+      });
+      return;
+    }
+    
+    const result = await agentApi.getInfo(agentId.value);
 
     if (result.code === 1000 && result.data) {
       const agent = result.data;
@@ -421,6 +429,8 @@ async function updateAgent() {
 function goBack() {
   uni.navigateBack();
 }
+
+// 一键润色逻辑已抽离到 AgentPromptPolish 组件中
 </script>
 
 <style>
@@ -483,29 +493,7 @@ function goBack() {
   font-size: 32rpx;
 }
 
-.textarea {
-  width: 100%;
-  min-height: 224rpx;
-  padding: 26rpx 32rpx;
-  border: 1rpx solid #e5e5e5;
-  border-radius: 16rpx;
-  font-size: 32rpx;
-  background: white;
-  line-height: 1.4;
-  color: #171717;
-  box-sizing: border-box;
-}
-
-.textarea:focus {
-  border-color: #335CFF;
-  background: white;
-  outline: none;
-}
-
-.textarea::placeholder {
-  color: #9ca3af;
-  font-size: 32rpx;
-}
+/* 文本域容器与样式在 AgentPromptPolish 组件中定义 */
 
 .picker-display,
 .voice-selector-trigger,

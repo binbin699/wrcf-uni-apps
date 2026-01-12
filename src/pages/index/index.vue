@@ -8,83 +8,34 @@
         <view class="loading-text">{{ $t('index.loading') }}</view>
       </view>
 
-      <!-- 空状态 - 没有任何智能体时显示 -->
-      <view class="empty-page" v-else-if="agentList.length === 0 && othersAgentList.length === 0">
-        <image class="empty-page-icon" src="/static/agent.png" mode="aspectFit"></image>
-        <view class="empty-page-title">{{ $t('index.no_agents') }}</view>
-        <view class="empty-page-desc">{{ $t('index.no_agents_desc') }}</view>
-      </view>
-
-      <!-- 我的智能体 -->
-      <wd-collapse v-model="collapsedGroup" v-else>
+      <!-- 智能体列表区域 -->
+      <view v-else>
         <!-- AI生成内容合规提示 -->
         <view class="ai-disclaimer">
           <text class="ai-disclaimer-text">{{ $t('index.ai_generated_disclaimer') }}</text>
         </view>
-        <wd-collapse-item
-          :name="groupType.My"
-          :title="$t(groupNameKey[groupType.My])"
-          customBodyStyle="padding: 0;">
-          <!-- 智能体列表 -->
-          <view class="agent-list" v-if="agentList.length > 0">
-            <AgentCard
-              v-for="agent in agentList"
-              :key="agent.id"
-              :agent="agent"
-              @click="handleAgentClick(agent)"
-              @delete="handleAgentDelete" />
-          </view>
-          <!-- 模板智能体网格 -->
-          <view class="template-grid" v-else-if="templateAgentList.length > 0">
-            <view class="template-hint">{{ $t('index.template_hint') }}</view>
-            <wd-gap></wd-gap>
-            <view class="template-grid-container">
-              <template
-                v-for="(row, rowIndex) in Math.ceil(templateAgentList.length / 2)"
-                :key="rowIndex">
-                <wd-gap v-if="rowIndex > 0"></wd-gap>
-                <wd-row :gutter="24">
-                  <wd-col :span="12" v-for="col in 2" :key="col">
-                    <template v-if="templateAgentList[rowIndex * 2 + col - 1]">
-                      <wd-button
-                        block
-                        size="large"
-                        @click="handleTemplateClick(templateAgentList[rowIndex * 2 + col - 1])">
-                        {{ templateAgentList[rowIndex * 2 + col - 1].agentName }}
-                      </wd-button>
-                    </template>
-                  </wd-col>
-                </wd-row>
-              </template>
-            </view>
-          </view>
-          <!-- 空状态提示 -->
-          <view class="empty-state" v-else>
-            <image class="empty-icon" src="/static/icons/agent-icon.png" mode="aspectFit"></image>
-            <view class="empty-title">{{ $t('index.no_agents') }}</view>
-            <view class="empty-desc">{{ $t('index.no_agents_desc') }}</view>
-            <view class="empty-btn primary" @click="handleCreateAgent">
-              <text class="empty-btn-text">{{ $t('index.create_agent') }}</text>
-            </view>
-          </view>
-        </wd-collapse-item>
+        
+        <!-- 统一的智能体列表 -->
+        <view class="agent-list">
+          <AgentCard
+            v-for="agent in agentList"
+            :key="agent.id"
+            :agent="agent"
+            :swipable="agent.userId === userStore.userId"
+            @click="handleAgentClick(agent)"
+            @delete="handleAgentDelete" />
+        </view>
 
-        <!-- 其他人的智能体 -->
-        <wd-collapse-item
-          v-if="othersAgentList.length > 0"
-          :name="groupType.Others"
-          :title="$t(groupNameKey[groupType.Others])"
-          customBodyStyle="padding: 0;">
-          <view class="agent-list">
-            <AgentCard
-              v-for="agent in othersAgentList"
-              :key="agent.id"
-              :agent="agent"
-              :swipable="false"
-              @click="handleAgentClick(agent)" />
+        <!-- 如果列表为空但仍在渲染（理论上被外部 v-else-if 挡住，但为了保险） -->
+        <view class="empty-state" v-if="agentList.length === 0">
+          <image class="empty-icon" src="/static/icons/agent-icon.png" mode="aspectFit"></image>
+          <view class="empty-title">{{ $t('index.no_agents') }}</view>
+          <view class="empty-desc">{{ $t('index.no_agents_desc') }}</view>
+          <view class="empty-btn primary" @click="handleCreateAgent">
+            <text class="empty-btn-text">{{ $t('index.create_agent') }}</text>
           </view>
-        </wd-collapse-item>
-      </wd-collapse>
+        </view>
+      </view>
     </view>
 
     <!-- 设备绑定抽屉 -->
@@ -166,10 +117,8 @@ import { agentApi, deviceApi } from '@/api/index.js';
 import { PageMap, Pages } from '@/utils/route';
 import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
 import { onLoad, onShow } from '@dcloudio/uni-app';
-import { Agent, groupType, groupNameKey, AgentTemplate } from './types';
-import { collapsedGroup } from './store';
+import { Agent } from './types';
 import { useUserStore } from '@/store';
-import { gotoCreateAgentBy } from '../agent/create';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 import { useDeviceScan } from '@/utils/useDeviceScan';
 import AgentCard from '@/components/AgentCard.vue';
@@ -189,8 +138,6 @@ const userStore = useUserStore();
 
 // 响应式数据
 const agentList = ref<Agent[]>([]);
-const othersAgentList = ref<Agent[]>([]);
-const templateAgentList = ref<AgentTemplate[]>([]);
 const showBindDrawer = ref(false);
 const selectedAgent = ref<Agent | null>(null);
 const loading = ref(false);
@@ -206,9 +153,6 @@ function updateNavigationTitle() {
 
 onLoad(async () => {
   await loadAgentList(true);
-  if (agentList.value.length === 0) {
-    await loadTemplateAgents();
-  }
   await checkDeviceBinding();
   updateNavigationTitle();
 });
@@ -219,9 +163,8 @@ onShow(() => {
   checkDeviceBinding();
   updateNavigationTitle();
   updateSquareTabBadge();
-  // #ifdef APP-PLUS
+  // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
-  // #endif
 });
 
 watch(
@@ -248,10 +191,7 @@ async function loadAgentList(showLoading = false) {
     const result = await agentApi.getRelatedAgents();
 
     if (result.code === 1000 && result.data) {
-      agentList.value = result.data.filter((agent: Agent) => agent.userId === userStore.userId);
-      othersAgentList.value = result.data.filter(
-        (agent: Agent) => agent.userId !== userStore.userId
-      );
+      agentList.value = result.data || [];
     } else {
       agentList.value = [];
       console.warn('获取智能体列表失败:', result.message);
@@ -295,47 +235,14 @@ async function checkDeviceBinding() {
   }
 }
 
-async function loadTemplateAgents() {
-  // 静默加载，失败不提示
-  try {
-    const result = await agentApi.getTemplateAgents();
 
-    if (result.code === 1000 && result.data) {
-      // 随机获取最多4个模板智能体
-      const templates = result.data;
-      if (templates.length <= 4) {
-        templateAgentList.value = templates;
-      } else {
-        // 随机选择4个
-        const shuffled = [...templates].sort(() => 0.5 - Math.random());
-        templateAgentList.value = shuffled.slice(0, 4);
-      }
-    } else {
-      templateAgentList.value = [];
-      // toast.warning({
-      //   msg: $t('index.get_templates_failed'),
-      //   duration: 2000
-      // });
-      console.warn('获取模板智能体列表失败:', result.message);
-    }
-  } catch (error) {
-    console.error('加载模板智能体列表失败:', error);
-    templateAgentList.value = [];
-    // toast.warning({
-    //   msg: $t('common.network_error'),
-    //   duration: 2000
-    // });
-  }
-}
 
 function handleAgentClick(agent: Agent) {
   selectedAgent.value = agent;
   showBindDrawer.value = true;
 }
 
-function handleTemplateClick(template: AgentTemplate) {
-  gotoCreateAgentBy(template);
-}
+
 
 function handleCreateAgent() {
   uni.navigateTo({
@@ -382,9 +289,6 @@ function handleAgentDelete(agent: Agent) {
                 duration: 2000
               });
               await loadAgentList(false); // 刷新智能体列表
-              if (agentList.value.length === 0) {
-                await loadTemplateAgents();
-              }
             } else if (res.code === 1001) {
               toast.warning({
                 msg: `${$t('common.failed_with_message')}: ${res.message || res.errMsg}`,

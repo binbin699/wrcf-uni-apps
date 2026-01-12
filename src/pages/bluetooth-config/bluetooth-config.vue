@@ -16,10 +16,10 @@
       <view class="nav-content">
         <view class="nav-left">
           <view class="nav-back" @click="handleBack">
-            <wd-icon name="arrow-left" size="40rpx" color="#1f2937" />
+            <wd-icon name="arrow-left" size="44rpx" color="#000000" />
           </view>
         </view>
-        <text class="nav-title">{{ $t('bluetooth.title') }}</text>
+        <text class="nav-title">{{ state.configOnly ? $t('bluetooth.wifi_config_title') : $t('bluetooth.title') }}</text>
         <view class="nav-right">
           <!-- #ifndef MP-WEIXIN -->
           <!-- 非小程序平台显示刷新按钮，避免与小程序原生按钮重叠 -->
@@ -92,8 +92,8 @@ watch(
 );
 
 // 生命周期钩子
-onLoad(() => {
-  console.log('BluetoothConfig 页面加载');
+onLoad((options) => {
+  console.log('BluetoothConfig 页面加载', options);
 
   // 检测设备类型
   const systemInfo = uni.getSystemInfoSync();
@@ -110,6 +110,13 @@ onLoad(() => {
 
   // 初始化状态
   bluetoothConfigManager.resetState();
+  
+  // 设置仅配网模式（从 URL 参数读取）
+  if (options?.configOnly === '1') {
+    bluetoothConfigManager.setConfigOnly(true);
+    console.log('仅配网模式已启用');
+  }
+  
   state.value = bluetoothConfigManager.getState();
 
   console.log('初始状态:', {
@@ -332,9 +339,9 @@ async function cleanupBluetooth() {
 }
 
 .nav-title {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 36rpx;
+  font-weight: normal;
+  color: #000000;
   flex: 1;
   text-align: center;
   white-space: nowrap;
