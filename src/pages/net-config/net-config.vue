@@ -282,7 +282,7 @@ import { useI18n } from 'vue-i18n';
 import { onLoad, onUnload } from '@dcloudio/uni-app';
 // todo
 // @ts-ignore
-import { deviceApi } from '@/api/index.js';
+import { deviceApi } from '@/api/index';
 
 import { useToast, useMessage } from '@/uni_modules/wot-design-uni';
 import {
@@ -364,7 +364,7 @@ const QR_CONFIG_STEP = {
 };
 
 const curStep = ref(QR_CONFIG_STEP.config_wifi);
-const deviceBound = ref(false); // 设备是否绑定成功，初始为false，扫码成功后才显示页面
+const deviceBound = ref(false); // 设备是否绑定成功，初始为 false，扫码成功后才显示页面
 const securityIndex = ref(0);
 const showPassword = ref(false);
 
@@ -595,7 +595,7 @@ async function registerDevice(qrcodeData: { s: string; m: string; v?: string }) 
 }
 
 
-// 计算属性
+// 计算属性：当前是否可以生成配网信息
 const canGenerate = computed(() => {
   return wifiConfig.ssid.trim() !== '';
 });
@@ -694,7 +694,7 @@ async function startWifiScan(rescan: boolean = false) {
 
   // 注意：NEARBY_WIFI_DEVICES 权限的请求已统一在 wifi.ts 的 ensureAndroidScanPermissions 中处理
   // 这里不再重复请求，避免权限被永久拒绝后无法恢复
-
+  
   if (wifiScanTimer) {
     clearTimeout(wifiScanTimer);
   }
@@ -765,7 +765,7 @@ function handleErrorAction() {
   switch (wifiScanErrorInfo.value.actionType) {
     case 'wifi':
     case 'location':
-      // 跳转到系统设置
+      // 跳转到系统设置      
       // #ifdef APP-ANDROID
       try {
         // @ts-ignore
@@ -909,7 +909,7 @@ async function handleStepToConnectWifi(): Promise<boolean> {
     return false;
   }
 
-  // 生成WIFI配置字符串
+  // 生成 WIFI 配置字符串
   const wifiString = genWiFiStr(wifiConfig);
   console.log('genWiFiStr:', wifiString);
 
@@ -1008,7 +1008,7 @@ function writeFileForWx(fsm: any, filePath: string, arrayBuffer: Uint8Array<Arra
 function generateWaveForWx(wifiConfigStr: WiFiConfigStr, arrayBuffer: Uint8Array<ArrayBuffer>) {
   // #ifdef MP-WEIXIN
   const fsm = uni.getFileSystemManager();
-  // @ts-ignore uni.env 只在wx小程序环境有效
+  // @ts-ignore uni.env 只在 wx 小程序环境有效
   const fileInfo = constructFileInfo(uni.env.USER_DATA_PATH, wifiConfigStr);
   const { dir, filePrefix: prefix, filePath } = fileInfo;
 
@@ -1032,7 +1032,7 @@ function generateWaveForWx(wifiConfigStr: WiFiConfigStr, arrayBuffer: Uint8Array
   // #endif
 }
 
-// 辅助函数：清理同前缀的旧文件（APP版本）
+// 辅助函数：清理同前缀的旧文件（APP 版本）
 function cleanupOldFilesForApp(
   dirEntry: any,
   prefix: string,
@@ -1078,7 +1078,7 @@ function cleanupOldFilesForApp(
   // #endif
 }
 
-// 辅助函数：写入文件内容（APP版本）
+// 辅助函数：写入文件内容（APP 版本）
 function writeFileForApp(
   fileEntry: PlusIoFileEntry,
   arrayBuffer: Uint8Array<ArrayBuffer>,
@@ -1244,20 +1244,20 @@ function initAudioManager() {
 // 新增：进度更新相关函数
 let progressTimer: NodeJS.Timeout | null = null;
 
-function startProgressUpdate() {
-  if (progressTimer) {
-    clearInterval(progressTimer);
-  }
-
-  progressTimer = setInterval(() => {
-    if (audioPlayer.value) {
-      const progressInfo = audioPlayer.value.getPlayProgress();
-      currentTime.value = Math.floor(progressInfo.currentTime);
-      totalTime.value = Math.floor(progressInfo.duration);
-      progressPercent.value = progressInfo.progress;
+  function startProgressUpdate() {
+    if (progressTimer) {
+      clearInterval(progressTimer);
     }
-  }, 100); // 每100ms更新一次进度
-}
+
+    progressTimer = setInterval(() => {
+      if (audioPlayer.value) {
+        const progressInfo = audioPlayer.value.getPlayProgress();
+        currentTime.value = Math.floor(progressInfo.currentTime);
+        totalTime.value = Math.floor(progressInfo.duration);
+        progressPercent.value = progressInfo.progress;
+      }
+    }, 100); // 每100ms更新一次进度
+  }
 
 function stopProgressUpdate() {
   if (progressTimer) {
@@ -1273,7 +1273,7 @@ function resetProgress() {
 
 function handleLoopChange(loop: { value: boolean }) {
   console.log('handleLoopChange', loop);
-  // 更新AudioPlayerManager的循环播放设置
+  // 更新 AudioPlayerManager 的循环播放设置
   audioPlayer.value?.setLoop(loop.value);
   // 同步到pageOptions
   pageOptions.value.loopPlay = loop.value;
@@ -1281,8 +1281,8 @@ function handleLoopChange(loop: { value: boolean }) {
 
 // function handleAutoChange(autoplay: { value: boolean }) {
 //   console.log('handleAutoChange', autoplay);
-//   // 更新AudioPlayerManager的自动播放设置
-//   audioPlayer.value?.setAutoplay(autoplay.value);
+//   // 更新 AudioPlayerManager 的自动播放设置
+//   // audioPlayer.value?.setAutoplay(autoplay.value);
 //   // 同步到pageOptions
 //   pageOptions.value.autoplay = autoplay.value;
 // }
@@ -1294,7 +1294,7 @@ function updateNavigationTitle() {
 }
 
 /**
- * 反扫二维码配网 - 生成包含WiFi配置信息的二维码供设备扫描
+ * 反扫二维码配网 - 生成包含 WiFi 配置信息的二维码供设备扫码
  */
 async function handleFactoryQrClick() {
   console.log('Reverse QR config clicked');
@@ -1308,10 +1308,10 @@ async function handleFactoryQrClick() {
     return;
   }
   
-  // 生成WiFi配置字符串
+  // 生成 WiFi 配置字符串
   const wifiString = genWiFiStr(wifiConfig, false);
   
-  // 只有当WiFi配置改变时才重新生成二维码
+  // 只有当 WiFi 配置改变时才重新生成二维码
   if (reverseQrValue.value !== wifiString) {
     reverseQrImage.value = null;
     reverseQrValue.value = '';

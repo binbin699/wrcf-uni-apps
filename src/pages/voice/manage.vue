@@ -35,7 +35,7 @@
           
           <!-- 卡片内容 -->
           <view class="card-content">
-            <!-- 音色名称行 -->
+            <!-- 音色名称行  -->
             <view class="voice-name-row">
               <view class="voice-name-group">
                 <text class="voice-name">{{ voice.voiceName }}</text>
@@ -90,7 +90,7 @@
 <script setup lang="ts">
 // todo
 // @ts-ignore
-import { voiceApi } from '@/api/index.js';
+import { voiceApi } from '@/api/index';
 import { PageMap, Pages } from '@/utils/route';
 import { ref } from 'vue';
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app';
@@ -122,7 +122,7 @@ type Voice = {
 
 const myVoices = ref<Voice[]>([]);
 const loading = ref(false);
-// 当前播放的音色ID
+// 当前播放的音色 ID
 const playingVoiceId = ref<string | null>(null);
 // 音频播放状态
 const isPlaying = ref(false);
@@ -205,11 +205,11 @@ async function loadMyVoices() {
       myVoices.value = result.data.voices || [];
     } else {
       console.error('加载音色列表失败:', result.message);
-      // 不再显示toast，因为request.ts已经处理了
+      // 不再显示 toast，因为 request.ts 已经处理
     }
   } catch (error) {
     console.error('加载音色列表失败:', error);
-    // 不再显示toast，因为request.ts已经处理了
+    // 不再显示 toast，因为 request.ts 已经处理
   } finally {
     loading.value = false;
   }
@@ -350,7 +350,7 @@ function updateVoice(voice: Voice) {
 // 格式化时间
 function formatTime(timestamp: string) {
   if (!timestamp) return '-';
-  // 处理iOS兼容性问题，将"yyyy-MM-dd HH:mm:ss"格式转换为"yyyy/MM/dd HH:mm:ss"
+  // 处理 iOS 兼容性问题，将 "yyyy-MM-dd HH:mm:ss" 格式转换为 "yyyy/MM/dd HH:mm:ss"
   let dateStr = timestamp;
   if (typeof timestamp === 'string' && timestamp.includes('-')) {
     dateStr = timestamp.replace(/-/g, '/');

@@ -2,7 +2,7 @@
     "name" : "%app.name%",
     "appid" : "__UNI__53D46D3",
     "description" : "%app.description%",
-    "versionName" : "1.1.1",
+    "versionName" : "1.1.3",
     "versionCode" : 101010,
     "transformPx" : false,
     "app-plus" : {
@@ -26,7 +26,8 @@
             "Record" : {},
             "OAuth" : {},
             "Camera" : {},
-            "Geolocation" : {}
+            "Geolocation" : {},
+            "VideoPlayer" : {}
         },
         "locales" : {
             "zh" : {
@@ -34,7 +35,7 @@
                 "ios" : {
                     "privacyDescription" : {
                         "NSCameraUsageDescription" : "允许获得您的相机权限，以便扫描二维码，绑定设备",
-                        "NSPhotoLibraryUsageDescription" : "允许获得您的相册权限，以便扫描二维码，绑定设备",
+                        "NSPhotoLibraryUsageDescription" : "需要读取您的相册权限，用于从相册选择二维码图片，完成设备绑定操作",
                         "NSLocationWhenInUseUsageDescription" : "允许获得您的位置权限，以便优化设备联网信号推荐",
                         "NSMicrophoneUsageDescription" : "允许获得您的麦克风权限，以便录制音频，上传声纹信息",
                         "NSBluetoothPeripheralUsageDescription" : "允许获得您的蓝牙权限，以便搜索附近的蓝牙设备进行配网",
@@ -48,12 +49,40 @@
                 "ios" : {
                     "privacyDescription" : {
                         "NSCameraUsageDescription" : "Allow access to your camera to scan QR codes and bind devices",
-                        "NSPhotoLibraryUsageDescription" : "Allow access to your photo library to scan QR codes and bind devices",
+                        "NSPhotoLibraryUsageDescription" : "Photo library access is required to select QR code images from your album for device binding",
                         "NSLocationWhenInUseUsageDescription" : "Allow access to your location to optimize device network signal recommendations",
                         "NSMicrophoneUsageDescription" : "Allow access to your microphone to record audio and upload voiceprint information",
                         "NSBluetoothPeripheralUsageDescription" : "Allow access to Bluetooth to search nearby Bluetooth devices for network configuration",
                         "NSBluetoothAlwaysUsageDescription" : "Allow access to Bluetooth to search nearby Bluetooth devices for network configuration",
                         "NSUserTrackingUsageDescription" : "This permission is used to identify your device and protect service security. It will not collect your private information from other websites."
+                    }
+                }
+            },
+            "ja" : {
+                "name" : "Linx AI",
+                "ios" : {
+                    "privacyDescription" : {
+                        "NSCameraUsageDescription" : "QRコードをスキャンしてデバイスをバインドするために、カメラへのアクセスを許可してください",
+                        "NSPhotoLibraryUsageDescription" : "アルバムからQRコード画像を選択してデバイスをバインドするために、フォトライブラリへのアクセスが必要です",
+                        "NSLocationWhenInUseUsageDescription" : "デバイスのネットワーク信号推奨を最適化するために、位置情報へのアクセスを許可してください",
+                        "NSMicrophoneUsageDescription" : "音声を録音して声紋情報をアップロードするために、マイクへのアクセスを許可してください",
+                        "NSBluetoothPeripheralUsageDescription" : "ネットワーク設定のために近くのBluetoothデバイスを検索するには、Bluetoothへのアクセスを許可してください",
+                        "NSBluetoothAlwaysUsageDescription" : "ネットワーク設定のために近くのBluetoothデバイスを検索するには、Bluetoothへのアクセスを許可してください",
+                        "NSUserTrackingUsageDescription" : "この権限はデバイスの識別とサービスセキュリティの保護に使用されます。他のウェブサイトからの個人情報は収集しません。"
+                    }
+                }
+            },
+            "ru" : {
+                "name" : "Linx AI",
+                "ios" : {
+                    "privacyDescription" : {
+                        "NSCameraUsageDescription" : "Разрешите доступ к камере для сканирования QR-кодов и привязки устройств",
+                        "NSPhotoLibraryUsageDescription" : "Доступ к фотогалерее необходим для выбора изображений QR-кода из альбома для привязки устройства",
+                        "NSLocationWhenInUseUsageDescription" : "Разрешите доступ к местоположению для оптимизации рекомендаций сигнала сети устройства",
+                        "NSMicrophoneUsageDescription" : "Разрешите доступ к микрофону для записи аудио и загрузки информации голосовой подписи",
+                        "NSBluetoothPeripheralUsageDescription" : "Разрешите доступ к Bluetooth для поиска ближайших Bluetooth-устройств для настройки сети",
+                        "NSBluetoothAlwaysUsageDescription" : "Разрешите доступ к Bluetooth для поиска ближайших Bluetooth-устройств для настройки сети",
+                        "NSUserTrackingUsageDescription" : "Это разрешение используется для идентификации устройства и защиты безопасности сервиса. Ваша личная информация с других сайтов не будет собираться."
                     }
                 }
             }
@@ -94,7 +123,7 @@
                 "dSYMs" : false,
                 "privacyDescription" : {
                     "NSCameraUsageDescription" : "允许获得您的相机权限，以便扫描二维码，绑定设备",
-                    "NSPhotoLibraryUsageDescription" : "允许获得您的相册权限，以便扫描二维码，绑定设备",
+                    "NSPhotoLibraryUsageDescription" : "需要读取您的相册权限，用于从相册选择二维码图片，完成设备绑定操作",
                     "NSLocationWhenInUseUsageDescription" : "允许获得您的位置权限，以便优化设备联网信号推荐",
                     "NSMicrophoneUsageDescription" : "允许获得您的麦克风权限，以便录制音频，上传声纹信息",
                     "NSBluetoothPeripheralUsageDescription" : "允许获得您的蓝牙权限，以便搜索附近的蓝牙设备进行配网",

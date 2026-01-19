@@ -126,6 +126,7 @@ function switchTab(index: number) {
 
 .tabbar-item {
   flex: 1;
+  min-width: 0;  /* 允许 flex 子元素收缩 */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -133,6 +134,7 @@ function switchTab(index: number) {
   height: 100%;
   transition: all 0.2s ease;
   position: relative;
+  padding: 0 8rpx;
   
   &.active {
     .tabbar-text {
@@ -170,10 +172,15 @@ function switchTab(index: number) {
 }
 
 .tabbar-text {
-  font-size: 22rpx;
+  font-size: 19rpx;
   color: #717784;
   line-height: 1.4;
   transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  padding: 0 4rpx;
 }
 </style>
 

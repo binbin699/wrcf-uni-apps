@@ -53,7 +53,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onLoad } from '@dcloudio/uni-app';
 // @ts-ignore
-import { deviceApi } from '../../api/index.js';
+import { deviceApi } from '../../api/index';
 import storage from '@/utils/storage';
 import { setLocale } from '@/locale/index';
 

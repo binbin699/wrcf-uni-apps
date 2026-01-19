@@ -75,7 +75,7 @@
 
 <script>
 import { bluetoothConfigManager, CONFIG_STEPS } from '../../store/bluetoothConfigStore';
-import { deviceApi } from '@/api/index.js';
+import { deviceApi } from '@/api/index';
 import {
   initBluetooth,
   resetBluetooth,
@@ -384,7 +384,9 @@ export default {
 
 <style lang="scss" scoped>
 .select-device {
-  min-height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   padding-bottom: 200rpx;
   background-color: #fff;
 }
@@ -394,7 +396,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 300rpx);
+  flex: 1;
   padding: 48rpx 32rpx;
 }
 

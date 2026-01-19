@@ -76,8 +76,9 @@
             :value="selectedChatLanguageIndex"
             @change="onChatLanguageChange">
             <view class="selector-trigger">
-              <text class="value-text" v-if="selectedChatLanguage">{{ selectedChatLanguage.label }}</text>
-              <text class="placeholder-text" v-else>{{ $t('create_agent.select_chat_language') }}</text>
+              <text v-if="loadingLanguages">{{ $t('common.loading') }}</text>
+              <text v-else-if="selectedChatLanguage" class="value-text">{{ selectedChatLanguage.label }}</text>
+              <text v-else class="placeholder-text">{{ $t('create_agent.select_chat_language') }}</text>
               <view class="arrow-icon"></view>
             </view>
           </picker>
@@ -121,41 +122,14 @@
     </scroll-view>
 
     <!-- 模板选择弹窗 -->
-    <wd-popup v-model="templateModalVisible" position="bottom" custom-style="border-radius: 32rpx 32rpx 0 0; overflow: hidden;">
-      <view class="template-popup-content">
-        <view class="popup-header">
-          <text class="popup-title">{{ $t('create_agent.select_template') }}</text>
-        </view>
-        <view class="template-selector">
-          <scroll-view scroll-y class="category-list">
-            <view 
-              v-for="cat in templateCategories" 
-              :key="cat.value"
-              class="category-item"
-              :class="{ active: selectedTemplateLang === cat.value }"
-              @click="selectTemplateCategory(cat.value)">
-              <text class="category-text">{{ cat.label }}</text>
-            </view>
-          </scroll-view>
-          <scroll-view scroll-y class="template-list">
-            <view v-if="loadingTemplates" class="loading-state">
-              <text>{{ $t('common.loading') }}</text>
-            </view>
-            <view v-else-if="filteredTemplates.length === 0" class="empty-state">
-              <text>{{ $t('square.no_agents') }}</text>
-            </view>
-            <view 
-              v-else
-              v-for="item in filteredTemplates" 
-              :key="item.agentId"
-              class="template-item"
-              @click="applyTemplate(item)">
-              <text class="template-name">{{ item.agentName }}</text>
-            </view>
-          </scroll-view>
-        </view>
-      </view>
-    </wd-popup>
+    <AgentTemplateSelector
+      v-model:visible="templateModalVisible"
+      :template-categories="templateCategories"
+      :filtered-templates="filteredTemplates"
+      :selected-template-lang="selectedTemplateLang"
+      :loading="loadingTemplates"
+      @select-category="selectTemplateCategory"
+      @select-template="handleApplyTemplate" />
 
     <!-- 音色选择弹窗 -->
     <VoiceSelector
@@ -176,7 +150,7 @@
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 // @ts-ignore
-import { agentApi, voiceApi } from '@/api/index.js';
+import { agentApi, voiceApi } from '@/api/index';
 import VoiceSelector from '@/components/VoiceSelector.vue';
 import CustomTabBar from '@/components/CustomTabBar.vue';
 import { useToast } from '@/uni_modules/wot-design-uni';
@@ -185,9 +159,12 @@ import type { LLM, Voice } from '@/pages/agent/types';
 import { PageMap, Pages } from '@/utils/route';
 import { loadOptions } from './create';
 import { relocalizeLLMOptions } from './llm';
-import { getChatLanguageOptions, langCodeToVoiceLanguage, backendLangToLangCode, getSystemLangCode } from './lang_opts';
+import { getChatLanguageOptions, langCodeToVoiceLanguage, type ChatLanguageOption } from './lang_opts';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 import AgentPromptPolish from './components/AgentPromptPolish.vue';
+import { useTemplateSelector } from './composables/useTemplateSelector';
+import { applyTemplateLogic } from './composables/useApplyTemplate';
+import AgentTemplateSelector from './components/AgentTemplateSelector.vue';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
@@ -214,58 +191,23 @@ const voiceSelectorVisible = ref(false);
 const statusBarHeight = ref(44);
 const navBarHeight = ref(44);
 
-// 模板相关
-const templateModalVisible = ref(false);
-const allTemplates = ref<any[]>([]);
-const selectedTemplateLang = ref('all');
-const loadingTemplates = ref(false);
-
-const templateCategories = computed(() => {
-  // 1. 收集所有模板的 languageCode，转换为前端标准格式
-  const langCodeSet = new Set<string>();
-  allTemplates.value.forEach(t => {
-    if (t.languageCode) {
-      const standardLangCode = backendLangToLangCode(t.languageCode);
-      langCodeSet.add(standardLangCode);
-    }
-  });
-
-  // 2. 获取完整的语言选项列表
-  const allLangOptions = getChatLanguageOptions($t);
-
-  // 3. 筛选出模板中存在的语言（保持 getChatLanguageOptions 的顺序）
-  const availableLangOptions = allLangOptions.filter(opt =>
-    langCodeSet.has(opt.langCode)
-  );
-
-  // 4. 构建分类列表："全部"在最前面，其他语言按 getChatLanguageOptions 顺序
-  return [
-    { label: $t('create_agent.all_languages'), value: 'all' },
-    ...availableLangOptions.map(opt => ({
-      label: opt.label,
-      value: opt.langCode // 使用 langCode 作为 value（如 'zh_CN', 'en_US'）
-    }))
-  ];
-});
-
-const filteredTemplates = computed(() => {
-  if (selectedTemplateLang.value === 'all') {
-    return allTemplates.value;
-  }
-
-  // 筛选：将模板的 languageCode 转换为标准格式后比较
-  return allTemplates.value.filter(t => {
-    if (!t.languageCode) return false;
-    const standardLangCode = backendLangToLangCode(t.languageCode);
-    return standardLangCode === selectedTemplateLang.value;
-  });
-});
+// 使用模板选择 composable
+const {
+  templateModalVisible,
+  templateCategories,
+  filteredTemplates,
+  loadingTemplates,
+  selectedTemplateLang,
+  openTemplateModal,
+  selectTemplateCategory
+} = useTemplateSelector(formData, $t, toast);
 const navContentStyle = computed(() => ({
   height: `${navBarHeight.value * 2}rpx`
 }));
 
 // 对话语言选项
-const chatLanguageOptions = computed(() => getChatLanguageOptions($t));
+const chatLanguageOptions = ref<ChatLanguageOption[]>([]);
+const loadingLanguages = ref(false);
 
 const selectedChatLanguageIndex = ref<number | null>(null);  // 默认未选择
 const selectedChatLanguage = computed(() => 
@@ -274,10 +216,30 @@ const selectedChatLanguage = computed(() =>
     : null
 );
 
+// 加载语言选项
+async function loadLanguageOptions() {
+  try {
+    loadingLanguages.value = true;
+    chatLanguageOptions.value = await getChatLanguageOptions($t);
+  } catch (error) {
+    console.error('加载语言选项失败:', error);
+  } finally {
+    loadingLanguages.value = false;
+  }
+}
+
 // 当前选择的语言对应的音色语言代码（用于 VoiceSelector 强制筛选）
-const currentVoiceLanguage = computed(() => 
-  formData.value.langCode ? langCodeToVoiceLanguage(formData.value.langCode) : ''
-);
+const currentVoiceLanguage = computed(() => {
+  if (!formData.value.langCode) return '';
+  
+  // 从已加载的语言选项中查找对应的 voiceLanguage
+  const selectedLang = chatLanguageOptions.value.find(
+    lang => lang.langCode === formData.value.langCode
+  );
+  
+  // 如果找到了，直接使用 voiceLanguage；否则使用兜底函数
+  return selectedLang?.voiceLanguage || langCodeToVoiceLanguage(formData.value.langCode);
+});
 
 // 模板创建模式
 const id = ref<number | null>(null);
@@ -307,13 +269,26 @@ onLoad(async (options: any) => {
     title: $t('create_agent.page_title')
   });
 
+  await loadLanguageOptions();
   await loadLLMOptions();
   await loadVoiceOptions();
 });
 
 watch(
   () => locale.value,
-  () => {
+  async () => {
+    // 重新加载语言选项（更新 label 的国际化文本）
+    if (chatLanguageOptions.value.length > 0) {
+      await loadLanguageOptions();
+      // 如果已选择语言，需要重新设置 selectedChatLanguageIndex
+      if (selectedChatLanguageIndex.value !== null && formData.value.langCode) {
+        const newIndex = chatLanguageOptions.value.findIndex(
+          (lang) => lang.langCode === formData.value.langCode
+        );
+        selectedChatLanguageIndex.value = newIndex !== -1 ? newIndex : null;
+      }
+    }
+
     if (llmOptions.value.length === 0) {
       return;
     }
@@ -339,7 +314,9 @@ onShow(async () => {
 
 onHide(() => {
   // 离开页面时立即关闭弹窗，避免切回时才消失的奇怪感
-  templateModalVisible.value = false;
+  if (templateModalVisible.value) {
+    templateModalVisible.value = false;
+  }
 });
 
 function setStatusBarHeight() {
@@ -616,129 +593,22 @@ function handleCancel() {
   uni.switchTab({ url: PageMap[Pages.Index].url });
 }
 
-// 模板逻辑
-// 辅助函数：检查指定 langCode 是否在筛选项中存在
-function isLanguageInCategories(langCode: string): boolean {
-  return templateCategories.value.some(cat => cat.value === langCode);
-}
-
-async function openTemplateModal() {
-  templateModalVisible.value = true;
-
-  // 每次打开弹窗都获取最新的模板列表，确保筛选项能够及时更新
-  await fetchTemplates();
-
-  // 确定默认选中的筛选项（按优先级顺序检查：用户选择的对话语言 > 系统语言 > 英文 > '全部'）
-  let defaultLangValue = 'all'; // 最终兜底值
-
-  // 优先级1：用户选择的对话语言
-  const userSelectedLangCode = formData.value.langCode;
-  if (userSelectedLangCode && isLanguageInCategories(userSelectedLangCode)) {
-    defaultLangValue = userSelectedLangCode;
-  } else {
-    // 优先级2：系统语言
-    const systemLangCode = getSystemLangCode();
-    if (isLanguageInCategories(systemLangCode)) {
-      defaultLangValue = systemLangCode;
-    } else {
-      // 优先级3：英文
-      if (isLanguageInCategories('en_US')) {
-        defaultLangValue = 'en_US';
-      }
-      // 优先级4：'all' 作为兜底（已在初始化时设置）
-    }
-  }
-
-  // 设置默认选中的筛选项
-  selectedTemplateLang.value = defaultLangValue;
-}
-
-async function fetchTemplates() {
-  // 如果正在加载中，直接返回，避免并发请求（请求锁机制）
-  if (loadingTemplates.value) {
-    return;
-  }
-
-  try {
-    loadingTemplates.value = true;
-    // 传递 'all' 获取所有模板，不在后端筛选
-    const res = await agentApi.getTemplateAgents('all');
-    if (res.code === 1000) {
-      allTemplates.value = res.data || [];
-    } else {
-      // API 返回错误码
-      toast.warning({
-        msg: res.message || $t('index.get_templates_failed'),
-        duration: 2000
-      });
-    }
-  } catch (e) {
-    console.error('Fetch templates failed', e);
-    // 网络错误或其他异常
-    toast.error({
-      msg: $t('index.get_templates_failed'),
-      duration: 2000
-    });
-  } finally {
-    loadingTemplates.value = false;
-  }
-}
-
-function selectTemplateCategory(lang: string) {
-  selectedTemplateLang.value = lang;
-}
-
-async function applyTemplate(template: any) {
+// 处理模板应用
+async function handleApplyTemplate(template: any) {
   templateModalVisible.value = false;
-  
-  // 填入名称
-  formData.value.agentName = template.agentName;
-  
-  // 加载详细数据并填入剩余字段
-  try {
-    toast.loading($t('common.loading'));
-    // 使用 agentId 获取智能体详情
-    const result = await agentApi.getInfo(template.agentId);
-    if (result.code === 1000 && result.data) {
-      const agent = result.data;
-      if (agent.config) {
-        formData.value.systemPrompt = agent.config.systemPrompt || '';
-        
-        //模型
-        if (agent.config.llmModelId) {
-          const idx = llmOptions.value.findIndex(l => l.id === agent.config.llmModelId);
-          if (idx !== -1) {
-            selectedLLMIndex.value = idx;
-            selectedLLM.value = llmOptions.value[idx];
-            formData.value.llmModelId = agent.config.llmModelId;
-          }
-        }
-        
-        // 语言
-        if (agent.config.langCode) {
-          const idx = chatLanguageOptions.value.findIndex(l => l.langCode === agent.config.langCode);
-          if (idx !== -1) {
-            selectedChatLanguageIndex.value = idx;
-            formData.value.langCode = agent.config.langCode;
-            formData.value.language = chatLanguageOptions.value[idx].language;
-          }
-        }
-        
-        // 音色
-        if (agent.config.ttsVoiceId) {
-          const voice = voiceOptions.value.find(v => v.voiceId === agent.config.ttsVoiceId || v.id === agent.config.ttsVoiceId);
-          if (voice) {
-            selectedVoice.value = voice;
-            formData.value.ttsVoiceId = voice.voiceId;
-          }
-        }
-      }
-    }
-    toast.close();
-  } catch (e) {
-    console.error('Apply template failed', e);
-    toast.close();
-  }
+  await applyTemplateLogic(
+    template,
+    formData,
+    llmOptions,
+    chatLanguageOptions,
+    voiceOptions,
+    selectedLLMIndex,
+    selectedLLM,
+    selectedChatLanguageIndex,
+    selectedVoice,
+    toast,
+    $t
+  );
 }
 </script>
 
@@ -983,100 +853,6 @@ async function applyTemplate(template: any) {
 }
 .use-template-btn:active {
   opacity: 0.7;
-}
-
-/* Template Popup Styles */
-.template-popup-content {
-  background: #ffffff;
-  display: flex;
-  flex-direction: column;
-  height: 60vh;
-}
-
-.popup-header {
-  padding: 36rpx 32rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  background-color: #ffffff;
-  border-bottom: 2rpx solid #f8f9fa;
-  border-radius: 36rpx 36rpx 0 0;
-}
-
-.popup-title {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #111;
-}
-
-.template-selector {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-
-.category-list {
-  width: 220rpx;
-  background: #f8f9fb;
-  height: 100%;
-}
-
-.category-item {
-  padding: 36rpx 28rpx;
-  font-size: 28rpx;
-  color: #777;
-  position: relative;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  text-align: center;
-}
-
-.category-item.active {
-  background: #ffffff;
-  color: #3E5DEF;
-  font-weight: 600;
-}
-
-.category-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 30%;
-  height: 40%;
-  width: 6rpx;
-  background: #3E5DEF;
-  border-radius: 0 4rpx 4rpx 0;
-}
-
-.template-list {
-  flex: 1;
-  height: 100%;
-  background: #ffffff;
-}
-
-.template-item {
-  padding: 36rpx 32rpx;
-  border-bottom: 2rpx solid #f9f9f9;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-}
-
-.template-item:active {
-  background: #f7f8fa;
-}
-
-.template-name {
-  font-size: 30rpx;
-  color: #1a1a1a;
-  flex: 1;
-}
-
-.loading-state, .empty-state {
-  padding: 100rpx 0;
-  text-align: center;
-  color: #999;
-  font-size: 28rpx;
 }
 
 .create-btn {

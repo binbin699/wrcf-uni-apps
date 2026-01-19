@@ -99,7 +99,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useI18n } from 'vue-i18n';
 // todo
 // @ts-ignore
-import { deviceApi } from '@/api/index.js';
+import { deviceApi } from '@/api/index';
 import { ref, computed, watch } from 'vue';
 import AudioPlayerManager from '@/utils/audioPlayer';
 import { Pages, PageMap } from '@/utils/route';

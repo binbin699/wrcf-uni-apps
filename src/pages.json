@@ -13,8 +13,14 @@
     {
       "path": "pages/webview/webview",
       "style": {
-        "navigationBarTitleText": "%pages.webview%",
-        "navigationStyle": "default"
+        "navigationBarTitleText": "",
+        "navigationStyle": "default",
+        "app-plus": {
+          "titleNView": {
+            "autoBackButton": true,
+            "titleText": ""
+          }
+        }
       }
     },
     {
@@ -50,6 +56,7 @@
       "path": "pages/agent/edit",
       "style": {
         "navigationBarTitleText": "%pages.edit_agent%",
+        "navigationStyle": "custom",
         "app-plus": {
           "bounce": "none"
         }
@@ -69,6 +76,16 @@
       "path": "pages/profile/delete-account",
       "style": {
         "navigationBarTitleText": "%pages.delete_account%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/profile/help",
+      "style": {
+        "navigationBarTitleText": "%profile.instructions_tutorials%",
+        "navigationStyle": "custom",
         "app-plus": {
           "bounce": "none"
         }

@@ -218,6 +218,9 @@ export default {
           console.log('配网成功', configResult);
           this.isConfigSuccess = true;
 
+          // 标记配网已完成，这样返回时可以直接退出页面
+          bluetoothConfigManager.setConfigCompleted(true);
+
           // 仅在非 configOnly 模式下绑定设备
           if (!state.configOnly) {
             await this.registerDevice();
@@ -348,7 +351,9 @@ export default {
 
 <style lang="scss" scoped>
 .submit-config {
-  min-height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   padding-bottom: 200rpx;
   background-color: #fff;
 }
@@ -358,7 +363,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 300rpx);
+  flex: 1;
   padding: 48rpx 32rpx;
 }
 

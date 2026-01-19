@@ -1,93 +1,146 @@
 <template>
   <wd-toast />
   <view class="container">
-    <view class="form-container">
-      <view class="form-item">
-        <text class="label required">{{ $t('edit_agent.agent_name') }}</text>
-        <input
-          class="input"
-          v-model="formData.agentName"
-          :placeholder="$t('edit_agent.agent_name_placeholder')"
-          maxlength="20" />
-      </view>
-
-      <view class="form-item">
-        <text class="label">{{ $t('edit_agent.agent_description') }}</text>
-        <AgentPromptPolish
-          v-model="formData.systemPrompt"
-          class="agent-prompt-polish"
-          placeholder-key="edit_agent.agent_description_placeholder"
-        />
-      </view>
-
-      <view class="form-item">
-        <text class="label">{{ $t('edit_agent.llm_type') }}</text>
-        <picker
-          @click="handleLLMPickerClick"
-          mode="selector"
-          :range="llmOptions"
-          range-key="displayName"
-          :value="selectedLLMIndex"
-          @change="onLLMChange">
-          <view class="selector-trigger">
-            <text v-if="loadingLLMs">{{ $t('common.loading') }}</text>
-            <text v-else-if="selectedLLM">
-              {{ selectedLLM.displayName || selectedLLM.name }}
-            </text>
-            <text v-else-if="llmOptions.length === 0">
-              {{ $t('edit_agent.llm_load_failed') }}
-            </text>
-            <text v-else>{{ $t('edit_agent.select_llm') }}</text>
+    <view class="agent-create-navbar">
+      <view class="agent-create-status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+      <view class="agent-create-nav-content" :style="{ height: navBarHeight + 'px' }">
+        <view class="agent-create-nav-left">
+          <view class="back-btn" @click="goBack">
+            <wd-icon name="chevron-left" custom-class="back-icon" />
           </view>
-        </picker>
-      </view>
-
-      <view class="form-item">
-        <text class="label">{{ $t('create_agent.chat_language') }}</text>
-        <picker
-          mode="selector"
-          :range="chatLanguageOptions"
-          range-key="label"
-          :value="selectedChatLanguageIndex"
-          @change="onChatLanguageChange">
-          <view class="selector-trigger">
-            <text>{{ selectedChatLanguage?.label || $t('create_agent.select_chat_language') }}</text>
-          </view>
-        </picker>
-      </view>
-
-      <view class="form-item">
-        <text class="label">{{ $t('edit_agent.voice_type') }}</text>
-        <view class="voice-selector-trigger" @click="showVoiceSelector">
-          <text v-if="loadingVoices">{{ $t('common.loading') }}</text>
-          <text v-else-if="selectedVoice">
-            {{ selectedVoice.voiceName || selectedVoice.name }}
-          </text>
-          <text v-else-if="voiceOptions.length === 0">
-            {{ $t('edit_agent.voice_load_failed') }}
-          </text>
-          <text v-else>{{ $t('edit_agent.select_voice') }}</text>
-          <image class="arrow" src="/static/icons/right-arrow.svg" mode="aspectFit" />
+        </view>
+        <text class="agent-create-nav-title">{{ $t('edit_agent.page_title') }}</text>
+        <view class="agent-create-nav-right">
+          <!-- 右侧空白占位 -->
         </view>
       </view>
     </view>
 
-    <view class="actions">
-      <button class="cancel-btn secondary" @click="goBack">{{ $t('common.cancel') }}</button>
-      <button
-        class="update-btn primary"
-        @click="updateAgent"
-        :disabled="!canUpdate"
-        :loading="updating">
-        {{ updating ? $t('edit_agent.updating') : $t('edit_agent.update_agent') }}
-      </button>
-    </view>
+    <scroll-view scroll-y class="scroll-content">
+      <!-- Card 1: Agent Name (inline layout) -->
+      <view class="card name-card">
+        <view class="form-item name-item">
+          <view class="label-row">
+            <text class="label">{{ $t('edit_agent.agent_name') }}</text>
+            <text class="required-star">*</text>
+          </view>
+          <input
+            class="input name-input"
+            v-model="formData.agentName"
+            :placeholder="$t('edit_agent.agent_name_placeholder')"
+            placeholder-class="input-placeholder"
+            maxlength="20" />
+          <text class="use-template-btn" @click="openTemplateModal">{{ $t('create_agent.use_template') }}</text>
+        </view>
+      </view>
+
+      <!-- Card 2: Description -->
+      <view class="card desc-card">
+        <view class="form-item">
+          <text class="label">{{ $t('edit_agent.agent_description') }}</text>
+          <AgentPromptPolish
+            v-model="formData.systemPrompt"
+            class="agent-prompt-polish"
+            placeholder-key="edit_agent.agent_description_placeholder"
+          />
+        </view>
+      </view>
+
+      <!-- Card 3: Settings (Model, Language, Voice) -->
+      <view class="card">
+        <view class="form-item">
+          <text class="label">{{ $t('edit_agent.llm_type') }}</text>
+          <picker
+            @click="handleLLMPickerClick"
+            mode="selector"
+            :range="llmOptions"
+            range-key="displayName"
+            :value="selectedLLMIndex"
+            @change="onLLMChange">
+            <view class="selector-trigger">
+              <text v-if="loadingLLMs">{{ $t('common.loading') }}</text>
+              <text v-else-if="selectedLLM" class="value-text">
+                {{ selectedLLM.displayName || selectedLLM.name }}
+              </text>
+              <text v-else-if="llmOptions.length === 0" class="placeholder-text">
+                {{ $t('edit_agent.llm_load_failed') }}
+              </text>
+              <text v-else class="placeholder-text">{{ $t('edit_agent.select_llm') }}</text>
+              <view class="arrow-icon"></view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="label">{{ $t('create_agent.chat_language') }}</text>
+          <picker
+            mode="selector"
+            :range="chatLanguageOptions"
+            range-key="label"
+            :value="selectedChatLanguageIndex"
+            @change="onChatLanguageChange">
+            <view class="selector-trigger">
+              <text v-if="loadingLanguages">{{ $t('common.loading') }}</text>
+              <text v-else-if="selectedChatLanguage" class="value-text">{{ selectedChatLanguage.label }}</text>
+              <text v-else class="placeholder-text">{{ $t('create_agent.select_chat_language') }}</text>
+              <view class="arrow-icon"></view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item last-item">
+          <text class="label">{{ $t('edit_agent.voice_type') }}</text>
+          <view class="selector-trigger" @click="showVoiceSelector">
+            <text v-if="loadingVoices">{{ $t('common.loading') }}</text>
+            <text v-else-if="selectedVoice" class="value-text">{{ selectedVoice.voiceName || selectedVoice.name }}</text>
+            <text v-else-if="voiceOptions.length === 0" class="placeholder-text">
+              {{ $t('edit_agent.voice_load_failed') }}
+            </text>
+            <text v-else class="placeholder-text">{{ $t('edit_agent.select_voice') }}</text>
+            <view class="arrow-icon"></view>
+          </view>
+        </view>
+      </view>
+
+      <!-- Buttons moved inside scroll-view -->
+      <view class="actions-inline">
+        <button
+          class="update-btn"
+          hover-class="none"
+          @click="updateAgent"
+          :disabled="!canUpdate || updating"
+          :loading="updating">
+          {{ updating ? $t('edit_agent.updating') : $t('edit_agent.update_agent') }}
+        </button>
+        <button
+          class="cancel-btn"
+          hover-class="none"
+          @click="goBack"
+          :disabled="updating">
+          {{ $t('common.cancel') }}
+        </button>
+      </view>
+      
+      <!-- Spacer for bottom balance -->
+      <view class="bottom-spacer-small"></view>
+    </scroll-view>
+
+    <!-- 模板选择弹窗 -->
+    <AgentTemplateSelector
+      v-model:visible="templateModalVisible"
+      :template-categories="templateCategories"
+      :filtered-templates="filteredTemplates"
+      :selected-template-lang="selectedTemplateLang"
+      :loading="loadingTemplates"
+      @select-category="selectTemplateCategory"
+      @select-template="handleApplyTemplate" />
 
     <!-- 音色选择弹窗 -->
     <VoiceSelector
       :visible="voiceSelectorVisible"
       :voices="voiceOptions"
       :defaultVoice="selectedVoice"
+      :isOnTabbarPage="false"
       :fixedLanguage="currentVoiceLanguage"
       @close="hideVoiceSelector"
       @confirm="onVoiceSelected" />
@@ -98,14 +151,18 @@
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 // @ts-ignore
-import { agentApi, voiceApi } from '@/api/index.js';
+import { agentApi, voiceApi } from '@/api/index';
 import VoiceSelector from '@/components/VoiceSelector.vue';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import { onLoad } from '@dcloudio/uni-app';
 import type { LLM, Voice } from '@/pages/agent/types';
 import { relocalizeLLMOptions } from './llm';
-import { getChatLanguageOptions, langCodeToVoiceLanguage } from './lang_opts';
+import { getChatLanguageOptions, langCodeToVoiceLanguage, type ChatLanguageOption } from './lang_opts';
 import AgentPromptPolish from './components/AgentPromptPolish.vue';
+import { useTemplateSelector } from './composables/useTemplateSelector';
+import { applyTemplateLogic } from './composables/useApplyTemplate';
+import AgentTemplateSelector from './components/AgentTemplateSelector.vue';
+import WdIcon from '@/uni_modules/wot-design-uni/components/wd-icon/wd-icon.vue';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
@@ -116,8 +173,8 @@ const formData = ref({
   systemPrompt: '',
   ttsVoiceId: '',
   llmModelId: '',
-  langCode: 'zh_CN',
-  language: '中文'
+  langCode: '',      // 改为空字符串，由 loadAgentData() 设置
+  language: ''
 });
 
 const updating = ref(false);
@@ -129,19 +186,59 @@ const selectedLLMIndex = ref<number | null>(null);
 const selectedVoice = ref<any | null>(null);
 const voiceOptions = ref<any[]>([]);
 const voiceSelectorVisible = ref(false);
+const statusBarHeight = ref(44);
+const navBarHeight = ref(44);
 
 // 对话语言选项
-const chatLanguageOptions = computed(() => getChatLanguageOptions($t));
+const chatLanguageOptions = ref<ChatLanguageOption[]>([]);
+const loadingLanguages = ref(false);
 
-const selectedChatLanguageIndex = ref(0);
-const selectedChatLanguage = computed(() => chatLanguageOptions.value[selectedChatLanguageIndex.value]);
+const selectedChatLanguageIndex = ref<number | null>(null);  // 改为 null，与创建页一致
+const selectedChatLanguage = computed(() => 
+  selectedChatLanguageIndex.value !== null 
+    ? chatLanguageOptions.value[selectedChatLanguageIndex.value] 
+    : null
+);
+
+// 加载语言选项
+async function loadLanguageOptions() {
+  try {
+    loadingLanguages.value = true;
+    chatLanguageOptions.value = await getChatLanguageOptions($t);
+  } catch (error) {
+    console.error('加载语言选项失败:', error);
+  } finally {
+    loadingLanguages.value = false;
+  }
+}
 
 // 当前选择的语言对应的音色语言代码（用于 VoiceSelector 强制筛选）
-const currentVoiceLanguage = computed(() => langCodeToVoiceLanguage(formData.value.langCode));
+const currentVoiceLanguage = computed(() => {
+  if (!formData.value.langCode) return '';
+  
+  // 从已加载的语言选项中查找对应的 voiceLanguage
+  const selectedLang = chatLanguageOptions.value.find(
+    lang => lang.langCode === formData.value.langCode
+  );
+  
+  // 如果找到了，直接使用 voiceLanguage；否则使用兜底函数
+  return selectedLang?.voiceLanguage || langCodeToVoiceLanguage(formData.value.langCode);
+});
 
 // 编辑模式
 const agentId = ref<string | null>(null);
 const loadingAgent = ref(false);
+
+// 使用模板选择 composable
+const {
+  templateModalVisible,
+  templateCategories,
+  filteredTemplates,
+  loadingTemplates,
+  selectedTemplateLang,
+  openTemplateModal,
+  selectTemplateCategory
+} = useTemplateSelector(formData, $t, toast);
 
 // 计算属性
 const canUpdate = computed(() => {
@@ -159,6 +256,8 @@ const canUpdate = computed(() => {
 
 // 生命周期钩子
 onLoad(async (options: any) => {
+  setStatusBarHeight();
+  
   // 编辑模式必须有agentId
   if (!options.agentId) {
     toast.error({
@@ -177,14 +276,66 @@ onLoad(async (options: any) => {
     title: $t('edit_agent.page_title')
   });
 
+  await loadLanguageOptions();
   await loadLLMOptions();
   await loadVoiceOptions();
   await loadAgentData();
 });
 
+function setStatusBarHeight() {
+  const systemInfo = uni.getSystemInfoSync();
+  statusBarHeight.value = systemInfo.statusBarHeight || 20;
+  const isAndroid = systemInfo.platform === 'android';
+  
+  try {
+    const menuButtonInfo =
+      typeof uni.getMenuButtonBoundingClientRect === 'function'
+      ? uni.getMenuButtonBoundingClientRect()
+      : null;
+    if (menuButtonInfo && menuButtonInfo.height) {
+      const topGap = menuButtonInfo.top - statusBarHeight.value;
+      navBarHeight.value = menuButtonInfo.height + Math.max(topGap, 0) * 2;
+    } else {
+      navBarHeight.value = isAndroid ? 48 : 44;
+    }
+  } catch (error) {
+    navBarHeight.value = isAndroid ? 48 : 44;
+  }
+}
+
+// 处理模板应用
+async function handleApplyTemplate(template: any) {
+  templateModalVisible.value = false;
+  await applyTemplateLogic(
+    template,
+    formData,
+    llmOptions,
+    chatLanguageOptions,
+    voiceOptions,
+    selectedLLMIndex,
+    selectedLLM,
+    selectedChatLanguageIndex,
+    selectedVoice,
+    toast,
+    $t
+  );
+}
+
 watch(
   () => locale.value,
-  () => {
+  async () => {
+    // 重新加载语言选项（更新 label 的国际化文本）
+    if (chatLanguageOptions.value.length > 0) {
+      await loadLanguageOptions();
+      // 如果已选择语言，需要重新设置 selectedChatLanguageIndex
+      if (selectedChatLanguageIndex.value !== null && formData.value.langCode) {
+        const newIndex = chatLanguageOptions.value.findIndex(
+          (lang) => lang.langCode === formData.value.langCode
+        );
+        selectedChatLanguageIndex.value = newIndex !== -1 ? newIndex : null;
+      }
+    }
+
     if (llmOptions.value.length === 0) {
       return;
     }
@@ -256,7 +407,12 @@ async function loadAgentData() {
           );
           if (langIndex !== -1) {
             selectedChatLanguageIndex.value = langIndex;
+          } else {
+            selectedChatLanguageIndex.value = null;
           }
+        } else {
+          // 如果没有 langCode，设置为 null
+          selectedChatLanguageIndex.value = null;
         }
       }
     } else {
@@ -382,8 +538,9 @@ function handleLLMPickerClick() {
 function onChatLanguageChange(e: { detail: { value: number } }) {
   console.log('选择的对话语言:', e.detail.value);
   selectedChatLanguageIndex.value = e.detail.value;
-  formData.value.langCode = chatLanguageOptions.value[e.detail.value].langCode;
-  formData.value.language = chatLanguageOptions.value[e.detail.value].language;
+  const selected = chatLanguageOptions.value[e.detail.value];
+  formData.value.langCode = selected.langCode;
+  formData.value.language = selected.language;
   
   // 语言改变时，重置当前选择的音色，让用户重新选择对应该语言的音色
   selectedVoice.value = null;
@@ -437,105 +594,308 @@ function goBack() {
 .container {
   padding: 0;
   min-height: calc(100vh - var(--window-top));
-  height: calc(100vh - var(--window-top));
-  background-color: #ffffff;
+  background: linear-gradient(180deg, #EFF2FF 0%, #FFFFFF 100%);
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(104rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
 }
 
-.form-container {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  background: white;
-  border-radius: 32rpx;
-  padding: 48rpx 32rpx;
-  margin: 32rpx;
+/* 安卓端如果 env() 为 0，padding 会过小，强制保底 160rpx */
+@media screen and (min-width: 0px) {
+  .container {
+    padding-bottom: calc(max(160rpx, 104rpx + env(safe-area-inset-bottom)));
+  }
+}
+
+.agent-create-navbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: #EFF2FF; /* Match page gradient top */
+}
+
+.agent-create-status-bar {
+  width: 100%;
+}
+
+.agent-create-nav-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24rpx;
+  position: relative;
+}
+
+.agent-create-nav-left {
+  flex: 0 0 120rpx;
+  display: flex;
+  align-items: center;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+  padding: 0;
+}
+
+.back-icon {
+  font-size: 40rpx;
+  color: #0f172a;
+}
+
+.agent-create-nav-right {
+  flex: 0 0 120rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.agent-create-nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.scroll-content {
+  flex: 1;
+  padding: 24rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.02);
 }
 
 .form-item {
-  margin-bottom: 48rpx;
+  margin-bottom: 32rpx;
 }
-
 .form-item:last-child {
   margin-bottom: 0;
+}
+.card .form-item.last-item {
+  margin-bottom: 0;
+}
+
+/* Name Card: Inline layout - label and input on same row */
+.name-card {
+  padding: 28rpx 32rpx;
+}
+.name-card .name-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 0;
+}
+.name-card .label-row {
+  margin-bottom: 0;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+}
+.name-card .name-input {
+  flex: 1;
+  text-align: left;
+  height: 48rpx;
+  line-height: 48rpx;
+  display: flex;
+  align-items: center;
+}
+
+/* Description Card */
+.desc-card .label {
+  margin-bottom: 16rpx;
+}
+
+/* 覆盖 AgentPromptPolish 组件中的样式，使其字体和光标颜色一致 */
+.desc-card .agent-prompt-polish .textarea {
+  min-height: 120rpx;
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: #1a1a1a;
+  caret-color: #5b75fb;
+}
+
+.desc-card .agent-prompt-polish .textarea-wrapper {
+  border-color: #f1f5f9;
+}
+
+.desc-card .agent-prompt-polish .textarea::placeholder {
+  color: #c0c4cc;
+  font-size: 28rpx;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
 }
 
 .label {
   display: block;
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
-  color: #0f172a;
+  color: #333333;
   margin-bottom: 16rpx;
 }
-
-.label.required::after {
-  content: '*';
-  color: var(--red-500, #fb3748);
+.label-row .label {
+  margin-bottom: 0;
 }
 
+.required-star {
+  color: #ff4d4f;
+  margin-left: 8rpx;
+  font-size: 30rpx;
+}
+
+/* Modern Input Styles - No background for Name and Description cards */
 .input {
   width: 100%;
-  height: 96rpx;
-  padding: 0 32rpx;
-  border: 1rpx solid #e5e5e5;
-  border-radius: 16rpx;
-  font-size: 32rpx;
-  background: white;
-  color: #171717;
+  height: auto;
+  min-height: 48rpx;
+  padding: 0;
+  border-radius: 0;
+  font-size: 30rpx;
+  background: transparent;
+  color: #1a1a1a;
   box-sizing: border-box;
+  caret-color: #5b75fb;
+  border: none;
+}
+.input-placeholder {
+  color: #c0c4cc;
+  font-size: 28rpx;
 }
 
-.input:focus {
-  border-color: #335CFF;
-  background: white;
-  outline: none;
-}
-
-.input::placeholder {
-  color: #9ca3af;
-  font-size: 32rpx;
-}
-
-/* 文本域容器与样式在 AgentPromptPolish 组件中定义 */
-
-.picker-display,
-.voice-selector-trigger,
 .selector-trigger {
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 96rpx;
-  padding: 0 32rpx;
-  border: 1rpx solid #e5e5e5;
+  padding: 0 24rpx;
   border-radius: 16rpx;
-  background: white url('/static/icons/right-arrow.svg') no-repeat right 32rpx center;
-  background-size: 32rpx 32rpx;
-  font-size: 32rpx;
-  color: #111827;
-  cursor: pointer;
+  background: #f7f8fa;
+  font-size: 30rpx;
   box-sizing: border-box;
 }
-
-.voice-selector-trigger:active,
 .selector-trigger:active {
-  background: #f2f2f7 url('/static/icons/right-arrow.svg') no-repeat right 32rpx center;
-  background-size: 32rpx 32rpx;
+  background: #eff0f4;
 }
 
-.arrow {
+.value-text {
+  color: #1a1a1a;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.placeholder-text {
+  color: #c0c4cc;
+  font-size: 28rpx;
+}
+
+.arrow-icon {
   width: 32rpx;
   height: 32rpx;
+  background: url('@/static/icons/right-arrow.svg') no-repeat center;
+  background-size: contain;
+  opacity: 0.4;
 }
 
-.actions {
+.bottom-spacer {
+  height: 280rpx;
+}
+
+.actions-inline {
+  padding: 32rpx 0;
   display: flex;
+  flex-direction: column;
   gap: 24rpx;
-  padding: 32rpx;
-  padding-bottom: 32rpx;
-  background: #ffffff;
 }
 
-.cancel-btn,
+.bottom-spacer-small {
+  height: 48rpx;
+}
+
+.use-template-btn {
+  font-size: 26rpx;
+  color: #3E5DEF;
+  margin-left: 16rpx;
+  background: #F0F3FF;
+  padding: 8rpx 20rpx;
+  border-radius: 12rpx;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.use-template-btn:active {
+  opacity: 0.7;
+}
+
+.cancel-btn {
+  width: 100%;
+  height: 96rpx;
+  border-radius: 24rpx;
+  background: #E8ECFF;
+  color: #7A8BFF;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cancel-btn::after {
+  border: none;
+}
+.cancel-btn[disabled] {
+  background: #F5F7FF !important;
+  color: #B2BDFF !important;
+  opacity: 1;
+}
+.cancel-btn:active {
+  transform: scale(0.98);
+  background: #E8ECFF;
+  color: #7A8BFF !important;
+}
+
 .update-btn {
   width: 100%;
   height: 96rpx;
-  border-radius: 48rpx;
+  border-radius: 24rpx;
+  background: #3E5DEF;
+  color: #ffffff !important;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.update-btn::after {
+  border: none;
+}
+.update-btn[disabled], .update-btn[loading] {
+  background: #9EB0FF !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  opacity: 1;
+}
+.update-btn:active {
+  transform: scale(0.98);
+  background: #3E5DEF;
+  color: #ffffff !important;
 }
 </style>

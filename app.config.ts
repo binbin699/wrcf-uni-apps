@@ -15,13 +15,13 @@ type Platform = 'mp-weixin' | 'app-ios' | 'app-android' | 'app-harmony';
 export default function getAppConfig(platform: Platform, appEdition: 'full' | 'cn' | 'intl'): Record<string, any> {
   // 基础 API 地址
   let BASE_API_URL: string;
-  
+
   if (platform === 'mp-weixin') {
     // 微信小程序使用 HTTPS 线上服务器
     BASE_API_URL = 'https://lingxiwmp.qiniu.com/user';
   } else {
     // App 端根据版本选择服务器
-    BASE_API_URL = appEdition === 'intl' ? 'http://204.141.229.218:8001' : 'http://111.62.241.103:8001';
+    BASE_API_URL = appEdition === 'intl' ? 'http://204.141.229.218:8000' : 'http://111.62.241.103:8000';
   }
 
   // 是否支持微信小程序手机号登录
@@ -65,6 +65,15 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
   const TERMS_URL = platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/user-agreement';
   const PRIVACY_URL = platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/privacy-right';
 
+  // 用户反馈邮箱（留空则不显示反馈入口）
+  // 灵矽：jubao@qiniu.com
+  // 萌点：luomiaoxia@szsmdt.cn
+  const FEEDBACK_EMAIL = 'jubao@qiniu.com';
+
+  const MANUAL_ZH_URL = 'https://mengdiantansuo.com.cn/files/manual_zh.pdf';
+  const MANUAL_EN_URL = 'https://mengdiantansuo.com.cn/files/manual_en.pdf';
+  const TUTORIAL_VIDEO_URL = 'https://mengdiantansuo.com.cn/files/tutorial.mp4';
+
   // Google 授权登录，海外版需要配置 Google Client ID
   const GOOGLE_OAUTH_CLIENT_ID_WEB =
     appEdition === 'cn'
@@ -92,6 +101,10 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
     APP_USE_VOICEPRINT,
     TERMS_URL,
     PRIVACY_URL,
+    FEEDBACK_EMAIL,
+    MANUAL_ZH_URL,
+    MANUAL_EN_URL,
+    TUTORIAL_VIDEO_URL,
     GOOGLE_OAUTH_CLIENT_ID_WEB,
     ARMS_PID,
     ARMS_ENDPOINT,

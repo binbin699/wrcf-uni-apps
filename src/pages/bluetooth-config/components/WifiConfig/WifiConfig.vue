@@ -26,17 +26,25 @@
           class="wifi-card"
           :class="{ selected: selectedWifi && selectedWifi.SSID === wifi.SSID }"
           @click="handleSelectWifi(wifi)">
+          <view class="wifi-content">
           <view class="wifi-icon">
-            <wd-icon name="wifi" size="40rpx" :color="selectedWifi && selectedWifi.SSID === wifi.SSID ? '#fff' : '#9ca3af'" />
+              <wd-icon name="wifi" size="48rpx" :color="selectedWifi && selectedWifi.SSID === wifi.SSID ? '#FFFFFF' : '#9ca3af'" />
           </view>
           <view class="wifi-info">
             <text class="wifi-name">{{ wifi.SSID }}</text>
-          </view>
           <view v-if="wifi.secure" class="wifi-lock">
-            <wd-icon name="lock-on" size="32rpx" :color="selectedWifi && selectedWifi.SSID === wifi.SSID ? '#fff' : '#9ca3af'" />
+                <image 
+                  :src="selectedWifi && selectedWifi.SSID === wifi.SSID ? '/static/icons/wifi-lock-selected.svg' : '/static/icons/wifi-lock.svg'" 
+                  mode="aspectFit"
+                  class="wifi-lock-icon" />
+              </view>
+            </view>
           </view>
           <view class="wifi-arrow">
-            <wd-icon name="arrow-right" size="32rpx" :color="selectedWifi && selectedWifi.SSID === wifi.SSID ? '#fff' : '#9ca3af'" />
+            <image 
+              :src="selectedWifi && selectedWifi.SSID === wifi.SSID ? '/static/icons/wifi-arrow-selected.svg' : '/static/icons/wifi-arrow.svg'" 
+              mode="aspectFit"
+              class="wifi-arrow-icon" />
           </view>
         </view>
       </scroll-view>
@@ -120,26 +128,35 @@
     </view>
 
     <!-- 密码输入弹窗 -->
-    <view v-if="showPasswordModal" class="password-modal-overlay" @click="closePasswordModal">
-      <view class="password-modal" @click.stop>
+    <view v-if="showPasswordModal" class="password-modal-overlay">
+      <!-- 遮罩层，点击关闭弹窗 -->
+      <view class="password-modal-mask" @click="closePasswordModal"></view>
+      <view class="password-modal">
         <view class="modal-title">{{ pendingWifi && pendingWifi.SSID }}</view>
-        <view class="modal-input-wrapper">
+        <view class="modal-content">
+          <view class="modal-input-wrapper" @click="focusPasswordInput">
           <input
             v-model="password"
             class="modal-input"
-            type="text"
-            :password="!isPasswordVisible"
+              :type="isPasswordVisible ? 'text' : 'password'"
             :placeholder="$t('bluetooth.wifi.password_placeholder')"
             :maxlength="64"
-            :focus="showPasswordModal"
+              :focus="passwordInputFocus"
+              :adjust-position="true"
+              :cursor-spacing="120"
+              confirm-type="done"
             @confirm="confirmPassword" />
           <view class="toggle-visibility" @click.stop="togglePasswordVisibility">
-            <wd-icon :name="isPasswordVisible ? 'view' : 'eye-close'" size="40rpx" color="#9ca3af" />
+              <image 
+                :src="isPasswordVisible ? '/static/icons/eye-on.svg' : '/static/icons/eye-off.svg'" 
+                mode="aspectFit"
+                class="eye-icon" />
           </view>
         </view>
         <button class="modal-confirm-btn" @click="confirmPassword">
           {{ $t('common.confirm') }}
         </button>
+        </view>
       </view>
     </view>
   </view>
@@ -166,6 +183,7 @@ export default {
       scrollHeight: '600rpx',
       // 密码弹窗
       showPasswordModal: false,
+      passwordInputFocus: false,  // 控制密码输入框聚焦（iOS 需要延迟聚焦）
       pendingWifi: null,
       // 手动配置相关
       showManualConfig: false,
@@ -184,7 +202,7 @@ export default {
       }
       // 列表选择模式
       if (!this.selectedWifi) return false;
-      if (this.selectedWifi.secure && !this.password.trim()) return false;
+      // 允许不输入密码的情况下继续
       return true;
     }
   },
@@ -283,34 +301,52 @@ export default {
       // 选择WiFi时关闭手动配置模式
       this.showManualConfig = false;
       
+      // 先设置选中状态，让卡片变蓝
+      this.selectedWifi = wifi;
+      
       // 如果需要密码，显示密码弹窗
       if (wifi.secure) {
         this.pendingWifi = wifi;
         this.password = '';
+        this.passwordInputFocus = false;
         this.showPasswordModal = true;
+        
+        // iOS 上不自动聚焦，让用户点击输入框来触发键盘
+        // 只在 Android 上自动聚焦
+        const systemInfo = uni.getSystemInfoSync();
+        if (systemInfo.platform !== 'ios') {
+          this.$nextTick(() => {
+            setTimeout(() => {
+              this.passwordInputFocus = true;
+            }, 300);
+          });
+        }
       } else {
-        // 开放网络，直接选中
-        this.selectedWifi = wifi;
+        // 开放网络，直接保存
         this.password = '';
         bluetoothConfigManager.setSelectedWifi(wifi);
       }
     },
+    
+    // 点击输入框区域时手动聚焦（iOS 需要用户主动点击）
+    focusPasswordInput() {
+      // 先取消聚焦再聚焦，确保状态变化能被检测到
+      this.passwordInputFocus = false;
+      setTimeout(() => {
+        this.passwordInputFocus = true;
+      }, 50);
+    },
 
     closePasswordModal() {
       this.showPasswordModal = false;
+      this.passwordInputFocus = false;  // 重置聚焦状态
       this.pendingWifi = null;
+      // 取消时清除选中状态
+      this.selectedWifi = null;
     },
 
     confirmPassword() {
-      if (!this.password.trim() && this.pendingWifi && this.pendingWifi.secure) {
-        uni.showToast({
-          title: this.$t('bluetooth.wifi.password_required'),
-          icon: 'none',
-          duration: 2000
-        });
-        return;
-      }
-
+      // 允许不输入密码的情况下继续
       this.selectedWifi = this.pendingWifi;
       bluetoothConfigManager.setSelectedWifi(this.selectedWifi);
       bluetoothConfigManager.setPasswordState({
@@ -318,10 +354,18 @@ export default {
         isVisible: this.isPasswordVisible
       });
       this.showPasswordModal = false;
+      this.passwordInputFocus = false;  // 重置聚焦状态
     },
 
     togglePasswordVisibility() {
       this.isPasswordVisible = !this.isPasswordVisible;
+      // 切换密码可见性后重新聚焦输入框
+      this.$nextTick(() => {
+        this.passwordInputFocus = false;
+        setTimeout(() => {
+          this.passwordInputFocus = true;
+        }, 100);
+      });
     },
 
     // 手动配置相关方法
@@ -461,7 +505,9 @@ export default {
 
 <style lang="scss" scoped>
 .wifi-config {
-  min-height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   padding-bottom: 200rpx;
   background-color: #fff;
 }
@@ -471,7 +517,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 300rpx);
+  flex: 1;
   padding: 48rpx 32rpx;
 }
 
@@ -511,14 +557,23 @@ export default {
 }
 
 .wifi-card {
+  box-sizing: border-box;
   display: flex;
+  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
-  padding: 28rpx 24rpx;
-  margin-bottom: 20rpx;
+  padding: 32rpx;
+  gap: 32rpx;
+  
+  width: 700rpx;
+  height: 120rpx;
+  margin: 0 auto 32rpx;
+  
   background-color: #fff;
-  border-radius: 20rpx;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
-  border: 1rpx solid #f3f4f6;
+  border: 2rpx solid #f3f4f6;
+  box-shadow: 0px 4rpx 24rpx rgba(0, 0, 0, 0.1);
+  border-radius: 32rpx;
+  
   transition: all 0.2s;
 
   &:active {
@@ -526,13 +581,25 @@ export default {
   }
 
   &.selected {
-    background: linear-gradient(135deg, #3b82f6 0%, #335CFF 100%);
-    border-color: transparent;
+    background: #335CFF;
+    border: 2rpx solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0px 4rpx 24rpx rgba(0, 0, 0, 0.1);
 
     .wifi-name {
       color: #fff;
     }
   }
+}
+
+.wifi-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+  gap: 24rpx;
+  margin: 0 auto;
+  flex: 1;
+  min-width: 0;
 }
 
 .wifi-icon {
@@ -541,32 +608,63 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 20rpx;
   flex-shrink: 0;
 }
 
 .wifi-info {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  gap: 8rpx;
   flex: 1;
   min-width: 0;
 }
 
 .wifi-name {
-  font-size: 32rpx;
-  font-weight: 500;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 36rpx;
+  line-height: 56rpx;
   color: #1f2937;
+  
+  display: flex;
+  align-items: center;
+  
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .wifi-lock {
-  margin-left: 12rpx;
+  width: 32rpx;
+  height: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
+.wifi-lock-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
+
 .wifi-arrow {
-  margin-left: 12rpx;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+}
+
+.wifi-arrow-icon {
+  width: 48rpx;
+  height: 48rpx;
 }
 
 /* 底部按钮 */
@@ -614,80 +712,139 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
 
+.password-modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
 .password-modal {
-  width: 600rpx;
-  background-color: #fff;
-  border-radius: 24rpx;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 40rpx 32rpx;
-  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.15);
+  gap: 20rpx;
+  
+  width: 686rpx;
+  margin: 0 32rpx;
+  background: #FFFFFF;
+  border-radius: 48rpx;
 }
 
 .modal-title {
-  font-size: 34rpx;
+  width: 100%;
+  height: 56rpx;
+  
+  font-style: normal;
   font-weight: 600;
-  color: #1f2937;
+  font-size: 36rpx;
+  line-height: 56rpx;
+  
+  display: flex;
+  align-items: center;
   text-align: center;
-  margin-bottom: 32rpx;
+  justify-content: center;
+  
+  color: #0E121B;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  gap: 48rpx;
+  width: 100%;
 }
 
 .modal-input-wrapper {
+  box-sizing: border-box;
   display: flex;
+  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
-  background-color: #f9fafb;
+  padding: 24rpx 32rpx;
+  gap: 16rpx;
+  
+  width: 100%;
+  height: 96rpx;
+  
+  background: #FFFFFF;
+  border: 2rpx solid #335CFF;
   border-radius: 16rpx;
-  border: 2rpx solid #e5e7eb;
-  overflow: hidden;
-  margin-bottom: 32rpx;
-
-  &:focus-within {
-    border-color: #3b82f6;
-    background-color: #fff;
-  }
+  /* 确保可以接收点击事件 */
+  pointer-events: auto;
 }
 
 .modal-input {
   flex: 1;
-  padding: 28rpx 24rpx;
-  font-size: 30rpx;
-  color: #1f2937;
+  height: 44rpx;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 32rpx;
+  line-height: 44rpx;
+  color: #0E121B;
   background-color: transparent;
   border: none;
+  /* iOS 确保输入框可交互 */
+  pointer-events: auto;
+  -webkit-user-select: text;
+  user-select: text;
 
   &::placeholder {
-    color: #9ca3af;
+    color: #99A0AE;
   }
 }
 
 .toggle-visibility {
-  padding: 28rpx 24rpx;
+  width: 48rpx;
+  height: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 
   &:active {
     opacity: 0.7;
   }
 }
 
+.eye-icon {
+  width: 48rpx;
+  height: 48rpx;
+}
+
 .modal-confirm-btn {
-  width: 100%;
+  min-width: 346rpx;
   height: 88rpx;
-  background: linear-gradient(135deg, #3b82f6 0%, #335CFF 100%);
-  border-radius: 44rpx;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #fff;
+  padding: 0 48rpx;
+  background: #335CFF;
+  border-radius: 16rpx;
+  
+  font-style: normal;
+  font-weight: 500;
+  font-size: 32rpx;
+  line-height: 88rpx;
+  
+  text-align: center;
+  
+  color: #FFFFFF;
   border: none;
+  flex-shrink: 0;
 
   &:active {
-    transform: scale(0.98);
+    opacity: 0.9;
   }
 }
 

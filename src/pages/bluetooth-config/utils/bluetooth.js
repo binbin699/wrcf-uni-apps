@@ -184,27 +184,58 @@ export async function searchBluetoothDevices() {
     const deviceInfo = uni.getDeviceInfo();
     console.log('[蓝牙扫描] 系统:', deviceInfo.platform, deviceInfo.osVersion);
 
-    // 先尝试停止之前的搜索（忽略错误）
+    // 先尝试停止之前的搜索（忽略错误，添加超时保护）
+    console.log('[蓝牙扫描] 尝试停止之前的设备发现...');
     try {
-      await uni.stopBluetoothDevicesDiscovery();
+      // 添加 2 秒超时，防止 API 挂起
+      await Promise.race([
+        uni.stopBluetoothDevicesDiscovery(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('停止扫描超时')), 2000))
+      ]);
       console.log('[蓝牙扫描] 已停止之前的设备发现');
     } catch (e) {
-      // 忽略错误，可能之前没有在搜索
+      console.log('[蓝牙扫描] 停止之前的发现失败(可忽略):', e?.errMsg || e?.message || e);
     }
 
     // 开始搜索
     console.log('[蓝牙扫描] 调用 startBluetoothDevicesDiscovery...');
+    
+    // 添加实时设备发现回调（静默收集，不打印日志）
+    let foundCount = 0;
+    const deviceFoundCallback = (res) => {
+      foundCount += res.devices?.length || 0;
+    };
+    uni.onBluetoothDeviceFound(deviceFoundCallback);
+    
+    // 辅助函数：安全地移除监听器
+    const removeDeviceFoundListener = () => {
+      // 某些平台（如 iOS）可能没有 offBluetoothDeviceFound API
+      if (typeof uni.offBluetoothDeviceFound === 'function') {
+        try {
+          uni.offBluetoothDeviceFound(deviceFoundCallback);
+        } catch (e) {
+          // 静默处理
+        }
+      }
+    };
+    
     try {
-      await uni.startBluetoothDevicesDiscovery({
+      // 添加 5 秒超时，防止 API 挂起
+      await Promise.race([
+        uni.startBluetoothDevicesDiscovery({
         allowDuplicatesKey: false
-      });
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('开始扫描超时')), 5000))
+      ]);
       console.log('[蓝牙扫描] startBluetoothDevicesDiscovery 成功');
     } catch (discoverError) {
-      const errMsg = discoverError?.errMsg || String(discoverError);
+      const errMsg = discoverError?.errMsg || discoverError?.message || String(discoverError);
       // 如果已经在搜索中，忽略错误继续执行
       if (errMsg.includes('already discovering')) {
         console.log('[蓝牙扫描] 设备发现已在进行中，继续获取设备列表');
       } else {
+        // 移除监听
+        removeDeviceFoundListener();
         throw discoverError;
       }
     }
@@ -212,6 +243,10 @@ export async function searchBluetoothDevices() {
     // 等待一段时间以收集设备（增加到3秒）
     console.log('[蓝牙扫描] 等待 3 秒收集设备...');
     await new Promise((resolve) => setTimeout(resolve, 3000));
+    
+    // 移除监听
+    removeDeviceFoundListener();
+    console.log('[蓝牙扫描] 等待结束，实时发现设备数:', foundCount);
 
     // 获取搜索到的设备
     console.log('[蓝牙扫描] 调用 getBluetoothDevices...');

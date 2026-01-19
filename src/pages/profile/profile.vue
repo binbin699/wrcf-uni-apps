@@ -55,6 +55,10 @@
       <button class="logout-btn outlined" @click="goDeleteAccount">
         {{ $t('profile.delete_account') }}
       </button>
+      <!-- 版本号显示 -->
+      <view class="version-info">
+        <text class="version-text">v{{ appVersion }}</text>
+      </view>
       <!-- 隐藏的可交互元素，点击7次后跳转到mock-test页面 -->
       <view class="hidden-trigger" @click="handleHiddenClick"></view>
     </view>
@@ -76,7 +80,7 @@ import { useNotify } from '@/uni_modules/wot-design-uni';
 import { useDeviceScan } from '@/utils/useDeviceScan';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 // @ts-ignore
-import { deviceApi } from '@/api/index.js';
+import { deviceApi } from '@/api/index';
 import CustomTabBar from '@/components/CustomTabBar.vue';
 
 const toast = useToast();
@@ -107,8 +111,41 @@ function openExternal(src: string) {
   uni.navigateTo({ url: '/pages/webview/webview?src=' + encoded });
 }
 
+function sendFeedbackEmail() {
+  const email = APP_CONFIG.FEEDBACK_EMAIL;
+  if (!email) return;
+  
+  // 使用 mailto: 协议打开邮件客户端
+  // #ifdef APP-PLUS
+  plus.runtime.openURL(`mailto:${email}?subject=${encodeURIComponent($t('profile.feedback_subject'))}`);
+  // #endif
+  // #ifndef APP-PLUS
+  window.location.href = `mailto:${email}?subject=${encodeURIComponent($t('profile.feedback_subject'))}`;
+  // #endif
+}
+
 const hiddenClickCount = ref<number>(0);
 const statusBarHeight = ref<number>(44);
+
+// 获取应用版本号
+const appVersion = ref<string>('');
+function getAppVersion() {
+  // #ifdef APP-PLUS
+  // 使用 getProperty 获取应用真实版本号，避免获取到 HBuilderX 版本
+  const appId = plus.runtime.appid;
+  if (appId) {
+    plus.runtime.getProperty(appId, (info) => {
+      appVersion.value = info.version || '1.1.3';
+    });
+  } else {
+    appVersion.value = '1.1.3';
+  }
+  // #endif
+  // #ifndef APP-PLUS
+  // 非 App 环境使用 manifest.json 中的版本号
+  appVersion.value = '1.1.3';
+  // #endif
+}
 
 // 获取状态栏高度
 function setStatusBarHeight() {
@@ -189,6 +226,12 @@ const menuItems = computed(() => {
           url: PageMap[Pages.VoiceClone].url
         })
     } : undefined,
+    {
+      id: 'instructions_tutorials',
+      title: $t('profile.instructions_tutorials'),
+      icon: '/static/icons/setting.svg',
+      handleClick: () => uni.navigateTo({ url: '/pages/profile/help' })
+    },
     APP_CONFIG.TERMS_URL ? {
       id: 'user_agreement',
       title: $t('profile.user_agreement'),
@@ -200,6 +243,12 @@ const menuItems = computed(() => {
       title: $t('profile.privacy_policy'),
       icon: '/static/icons/setting.svg',
       handleClick: () => openExternal(APP_CONFIG.PRIVACY_URL)
+    } : undefined,
+    APP_CONFIG.FEEDBACK_EMAIL ? {
+      id: 'feedback',
+      title: $t('profile.feedback'),
+      icon: '/static/icons/feedback.svg',
+      handleClick: () => sendFeedbackEmail()
     } : undefined
   ];
 
@@ -214,6 +263,7 @@ const menuItems = computed(() => {
 
 onLoad(() => {
   setStatusBarHeight();
+  getAppVersion();
   // 页面加载时刷新用户信息
   refreshUserInfo();
 });
@@ -612,6 +662,17 @@ function goDeleteAccount() {
   box-shadow: none;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+/* 版本号显示 */
+.version-info {
+  margin-top: 24rpx;
+  text-align: center;
+}
+
+.version-text {
+  font-size: 24rpx;
+  color: #9ca3af;
 }
 
 .hidden-trigger {

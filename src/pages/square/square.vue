@@ -93,18 +93,21 @@
           :key="agent.id"
           class="agent-card"
           :style="{ zIndex: isSquareBindGuideActive && index === 0 ? 10 : 1 }">
-          <view class="agent-info">
+          <view class="agent-content">
+            <!-- 左侧内容：名称、标签、描述 -->
+            <view class="agent-left">
+              <view class="agent-header">
             <view class="agent-name">{{ agent.name }}</view>
-            <view class="agent-description">{{ agent.description }}</view>
-            <view class="agent-actions">
-              <view class="left-content">
                 <view class="agent-tag">
                   <text class="tag-text">{{ getAgentTag(agent) }}</text>
                 </view>
               </view>
-              <view class="right-content" :class="{ 'guide-highlight-wrapper': isSquareBindGuideActive && index === 0 }">
+              <view class="agent-description">{{ agent.description }}</view>
+            </view>
+            <!-- 右侧内容：绑定按钮 -->
+            <view class="agent-right" :class="{ 'guide-highlight-wrapper': isSquareBindGuideActive && index === 0 }">
                 <button
-                  :id="index === 0 ? 'first-bind-btn' : ''"
+                :id="index === 0 ? 'first-bind-btn' : ''"
                   class="config-btn primary"
                   :class="{ 'guide-highlight': isSquareBindGuideActive && index === 0, 'guide-pulse': isSquareBindGuideActive && index === 0 }"
                   @click="handleGuideBindClick(agent, index)">
@@ -118,7 +121,6 @@
                   <view class="square-guide-tooltip-actions">
                     <view class="square-guide-tooltip-skip" @click.stop="skipSquareBindGuide">
                       {{ $t('guide.square_highlight_skip') }}
-                    </view>
                   </view>
                 </view>
               </view>
@@ -240,7 +242,7 @@
       <image src="/static/icons/bell.svg" class="info-bar-icon" />
       <rich-text class="info-bar-text" :nodes="$t('guide.info_bar_text')"></rich-text>
     </view>
-
+    
     <!-- 自定义 TabBar -->
     <CustomTabBar :current="2" />
   </view>
@@ -251,7 +253,7 @@ import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 // @ts-ignore
-import { agentApi, deviceApi } from '../../api/index.js';
+import { agentApi, deviceApi } from '../../api/index';
 import AgentBindDrawer from '../../components/AgentBindDrawer.vue';
 import CustomTabBar from '@/components/CustomTabBar.vue';
 import { useToast } from '@/uni_modules/wot-design-uni';
@@ -585,7 +587,7 @@ async function loadPublicAgents() {
       });
 
       // 提取所有智能体中存在的语言
-      extractAvailableLanguages();
+      await extractAvailableLanguages();
       
       // 设置默认语言（如果还没有选择）
       if (!selectedLanguage.value) {
@@ -607,7 +609,7 @@ async function loadPublicAgents() {
 }
 
 // 从所有智能体中提取存在的语言
-function extractAvailableLanguages() {
+async function extractAvailableLanguages() {
   const langSet = new Set<string>();
   
   // 收集所有智能体的语言
@@ -620,7 +622,7 @@ function extractAvailableLanguages() {
   });
   
   // 获取完整的语言选项列表
-  const allLangOptions = getChatLanguageOptions($t);
+  const allLangOptions = await getChatLanguageOptions($t);
   
   // 筛选出智能体中存在的语言
   availableLanguages.value = allLangOptions.filter(opt => langSet.has(opt.langCode));
@@ -801,38 +803,7 @@ function handleBindCancel() {
   flex-direction: column;
   padding-bottom: calc(max(160rpx, 104rpx + env(safe-area-inset-bottom)));
   box-sizing: border-box;
-  background: linear-gradient(
-    135deg,
-    rgba(161, 140, 209, 0.4) 0%,
-    rgba(143, 211, 244, 0.4) 50%,
-    rgba(251, 194, 235, 0.4) 100%
-  );
-}
-
-.page-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  opacity: 0.4;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at top right, #fbc2eb66 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.page-container::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  opacity: 0.3;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at bottom left, #8fd3f44d 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 1;
+  background: linear-gradient(180deg, #EFF2FF 0%, #FFFFFF 124.53%);
 }
 
 /* 自定义导航栏样式 */
@@ -851,7 +822,8 @@ function handleBindCancel() {
 }
 
 .nav-content {
-  height: 88rpx;
+  min-height: 88rpx;
+  padding: 16rpx 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -862,6 +834,9 @@ function handleBindCancel() {
   font-size: 18px;
   font-weight: 500;
   color: #0f172a;
+  white-space: pre-line;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .content-scroll {
@@ -1147,72 +1122,75 @@ function handleBindCancel() {
 }
 
 .agent-card {
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 40rpx;
-  padding: 32rpx 40rpx;
-  box-shadow: 0 16rpx 64rpx rgba(100, 100, 255, 0.1);
-  border: 2rpx solid rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20rpx);
-  -webkit-backdrop-filter: blur(20rpx);
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
-  transition: all 0.3s ease;
-  align-items: stretch;
+  align-items: flex-start;
+  padding: 32rpx;
+  background: #FFFFFF;
+  border-radius: 32rpx;
   position: relative;
 }
 
 .agent-card + .agent-card {
-  margin-top: 32rpx;
+  margin-top: 24rpx;
 }
 
-.agent-info {
+.agent-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 32rpx;
+  width: 100%;
+}
+
+.agent-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24rpx;
   flex: 1;
   min-width: 0;
 }
 
+.agent-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+  width: 100%;
+}
+
 .agent-name {
+  font-family: 'PingFang SC';
+  font-style: normal;
+  font-weight: 500;
   font-size: 36rpx;
-  font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 0;
-  text-align: left;
+  line-height: 52rpx;
+  display: flex;
+  align-items: center;
+  color: #212730;
 }
 
 .agent-description {
-  font-size: 14px;
-  color: #78716c;
-  line-height: 1.4;
+  font-family: 'PingFang SC';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  color: #60718B;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   line-clamp: 3;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  padding-top: 24rpx;
-  margin-bottom: 24rpx;
-  text-align: justify;
   width: 100%;
-  max-width: calc(100% - 32rpx);
-  box-sizing: border-box;
   word-wrap: break-word;
   word-break: break-all;
 }
 
-.agent-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.left-content {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-}
-
-.right-content {
+.agent-right {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -1220,37 +1198,38 @@ function handleBindCancel() {
 }
 
 .agent-tag {
-  padding: 6rpx 16rpx;
-  background: #e1e4ea;
-  border-radius: 8rpx;
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  flex-direction: row;
   justify-content: center;
-  gap: 10rpx;
-  word-wrap: break-word;
-  white-space: normal;
-  width: fit-content;
+  align-items: center;
+  padding: 6rpx 12rpx;
+  gap: 20rpx;
+  background: #F3F4F7;
+  border-radius: 8rpx;
 }
 
 .tag-text {
-  font-size: 24rpx;
-  color: #6b7280;
-}
-.config-btn {
-  width: 128rpx;
-  height: 64rpx;
-  border-radius: 16rpx;
-  padding: 0 16rpx;
-  font-size: 28rpx;
+  font-family: 'PingFang SC';
+  font-style: normal;
   font-weight: 400;
-  background: #3E5DEF;
-  border: 1.5rpx solid #3E5DEF;
-  transition: all 0.3s ease;
+  font-size: 24rpx;
+  line-height: 32rpx;
   display: flex;
   align-items: center;
+  color: #60718B;
+}
+.config-btn {
+  display: flex;
+  flex-direction: row;
   justify-content: center;
-  gap: 8rpx;
-  position: relative;
+  align-items: center;
+  padding: 0 16rpx;
+  min-width: 128rpx;
+  width: auto;
+  height: 64rpx;
+  background: #3E5DEF;
+  border-radius: 16rpx;
+  border: none;
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -1260,11 +1239,17 @@ function handleBindCancel() {
   height: 32rpx;
   flex-shrink: 0;
 }
+
 .btn-text {
-  text-align: center;
-  font-size: 28rpx;
-  color: white;
+  font-family: 'PingFang SC';
+  font-style: normal;
   font-weight: 400;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #FFFFFF;
 }
 
 .config-btn:active {
@@ -1362,7 +1347,8 @@ function handleBindCancel() {
 .square-guide-popup {
   position: fixed;
   left: 50%;
-  bottom: calc(max(180rpx, 130rpx + env(safe-area-inset-bottom)));
+  /* 非全面屏手机需要足够的基础高度避免被 tabbar 遮挡 */
+  bottom: calc(200rpx + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   width: calc(100% - 120rpx);
   max-width: 640rpx;
@@ -1513,14 +1499,15 @@ function handleBindCancel() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.65);
 }
 
 .overlay-guide-card {
   position: absolute;
   width: 548rpx;
   left: 50%;
-  top: 928rpx;
+  /* 使用 bottom 定位，避免在非全面屏手机上被遮挡 */
+  bottom: calc(200rpx + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   background: #E3EFFF;
   border-radius: 32rpx;
@@ -1676,7 +1663,7 @@ function handleBindCancel() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.65);
 }
 
 .second-overlay-highlight {

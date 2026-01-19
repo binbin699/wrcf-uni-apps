@@ -30,7 +30,9 @@ const initialState = {
   isRestarting: false,
   restartReason: null,
   // 仅配网模式（不绑定设备）
-  configOnly: false
+  configOnly: false,
+  // 配网是否已完成
+  configCompleted: false
 };
 
 /**
@@ -258,6 +260,22 @@ class BluetoothConfigManager {
    */
   setConfigOnly(configOnly) {
     this.updateState({ configOnly });
+  }
+
+  /**
+   * 设置配网完成状态
+   * @param {boolean} completed - 是否已完成配网
+   */
+  setConfigCompleted(completed) {
+    this.updateState({ configCompleted: completed });
+  }
+
+  /**
+   * 检查配网是否已完成
+   * @returns {boolean} 是否已完成
+   */
+  isConfigCompleted() {
+    return this.state.configCompleted;
   }
 
   /**

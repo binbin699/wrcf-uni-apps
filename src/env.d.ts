@@ -24,6 +24,10 @@ declare const APP_CONFIG: {
   APP_USE_VOICEPRINT: boolean;
   TERMS_URL: string;
   PRIVACY_URL: string;
+  FEEDBACK_EMAIL: string;
+  MANUAL_ZH_URL: string;
+  MANUAL_EN_URL: string;
+  TUTORIAL_VIDEO_URL: string;
   GOOGLE_OAUTH_CLIENT_ID_WEB: string;
   ARMS_PID: string;
   ARMS_ENDPOINT: string;

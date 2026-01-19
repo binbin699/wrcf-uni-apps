@@ -50,7 +50,7 @@
 <script setup lang="ts">
 // todo
 // @ts-ignore
-import { deviceApi, commonApi } from '@/api/index.js';
+import { deviceApi, commonApi } from '@/api/index';
 import AudioPlayerManager from '@/utils/audioPlayer';
 import AudioRecorderManager from '@/utils/audioRecorder';
 import { PageMap, Pages } from '@/utils/route';

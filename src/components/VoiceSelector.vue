@@ -339,7 +339,15 @@ export default {
         return [];
       }
 
-      let result = this.voices;
+      // 先对数据进行去重，防止后端返回重复的 voiceId
+      const seen = new Set();
+      let result = this.voices.filter((voice) => {
+        if (seen.has(voice.voiceId)) {
+          return false;
+        }
+        seen.add(voice.voiceId);
+        return true;
+      });
 
       if (this.selectedLanguage !== 'all') {
         result = result.filter((voice) =>
@@ -373,12 +381,32 @@ export default {
           }
 
           // 根据选中的标签过滤
+          // 男声标签：必须有 gender === 'male'，否则根据名称判断
           if (this.selectedTag === this.$t('voice_selector.male')) {
-            return voiceTags.gender === 'male';
+            if (voiceTags.gender) {
+              return voiceTags.gender === 'male';
+            }
+            // 没有 gender 属性时，根据名称判断
+            return (
+              voice.voiceName &&
+              (voice.voiceName.includes('男') ||
+                voice.voiceName.includes('先生') ||
+                voice.voiceName.includes('哥'))
+            );
           }
 
+          // 女声标签：必须有 gender === 'female'，否则根据名称判断
           if (this.selectedTag === this.$t('voice_selector.female')) {
-            return voiceTags.gender === 'female';
+            if (voiceTags.gender) {
+              return voiceTags.gender === 'female';
+            }
+            // 没有 gender 属性时，根据名称判断
+            return (
+              voice.voiceName &&
+              (voice.voiceName.includes('女') ||
+                voice.voiceName.includes('小姐') ||
+                voice.voiceName.includes('姐'))
+            );
           }
 
           if (this.selectedTag === this.$t('voice_selector.mine')) {
@@ -427,7 +455,8 @@ export default {
             return voiceTags.scenes && voiceTags.scenes.includes(sceneMap[this.selectedTag]);
           }
 
-          return true;
+          // 其他未知标签，不显示
+          return false;
         });
       }
 
@@ -1064,6 +1093,10 @@ export default {
   width: 100%;
   flex: 1;
   padding: 16rpx 24rpx 32rpx;
+  /* 底部预留空间，避免被固定按钮遮挡 */
+  padding-bottom: 260rpx;
+  padding-bottom: calc(260rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(260rpx + env(safe-area-inset-bottom));
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;

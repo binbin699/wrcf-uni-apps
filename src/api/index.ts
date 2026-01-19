@@ -1,3 +1,4 @@
+// @ts-nocheck
 import request from '@/utils/request';
 import common from './common';
 
@@ -242,6 +243,14 @@ export const deviceApi = {
    */
   bindByQrcode(data) {
     return request.post('/app/device/bind-by-qrcode', { qrcode: data });
+  }
+};
+
+// 语言管理相关接口
+export const languageApi = {
+  // 获取对话语言选项列表
+  getList() {
+    return request.get('/app/language/list');
   }
 };
 

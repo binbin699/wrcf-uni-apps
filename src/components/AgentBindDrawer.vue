@@ -89,7 +89,7 @@
 
 <script>
 import { PageMap, Pages } from '@/utils/route';
-import { agentApi, deviceApi } from '../api/index.js';
+import { agentApi, deviceApi } from '../api/index';
 import { gotoCreateAgentBy } from '@/pages/agent/create';
 import { requestCameraPermission, checkPermissionStatus, PermissionType, PermissionStatus, openPermissionSetting } from '@/utils/permission';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';

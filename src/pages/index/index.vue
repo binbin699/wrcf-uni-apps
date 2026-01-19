@@ -113,7 +113,7 @@
 import { ref, watch, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 // @ts-ignore
-import { agentApi, deviceApi } from '@/api/index.js';
+import { agentApi, deviceApi } from '@/api/index';
 import { PageMap, Pages } from '@/utils/route';
 import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
 import { onLoad, onShow } from '@dcloudio/uni-app';
@@ -194,12 +194,12 @@ async function loadAgentList(showLoading = false) {
       agentList.value = result.data || [];
     } else {
       agentList.value = [];
-      console.warn('获取智能体列表失败:', result.message);
+      console.warn('获取智能体列表失败', result.message);
     }
   } catch (error) {
-    console.error('加载智能体列表失败:', error);
+    console.error('加载智能体列表失败', error);
     agentList.value = [];
-    // 不再显示toast，因为request.ts已经处理了
+    // 不再显示toast，因为 request.ts 已经处理
   } finally {
     if (showLoading) {
       loading.value = false;
@@ -228,7 +228,7 @@ async function checkDeviceBinding() {
       console.warn('获取设备列表失败:', result?.message);
     }
   } catch (error) {
-    console.error('检查设备绑定状态失败:', error);
+    console.error('检查设备绑定状态失败', error);
     showWelcomeGuide.value = false;
   } finally {
     isCheckingDevice = false;

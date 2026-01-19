@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 // @ts-ignore
-import { deviceApi } from '@/api/index.js';
+import { deviceApi } from '@/api/index';
 import { PageMap, Pages } from '@/utils/route';
 import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';

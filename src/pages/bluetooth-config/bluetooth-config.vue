@@ -160,6 +160,19 @@ function onStoreStateChange(newState: any) {
 }
 
 function handleBack() {
+  // 如果配网已完成，直接返回"我的"页面
+  if (state.value.configCompleted) {
+    console.log('配网已完成，直接返回');
+    try {
+      uni.navigateBack();
+    } catch (error: any) {
+      uni.switchTab({
+        url: PageMap[Pages.Profile].url
+      });
+    }
+    return;
+  }
+  
   if (state.value.currentStep === CONFIG_STEPS.SELECT_DEVICE) {
     // 第一步，返回上一页
     try {
@@ -173,8 +186,35 @@ function handleBack() {
         console.log('返回上一页失败:', error);
       }
     }
-    // 其他步骤，返回上一步
+  } else if (state.value.currentStep === CONFIG_STEPS.SELECT_WIFI) {
+    // 从WiFi选择页返回设备选择页，需要断开蓝牙连接并重置状态
+    console.log('从WiFi页返回设备扫描页，断开蓝牙并重置状态');
+    
+    // 断开当前蓝牙连接
+    const selectedDevice = state.value.selectedDevice;
+    if (selectedDevice && selectedDevice.deviceId) {
+      uni.closeBLEConnection({
+        deviceId: selectedDevice.deviceId,
+        success: () => {
+          console.log('蓝牙连接已断开');
+        },
+        fail: (error) => {
+          console.log('断开蓝牙连接失败(可忽略):', error);
+        }
+      });
+    }
+    
+    // 重置配网协议状态
+    configProtocol.reset();
+    
+    // 清除选中的设备和WiFi
+    bluetoothConfigManager.setSelectedDevice(null);
+    bluetoothConfigManager.setSelectedWifi(null);
+    
+    // 返回上一步
+    bluetoothConfigManager.prevStep();
   } else {
+    // 其他步骤，返回上一步
     bluetoothConfigManager.prevStep();
   }
 }
@@ -235,6 +275,8 @@ async function cleanupBluetooth() {
   min-height: 100vh;
   background-color: #fff;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 重新开始遮罩 */
@@ -352,7 +394,8 @@ async function cleanupBluetooth() {
 .step-content {
   flex: 1;
   background-color: #f9fafb;
-  min-height: calc(100vh - 200rpx);
+  display: flex;
+  flex-direction: column;
 }
 
 /* 响应式设计 */

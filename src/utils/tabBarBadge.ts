@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 // @ts-ignore
-import { deviceApi } from '@/api/index.js';
+import { deviceApi } from '@/api/index';
 import { isSquareOverlayDismissed } from './userGuide';
 
 // 广场 Tab 的索引（从 0 开始）

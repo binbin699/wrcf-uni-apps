@@ -1,9 +1,9 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, UserConfig, loadEnv } from 'vite';
 import uni from '@dcloudio/vite-plugin-uni';
 import getAppConfig from './app.config';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode, command }) => {
+export default defineConfig(({ mode }) => {
   // 1. 加载环境变量（从 .env 文件）
   const env = loadEnv(mode, process.cwd(), '');
   const isDev = env.VITE_USER_NODE_ENV === 'development';
@@ -21,14 +21,16 @@ export default defineConfig(({ mode, command }) => {
     appConfig.BASE_API_URL = env.VITE_BASE_API_URL;
   }
 
-  return {
+  const config: UserConfig = {
     css: {
       preprocessorOptions: {
         scss: {
           // @ts-ignore
           api: 'modern-compiler'
         }
-      }
+      },
+      // 禁用 CSS sourcemap
+      devSourcemap: false
     },
 
     // 4. 使用 define 将配置注入到代码中（编译时替换）
@@ -39,12 +41,23 @@ export default defineConfig(({ mode, command }) => {
     plugins: [uni()],
 
     build: {
+      // 禁用生产环境 sourcemap
+      sourcemap: false,
       minify: 'terser',
       terserOptions: {
         compress: {
           drop_console: true
         }
+      },
+      // 禁用 CSS sourcemap
+      cssCodeSplit: true,
+      rollupOptions: {
+        output: {
+          sourcemap: false
+        }
       }
-    }
+    },
   };
+
+  return config;
 });
