@@ -165,7 +165,7 @@
 
 <script setup lang="ts">
 import { audioSrc, audioSrcName, audioSrcOptions, curAudioSrc } from './clone-store';
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { AudioPlayerManager } from '@/utils/audioPlayer';
 import { AudioRecorderManager } from '@/utils/audioRecorder';
 import { onLoad, onUnload } from '@dcloudio/uni-app';
@@ -190,6 +190,9 @@ const recordedAudio = ref<string | null>(null);
 const isRecording = ref(false);
 const recordDuration = ref(0);
 const showRecordPopup = ref(false);
+
+// 音频时长（毫秒）- 用于上传的音频文件
+const audioDuration = ref(0);
 
 const isPlaying = ref(false);
 
@@ -284,9 +287,13 @@ function initManagers() {
   );
 
   // 初始化录音管理器
+  // 注意：最长录制时间（duration）与创建音色的有效时长限制不同
+  // - 录制时长限制：180秒（可根据需求调整，给用户足够的录制空间）
+  // - 创建音色有效时长：10-120秒（固定限制，在 uploadAndCreateVoice 函数中验证）
+  // 如需修改最长录制时间，只需修改下方 duration 值（单位：毫秒）
   audioRecorder.value = AudioRecorderManager.getInstance(
     {
-      duration: 60000, // 最长60秒
+      duration: 180000,// 最长录制时间，单位毫秒（180秒 = 180000ms）
       sampleRate: 16000,
       numberOfChannels: 1,
       encodeBitRate: 96000,
@@ -307,6 +314,9 @@ function initManagers() {
         recordedAudio.value = result.tempFilePath;
         audioFileName.value = `录音_${new Date().getTime()}.${result.fileExtension || 'wav'}`;
         audioFileSize.value = AudioRecorderManager.formatFileSize(result.fileSize);
+        // 保存录音时长（单位：秒）
+        recordDuration.value = result.duration;
+        console.log('录音时长:', recordDuration.value, '秒');
         // 关闭录音弹窗
         showRecordPopup.value = false;
       },
@@ -337,6 +347,12 @@ async function openRecordPopup() {
     return;
   }
   showRecordPopup.value = true;
+  
+  // 弹窗显示后自动开始录制
+  await nextTick();
+  if (audioRecorder.value && !isRecording.value) {
+    audioRecorder.value.toggle();
+  }
 }
 
 // 关闭录音弹窗
@@ -385,6 +401,7 @@ function resetAudio() {
   recordedAudio.value = null;
   audioFileName.value = '';
   audioFileSize.value = '';
+  audioDuration.value = 0;
   isPlaying.value = false;
 
   if (audioPlayer.value) {
@@ -611,6 +628,9 @@ function handleChooseAudioDirect(filePath: string, defaultFileName: string) {
     console.error('获取文件信息失败:', err);
     audioFileSize.value = '';
   }
+  
+  // 获取音频时长
+  getAudioDuration(filePath);
 }
 // #endif
 
@@ -643,11 +663,32 @@ function handleChooseAudio({
   audioFileName.value = filename;
   audioFileSize.value = formatFileSize(filesize);
   recordedAudio.value = null;
+  
+  // 获取音频时长
+  getAudioDuration(filepath);
 
   console.log('音频文件设置完成:', {
     audioFile: audioFile.value,
     audioFileName: audioFileName.value,
     audioFileSize: audioFileSize.value
+  });
+}
+
+// 获取音频文件时长
+function getAudioDuration(filepath: string) {
+  audioDuration.value = 0;
+  const innerAudioContext = uni.createInnerAudioContext();
+  innerAudioContext.src = filepath;
+  innerAudioContext.onCanplay(() => {
+    // duration 单位为秒，转换为毫秒
+    audioDuration.value = Math.round(innerAudioContext.duration * 1000);
+    console.log('音频时长:', audioDuration.value, 'ms');
+    innerAudioContext.destroy();
+  });
+  innerAudioContext.onError((err) => {
+    console.error('获取音频时长失败:', err);
+    audioDuration.value = 0;
+    innerAudioContext.destroy();
   });
 }
 
@@ -776,6 +817,26 @@ async function uploadAndCreateVoice() {
     return;
   }
 
+  // 验证音频时长（10-120秒）
+  // recordDuration 单位是秒，audioDuration 单位是毫秒，统一转换为秒
+  const durationInSeconds = recordedAudio.value 
+    ? recordDuration.value 
+    : Math.round(audioDuration.value / 1000);
+  const minDuration = 10; // 10秒
+  const maxDuration = 120; // 120秒
+  
+  console.log('音频时长验证:', durationInSeconds, '秒，范围:', minDuration, '-', maxDuration);
+  
+  if (durationInSeconds > 0 && (durationInSeconds < minDuration || durationInSeconds > maxDuration)) {
+    console.log('音频时长不符合要求，弹出提示');
+    uni.showToast({
+      title: $t('voice_clone.audio_duration_invalid'),
+      icon: 'none',
+      duration: 3000
+    });
+    return;
+  }
+
   uploading.value = true;
   try {
     if (lastUploadFile.value !== audioPath) {
@@ -844,6 +905,7 @@ function resetForm() {
   recordedAudio.value = null;
   audioFileName.value = '';
   audioFileSize.value = '';
+  audioDuration.value = 0;
   voiceName.value = '';
   voiceId.value = null;
   lastUploadFile.value = '';

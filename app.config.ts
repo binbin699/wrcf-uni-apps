@@ -59,8 +59,11 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
   const APP_SETUP_MODE = 'both';
 
   // 是否支持声纹（微信小程序不支持）
-  const APP_USE_VOICEPRINT = platform !== 'mp-weixin';
+  // const APP_USE_VOICEPRINT = platform !== 'mp-weixin';
 
+  // 是否支持声纹（暂时在所有平台启用）
+  const APP_USE_VOICEPRINT = true;
+  
   // 用户协议和隐私政策 URL（微信小程序不显示）
   const TERMS_URL = platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/user-agreement';
   const PRIVACY_URL = platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/privacy-right';

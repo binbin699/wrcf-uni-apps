@@ -442,9 +442,10 @@
   "voice_clone.no_voice_demo": "音声デモなし",
   "voice_clone.voice_name_exists": "音声名は既に存在します。別の名前を入力してください",
   "voice_clone.click_to_upload": "クリックして音声をアップロード",
-  "voice_clone.audio_format_hint": "MP3、WAV、M4A形式をサポート。10〜60秒推奨",
+  "voice_clone.audio_format_hint": "MP3、WAV、M4A形式をサポート。10〜120秒必要",
   "voice_clone.reselect": "再選択",
-  "voice_clone.record_hint": "クリックして録音を開始。10〜60秒のクリアな音声を推奨",
+  "voice_clone.record_hint": "クリックして録音を開始。10〜120秒必要",
+  "voice_clone.audio_duration_invalid": "10〜120秒の中国語音声を提供してください",
   "voice_clone.re_record": "再録音",
 
   "voice_manage.title": "音声管理",

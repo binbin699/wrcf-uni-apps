@@ -448,9 +448,10 @@
   "voice_clone.no_voice_demo": "Нет демо голоса",
   "voice_clone.voice_name_exists": "Название голоса уже существует, введите другое название",
   "voice_clone.click_to_upload": "Нажмите для загрузки аудио",
-  "voice_clone.audio_format_hint": "Поддерживаются форматы MP3, WAV, M4A. 10-60 секунд рекомендуется",
+  "voice_clone.audio_format_hint": "Поддерживаются форматы MP3, WAV, M4A. Требуется 10-120 секунд",
   "voice_clone.reselect": "Выбрать снова",
-  "voice_clone.record_hint": "Нажмите для начала записи. 10-60 секунд чистого голоса рекомендуется",
+  "voice_clone.record_hint": "Нажмите для начала записи. Требуется 10-120 секунд",
+  "voice_clone.audio_duration_invalid": "Пожалуйста, предоставьте 10-120 секунд китайского аудио",
   "voice_clone.re_record": "Перезаписать",
 
   "voice_manage.title": "Управление голосами",

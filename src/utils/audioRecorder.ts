@@ -208,6 +208,8 @@ export class AudioRecorderManager {
    */
   stop(): void {
     if (this._isRecording && this.recorderManager) {
+      // 立即标记为停止，防止重复调用
+      this._isRecording = false;
       try {
         console.log('停止录音');
         this.recorderManager.stop();
