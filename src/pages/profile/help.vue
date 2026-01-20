@@ -52,6 +52,8 @@
             loop
             class="tutorial-video"
             object-fit="contain"
+            :direction="0"
+            :enable-play-gesture="false"
           />
         </view>
       </view>
