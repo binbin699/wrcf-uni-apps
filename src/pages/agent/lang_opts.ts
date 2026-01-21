@@ -1,5 +1,4 @@
 export interface ChatLanguageOption {
-  label: string;
   language: string;
   langCode: string;
   voiceLanguage: string;
@@ -8,111 +7,30 @@ export interface ChatLanguageOption {
 import { languageApi } from '@/api/index';
 
 /**
- * langCode 到国际化 key 的映射表
- * 用于将 API 返回的 langCode 转换为国际化 key，生成 label
- */
-const langCodeToI18nKeyMap: Record<string, string> = {
-  'zh_CN': 'create_agent.language_zh',
-  'en_US': 'create_agent.language_en',
-  'ja_JP': 'create_agent.language_ja',
-  'ko_KR': 'create_agent.language_ko',
-  'yue_CN': 'create_agent.language_yue',
-  'ne_CN': 'create_agent.language_ne',
-  'es_ES': 'create_agent.language_es',
-  'de_DE': 'create_agent.language_de',
-  'fr_FR': 'create_agent.language_fr',
-  'hi_IN': 'create_agent.language_hi',
-  'it_IT': 'create_agent.language_it',
-  'nl_NL': 'create_agent.language_nl',
-  'pt_PT': 'create_agent.language_pt',
-  'ru_RU': 'create_agent.language_ru',
-  'tr_TR': 'create_agent.language_tr',
-  'vi_VN': 'create_agent.language_vi',
-  'km_KH': 'create_agent.language_km',
-  'th_TH': 'create_agent.language_th',
-  'id_ID': 'create_agent.language_id',
-  'mn_MN': 'create_agent.language_mn',
-  'ar_SA': 'create_agent.language_ar',
-  'pl_PL': 'create_agent.language_pl',
-  'uk_UA': 'create_agent.language_uk',
-  'bg_BG': 'create_agent.language_bg',
-  'ro_RO': 'create_agent.language_ro',
-  'hu_HU': 'create_agent.language_hu',
-  'ms_MY': 'create_agent.language_ms',
-  'he_IL': 'create_agent.language_he',
-};
-
-/**
- * 硬编码的语言选项（兜底方案）
- */
-function getHardcodedLanguageOptions($t: (key: string) => string): ChatLanguageOption[] {
-  return [
-    { label: $t('create_agent.language_zh'), language: '中文', langCode: 'zh_CN', voiceLanguage: 'zh' },
-    { label: $t('create_agent.language_en'), language: '英文', langCode: 'en_US', voiceLanguage: 'en' },
-    { label: $t('create_agent.language_ja'), language: '日语', langCode: 'ja_JP', voiceLanguage: 'ja' },
-    { label: $t('create_agent.language_ko'), language: '韩语', langCode: 'ko_KR', voiceLanguage: 'ko' },
-    { label: $t('create_agent.language_yue'), language: '粤语', langCode: 'yue_CN', voiceLanguage: 'yue' },
-    { label: $t('create_agent.language_ne'), language: '东北话', langCode: 'ne_CN', voiceLanguage: 'ne' },
-    { label: $t('create_agent.language_es'), language: '西班牙语', langCode: 'es_ES', voiceLanguage: 'es' },
-    { label: $t('create_agent.language_de'), language: '德语', langCode: 'de_DE', voiceLanguage: 'de' },
-    { label: $t('create_agent.language_fr'), language: '法语', langCode: 'fr_FR', voiceLanguage: 'fr' },
-    { label: $t('create_agent.language_hi'), language: '印地语', langCode: 'hi_IN', voiceLanguage: 'hi' },
-    { label: $t('create_agent.language_it'), language: '意大利语', langCode: 'it_IT', voiceLanguage: 'it' },
-    { label: $t('create_agent.language_nl'), language: '荷兰语', langCode: 'nl_NL', voiceLanguage: 'nl' },
-    { label: $t('create_agent.language_pt'), language: '葡萄牙语', langCode: 'pt_PT', voiceLanguage: 'pt' },
-    { label: $t('create_agent.language_ru'), language: '俄语', langCode: 'ru_RU', voiceLanguage: 'ru' },
-    { label: $t('create_agent.language_tr'), language: '土耳其语', langCode: 'tr_TR', voiceLanguage: 'tr' },
-    { label: $t('create_agent.language_vi'), language: '越南语', langCode: 'vi_VN', voiceLanguage: 'vi' },
-    { label: $t('create_agent.language_km'), language: '柬埔寨语', langCode: 'km_KH', voiceLanguage: 'km' },
-    { label: $t('create_agent.language_th'), language: '泰语', langCode: 'th_TH', voiceLanguage: 'th' },
-    { label: $t('create_agent.language_id'), language: '印尼语', langCode: 'id_ID', voiceLanguage: 'id' },
-    { label: $t('create_agent.language_mn'), language: '蒙古语', langCode: 'mn_MN', voiceLanguage: 'mn' },
-    { label: $t('create_agent.language_ar'), language: '阿拉伯语', langCode: 'ar_SA', voiceLanguage: 'ar' },
-    { label: $t('create_agent.language_pl'), language: '波兰语', langCode: 'pl_PL', voiceLanguage: 'pl' },
-    { label: $t('create_agent.language_uk'), language: '乌克兰语', langCode: 'uk_UA', voiceLanguage: 'uk' },
-    { label: $t('create_agent.language_bg'), language: '保加利亚语', langCode: 'bg_BG', voiceLanguage: 'bg' },
-    { label: $t('create_agent.language_ro'), language: '罗马尼亚语', langCode: 'ro_RO', voiceLanguage: 'ro' },
-    { label: $t('create_agent.language_hu'), language: '匈牙利语', langCode: 'hu_HU', voiceLanguage: 'hu' },
-    { label: $t('create_agent.language_ms'), language: '马来语', langCode: 'ms_MY', voiceLanguage: 'ms' },
-    { label: $t('create_agent.language_he'), language: '希伯来语', langCode: 'he_IL', voiceLanguage: 'he' },
-  ];
-}
-
-/**
  * 获取对话语言选项列表（异步）
- * 优先从 API 获取，失败时使用硬编码兜底
+ * 接口通过 Accept-Language 自动返回国际化的 language 字段
  */
-let cachedChatLanguageOptions: ChatLanguageOption[] | null = null;
-
-export async function getChatLanguageOptions($t: (key: string) => string): Promise<ChatLanguageOption[]> {
-  if (cachedChatLanguageOptions) {
-    return cachedChatLanguageOptions;
-  }
-
+export async function getChatLanguageOptions(): Promise<ChatLanguageOption[]> {
   try {
     const res = await languageApi.getList();
     
     if (res.code === 1000 && res.data && Array.isArray(res.data) && res.data.length > 0) {
       // API 返回成功，转换为 ChatLanguageOption 格式
-      const mapped = res.data.map((lang: { langCode: string; language: string; voiceLanguage?: string }) => {
-        const i18nKey = langCodeToI18nKeyMap[lang.langCode];
+      const mapped = res.data.map((lang: { langCode: string; language: string; voiceLanguage: string }) => {
         return {
           langCode: lang.langCode,
           language: lang.language,
-          voiceLanguage: lang.voiceLanguage || langCodeToVoiceLanguage(lang.langCode), // 兜底：如果接口没有返回，使用硬编码转换
-          label: i18nKey ? $t(i18nKey) : lang.language, // 如果映射表中没有，使用 language 作为 label
+          voiceLanguage: lang.voiceLanguage,
         };
       });
-      cachedChatLanguageOptions = mapped;
       return mapped;
     }
   } catch (error) {
-    // API 调用失败，静默失败，使用硬编码兜底
-    console.warn('获取语言列表失败，使用硬编码兜底:', error);
+    console.error('获取语言列表失败:', error);
   }
   
-  // 硬编码兜底（原有逻辑），不写缓存，便于下次再尝试 API
-  return getHardcodedLanguageOptions($t);
+  // 如果 API 失败，返回空数组
+  return [];
 }
 
 /**

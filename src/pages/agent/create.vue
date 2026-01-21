@@ -72,12 +72,12 @@
           <picker
             mode="selector"
             :range="chatLanguageOptions"
-            range-key="label"
+            range-key="language"
             :value="selectedChatLanguageIndex"
             @change="onChatLanguageChange">
             <view class="selector-trigger">
               <text v-if="loadingLanguages">{{ $t('common.loading') }}</text>
-              <text v-else-if="selectedChatLanguage" class="value-text">{{ selectedChatLanguage.label }}</text>
+              <text v-else-if="selectedChatLanguage" class="value-text">{{ selectedChatLanguage.language }}</text>
               <text v-else class="placeholder-text">{{ $t('create_agent.select_chat_language') }}</text>
               <view class="arrow-icon"></view>
             </view>
@@ -220,7 +220,7 @@ const selectedChatLanguage = computed(() =>
 async function loadLanguageOptions() {
   try {
     loadingLanguages.value = true;
-    chatLanguageOptions.value = await getChatLanguageOptions($t);
+    chatLanguageOptions.value = await getChatLanguageOptions();
   } catch (error) {
     console.error('加载语言选项失败:', error);
   } finally {
@@ -277,18 +277,6 @@ onLoad(async (options: any) => {
 watch(
   () => locale.value,
   async () => {
-    // 重新加载语言选项（更新 label 的国际化文本）
-    if (chatLanguageOptions.value.length > 0) {
-      await loadLanguageOptions();
-      // 如果已选择语言，需要重新设置 selectedChatLanguageIndex
-      if (selectedChatLanguageIndex.value !== null && formData.value.langCode) {
-        const newIndex = chatLanguageOptions.value.findIndex(
-          (lang) => lang.langCode === formData.value.langCode
-        );
-        selectedChatLanguageIndex.value = newIndex !== -1 ? newIndex : null;
-      }
-    }
-
     if (llmOptions.value.length === 0) {
       return;
     }

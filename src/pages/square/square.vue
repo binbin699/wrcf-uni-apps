@@ -622,7 +622,7 @@ async function extractAvailableLanguages() {
   });
   
   // 获取完整的语言选项列表
-  const allLangOptions = await getChatLanguageOptions($t);
+  const allLangOptions = await getChatLanguageOptions();
   
   // 筛选出智能体中存在的语言
   availableLanguages.value = allLangOptions.filter(opt => langSet.has(opt.langCode));
