@@ -10,57 +10,29 @@
 
       <!-- 智能体列表区域 -->
       <view v-else>
-        <!-- 有智能体时显示列表 -->
-        <view v-if="agentList.length > 0">
-          <!-- AI生成内容合规提示 -->
-          <view class="ai-disclaimer">
-            <text class="ai-disclaimer-text">{{ $t('index.ai_generated_disclaimer') }}</text>
-          </view>
-          
-          <!-- 创建智能体按钮 -->
-          <view class="create-agent-wrapper">
-            <view class="create-agent-btn" @click="handleCreateAgent">
-              <image class="create-agent-icon" src="/static/icons/add-dark.svg" mode="aspectFit" />
-              <text class="create-agent-text">{{ $t('index.create_agent') }}</text>
-            </view>
-          </view>
-          
-          <!-- 统一的智能体列表 -->
-          <view class="agent-list">
-            <AgentCard
-              v-for="agent in agentList"
-              :key="agent.id"
-              :agent="agent"
-              :swipable="agent.userId === userStore.userId"
-              @click="handleAgentClick(agent)"
-              @delete="handleAgentDelete" />
-          </view>
+        <!-- AI生成内容合规提示 -->
+        <view class="ai-disclaimer">
+          <text class="ai-disclaimer-text">{{ $t('index.ai_generated_disclaimer') }}</text>
+        </view>
+        
+        <!-- 统一的智能体列表 -->
+        <view class="agent-list">
+          <AgentCard
+            v-for="agent in agentList"
+            :key="agent.id"
+            :agent="agent"
+            :swipable="agent.userId === userStore.userId"
+            @click="handleAgentClick(agent)"
+            @delete="handleAgentDelete" />
         </view>
 
-        <!-- 空状态 - 没有智能体时显示 -->
-        <view v-else>
-          <!-- AI生成内容合规提示 -->
-          <view class="ai-disclaimer">
-            <text class="ai-disclaimer-text">{{ $t('index.ai_generated_disclaimer') }}</text>
-          </view>
-          
-          <view class="empty-state">
-            <view class="empty-content">
-              <view class="empty-icon-wrapper">
-                <image class="empty-icon" src="/static/icons/agent-icon.png" mode="aspectFit"></image>
-              </view>
-              <view class="empty-text-wrapper">
-                <view class="empty-title">{{ $t('index.no_agents') }}</view>
-                <view class="empty-desc">{{ $t('index.no_agents_desc') }}</view>
-              </view>
-            </view>
-            <!-- 创建智能体按钮 -->
-            <view class="create-agent-wrapper">
-              <view class="create-agent-btn" @click="handleCreateAgent">
-                <image class="create-agent-icon" src="/static/icons/add-dark.svg" mode="aspectFit" />
-                <text class="create-agent-text">{{ $t('index.create_agent') }}</text>
-              </view>
-            </view>
+        <!-- 如果列表为空但仍在渲染（理论上被外部 v-else-if 挡住，但为了保险） -->
+        <view class="empty-state" v-if="agentList.length === 0">
+          <image class="empty-icon" src="/static/icons/agent-icon.png" mode="aspectFit"></image>
+          <view class="empty-title">{{ $t('index.no_agents') }}</view>
+          <view class="empty-desc">{{ $t('index.no_agents_desc') }}</view>
+          <view class="empty-btn primary" @click="handleCreateAgent">
+            <text class="empty-btn-text">{{ $t('index.create_agent') }}</text>
           </view>
         </view>
       </view>
@@ -273,8 +245,7 @@ function handleAgentClick(agent: Agent) {
 
 
 function handleCreateAgent() {
-  // 创建页面是 tabBar 页面，使用 switchTab 跳转
-  uni.switchTab({
+  uni.navigateTo({
     url: PageMap[Pages.AgentCreate].url
   });
 }
@@ -380,47 +351,13 @@ function handleSkipSetup() {
 
 .ai-disclaimer {
   padding: 8px 16px;
-  background-color: #F3F4F7;
+  background-color: #f8f9fa;
 }
 
 .ai-disclaimer-text {
-  font-size: 13px;
-  color: #98A5B8;
-  line-height: 20px;
-}
-
-.create-agent-wrapper {
-  padding: 16px 20px;
-  background: #ffffff;
-}
-
-.create-agent-btn {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 12px 20px;
-  gap: 4px;
-  height: 40px;
-  background: #F3F4F7;
-  border-radius: 8px;
-  box-sizing: border-box;
-}
-
-.create-agent-btn:active {
-  opacity: 0.7;
-}
-
-.create-agent-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.create-agent-text {
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 22px;
-  color: #212730;
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.4;
 }
 
 .page-title {
@@ -441,72 +378,43 @@ function handleSkipSetup() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0;
-  gap: 20px;
-  padding-top: 160px;
-}
-
-.empty-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0;
-  gap: 16px;
-  width: 358px;
-  height: 180px;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.empty-icon-wrapper {
-  width: 120px;
-  height: 120px;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  flex: none;
+  padding: 60px 36px;
+  text-align: center;
 }
 
 .empty-icon {
-  width: 97px;
-  height: 95px;
-}
-
-.empty-text-wrapper {
-  width: 358px;
-  height: 44px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  flex: none;
+  max-width: 40%;
+  margin: 0 auto;
+  margin-bottom: 20px;
 }
 
 .empty-title {
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 22px;
-  text-align: center;
-  color: #60718B;
+  font-size: 18px;
+  font-weight: 600;
+  color: #222530;
+  margin-bottom: 8px;
 }
 
 .empty-desc {
-  font-weight: 400;
   font-size: 14px;
-  line-height: 22px;
-  text-align: center;
-  color: #60718B;
+  color: #8b8e9a;
+  line-height: 1.5;
+  margin-bottom: 32px;
 }
 
-.empty-state .create-agent-wrapper {
-  width: 100%;
-  max-width: 390px;
+.empty-btn {
+  border-radius: 24px;
+  padding: 12px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.empty-state .create-agent-btn {
-  width: 350px;
-  max-width: calc(100% - 40px);
-  margin: 0 auto;
+.empty-btn-text {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .loading-state {
