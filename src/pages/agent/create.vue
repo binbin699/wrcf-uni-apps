@@ -4,7 +4,9 @@
     <view class="agent-create-navbar">
       <view class="agent-create-status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="agent-create-nav-content" :style="{ height: navBarHeight + 'px' }">
-        <view class="agent-create-nav-left"></view>
+        <view class="agent-create-nav-left" @click="handleBack">
+          <wd-icon name="arrow-left" size="44rpx" color="#0f172a" />
+        </view>
         <text class="agent-create-nav-title">{{ $t('create_agent.page_title') }}</text>
         <view class="agent-create-nav-right">
           <!-- 右侧空白占位 -->
@@ -140,9 +142,6 @@
       :fixedLanguage="currentVoiceLanguage"
       @close="hideVoiceSelector"
       @confirm="onVoiceSelected" />
-    
-    <!-- 自定义 TabBar -->
-    <CustomTabBar :current="1" />
   </view>
 </template>
 
@@ -152,7 +151,6 @@ import { useI18n } from 'vue-i18n';
 // @ts-ignore
 import { agentApi, voiceApi } from '@/api/index';
 import VoiceSelector from '@/components/VoiceSelector.vue';
-import CustomTabBar from '@/components/CustomTabBar.vue';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import { onLoad, onShow, onHide } from '@dcloudio/uni-app';
 import type { LLM, Voice } from '@/pages/agent/types';
@@ -383,7 +381,7 @@ async function loadAgentData() {
         }
       }
     } else {
-      if (result.msg?.includes('没有权限')) {
+      if (result.message?.includes('没有权限')) {
         toast.error({
           msg: $t('edit_agent.no_permission'),
           duration: 2000
@@ -560,9 +558,9 @@ async function createAgent() {
       selectedLLM.value = null;
       selectedChatLanguageIndex.value = null;
 
-      // 延迟跳转，让用户看到成功提示
+      // 延迟返回，让用户看到成功提示
       setTimeout(() => {
-        uni.switchTab({ url: '/pages/index/index' });
+        uni.navigateBack();
       }, 1500);
     } else {
       toast.warning({
@@ -578,7 +576,12 @@ async function createAgent() {
 }
 
 function handleCancel() {
-  uni.switchTab({ url: PageMap[Pages.Index].url });
+  uni.navigateBack();
+}
+
+// 返回上一页
+function handleBack() {
+  uni.navigateBack();
 }
 
 // 处理模板应用
@@ -607,14 +610,14 @@ async function handleApplyTemplate(template: any) {
   background: linear-gradient(180deg, #EFF2FF 0%, #FFFFFF 100%);
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(104rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 
-/* 安卓端如果 env() 为 0，padding 会过小，强制保底 160rpx */
+/* 安卓端如果 env() 为 0，padding 会过小，强制保底 48rpx */
 @media screen and (min-width: 0px) {
   .container {
-    padding-bottom: calc(max(160rpx, 104rpx + env(safe-area-inset-bottom)));
+    padding-bottom: calc(max(48rpx, 32rpx + env(safe-area-inset-bottom)));
   }
 }
 
@@ -641,6 +644,11 @@ async function handleApplyTemplate(template: any) {
 
 .agent-create-nav-left {
   flex: 0 0 120rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  padding-left: 8rpx;
 }
 
 .agent-create-nav-right {

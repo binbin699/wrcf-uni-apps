@@ -220,7 +220,6 @@ function openManual() {
 }
 
 .nav-title {
-  font-family: PingFang SC, -apple-system, blinkmacsystemfont, 'Helvetica Neue', helvetica, 'lucida grande', 'arial', verdana, 'microsoft yahei', sans-serif;
   font-weight: 500;
   font-size: 20px;
   line-height: 100%;

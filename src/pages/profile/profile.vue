@@ -64,7 +64,7 @@
     </view>
     
     <!-- 自定义 TabBar -->
-    <CustomTabBar :current="3" />
+    <CustomTabBar :current="2" />
     </view>
   </view>
 </template>
@@ -530,7 +530,6 @@ function goDeleteAccount() {
   color: #0f172a;
   font-size: 36rpx;
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .edit-icon {
@@ -543,7 +542,6 @@ function goDeleteAccount() {
   color: #78716c;
   font-size: 28rpx;
   font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   line-height: 1.25;
 }
 
@@ -596,7 +594,6 @@ function goDeleteAccount() {
   color: #1f2937;
   font-size: 32rpx;
   font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -629,7 +626,6 @@ function goDeleteAccount() {
   border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;

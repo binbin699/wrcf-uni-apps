@@ -728,7 +728,6 @@ page {
   color: #262626;
   font-size: 48rpx;
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   line-height: 72rpx;
   text-align: center;
 }
@@ -737,7 +736,6 @@ page {
   color: #262626;
   font-size: 28rpx;
   font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   line-height: 56rpx;
   text-align: center;
 }
@@ -825,7 +823,6 @@ page {
   color: #ffffff;
   font-size: 32rpx;
   font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   border: none;
   border-radius: 48rpx; /* Apple规范约6pt圆角 */
   display: flex;

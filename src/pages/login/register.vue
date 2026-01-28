@@ -336,7 +336,6 @@ function redirectToMain() {
   color: #262626;
   font-size: 48rpx;
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   line-height: 72rpx;
   text-align: center;
 }
@@ -345,7 +344,6 @@ function redirectToMain() {
   color: #262626;
   font-size: 28rpx;
   font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   line-height: 56rpx;
   text-align: center;
 }

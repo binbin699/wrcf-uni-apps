@@ -49,7 +49,7 @@
               :style="{ animationDelay: showLanguagePicker ? `${index * 30}ms` : '0ms' }"
               @click.stop="selectLanguage(lang.langCode)">
               <view class="language-option-content">
-                <text class="language-option-text">{{ lang.label }}</text>
+                <text class="language-option-text">{{ lang.language }}</text>
               </view>
               <view v-if="selectedLanguage === lang.langCode" class="language-check-wrapper">
                 <view class="language-check-circle">
@@ -244,7 +244,7 @@
     </view>
     
     <!-- 自定义 TabBar -->
-    <CustomTabBar :current="2" />
+    <CustomTabBar :current="1" />
   </view>
 </template>
 
@@ -261,7 +261,7 @@ import { Agent } from '../index/types.js';
 import { Device } from '../device/types.js';
 import { completeSquareBindGuide, isSquareOverlayDismissed, dismissSquareOverlay, resetUserGuideState } from '@/utils/userGuide';
 import { updateSquareTabBadge, showSquareBadge } from '@/utils/tabBarBadge';
-import { getChatLanguageOptions, backendLangToLangCode, getSystemLangCode } from '../agent/lang_opts';
+import { getChatLanguageOptions, backendLangToLangCode, getSystemLangCode, type ChatLanguageOption } from '../agent/lang_opts';
 
 type SquareAgent = Agent & {
   name: string;
@@ -303,7 +303,7 @@ const showInfoBar = ref<boolean>(false);
 // 语言选择相关
 const selectedLanguage = ref<string>(''); // 选中的语言 langCode
 const showLanguagePicker = ref<boolean>(false); // 是否显示语言选择器
-const availableLanguages = ref<{ label: string; langCode: string }[]>([]); // 智能体中存在的语言选项
+const availableLanguages = ref<ChatLanguageOption[]>([]); // 智能体中存在的语言选项
 
 const modelTags = computed(() => {
   let tags: { id: string; name: string }[] = [];
@@ -681,7 +681,7 @@ function selectLanguage(langCode: string) {
 // 获取当前选中语言的显示名称
 const selectedLanguageLabel = computed(() => {
   const found = availableLanguages.value.find(opt => opt.langCode === selectedLanguage.value);
-  return found ? found.label : $t('square.select_language');
+  return found ? found.language : $t('square.select_language');
 });
 
 function onSearchInput() {
@@ -1162,7 +1162,6 @@ function handleBindCancel() {
 }
 
 .agent-name {
-  font-family: 'PingFang SC';
   font-style: normal;
   font-weight: 500;
   font-size: 36rpx;
@@ -1173,7 +1172,6 @@ function handleBindCancel() {
 }
 
 .agent-description {
-  font-family: 'PingFang SC';
   font-style: normal;
   font-weight: 400;
   font-size: 28rpx;
@@ -1209,7 +1207,6 @@ function handleBindCancel() {
 }
 
 .tag-text {
-  font-family: 'PingFang SC';
   font-style: normal;
   font-weight: 400;
   font-size: 24rpx;
@@ -1241,7 +1238,6 @@ function handleBindCancel() {
 }
 
 .btn-text {
-  font-family: 'PingFang SC';
   font-style: normal;
   font-weight: 400;
   font-size: 28rpx;
