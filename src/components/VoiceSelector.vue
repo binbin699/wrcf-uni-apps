@@ -339,15 +339,7 @@ export default {
         return [];
       }
 
-      // 先对数据进行去重，防止后端返回重复的 voiceId
-      const seen = new Set();
-      let result = this.voices.filter((voice) => {
-        if (seen.has(voice.voiceId)) {
-          return false;
-        }
-        seen.add(voice.voiceId);
-        return true;
-      });
+      let result = this.voices;
 
       if (this.selectedLanguage !== 'all') {
         result = result.filter((voice) =>
@@ -359,54 +351,16 @@ export default {
       if (this.selectedTag !== this.$t('voice_selector.all')) {
         result = result.filter((voice) => {
           const voiceTags = voice.config?.tags || {};
-          // 如果没有tags，根据名称进行简单判断
-          if (!voiceTags || typeof voiceTags !== 'object') {
-            if (this.selectedTag === this.$t('voice_selector.male')) {
-              return (
-                voice.voiceName &&
-                (voice.voiceName.includes('男') ||
-                  voice.voiceName.includes('先生') ||
-                  voice.voiceName.includes('哥'))
-              );
-            }
-            if (this.selectedTag === this.$t('voice_selector.female')) {
-              return (
-                voice.voiceName &&
-                (voice.voiceName.includes('女') ||
-                  voice.voiceName.includes('小姐') ||
-                  voice.voiceName.includes('姐'))
-              );
-            }
-            return false;
-          }
 
           // 根据选中的标签过滤
-          // 男声标签：必须有 gender === 'male'，否则根据名称判断
+          // 男声标签：必须有 gender === 'male'
           if (this.selectedTag === this.$t('voice_selector.male')) {
-            if (voiceTags.gender) {
-              return voiceTags.gender === 'male';
-            }
-            // 没有 gender 属性时，根据名称判断
-            return (
-              voice.voiceName &&
-              (voice.voiceName.includes('男') ||
-                voice.voiceName.includes('先生') ||
-                voice.voiceName.includes('哥'))
-            );
+            return voiceTags.gender === 'male';
           }
 
-          // 女声标签：必须有 gender === 'female'，否则根据名称判断
+          // 女声标签：必须有 gender === 'female'
           if (this.selectedTag === this.$t('voice_selector.female')) {
-            if (voiceTags.gender) {
-              return voiceTags.gender === 'female';
-            }
-            // 没有 gender 属性时，根据名称判断
-            return (
-              voice.voiceName &&
-              (voice.voiceName.includes('女') ||
-                voice.voiceName.includes('小姐') ||
-                voice.voiceName.includes('姐'))
-            );
+            return voiceTags.gender === 'female';
           }
 
           if (this.selectedTag === this.$t('voice_selector.mine')) {
