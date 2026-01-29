@@ -76,6 +76,7 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
   const MANUAL_ZH_URL = 'https://mengdiantansuo.com.cn/files/manual_zh.pdf';
   const MANUAL_EN_URL = 'https://mengdiantansuo.com.cn/files/manual_en.pdf';
   const TUTORIAL_VIDEO_URL = 'https://mengdiantansuo.com.cn/files/tutorial.mp4';
+  const TUTORIAL_VIDEO_EN_URL = 'https://mengdiantansuo.com.cn/files/tutorial_en.mp4';
 
   // Google 授权登录，海外版需要配置 Google Client ID
   const GOOGLE_OAUTH_CLIENT_ID_WEB =
@@ -108,6 +109,7 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
     MANUAL_ZH_URL,
     MANUAL_EN_URL,
     TUTORIAL_VIDEO_URL,
+    TUTORIAL_VIDEO_EN_URL,
     GOOGLE_OAUTH_CLIENT_ID_WEB,
     ARMS_PID,
     ARMS_ENDPOINT,
