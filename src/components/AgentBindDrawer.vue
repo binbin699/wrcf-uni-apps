@@ -91,8 +91,9 @@
 import { PageMap, Pages } from '@/utils/route';
 import { agentApi, deviceApi } from '../api/index';
 import { gotoCreateAgentBy } from '@/pages/agent/create';
-import { requestCameraPermission, checkPermissionStatus, PermissionType, PermissionStatus, openPermissionSetting } from '@/utils/permission';
+import { requestCameraPermission, requestAlbumPermission, checkPermissionStatus, PermissionType, PermissionStatus, openPermissionSetting } from '@/utils/permission';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
+import { AppInfo } from '@/const';
 
 export default {
   name: 'AgentBindDrawer',
@@ -271,6 +272,11 @@ export default {
           const permissionResult = await requestCameraPermission({}, true);
           if (!permissionResult.granted) {
             return;
+          }
+
+          // Android: 同时请求相册权限（带预请求弹窗），这样用户在扫码界面点击相册时权限已有
+          if (AppInfo.isAndroidApp()) {
+            await requestAlbumPermission({}, false); // 不自动跳转设置，因为相册是可选功能
           }
         }
 

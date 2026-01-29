@@ -169,7 +169,7 @@ export default {
       } catch (error) {
         console.error('WiFi配置发送失败:', error);
         uni.showToast({
-          title: error.message || 'WiFi配置失败',
+          title: this.$t('bluetooth.wifi_config_failed'),
           icon: 'none',
           duration: 3000
         });

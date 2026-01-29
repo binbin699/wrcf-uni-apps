@@ -3,6 +3,10 @@
  * 基于 Remax 版本重写，适配 uni-app
  */
 
+import i18n from '@/locale';
+
+const $t = i18n.global.t;
+
 /**
  * 蓝牙服务配置
  */
@@ -27,7 +31,8 @@ const deviceNameReg = deviceNameRegAll; // 暂时显示所有设备
 
 /**
  * Android 12+ 蓝牙权限请求
- * 必须在调用任何蓝牙 API 之前请求权限
+ * 注意：预请求弹窗已在 permission.ts 的 requestBluetoothPermissionWrapper 中处理
+ * 这里只做权限检查和补充请求，不再显示预请求弹窗
  */
 async function requestAndroid12BluetoothPermissions() {
   // 使用新的 API 替代已废弃的 getSystemInfoSync
@@ -51,14 +56,13 @@ async function requestAndroid12BluetoothPermissions() {
     return true;
   }
 
-  console.log('[蓝牙] Android 12+，请求蓝牙权限...');
+  console.log('[蓝牙] Android 12+，检查/请求蓝牙权限（预请求弹窗已在外层处理，位置权限单独请求）...');
 
   return new Promise((resolve) => {
     plus.android.requestPermissions(
       [
         'android.permission.BLUETOOTH_SCAN',
-        'android.permission.BLUETOOTH_CONNECT',
-        'android.permission.ACCESS_FINE_LOCATION'
+        'android.permission.BLUETOOTH_CONNECT'
       ],
       (result) => {
         console.log('[蓝牙] 权限请求结果:', JSON.stringify(result));
@@ -70,7 +74,7 @@ async function requestAndroid12BluetoothPermissions() {
           console.warn('[蓝牙] 永久拒绝的权限:', result.deniedAlways);
           uni.showModal({
             title: '需要蓝牙权限',
-            content: '请在系统设置中授予蓝牙和位置权限，否则无法扫描设备',
+            content: '请在系统设置中授予蓝牙权限，否则无法扫描设备',
             confirmText: '去设置',
             success: (res) => {
               if (res.confirm) {
@@ -266,11 +270,11 @@ export async function searchBluetoothDevices() {
   } catch (error) {
     console.error('搜索蓝牙设备失败:', error);
 
-    // 🔧 错误弹窗
-    uni.showModal({
-      title: '蓝牙扫描失败',
-      content: `错误: ${error.message || error.errMsg || JSON.stringify(error)}`,
-      showCancel: false
+    // 显示扫描失败提示
+    uni.showToast({
+      title: $t('bluetooth.scan_failed'),
+      icon: 'none',
+      duration: 2000
     });
 
     throw error;

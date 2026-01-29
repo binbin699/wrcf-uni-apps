@@ -7,11 +7,13 @@ import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 import {
     requestCameraPermission,
+    requestAlbumPermission,
     checkPermissionStatus,
     PermissionType,
     PermissionStatus,
     openPermissionSetting
 } from '@/utils/permission';
+import { AppInfo } from '@/const';
 
 export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNotify?: any }) {
     const { t: $t } = useI18n();
@@ -65,6 +67,14 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
                 if (!permissionResult.granted) {
                     isNavigating.value = false;
                     return;
+                }
+
+                // Android: 同时请求相册权限（带预请求弹窗），这样用户在扫码界面点击相册时权限已有
+                if (AppInfo.isAndroidApp()) {
+                    await requestAlbumPermission({
+                        show: showNotify,
+                        close: closeNotify
+                    }, false); // 不自动跳转设置，因为相册是可选功能
                 }
             }
 

@@ -306,12 +306,14 @@ import type { Device as UserDevice } from '../device/types';
 import { getWifiList, WifiScanError, WifiScanErrorType, startWifiSafe, stopWifiSafe, getConnectedWifiBestEffort } from '@/utils/wifi';
 import {
   requestCameraPermission,
+  requestAlbumPermission,
   requestLocationPermission,
   checkPermissionStatus,
   openPermissionSetting,
   PermissionType,
   PermissionStatus
 } from '@/utils/permission';
+import { AppInfo } from '@/const';
 import { useNotify } from '@/uni_modules/wot-design-uni';
 
 const toast = useToast();
@@ -492,6 +494,14 @@ async function handleScanQr() {
     // 权限请求工具已经显示了相应的提示，返回上一页
     uni.navigateBack();
     return;
+  }
+
+  // Android: 同时请求相册权限（带预请求弹窗），这样用户在扫码界面点击相册时权限已有
+  if (AppInfo.isAndroidApp()) {
+    await requestAlbumPermission({
+      show: showNotify,
+      close: closeNotify
+    }, false); // 不自动跳转设置，因为相册是可选功能
   }
 
   uni.scanCode({

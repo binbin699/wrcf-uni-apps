@@ -146,6 +146,74 @@ const PERMISSION_CONFIG: Record<PermissionType, PermissionConfig> = {
 }
 
 /**
+ * Android 预请求弹窗配置（每种权限类型的说明文案）
+ */
+const PREREQUEST_CONFIG: Record<PermissionType, { title: string; desc: string }> = {
+  [PermissionType.CAMERA]: {
+    title: 'permission_prerequest.camera',
+    desc: 'permission_prerequest.camera_desc'
+  },
+  [PermissionType.ALBUM]: {
+    title: 'permission_prerequest.album',
+    desc: 'permission_prerequest.album_desc'
+  },
+  [PermissionType.LOCATION]: {
+    title: 'permission_prerequest.location',
+    desc: 'permission_prerequest.location_desc'
+  },
+  [PermissionType.RECORD]: {
+    title: 'permission_prerequest.record',
+    desc: 'permission_prerequest.record_desc'
+  },
+  [PermissionType.BLUETOOTH]: {
+    title: 'permission_prerequest.bluetooth',
+    desc: 'permission_prerequest.bluetooth_desc'
+  }
+}
+
+/**
+ * 显示 Android 预请求弹窗
+ * 在请求系统权限之前，先向用户说明申请权限的理由
+ * 只有在权限未授权时才显示，权限已授权时跳过
+ * 
+ * @param type 权限类型
+ * @returns Promise，用户点击确认时 resolve(true)，点击取消时 resolve(false)
+ */
+async function showAndroidPreRequest(type: PermissionType): Promise<boolean> {
+  // 仅在 Android App 上显示
+  if (!AppInfo.isAndroidApp()) {
+    return true;
+  }
+
+  const config = PREREQUEST_CONFIG[type];
+  const title = $t(config.title);
+  const desc = $t(config.desc);
+
+  return new Promise((resolve) => {
+    uni.showModal({
+      title: title,
+      content: desc,
+      showCancel: true,
+      cancelText: $t('common.cancel'),
+      confirmText: $t('permission_prerequest.confirm'),
+      success: (res) => {
+        if (res.confirm) {
+          console.log(`[权限预请求] 用户确认，继续请求 ${type} 权限`);
+          resolve(true);
+        } else {
+          console.log(`[权限预请求] 用户取消，不请求 ${type} 权限`);
+          resolve(false);
+        }
+      },
+      fail: () => {
+        // 弹窗失败，默认继续请求权限
+        resolve(true);
+      }
+    });
+  });
+}
+
+/**
  * 获取权限类型的 i18n 键
  * @param type 权限类型
  * @returns i18n 键前缀（如 "permission.camera"）
@@ -266,6 +334,7 @@ const ANDROID_PERMISSIONS: Record<PermissionType, string[]> = {
 /**
  * 获取 Android 蓝牙权限列表（处理 Android 12+ 版本差异）
  * 注意：Android 12+ 必须请求 BLUETOOTH_SCAN 和 BLUETOOTH_CONNECT
+ * 注意：位置权限已移至单独请求，以便有独立的预请求弹窗说明
  */
 function getAndroidBluetoothPermissions(): string[] {
   // 直接使用 uni.getSystemInfoSync 获取系统信息（更可靠）
@@ -298,20 +367,16 @@ function getAndroidBluetoothPermissions(): string[] {
   console.log('[蓝牙权限] 需要新权限:', needNewPermissions)
 
   if (needNewPermissions) {
-    // Android 12+ 使用新权限（不再需要旧权限）
+    // Android 12+ 只请求蓝牙权限（位置权限单独请求）
     return [
       'android.permission.BLUETOOTH_SCAN',
-      'android.permission.BLUETOOTH_CONNECT',
-      'android.permission.ACCESS_FINE_LOCATION',
-      'android.permission.ACCESS_COARSE_LOCATION'
+      'android.permission.BLUETOOTH_CONNECT'
     ]
   } else {
-    // Android 11 及以下使用旧权限
+    // Android 11 及以下使用旧权限（位置权限单独请求）
     return [
       'android.permission.BLUETOOTH',
-      'android.permission.BLUETOOTH_ADMIN',
-      'android.permission.ACCESS_FINE_LOCATION',
-      'android.permission.ACCESS_COARSE_LOCATION'
+      'android.permission.BLUETOOTH_ADMIN'
     ]
   }
 }
@@ -343,10 +408,64 @@ function getAndroidAlbumPermissions(): string[] {
 
   if (useNewPermission) {
     // Android 13+ 使用新的媒体权限
-    return ['android.permission.READ_MEDIA_IMAGES']
+    // 需要同时请求所有媒体权限，才能正常显示相册内容
+    // READ_MEDIA_IMAGES + READ_MEDIA_VIDEO = 照片和视频
+    // READ_EXTERNAL_STORAGE = 文件和文档（HBuilderX 相册选择器需要）
+    return [
+      'android.permission.READ_MEDIA_IMAGES',
+      'android.permission.READ_MEDIA_VIDEO',
+      'android.permission.READ_EXTERNAL_STORAGE'
+    ]
   } else {
     // Android 12及以下使用存储权限
     return ['android.permission.READ_EXTERNAL_STORAGE']
+  }
+}
+
+/**
+ * 检查 Android 相册权限状态
+ * 由于 uni.getAppAuthorizeSetting() 无法获取 Android 相册权限状态（返回 undefined）
+ * 需要使用 plus.android 的方式检查
+ */
+async function checkAndroidAlbumPermissionStatus(): Promise<PermissionStatus> {
+  if (!AppInfo.isAndroidApp()) {
+    return PermissionStatus.NOT_DETERMINED
+  }
+
+  try {
+    // 获取需要检查的权限
+    const permissions = getAndroidAlbumPermissions()
+    
+    console.log(`[权限检查] Android 检查相册权限: ${JSON.stringify(permissions)}`)
+    
+    // 使用 plus.android 检查权限
+    const main = plus.android.runtimeMainActivity()
+    const ActivityCompat = plus.android.importClass('androidx.core.app.ActivityCompat') as any
+    const PackageManager = plus.android.importClass('android.content.pm.PackageManager') as any
+    
+    if (ActivityCompat && PackageManager) {
+      // 检查所有权限是否都已授予
+      let allGranted = true
+      for (const permission of permissions) {
+        const result = ActivityCompat.checkSelfPermission(main, permission)
+        const granted = result === PackageManager.PERMISSION_GRANTED
+        console.log(`[权限检查] Android ${permission}: ${granted ? 'GRANTED' : 'NOT_GRANTED'}`)
+        if (!granted) {
+          allGranted = false
+        }
+      }
+      
+      if (allGranted) {
+        console.log(`[权限检查] Android 相册权限检查结果: 全部已授予`)
+        return PermissionStatus.AUTHORIZED
+      }
+    }
+    
+    // 无法准确判断，返回未确定
+    return PermissionStatus.NOT_DETERMINED
+  } catch (e) {
+    console.warn('[权限检查] Android 相册权限检查失败:', e)
+    return PermissionStatus.NOT_DETERMINED
   }
 }
 
@@ -364,6 +483,13 @@ export async function checkPermissionStatus(
     // 蓝牙权限特殊处理
     if (type === PermissionType.BLUETOOTH) {
       const status = await checkBluetoothPermissionStatus()
+      console.log(`[权限检查] ${config.title}状态: ${status}`)
+      return status
+    }
+
+    // Android 相册权限特殊处理（uni.getAppAuthorizeSetting 无法获取）
+    if (type === PermissionType.ALBUM && AppInfo.isAndroidApp()) {
+      const status = await checkAndroidAlbumPermissionStatus()
       console.log(`[权限检查] ${config.title}状态: ${status}`)
       return status
     }
@@ -467,17 +593,46 @@ async function checkBluetoothPermissionStatus(): Promise<PermissionStatus> {
       return PermissionStatus.NOT_DETERMINED
     }
 
-    // Android 12+ 特殊处理：跳过 uni.getSystemSetting() 调用
-    // 因为 DCloud SDK 内部会检查旧的 BLUETOOTH 权限，在 Android 12+ 上会失败
+    // Android 12+ 特殊处理：使用 ActivityCompat.checkSelfPermission 检查权限
     if (AppInfo.isAndroidApp()) {
       const systemInfo = uni.getSystemInfoSync() as any
       const osVersion = parseFloat(systemInfo.osVersion || '0')
       const apiLevel = systemInfo.osAndroidAPILevel || 0
 
       if (apiLevel >= 31 || osVersion >= 12) {
-        console.log('[权限检查] Android 12+，跳过 getSystemSetting，直接返回 NOT_DETERMINED')
-        // 直接返回 NOT_DETERMINED，让后续流程去请求权限
-        // 权限请求成功后再检查蓝牙状态
+        console.log('[权限检查] Android 12+，使用 ActivityCompat 检查蓝牙权限')
+        try {
+          const main = plus.android.runtimeMainActivity()
+          const ActivityCompat = plus.android.importClass('androidx.core.app.ActivityCompat') as any
+          const PackageManager = plus.android.importClass('android.content.pm.PackageManager') as any
+          
+          if (ActivityCompat && PackageManager) {
+            // 检查 BLUETOOTH_SCAN 和 BLUETOOTH_CONNECT 权限
+            const scanResult = ActivityCompat.checkSelfPermission(main, 'android.permission.BLUETOOTH_SCAN')
+            const connectResult = ActivityCompat.checkSelfPermission(main, 'android.permission.BLUETOOTH_CONNECT')
+            const scanGranted = scanResult === PackageManager.PERMISSION_GRANTED
+            const connectGranted = connectResult === PackageManager.PERMISSION_GRANTED
+            
+            console.log(`[权限检查] Android 12+ BLUETOOTH_SCAN: ${scanGranted ? 'GRANTED' : 'NOT_GRANTED'}`)
+            console.log(`[权限检查] Android 12+ BLUETOOTH_CONNECT: ${connectGranted ? 'GRANTED' : 'NOT_GRANTED'}`)
+            
+            if (scanGranted && connectGranted) {
+              // 权限已授权，再检查蓝牙是否开启
+              const BluetoothAdapter = plus.android.importClass('android.bluetooth.BluetoothAdapter') as any
+              const adapter = BluetoothAdapter.getDefaultAdapter()
+              if (adapter && adapter.isEnabled()) {
+                console.log('[权限检查] Android 12+ 蓝牙权限已授权且蓝牙已开启')
+                return PermissionStatus.AUTHORIZED
+              } else {
+                // 权限已授权但蓝牙未开启，返回 UNAVAILABLE 触发开启流程
+                console.log('[权限检查] Android 12+ 蓝牙权限已授权但蓝牙未开启')
+                return PermissionStatus.UNAVAILABLE
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[权限检查] Android 12+ 蓝牙权限检查失败:', e)
+        }
         return PermissionStatus.NOT_DETERMINED
       }
     }
@@ -534,39 +689,53 @@ async function requestAndroidPermission(permissions: string[], permissionType?: 
         async function (resultObj) {
           console.log('[权限请求] Android权限请求回调结果:', resultObj)
 
-          // 检查是否有授权的权限
-          if (resultObj.granted && resultObj.granted.length > 0) {
-            console.log('[权限请求] 已获取的权限：', resultObj.granted)
+          // 检查所有请求的权限是否都被授予
+          const grantedSet = new Set(resultObj.granted || [])
+          const allGranted = permissions.every(p => grantedSet.has(p))
+          
+          if (allGranted) {
+            console.log('[权限请求] 所有权限都已授予：', resultObj.granted)
             resolve(1) // 授权成功
             return
           }
+          
+          // 检查是否有部分权限被授予
+          if (resultObj.granted && resultObj.granted.length > 0) {
+            console.log('[权限请求] 部分权限已授予：', resultObj.granted)
+            const missingPermissions = permissions.filter(p => !grantedSet.has(p))
+            console.log('[权限请求] 缺少的权限：', missingPermissions)
+          }
+          
           // 检查是否有永久拒绝的权限
-          else if (resultObj.deniedAlways && resultObj.deniedAlways.length > 0) {
+          if (resultObj.deniedAlways && resultObj.deniedAlways.length > 0) {
             console.log('[权限请求] 系统返回永久拒绝的权限：', resultObj.deniedAlways)
 
-            // 当用户点击弹窗之外（没有明确同意或拒绝）时，系统可能返回 deniedAlways
-            // 但实际权限状态可能仍然是 NOT_DETERMINED，需要再次检查确认
-            if (permissionType) {
-              console.log('[权限请求] 再次检查权限状态以确认是否真的被永久拒绝')
+            // 检查是否有部分权限被授予（可能是蓝牙等多权限请求的情况）
+            const hasGranted = resultObj.granted && resultObj.granted.length > 0
+            
+            if (hasGranted && permissionType) {
+              // 有部分权限被授予，但也有权限被永久拒绝
+              // 需要检查核心权限是否已授予
+              console.log('[权限请求] 部分权限被授予，部分被永久拒绝，再次检查权限状态')
               const actualStatus = await checkPermissionStatus(permissionType)
               console.log('[权限请求] 权限实际状态:', actualStatus)
 
-              if (actualStatus === PermissionStatus.NOT_DETERMINED) {
-                // 权限状态仍然是未确定，说明用户只是关闭了弹窗，不是真正的永久拒绝
-                console.log('[权限请求] 权限状态仍为未确定，视为临时拒绝（用户关闭了弹窗）')
-                resolve(0) // 临时拒绝（可再次请求）
+              if (actualStatus === PermissionStatus.AUTHORIZED) {
+                console.log('[权限请求] 核心权限已授权')
+                resolve(1) // 授权成功
                 return
-              } else if (actualStatus === PermissionStatus.DENIED) {
-                // 权限状态确实是已拒绝，确认为永久拒绝
-                console.log('[权限请求] 权限状态确认为已拒绝，确认为永久拒绝')
+              } else if (actualStatus === PermissionStatus.NOT_DETERMINED) {
+                // 某些权限类型（如相册）在 Android 上无法通过 getAppAuthorizeSetting 获取状态
+                // 此时应该信任系统返回的 deniedAlways 结果
+                console.log('[权限请求] 权限状态检查返回未确定，但系统返回永久拒绝，信任系统结果')
                 resolve(-1) // 永久拒绝
                 return
               }
             }
 
-            // 如果没有权限类型信息或检查失败，默认视为永久拒绝
-            console.log('[权限请求] 确认为永久拒绝（用户勾选了"不再询问"）')
-            resolve(-1) // 永久拒绝（用户勾选了"不再询问"）
+            // 没有任何权限被授予，直接视为永久拒绝
+            console.log('[权限请求] 确认为永久拒绝（用户勾选了"不再询问"或之前已永久拒绝）')
+            resolve(-1) // 永久拒绝
             return
           }
           // 检查是否有本次拒绝的权限
@@ -902,6 +1071,55 @@ export async function requestPermission(
       }
     }
 
+    // 蓝牙权限特殊处理：权限已授权但蓝牙未开启
+    // 显示预请求弹窗，让用户点击"一键开启"来开启蓝牙
+    if (type === PermissionType.BLUETOOTH && status === PermissionStatus.UNAVAILABLE) {
+      console.log(`[权限请求] 蓝牙权限已授权但蓝牙未开启，显示预请求弹窗`)
+      
+      // 显示预请求弹窗
+      if (AppInfo.isAndroidApp()) {
+        const userConfirmed = await showAndroidPreRequest(type)
+        if (!userConfirmed) {
+          console.log(`[权限请求] 用户取消开启蓝牙`)
+          return {
+            granted: false,
+            status: PermissionStatus.UNAVAILABLE,
+            message: '用户取消开启蓝牙'
+          }
+        }
+      }
+      
+      // 用户点击"一键开启"后，直接开启蓝牙
+      console.log(`[权限请求] 用户确认，开启蓝牙`)
+      const enabled = await enableBluetooth()
+      if (enabled) {
+        console.log(`[权限请求] 蓝牙已成功开启`)
+        return {
+          granted: true,
+          status: PermissionStatus.AUTHORIZED
+        }
+      } else {
+        // 开启失败，显示提示让用户手动开启
+        uni.showModal({
+          title: $t('common.tip'),
+          content: $t('permission.bluetooth_not_enabled'),
+          showCancel: true,
+          cancelText: $t('common.cancel'),
+          confirmText: $t('common.go_to_setting'),
+          success: (res) => {
+            if (res.confirm) {
+              openBluetoothSetting()
+            }
+          }
+        })
+        return {
+          granted: false,
+          status: PermissionStatus.UNAVAILABLE,
+          message: '蓝牙未开启'
+        }
+      }
+    }
+
     // 蓝牙权限特殊处理
     if (type === PermissionType.BLUETOOTH) {
       console.log(`[权限请求] ${config.title}使用特殊处理流程`)
@@ -931,7 +1149,22 @@ export async function requestPermission(
       }
     }
 
-    // 2. 显示权限说明（notify）
+    // 2. Android 预请求弹窗：在请求系统权限之前先向用户说明
+    // 注：到这里时 status 一定不是 AUTHORIZED（已在上面提前返回）
+    if (AppInfo.isAndroidApp()) {
+      console.log(`[权限预请求] Android 显示 ${config.title} 预请求弹窗`)
+      const userConfirmed = await showAndroidPreRequest(type)
+      if (!userConfirmed) {
+        console.log(`[权限预请求] 用户取消，不继续请求 ${config.title}`)
+        return {
+          granted: false,
+          status: PermissionStatus.DENIED,
+          message: $t('permission.user_cancelled')
+        }
+      }
+    }
+
+    // 3. 显示权限说明（notify）
     if (notify) {
       console.log(`[权限请求] 显示${config.title}请求说明`)
       notify.show(generateNotifyMessage(type, NotifyMessageType.REQUESTING))
@@ -1009,16 +1242,22 @@ export async function requestPermission(
             // result === -1, 用户永久拒绝
             if (notify) {
               notify.close()
-              const messageType = autoNavigateToSetting
-                ? NotifyMessageType.DENIED_NAVIGATE
-                : NotifyMessageType.DENIED
-              notify.show(generateNotifyMessage(type, messageType))
             }
-            if (autoNavigateToSetting) {
-              setTimeout(() => {
-                openPermissionSetting()
-              }, 1500)
-            }
+            
+            // 显示弹窗引导用户去设置中开启权限
+            uni.showModal({
+              title: $t('common.tip'),
+              content: $t(`permission.${type}_denied_guide`) || $t('permission.permanently_denied_guide'),
+              showCancel: !autoNavigateToSetting,
+              cancelText: $t('common.cancel'),
+              confirmText: $t('common.go_to_setting'),
+              success: (res) => {
+                if (res.confirm) {
+                  openPermissionSetting()
+                }
+              }
+            })
+            
             return {
               granted: false,
               status: PermissionStatus.DENIED,
@@ -1208,6 +1447,18 @@ async function requestBluetoothPermission(
     if (isAndroid12Plus && AppInfo.isApp()) {
       console.log('[权限请求] Android 12+，先请求权限再检查蓝牙状态')
 
+      // Android 预请求弹窗：在请求系统权限之前先向用户说明
+      console.log('[权限预请求] Android 显示蓝牙权限预请求弹窗')
+      const userConfirmed = await showAndroidPreRequest(PermissionType.BLUETOOTH)
+      if (!userConfirmed) {
+        console.log('[权限预请求] 用户取消，不继续请求蓝牙权限')
+        return {
+          granted: false,
+          status: PermissionStatus.DENIED,
+          message: $t('permission.user_cancelled')
+        }
+      }
+
       // 显示权限说明
       if (notify) {
         notify.show(generateNotifyMessage(PermissionType.BLUETOOTH, NotifyMessageType.REQUESTING))
@@ -1225,15 +1476,37 @@ async function requestBluetoothPermission(
         try {
           const systemSetting = uni.getSystemSetting()
           if (!systemSetting.bluetoothEnabled) {
-            console.log('[权限请求] 蓝牙未开启')
+            console.log('[权限请求] 蓝牙未开启，尝试直接开启')
             if (notify) {
               notify.close()
-              notify.show({
-                type: 'warning',
-                message: $t('permission.bluetooth_not_enabled'),
-                duration: 3000
-              })
             }
+            
+            // 尝试直接开启蓝牙
+            const enabled = await enableBluetooth()
+            if (enabled) {
+              console.log('[权限请求] 蓝牙已成功开启')
+              if (notify) {
+                notify.show(generateNotifyMessage(PermissionType.BLUETOOTH, NotifyMessageType.SUCCESS))
+              }
+              return {
+                granted: true,
+                status: PermissionStatus.AUTHORIZED
+              }
+            }
+            
+            // 开启失败，显示提示让用户手动开启
+            uni.showModal({
+              title: $t('common.tip'),
+              content: $t('permission.bluetooth_not_enabled'),
+              showCancel: true,
+              cancelText: $t('common.cancel'),
+              confirmText: $t('common.go_to_setting'),
+              success: (res) => {
+                if (res.confirm) {
+                  openBluetoothSetting()
+                }
+              }
+            })
             return {
               granted: false,
               status: PermissionStatus.UNAVAILABLE,
@@ -1291,19 +1564,36 @@ async function requestBluetoothPermission(
     if (!isAndroid12Plus) {
       const systemSetting = uni.getSystemSetting()
       if (!AppInfo.isIOSApp() && !systemSetting.bluetoothEnabled) {
-        console.log('[权限请求] 蓝牙未开启')
+        console.log('[权限请求] 蓝牙未开启，尝试直接开启')
         if (notify) {
-          notify.show({
-            type: 'warning',
-            message: $t('permission.bluetooth_not_enabled'),
-            duration: 3000
-          })
+          notify.close()
         }
+        
+        // 尝试直接开启蓝牙
+        const enabled = await enableBluetooth()
+        if (enabled) {
+          console.log('[权限请求] 蓝牙已成功开启')
+          // 继续后续流程
+        } else {
+          // 开启失败，显示提示让用户手动开启
+          uni.showModal({
+            title: $t('common.tip'),
+            content: $t('permission.bluetooth_not_enabled'),
+            showCancel: true,
+            cancelText: $t('common.cancel'),
+            confirmText: $t('common.go_to_setting'),
+            success: (res) => {
+              if (res.confirm) {
+                openBluetoothSetting()
+              }
+            }
+          })
 
-        return {
-          granted: false,
-          status: PermissionStatus.UNAVAILABLE,
-          message: '蓝牙未开启'
+          return {
+            granted: false,
+            status: PermissionStatus.UNAVAILABLE,
+            message: '蓝牙未开启'
+          }
         }
       }
     }
@@ -1522,12 +1812,20 @@ async function requestBluetoothPermission(
           if (errMsg.includes('not available') || errMsg.includes('not turned on') || errMsg.includes('未开启')) {
             if (notify) {
               notify.close()
-              notify.show({
-                type: 'warning',
-                message: $t('permission.bluetooth_not_enabled'),
-                duration: 3000
-              })
             }
+            // 显示系统弹窗提示用户开启蓝牙
+            uni.showModal({
+              title: $t('common.tip'),
+              content: $t('permission.bluetooth_not_enabled'),
+              showCancel: true,
+              cancelText: $t('common.cancel'),
+              confirmText: $t('common.go_to_setting'),
+              success: (res) => {
+                if (res.confirm) {
+                  openBluetoothSetting()
+                }
+              }
+            })
             return {
               granted: false,
               status: PermissionStatus.UNAVAILABLE,
@@ -1627,6 +1925,86 @@ export function openPermissionSetting(): void {
     }
   } catch (error) {
     console.error('打开权限设置失败:', error)
+  }
+}
+
+/**
+ * 直接开启蓝牙（Android 平台）
+ * 不弹出询问对话框，直接开启
+ * @returns Promise<boolean> 是否成功开启蓝牙
+ */
+export async function enableBluetooth(): Promise<boolean> {
+  if (!AppInfo.isAndroidApp()) {
+    return false
+  }
+
+  try {
+    console.log('[蓝牙] 尝试直接开启蓝牙...')
+    
+    const BluetoothAdapter = plus.android.importClass('android.bluetooth.BluetoothAdapter') as any
+    const adapter = BluetoothAdapter.getDefaultAdapter()
+    
+    if (!adapter) {
+      console.log('[蓝牙] 设备不支持蓝牙')
+      return false
+    }
+    
+    if (adapter.isEnabled()) {
+      console.log('[蓝牙] 蓝牙已经开启')
+      return true
+    }
+    
+    // 直接调用 enable() 开启蓝牙（不弹出询问对话框）
+    // 需要 BLUETOOTH_CONNECT 权限（Android 12+）或 BLUETOOTH_ADMIN 权限（Android 11及以下）
+    console.log('[蓝牙] 调用 adapter.enable() 开启蓝牙')
+    const result = adapter.enable()
+    console.log('[蓝牙] enable() 返回:', result)
+    
+    // 等待蓝牙开启（最多等待 5 秒）
+    for (let i = 0; i < 10; i++) {
+      await new Promise(resolve => setTimeout(resolve, 500))
+      if (adapter.isEnabled()) {
+        console.log('[蓝牙] 蓝牙已成功开启')
+        return true
+      }
+    }
+    
+    // 超时，检查最终状态
+    const isEnabled = adapter.isEnabled()
+    console.log('[蓝牙] 开启蓝牙结果:', isEnabled)
+    return isEnabled
+  } catch (error) {
+    console.error('[蓝牙] 开启蓝牙失败:', error)
+    return false
+  }
+}
+
+/**
+ * 打开蓝牙设置页面
+ */
+export function openBluetoothSetting(): void {
+  try {
+    if (AppInfo.isAndroidApp()) {
+      // Android 平台：打开蓝牙设置
+      const Intent = plus.android.importClass('android.content.Intent') as any
+      const Settings = plus.android.importClass('android.provider.Settings') as any
+      const intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
+      const main = plus.android.runtimeMainActivity() as any
+      main.startActivity(intent)
+      console.log('打开蓝牙设置成功')
+    } else if (AppInfo.isIOSApp()) {
+      // iOS 平台：打开蓝牙设置（需要跳转到系统设置）
+      if (typeof plus !== 'undefined' && plus.runtime && plus.runtime.openURL) {
+        plus.runtime.openURL('App-Prefs:root=Bluetooth')
+      }
+    } else {
+      // 其他平台：打开应用设置
+      openPermissionSetting()
+    }
+  } catch (error) {
+    console.error('打开蓝牙设置失败:', error)
+    // 降级方案：打开应用设置
+    openPermissionSetting()
   }
 }
 

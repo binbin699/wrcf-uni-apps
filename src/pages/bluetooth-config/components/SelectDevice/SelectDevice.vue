@@ -85,7 +85,8 @@ import {
   normalizeDeviceList,
   connectBluetoothDevice
 } from '../../utils/bluetooth';
-import { requestBluetoothPermissionWrapper } from '@/utils/permission';
+import { requestBluetoothPermissionWrapper, requestLocationPermission } from '@/utils/permission';
+import { AppInfo } from '@/const';
 
 export default {
   name: 'SelectDevice',
@@ -95,6 +96,7 @@ export default {
       deviceList: null,
       isLoadingDevices: false,
       isFirstScan: true,
+      permissionsGranted: false, // 权限是否已获取（避免重复弹预请求弹窗）
       errorMessage: null,
       _devices: [],
       _showNotify: null,
@@ -180,15 +182,34 @@ export default {
       this.selectedDevice = null;
 
       try {
-        // 请求蓝牙权限
-        const permissionResult = await requestBluetoothPermissionWrapper({
-          show: this._showNotify,
-          close: this._closeNotify
-        });
-        if (!permissionResult.granted) {
-          this.isLoadingDevices = false;
-          // 权限请求工具已经显示了相应的提示
-          return;
+        // 只在首次扫描时请求权限（避免重复弹预请求弹窗）
+        if (!this.permissionsGranted) {
+          // 请求蓝牙权限
+          const permissionResult = await requestBluetoothPermissionWrapper({
+            show: this._showNotify,
+            close: this._closeNotify
+          });
+          if (!permissionResult.granted) {
+            this.isLoadingDevices = false;
+            // 权限请求工具已经显示了相应的提示
+            return;
+          }
+
+          // Android: 蓝牙扫描需要位置权限，单独请求以确保有预请求弹窗
+          if (AppInfo.isAndroidApp()) {
+            const locationResult = await requestLocationPermission({
+              show: this._showNotify,
+              close: this._closeNotify
+            }, true);
+            if (!locationResult.granted) {
+              this.isLoadingDevices = false;
+              // 权限请求工具已经显示了相应的提示
+              return;
+            }
+          }
+
+          // 权限已获取，标记为已完成
+          this.permissionsGranted = true;
         }
 
         if (this.isFirstScan) {
@@ -354,10 +375,9 @@ export default {
 
         console.error('连接设备失败:', error);
 
-        // 显示错误提示
+        // 显示错误提示（始终使用翻译后的友好信息）
         uni.showToast({
-          title:
-            error.errMsg || error.message || this.$t('bluetooth.select_device.connection_failed'),
+          title: this.$t('bluetooth.select_device.connection_failed'),
           icon: 'none',
           duration: 2000
         });

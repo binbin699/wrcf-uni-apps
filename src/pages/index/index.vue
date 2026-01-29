@@ -519,7 +519,6 @@ function handleSkipSetup() {
 }
 
 .empty-btn-text {
-  width: 32px;
   height: 22px;
   font-family: 'PingFang SC';
   font-style: normal;
@@ -527,6 +526,7 @@ function handleSkipSetup() {
   font-size: 16px;
   line-height: 22px;
   color: #FFFFFF;
+  white-space: nowrap;
   flex: none;
   order: 1;
   flex-grow: 0;
@@ -539,7 +539,6 @@ function handleSkipSetup() {
   /* 设计稿：距离 tab bar 顶部 24px，tab bar 高度约 98px */
   bottom: calc(98px + 24px + env(safe-area-inset-bottom));
   min-width: 54px;
-  width: 96px;
   height: 54px;
   display: flex;
   flex-direction: row;
@@ -552,8 +551,7 @@ function handleSkipSetup() {
   box-sizing: border-box;
   z-index: 998;
   box-shadow: 0 4px 12px rgba(62, 92, 238, 0.3);
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
-              padding 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
               transform 0.15s ease;
   overflow: hidden;
 }
@@ -582,7 +580,6 @@ function handleSkipSetup() {
 }
 
 .fab-btn-text {
-  width: 32px;
   height: 22px;
   font-style: normal;
   font-weight: 400;
@@ -591,7 +588,6 @@ function handleSkipSetup() {
   color: #FFFFFF;
   white-space: nowrap;
   opacity: 1;
-  max-width: 40px;
   transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
               max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }

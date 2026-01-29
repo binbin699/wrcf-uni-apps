@@ -177,7 +177,7 @@ export default {
       } catch (error) {
         console.error('WiFi扫描失败:', error);
         uni.showToast({
-          title: error.message || this.$t('bluetooth.select_wifi.scan_failed'),
+          title: this.$t('bluetooth.select_wifi.scan_failed'),
           icon: 'none',
           duration: 3000
         });
