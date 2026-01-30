@@ -75,6 +75,9 @@
                 <text class="welcome-setup-text">{{ $t('welcome.setup_bluetooth') }}</text>
               </view>
             </view>
+            <view class="welcome-help-link" @click="handleHelpClick">
+              <text>{{ $t('profile.instructions_tutorials') }}</text>
+            </view>
             <view class="welcome-skip" @click="handleSkipSetup">
               {{ $t('welcome.skip_for_now') }}
             </view>
@@ -101,6 +104,9 @@
               class="welcome-primary-btn"
               @click="setupMode === 'qrcode' ? handleStartSetup() : handleBluetoothSetup()">
               {{ setupMode === 'qrcode' ? $t('welcome.setup_qrcode') : $t('welcome.setup_bluetooth') }}
+            </view>
+            <view class="welcome-help-link single-mode" @click="handleHelpClick">
+              <text>{{ $t('profile.instructions_tutorials') }}</text>
             </view>
             <view class="welcome-skip-single" @click="handleSkipSetup">
               {{ $t('welcome.skip_for_now') }}
@@ -363,6 +369,12 @@ function handleBluetoothSetup() {
 function handleSkipSetup() {
   // 用户选择跳过，隐藏引导
   showWelcomeGuide.value = false;
+}
+
+function handleHelpClick() {
+  uni.navigateTo({
+    url: '/pages/profile/help'
+  });
 }
 </script>
 
@@ -753,6 +765,34 @@ function handleSkipSetup() {
   font-size: 26rpx;
   font-weight: 500;
   color: #334155;
+}
+
+/* 说明与教程链接样式 */
+.welcome-help-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 16rpx 40rpx 8rpx;
+  margin-top: 16rpx;
+  color: #3b82f6;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.welcome-help-link:active {
+  opacity: 0.7;
+}
+
+.welcome-help-link.single-mode {
+  margin-top: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.welcome-help-icon {
+  width: 32rpx;
+  height: 32rpx;
 }
 
 .welcome-skip {
