@@ -150,41 +150,7 @@
 import { AudioPlayerManager } from '../utils/audioPlayer.ts';
 import wdIcon from '../uni_modules/wot-design-uni/components/wd-icon/wd-icon.vue';
 import { useUserStore } from '@/store/user';
-
-const LANGUAGE_PRIORITY = [
-  'zh',
-  'en',
-  'ja',
-  'ko',
-  'yue',
-  'es',
-  'fr',
-  'de',
-  'ru',
-  'pt',
-  'it',
-  'vi',
-  'hi',
-  'tr',
-  'nl',
-  'ar',
-  'id',
-  'ms',
-  'th',
-  'he',
-  'pl',
-  'sv',
-  'da',
-  'fi',
-  'no',
-  'cs',
-  'uk',
-  'ro',
-  'hu',
-  'el',
-  'km',
-  'ne'
-];
+import { initLanguageDisplayNameCache, getLanguageDisplayName as getLangDisplayName, isLanguageCacheReady, getLanguagePriority } from '@/pages/agent/lang_opts';
 
 export default {
   name: 'VoiceSelector',
@@ -254,11 +220,10 @@ export default {
 
       const baseOption = [{ code: 'all', label: this.$t('voice_selector.language_all') }];
       const languageEntries = Array.from(languageMap.entries()).map(([code, label]) => {
-        const index = LANGUAGE_PRIORITY.indexOf(code);
         return {
           code,
           label,
-          priority: index === -1 ? LANGUAGE_PRIORITY.length : index
+          priority: getLanguagePriority(code)
         };
       });
 
@@ -473,6 +438,11 @@ export default {
         this.computeMpSafeArea();
         this.hideTabBarIfNeeded();
       }
+    }
+  },
+  async created() {
+    if (!isLanguageCacheReady()) {
+      await initLanguageDisplayNameCache();
     }
   },
   mounted() {
@@ -728,43 +698,7 @@ export default {
       if (!code) {
         return this.$t('voice_selector.language_unknown');
       }
-
-      const map = {
-        zh: this.$t('voice_selector.language.zh'),
-        en: this.$t('voice_selector.language.en'),
-        ja: this.$t('voice_selector.language.ja'),
-        ko: this.$t('voice_selector.language.ko'),
-        yue: this.$t('voice_selector.language.yue'),
-        fr: this.$t('voice_selector.language.fr'),
-        es: this.$t('voice_selector.language.es'),
-        de: this.$t('voice_selector.language.de'),
-        ru: this.$t('voice_selector.language.ru'),
-        pt: this.$t('voice_selector.language.pt'),
-        it: this.$t('voice_selector.language.it'),
-        vi: this.$t('voice_selector.language.vi'),
-        hi: this.$t('voice_selector.language.hi'),
-        tr: this.$t('voice_selector.language.tr'),
-        nl: this.$t('voice_selector.language.nl'),
-        ar: this.$t('voice_selector.language.ar'),
-        id: this.$t('voice_selector.language.id'),
-        ms: this.$t('voice_selector.language.ms'),
-        th: this.$t('voice_selector.language.th'),
-        he: this.$t('voice_selector.language.he'),
-        pl: this.$t('voice_selector.language.pl'),
-        sv: this.$t('voice_selector.language.sv'),
-        da: this.$t('voice_selector.language.da'),
-        fi: this.$t('voice_selector.language.fi'),
-        no: this.$t('voice_selector.language.no'),
-        cs: this.$t('voice_selector.language.cs'),
-        uk: this.$t('voice_selector.language.uk'),
-        ro: this.$t('voice_selector.language.ro'),
-        hu: this.$t('voice_selector.language.hu'),
-        el: this.$t('voice_selector.language.el'),
-        km: this.$t('voice_selector.language.km'),
-        ne: this.$t('voice_selector.language.ne')
-      };
-
-      return map[code] || code.toUpperCase();
+      return getLangDisplayName(code, code.toUpperCase());
     },
     selectTag(tag) {
       this.selectedTag = tag;

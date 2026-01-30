@@ -25,24 +25,24 @@
 
       <!-- 语言选择下拉框 -->
       <view class="language-selector-container" v-if="availableLanguages.length > 0">
-        <view class="language-selector" :class="{ expanded: showLanguagePicker }" @click="showLanguagePicker = !showLanguagePicker">
+        <view
+          class="language-selector"
+          :class="{ expanded: showLanguagePicker }"
+          @click="showLanguagePicker = !showLanguagePicker">
           <view class="language-selector-inner">
             <text class="language-icon">🌐</text>
             <text class="language-label">{{ selectedLanguageLabel }}</text>
           </view>
           <view class="language-arrow-wrapper" :class="{ rotated: showLanguagePicker }">
-            <image 
-              class="language-arrow" 
-              src="/static/icons/arrow-down.svg" 
-              mode="aspectFit" />
+            <image class="language-arrow" src="/static/icons/arrow-down.svg" mode="aspectFit" />
           </view>
         </view>
-        
+
         <!-- 语言下拉列表 -->
         <view class="language-dropdown" :class="{ show: showLanguagePicker }">
           <view class="language-dropdown-inner">
-            <view 
-              v-for="(lang, index) in availableLanguages" 
+            <view
+              v-for="(lang, index) in availableLanguages"
               :key="lang.langCode"
               class="language-option"
               :class="{ active: selectedLanguage === lang.langCode }"
@@ -53,23 +53,19 @@
               </view>
               <view v-if="selectedLanguage === lang.langCode" class="language-check-wrapper">
                 <view class="language-check-circle">
-                  <image 
-                    class="language-check" 
-                    src="/static/icons/check.svg" 
-                    mode="aspectFit" />
+                  <image class="language-check" src="/static/icons/check.svg" mode="aspectFit" />
                 </view>
               </view>
             </view>
           </view>
         </view>
       </view>
-      
+
       <!-- 点击外部关闭下拉框 -->
-      <view 
-        v-if="showLanguagePicker" 
-        class="language-picker-overlay" 
-        @click="showLanguagePicker = false">
-      </view>
+      <view
+        v-if="showLanguagePicker"
+        class="language-picker-overlay"
+        @click="showLanguagePicker = false"></view>
 
       <!-- 标签分类 -->
       <view class="tag-container">
@@ -97,7 +93,7 @@
             <!-- 左侧内容：名称、标签、描述 -->
             <view class="agent-left">
               <view class="agent-header">
-            <view class="agent-name">{{ agent.name }}</view>
+                <view class="agent-name">{{ agent.name }}</view>
                 <view class="agent-tag">
                   <text class="tag-text">{{ getAgentTag(agent) }}</text>
                 </view>
@@ -105,22 +101,29 @@
               <view class="agent-description">{{ agent.description }}</view>
             </view>
             <!-- 右侧内容：绑定按钮 -->
-            <view class="agent-right" :class="{ 'guide-highlight-wrapper': isSquareBindGuideActive && index === 0 }">
-                <button
+            <view
+              class="agent-right"
+              :class="{ 'guide-highlight-wrapper': isSquareBindGuideActive && index === 0 }">
+              <button
                 :id="index === 0 ? 'first-bind-btn' : ''"
-                  class="config-btn primary"
-                  :class="{ 'guide-highlight': isSquareBindGuideActive && index === 0, 'guide-pulse': isSquareBindGuideActive && index === 0 }"
-                  @click="handleGuideBindClick(agent, index)">
-                  <text class="btn-text">{{ $t('square.bind_device') }}</text>
-                </button>
-                <view
-                  v-if="isSquareBindGuideActive && index === 0"
-                  class="square-guide-tooltip"
-                  @click.stop>
-                  <text class="square-guide-tooltip-text">{{ $t('guide.square_highlight_tip') }}</text>
-                  <view class="square-guide-tooltip-actions">
-                    <view class="square-guide-tooltip-skip" @click.stop="skipSquareBindGuide">
-                      {{ $t('guide.square_highlight_skip') }}
+                class="config-btn primary"
+                :class="{
+                  'guide-highlight': isSquareBindGuideActive && index === 0,
+                  'guide-pulse': isSquareBindGuideActive && index === 0
+                }"
+                @click="handleGuideBindClick(agent, index)">
+                <text class="btn-text">{{ $t('square.bind_device') }}</text>
+              </button>
+              <view
+                v-if="isSquareBindGuideActive && index === 0"
+                class="square-guide-tooltip"
+                @click.stop>
+                <text class="square-guide-tooltip-text">
+                  {{ $t('guide.square_highlight_tip') }}
+                </text>
+                <view class="square-guide-tooltip-actions">
+                  <view class="square-guide-tooltip-skip" @click.stop="skipSquareBindGuide">
+                    {{ $t('guide.square_highlight_skip') }}
                   </view>
                 </view>
               </view>
@@ -196,12 +199,12 @@
       <!-- 蒙层 -->
       <view class="second-overlay-mask"></view>
       <!-- 绑定按钮高亮区域（在蒙层之上） -->
-      <view 
-        v-if="highlightPosition && filteredAgents.length > 0" 
+      <view
+        v-if="highlightPosition && filteredAgents.length > 0"
         class="second-overlay-highlight"
         :style="{
-          top: (highlightPosition.top - 8) + 'px',
-          left: (highlightPosition.left - 8) + 'px',
+          top: highlightPosition.top - 8 + 'px',
+          left: highlightPosition.left - 8 + 'px'
         }"
         @click="handleGuideBindClick(filteredAgents[0], 0)">
         <button class="config-btn primary highlight-btn">
@@ -209,10 +212,13 @@
         </button>
       </view>
       <!-- 信息条 -->
-      <view 
+      <view
         class="second-overlay-card"
-        :style="highlightPosition ? { top: (highlightPosition.top + highlightPosition.height + 20) + 'px' } : {}"
-      >
+        :style="
+          highlightPosition
+            ? { top: highlightPosition.top + highlightPosition.height + 20 + 'px' }
+            : {}
+        ">
         <!-- 背景光晕效果 -->
         <view class="second-overlay-bg">
           <view class="second-overlay-ellipse ellipse-1"></view>
@@ -228,13 +234,16 @@
         </view>
       </view>
       <!-- 三角形箭头 -->
-      <view 
+      <view
         class="second-overlay-arrow"
-        :style="highlightPosition ? { 
-          left: (highlightPosition.left + highlightPosition.width / 2 - 12) + 'px',
-          top: (highlightPosition.top + highlightPosition.height + 14) + 'px'
-        } : {}">
-      </view>
+        :style="
+          highlightPosition
+            ? {
+                left: highlightPosition.left + highlightPosition.width / 2 - 12 + 'px',
+                top: highlightPosition.top + highlightPosition.height + 14 + 'px'
+              }
+            : {}
+        "></view>
     </view>
 
     <!-- 信息提示条（固定在底部tab上方） -->
@@ -242,7 +251,7 @@
       <image src="/static/icons/bell.svg" class="info-bar-icon" />
       <rich-text class="info-bar-text" :nodes="$t('guide.info_bar_text')"></rich-text>
     </view>
-    
+
     <!-- 自定义 TabBar -->
     <CustomTabBar :current="1" />
   </view>
@@ -259,9 +268,14 @@ import CustomTabBar from '@/components/CustomTabBar.vue';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import { Agent } from '../index/types.js';
 import { Device } from '../device/types.js';
-import { completeSquareBindGuide, isSquareOverlayDismissed, dismissSquareOverlay, resetUserGuideState } from '@/utils/userGuide';
+import {
+  completeSquareBindGuide,
+  isSquareOverlayDismissed,
+  dismissSquareOverlay,
+  resetUserGuideState
+} from '@/utils/userGuide';
 import { updateSquareTabBadge, showSquareBadge } from '@/utils/tabBarBadge';
-import { getChatLanguageOptions, backendLangToLangCode, getSystemLangCode, type ChatLanguageOption } from '../agent/lang_opts';
+import { getChatLanguageOptions, backendLangToLangCode, getSystemLangCode, initLanguageDisplayNameCache, type ChatLanguageOption } from '../agent/lang_opts';
 
 type SquareAgent = Agent & {
   name: string;
@@ -296,18 +310,20 @@ const showOverlayGuide = ref<boolean>(false);
 // 是否显示第二个蒙层提示（点击第一个蒙层"知道了"后显示）
 const showSecondOverlay = ref<boolean>(false);
 // 绑定按钮高亮框位置
-const highlightPosition = ref<{ top: number; left: number; width: number; height: number } | null>(null);
+const highlightPosition = ref<{ top: number; left: number; width: number; height: number } | null>(
+  null
+);
 // 是否显示信息提示条（点击第二个蒙层"知道了"后显示，直到设备绑定智能体）
 const showInfoBar = ref<boolean>(false);
 
 // 语言选择相关
 const selectedLanguage = ref<string>(''); // 选中的语言 langCode
 const showLanguagePicker = ref<boolean>(false); // 是否显示语言选择器
-const availableLanguages = ref<ChatLanguageOption[]>([]); // 智能体中存在的语言选项
+const availableLanguages = ref<{ language: string; langCode: string }[]>([]); // 智能体中存在的语言选项
 
 const modelTags = computed(() => {
   let tags: { id: string; name: string }[] = [];
-  
+
   // 定义所有可能的模型标签
   const allModelTags = [
     { id: 'gpt4', name: $t('square.model.gpt4') },
@@ -320,14 +336,14 @@ const modelTags = computed(() => {
 
   // 获取所有 agent 的 modalTag 集合
   const existingModalTags = new Set();
-  publicAgents.value.forEach(agent => {
+  publicAgents.value.forEach((agent) => {
     if (agent.modalTag) {
       existingModalTags.add(agent.modalTag);
     }
   });
 
   // 只添加有对应 agent 的标签
-  allModelTags.forEach(tag => {
+  allModelTags.forEach((tag) => {
     if (existingModalTags.has(tag.id)) {
       tags.push(tag);
     }
@@ -434,7 +450,8 @@ function skipSquareBindGuide() {
  */
 function getFirstBindBtnPosition() {
   return new Promise<void>((resolve) => {
-    uni.createSelectorQuery()
+    uni
+      .createSelectorQuery()
       .select('#first-bind-btn')
       .boundingClientRect((rect: any) => {
         if (rect) {
@@ -463,7 +480,7 @@ async function handleOverlayDismiss() {
   // 隐藏红点
   showSquareBadge.value = false;
   uni.hideTabBarRedDot({ index: 2 });
-  
+
   // 获取第一个绑定按钮的位置，然后显示第二个蒙层
   if (filteredAgents.value.length > 0) {
     await getFirstBindBtnPosition();
@@ -499,11 +516,11 @@ onLoad(() => {
 
 onShow(() => {
   showBindDrawer.value = false;
-  
+
   // TODO: 临时重置引导状态，需要测试时取消注释
   // resetUserGuideState();
   // console.log('[Square] 已重置用户引导状态');
-  
+
   // 页面显示时刷新数据
   loadPublicAgents();
   refreshSquareGuideState();
@@ -517,7 +534,7 @@ function setStatusBarHeight() {
   const systemInfo = uni.getSystemInfoSync();
   statusBarHeight.value = systemInfo.statusBarHeight || 20;
   const isAndroid = systemInfo.platform === 'android';
-  
+
   try {
     const menuButtonInfo =
       typeof uni.getMenuButtonBoundingClientRect === 'function'
@@ -537,6 +554,10 @@ function setStatusBarHeight() {
 async function loadPublicAgents() {
   try {
     loading.value = true;
+
+    // 确保语言缓存已加载，以便 backendLangToLangCode 能正确映射
+    await initLanguageDisplayNameCache();
+
     // 使用 language: all 获取所有公开智能体
     const res = await agentApi.getPublicAgents('all');
     console.log('[Square] 获取所有公开助手:', res);
@@ -569,7 +590,8 @@ async function loadPublicAgents() {
         }
 
         // 优先使用 config 中的 langCode，因为它比顶级 lang 字段更稳定且始终存在
-        const langSource = agent.config?.langCode || (Array.isArray(agent.lang) ? agent.lang[0] : agent.lang) || '';
+        const langSource =
+          agent.config?.langCode || (Array.isArray(agent.lang) ? agent.lang[0] : agent.lang) || '';
         const langCodes = langSource ? [backendLangToLangCode(langSource)] : [];
 
         return {
@@ -588,12 +610,12 @@ async function loadPublicAgents() {
 
       // 提取所有智能体中存在的语言
       await extractAvailableLanguages();
-      
+
       // 设置默认语言（如果还没有选择）
       if (!selectedLanguage.value) {
         initDefaultLanguage();
       }
-      
+
       // 根据选择的语言筛选智能体
       filterAgentsByLanguage();
     } else {
@@ -611,22 +633,24 @@ async function loadPublicAgents() {
 // 从所有智能体中提取存在的语言
 async function extractAvailableLanguages() {
   const langSet = new Set<string>();
-  
+
   // 收集所有智能体的语言
-  allAgents.value.forEach(agent => {
+  allAgents.value.forEach((agent) => {
     if (agent.langCodes && Array.isArray(agent.langCodes)) {
       agent.langCodes.forEach((langCode: string) => {
         langSet.add(langCode);
       });
     }
   });
-  
+
   // 获取完整的语言选项列表
   const allLangOptions = await getChatLanguageOptions();
-  
-  // 筛选出智能体中存在的语言
-  availableLanguages.value = allLangOptions.filter(opt => langSet.has(opt.langCode));
-  
+
+  // 筛选出智能体中存在的语言，并映射为 { label, langCode } 格式
+  availableLanguages.value = allLangOptions
+    .filter((opt) => langSet.has(opt.langCode))
+    .map((opt) => ({ language: opt.language, langCode: opt.langCode }));
+
   console.log('[Square] 可用语言:', availableLanguages.value);
 }
 
@@ -634,23 +658,32 @@ async function extractAvailableLanguages() {
 function initDefaultLanguage() {
   const systemLangCode = getSystemLangCode();
   console.log('[Square] 系统语言:', systemLangCode);
-  
-  // 检查系统语言是否在可用语言中
-  const hasSystemLang = availableLanguages.value.some(opt => opt.langCode === systemLangCode);
-  
-  if (hasSystemLang) {
-    selectedLanguage.value = systemLangCode;
+
+  // 提取系统语言的短格式（zh_CN -> zh, en_US -> en）
+  const systemLangShort = systemLangCode.split('_')[0].toLowerCase();
+
+  // 检查系统语言是否在可用语言中（支持短格式和长格式匹配）
+  const matchedLang = availableLanguages.value.find((opt) => {
+    const optLangShort = opt.langCode.split('_')[0].toLowerCase();
+    return opt.langCode === systemLangCode || optLangShort === systemLangShort;
+  });
+
+  if (matchedLang) {
+    selectedLanguage.value = matchedLang.langCode;
   } else {
-    // 回退到英文
-    const hasEnglish = availableLanguages.value.some(opt => opt.langCode === 'en_US');
-    if (hasEnglish) {
-      selectedLanguage.value = 'en_US';
+    // 回退到英文（支持 en 或 en_US 格式）
+    const englishLang = availableLanguages.value.find((opt) => {
+      const optLangShort = opt.langCode.split('_')[0].toLowerCase();
+      return opt.langCode === 'en_US' || opt.langCode === 'en' || optLangShort === 'en';
+    });
+    if (englishLang) {
+      selectedLanguage.value = englishLang.langCode;
     } else if (availableLanguages.value.length > 0) {
       // 如果连英文都没有，选择第一个可用语言
       selectedLanguage.value = availableLanguages.value[0].langCode;
     }
   }
-  
+
   console.log('[Square] 默认选择语言:', selectedLanguage.value);
 }
 
@@ -660,14 +693,14 @@ function filterAgentsByLanguage() {
     publicAgents.value = allAgents.value;
     return;
   }
-  
-  publicAgents.value = allAgents.value.filter(agent => {
+
+  publicAgents.value = allAgents.value.filter((agent) => {
     if (!agent.langCodes || !Array.isArray(agent.langCodes)) {
       return false;
     }
     return agent.langCodes.includes(selectedLanguage.value);
   });
-  
+
   console.log('[Square] 筛选后智能体数量:', publicAgents.value.length);
 }
 
@@ -680,7 +713,7 @@ function selectLanguage(langCode: string) {
 
 // 获取当前选中语言的显示名称
 const selectedLanguageLabel = computed(() => {
-  const found = availableLanguages.value.find(opt => opt.langCode === selectedLanguage.value);
+  const found = availableLanguages.value.find((opt) => opt.langCode === selectedLanguage.value);
   return found ? found.language : $t('square.select_language');
 });
 
@@ -803,7 +836,7 @@ function handleBindCancel() {
   flex-direction: column;
   padding-bottom: calc(max(160rpx, 104rpx + env(safe-area-inset-bottom)));
   box-sizing: border-box;
-  background: linear-gradient(180deg, #EFF2FF 0%, #FFFFFF 124.53%);
+  background: linear-gradient(180deg, #eff2ff 0%, #ffffff 124.53%);
 }
 
 /* 自定义导航栏样式 */
@@ -1126,7 +1159,7 @@ function handleBindCancel() {
   flex-direction: column;
   align-items: flex-start;
   padding: 32rpx;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 32rpx;
   position: relative;
 }
@@ -1176,7 +1209,7 @@ function handleBindCancel() {
   font-weight: 400;
   font-size: 28rpx;
   line-height: 44rpx;
-  color: #60718B;
+  color: #60718b;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -1202,7 +1235,7 @@ function handleBindCancel() {
   align-items: center;
   padding: 6rpx 12rpx;
   gap: 20rpx;
-  background: #F3F4F7;
+  background: #f3f4f7;
   border-radius: 8rpx;
 }
 
@@ -1213,7 +1246,7 @@ function handleBindCancel() {
   line-height: 32rpx;
   display: flex;
   align-items: center;
-  color: #60718B;
+  color: #60718b;
 }
 .config-btn {
   display: flex;
@@ -1224,7 +1257,7 @@ function handleBindCancel() {
   min-width: 128rpx;
   width: auto;
   height: 64rpx;
-  background: #3E5DEF;
+  background: #3e5def;
   border-radius: 16rpx;
   border: none;
   flex-shrink: 0;
@@ -1245,7 +1278,7 @@ function handleBindCancel() {
   display: flex;
   align-items: center;
   text-align: center;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .config-btn:active {
@@ -1326,7 +1359,7 @@ function handleBindCancel() {
 
 .square-guide-tooltip-skip {
   font-size: 24rpx;
-  color: #335CFF;
+  color: #335cff;
 }
 
 .square-guide-tooltip::after {
@@ -1380,7 +1413,7 @@ function handleBindCancel() {
 }
 
 .square-guide-action {
-  background: #335CFF;
+  background: #335cff;
   color: #ffffff;
   padding: 18rpx 44rpx;
   border-radius: 999rpx;
@@ -1505,7 +1538,7 @@ function handleBindCancel() {
   /* 使用 bottom 定位，避免在非全面屏手机上被遮挡 */
   bottom: calc(200rpx + env(safe-area-inset-bottom));
   transform: translateX(-50%);
-  background: #E3EFFF;
+  background: #e3efff;
   border-radius: 32rpx;
   overflow: hidden;
 }
@@ -1531,7 +1564,7 @@ function handleBindCancel() {
   height: 250rpx;
   right: -50rpx;
   bottom: -32rpx;
-  background: #DEF4FF;
+  background: #def4ff;
 }
 
 .overlay-guide-ellipse.ellipse-2 {
@@ -1539,7 +1572,7 @@ function handleBindCancel() {
   height: 274rpx;
   left: -94rpx;
   top: 202rpx;
-  background: #FFFFFF;
+  background: #ffffff;
   opacity: 0.34;
 }
 
@@ -1548,7 +1581,7 @@ function handleBindCancel() {
   height: 208rpx;
   left: -94rpx;
   top: -80rpx;
-  background: #CBEEFF;
+  background: #cbeeff;
   opacity: 0.34;
 }
 
@@ -1557,7 +1590,7 @@ function handleBindCancel() {
   height: 364rpx;
   right: -70rpx;
   top: -162rpx;
-  background: #A8DFFF;
+  background: #a8dfff;
   opacity: 0.5;
   filter: blur(82rpx);
 }
@@ -1590,7 +1623,7 @@ function handleBindCancel() {
   font-weight: 400;
   font-size: 26rpx;
   line-height: 40rpx;
-  color: #36404F;
+  color: #36404f;
 }
 
 .overlay-guide-illustration {
@@ -1618,7 +1651,7 @@ function handleBindCancel() {
   padding: 0 24rpx;
   width: 240rpx;
   height: 56rpx;
-  background: #0166FF;
+  background: #0166ff;
   border-radius: 132rpx;
 }
 
@@ -1630,7 +1663,7 @@ function handleBindCancel() {
   display: flex;
   align-items: center;
   text-align: center;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .overlay-guide-arrow {
@@ -1639,7 +1672,7 @@ function handleBindCancel() {
   height: 18rpx;
   right: 70rpx;
   bottom: -16rpx;
-  background: #E1F1FF;
+  background: #e1f1ff;
   clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
 }
 
@@ -1665,7 +1698,7 @@ function handleBindCancel() {
 .second-overlay-highlight {
   position: fixed;
   z-index: 2001;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 24rpx;
   padding: 16rpx;
 }
@@ -1679,7 +1712,7 @@ function handleBindCancel() {
   left: 50%;
   transform: translateX(-50%);
   width: 548rpx;
-  background: #E3EFFF;
+  background: #e3efff;
   border-radius: 32rpx;
   overflow: hidden;
   z-index: 2001;
@@ -1706,7 +1739,7 @@ function handleBindCancel() {
   height: 208rpx;
   right: -70rpx;
   bottom: -80rpx;
-  background: #DEF4FF;
+  background: #def4ff;
 }
 
 .second-overlay-ellipse.ellipse-2 {
@@ -1714,7 +1747,7 @@ function handleBindCancel() {
   height: 274rpx;
   left: -94rpx;
   bottom: -120rpx;
-  background: #FFFFFF;
+  background: #ffffff;
   opacity: 0.34;
 }
 
@@ -1723,7 +1756,7 @@ function handleBindCancel() {
   height: 208rpx;
   left: -94rpx;
   top: -80rpx;
-  background: #CBEEFF;
+  background: #cbeeff;
   opacity: 0.34;
 }
 
@@ -1732,7 +1765,7 @@ function handleBindCancel() {
   height: 364rpx;
   right: -70rpx;
   top: -162rpx;
-  background: #A8DFFF;
+  background: #a8dfff;
   opacity: 0.5;
   filter: blur(82rpx);
 }
@@ -1757,7 +1790,7 @@ function handleBindCancel() {
   align-items: center;
   text-align: center;
   justify-content: center;
-  color: #36404F;
+  color: #36404f;
 }
 
 .second-overlay-btn {
@@ -1768,7 +1801,7 @@ function handleBindCancel() {
   padding: 0 24rpx;
   width: 240rpx;
   height: 56rpx;
-  background: #0166FF;
+  background: #0166ff;
   border-radius: 132rpx;
 }
 
@@ -1780,7 +1813,7 @@ function handleBindCancel() {
   display: flex;
   align-items: center;
   text-align: center;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .second-overlay-arrow {
@@ -1788,7 +1821,7 @@ function handleBindCancel() {
   z-index: 2001;
   width: 24rpx;
   height: 14rpx;
-  background: #CDE9FF;
+  background: #cde9ff;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
@@ -1804,7 +1837,7 @@ function handleBindCancel() {
   padding: 16rpx 32rpx;
   gap: 16rpx;
   min-height: 112rpx;
-  background: #EDEDF9;
+  background: #ededf9;
   z-index: 99;
 }
 
@@ -1820,6 +1853,6 @@ function handleBindCancel() {
   font-weight: 400;
   font-size: 26rpx;
   line-height: 40rpx;
-  color: #3E5DEF;
+  color: #3e5def;
 }
 </style>
