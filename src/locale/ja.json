@@ -867,6 +867,8 @@
   "permission_prerequest.confirm": "今すぐ有効化",
   "permission_prerequest.camera_record_title": "カメラとマイクを有効化",
   "permission_prerequest.camera_record_desc": "QRコードのスキャンと音声録音にカメラとマイクの権限が必要です",
+  "permission_prerequest.camera_album_title": "カメラとアルバム権限の申請",
+  "permission_prerequest.camera_album_desc": "QRコードをスキャンするためにカメラ権限が必要です。またQRコード画像を選択してデバイスをバインドするためにアルバム権限が必要です",
   "permission_prerequest.camera": "カメラ権限の申請",
   "permission_prerequest.camera_desc": "QRコードをスキャンしてデバイスをバインドするために、カメラ権限が必要です",
   "permission_prerequest.record": "マイク権限の申請",

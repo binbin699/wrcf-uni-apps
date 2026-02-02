@@ -382,35 +382,45 @@ function getAndroidBluetoothPermissions(): string[] {
 }
 
 /**
- * 获取 Android 相册权限列表（处理 Android 13+ 版本差异）
- * Android 13+ 使用 READ_MEDIA_IMAGES
- * Android 12及以下使用 READ_EXTERNAL_STORAGE（maxSdkVersion=32）
+ * 获取 Android 相册权限列表（处理 Android 版本差异）
+ * - Android 14+ (API 34+): READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_VISUAL_USER_SELECTED, READ_EXTERNAL_STORAGE
+ * - Android 13 (API 33): READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_EXTERNAL_STORAGE
+ * - Android 12及以下: READ_EXTERNAL_STORAGE
+ * 
+ * 注意：Android 13+ 上 READ_EXTERNAL_STORAGE 已被弃用，系统不会弹出请求弹窗，
+ * 但 HBuilderX 调试环境的相册选择器需要此权限，所以仍然请求（用户需手动在设置中开启）
  */
 function getAndroidAlbumPermissions(): string[] {
-  // Android 13+ (API Level 33+) 使用新的媒体权限
-  let useNewPermission = false
-
-  // 优先使用 API Level（更准确）
-  if (AppInfo.androidApiLevel !== undefined) {
-    // Android 13 = API Level 33
-    useNewPermission = AppInfo.androidApiLevel >= 33
-  } else {
-    // 兜底：解析版本号字符串（如 "12"、"13"）
+  const apiLevel = AppInfo.androidApiLevel || 0
+  
+  // 兜底：通过版本号判断
+  let effectiveApiLevel = apiLevel
+  if (effectiveApiLevel === 0) {
     const versionStr = AppInfo.osVersion
     if (versionStr) {
       const parsed = parseFloat(versionStr)
       if (!isNaN(parsed)) {
-        // 版本号判断：Android 13+
-        useNewPermission = parsed >= 13
+        if (parsed >= 14) effectiveApiLevel = 34
+        else if (parsed >= 13) effectiveApiLevel = 33
+        else effectiveApiLevel = 32
       }
     }
   }
 
-  if (useNewPermission) {
-    // Android 13+ 使用新的媒体权限
-    // 需要同时请求所有媒体权限，才能正常显示相册内容
-    // READ_MEDIA_IMAGES + READ_MEDIA_VIDEO = 照片和视频
-    // READ_EXTERNAL_STORAGE = 文件和文档（HBuilderX 相册选择器需要）
+  console.log(`[权限请求] Android 相册权限 - API Level: ${effectiveApiLevel}`)
+
+  if (effectiveApiLevel >= 34) {
+    // Android 14+ 支持"允许有限访问"选项
+    // 包含 READ_EXTERNAL_STORAGE 用于 HBuilderX 调试环境
+    return [
+      'android.permission.READ_MEDIA_IMAGES',
+      'android.permission.READ_MEDIA_VIDEO',
+      'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
+      'android.permission.READ_EXTERNAL_STORAGE'
+    ]
+  } else if (effectiveApiLevel >= 33) {
+    // Android 13 使用新的媒体权限
+    // 包含 READ_EXTERNAL_STORAGE 用于 HBuilderX 调试环境
     return [
       'android.permission.READ_MEDIA_IMAGES',
       'android.permission.READ_MEDIA_VIDEO',
@@ -423,9 +433,28 @@ function getAndroidAlbumPermissions(): string[] {
 }
 
 /**
+ * 通用函数：根据权限类型获取 Android 权限列表
+ * 处理不同类型权限的版本差异
+ */
+function getAndroidPermissionsForType(type: PermissionType): string[] {
+  switch (type) {
+    case PermissionType.BLUETOOTH:
+      return getAndroidBluetoothPermissions()
+    case PermissionType.ALBUM:
+      return getAndroidAlbumPermissions()
+    default:
+      return ANDROID_PERMISSIONS[type] || []
+  }
+}
+
+/**
  * 检查 Android 相册权限状态
  * 由于 uni.getAppAuthorizeSetting() 无法获取 Android 相册权限状态（返回 undefined）
  * 需要使用 plus.android 的方式检查
+ * 
+ * 注意：
+ * - Android 13+ 上 READ_EXTERNAL_STORAGE 已被弃用
+ * - Android 14+ 引入 READ_MEDIA_VISUAL_USER_SELECTED 用于"允许有限访问"
  */
 async function checkAndroidAlbumPermissionStatus(): Promise<PermissionStatus> {
   if (!AppInfo.isAndroidApp()) {
@@ -433,35 +462,80 @@ async function checkAndroidAlbumPermissionStatus(): Promise<PermissionStatus> {
   }
 
   try {
-    // 获取需要检查的权限
-    const permissions = getAndroidAlbumPermissions()
-    
-    console.log(`[权限检查] Android 检查相册权限: ${JSON.stringify(permissions)}`)
-    
     // 使用 plus.android 检查权限
     const main = plus.android.runtimeMainActivity()
     const ActivityCompat = plus.android.importClass('androidx.core.app.ActivityCompat') as any
     const PackageManager = plus.android.importClass('android.content.pm.PackageManager') as any
     
-    if (ActivityCompat && PackageManager) {
-      // 检查所有权限是否都已授予
-      let allGranted = true
-      for (const permission of permissions) {
-        const result = ActivityCompat.checkSelfPermission(main, permission)
-        const granted = result === PackageManager.PERMISSION_GRANTED
-        console.log(`[权限检查] Android ${permission}: ${granted ? 'GRANTED' : 'NOT_GRANTED'}`)
-        if (!granted) {
-          allGranted = false
+    if (!ActivityCompat || !PackageManager) {
+      console.warn('[权限检查] ActivityCompat 或 PackageManager 不可用')
+      return PermissionStatus.NOT_DETERMINED
+    }
+
+    // 判断 Android 版本
+    let apiLevel = AppInfo.androidApiLevel || 0
+    
+    // 兜底：通过版本号判断（当 apiLevel 获取失败时）
+    if (apiLevel === 0) {
+      const versionStr = AppInfo.osVersion
+      if (versionStr) {
+        const parsed = parseFloat(versionStr)
+        if (!isNaN(parsed)) {
+          if (parsed >= 14) apiLevel = 34
+          else if (parsed >= 13) apiLevel = 33
+          else apiLevel = 32
         }
       }
-      
-      if (allGranted) {
+      console.log(`[权限检查] API Level 通过版本号推断: ${apiLevel}`)
+    }
+    
+    const isAndroid14Plus = apiLevel >= 34
+    const isAndroid13Plus = apiLevel >= 33
+
+    console.log(`[权限检查] Android API Level: ${apiLevel}, isAndroid13Plus: ${isAndroid13Plus}, isAndroid14Plus: ${isAndroid14Plus}`)
+
+    // Android 14+ 检查逻辑：支持"允许有限访问"
+    if (isAndroid14Plus) {
+      // 检查完全访问权限
+      const imagesGranted = ActivityCompat.checkSelfPermission(main, 'android.permission.READ_MEDIA_IMAGES') === PackageManager.PERMISSION_GRANTED
+      const videoGranted = ActivityCompat.checkSelfPermission(main, 'android.permission.READ_MEDIA_VIDEO') === PackageManager.PERMISSION_GRANTED
+      // 检查有限访问权限（Android 14+ 新增）
+      const partialGranted = ActivityCompat.checkSelfPermission(main, 'android.permission.READ_MEDIA_VISUAL_USER_SELECTED') === PackageManager.PERMISSION_GRANTED
+
+      console.log(`[权限检查] Android 14+ - READ_MEDIA_IMAGES: ${imagesGranted}, READ_MEDIA_VIDEO: ${videoGranted}, READ_MEDIA_VISUAL_USER_SELECTED: ${partialGranted}`)
+
+      // 完全访问或有限访问都算已授权
+      if ((imagesGranted && videoGranted) || partialGranted) {
+        console.log(`[权限检查] Android 相册权限检查结果: 已授予${partialGranted && !imagesGranted ? '（有限访问）' : '（完全访问）'}`)
+        return PermissionStatus.AUTHORIZED
+      }
+    }
+    // Android 13 检查逻辑
+    else if (isAndroid13Plus) {
+      const imagesGranted = ActivityCompat.checkSelfPermission(main, 'android.permission.READ_MEDIA_IMAGES') === PackageManager.PERMISSION_GRANTED
+      const videoGranted = ActivityCompat.checkSelfPermission(main, 'android.permission.READ_MEDIA_VIDEO') === PackageManager.PERMISSION_GRANTED
+
+      console.log(`[权限检查] Android 13 - READ_MEDIA_IMAGES: ${imagesGranted}, READ_MEDIA_VIDEO: ${videoGranted}`)
+
+      if (imagesGranted && videoGranted) {
         console.log(`[权限检查] Android 相册权限检查结果: 全部已授予`)
         return PermissionStatus.AUTHORIZED
       }
     }
+    // Android 12及以下检查逻辑
+    else {
+      const storageGranted = ActivityCompat.checkSelfPermission(main, 'android.permission.READ_EXTERNAL_STORAGE') === PackageManager.PERMISSION_GRANTED
+
+      console.log(`[权限检查] Android 12- READ_EXTERNAL_STORAGE: ${storageGranted}`)
+
+      if (storageGranted) {
+        console.log(`[权限检查] Android 相册权限检查结果: 已授予`)
+        return PermissionStatus.AUTHORIZED
+      }
+    }
     
-    // 无法准确判断，返回未确定
+    // 未授予
+    console.log(`[权限检查] Android 相册权限检查结果: 未授予`)
     return PermissionStatus.NOT_DETERMINED
   } catch (e) {
     console.warn('[权限检查] Android 相册权限检查失败:', e)
@@ -741,11 +815,36 @@ async function requestAndroidPermission(permissions: string[], permissionType?: 
           // 检查是否有本次拒绝的权限
           else if (resultObj.deniedPresent && resultObj.deniedPresent.length > 0) {
             console.log('[权限请求] 本次拒绝的权限：', resultObj.deniedPresent)
+            
+            // Android 14+ "允许有限访问"场景：
+            // READ_MEDIA_IMAGES 和 READ_MEDIA_VIDEO 可能在 deniedPresent 中
+            // 但 READ_MEDIA_VISUAL_USER_SELECTED 可能已被授予
+            // 需要检查实际权限状态
+            if (permissionType) {
+              const actualStatus = await checkPermissionStatus(permissionType)
+              console.log('[权限请求] 检查实际权限状态:', actualStatus)
+              if (actualStatus === PermissionStatus.AUTHORIZED) {
+                console.log('[权限请求] 实际权限已授权（可能是有限访问）')
+                resolve(1) // 授权成功
+                return
+              }
+            }
+            
             resolve(0) // 临时拒绝（可再次请求）
             return
           }
           else {
-            // 其他情况视为拒绝
+            // 其他情况：检查实际权限状态
+            if (permissionType) {
+              const actualStatus = await checkPermissionStatus(permissionType)
+              console.log('[权限请求] 其他情况，检查实际权限状态:', actualStatus)
+              if (actualStatus === PermissionStatus.AUTHORIZED) {
+                console.log('[权限请求] 实际权限已授权')
+                resolve(1) // 授权成功
+                return
+              }
+            }
+            
             console.log('[权限请求] 其他情况，视为拒绝')
             resolve(0)
             return
@@ -2056,4 +2155,180 @@ export async function requestAlbumPermission(
   autoNavigateToSetting: boolean = false
 ): Promise<PermissionResult> {
   return requestPermission(PermissionType.ALBUM, notify, autoNavigateToSetting)
+}
+
+/**
+ * 便捷方法：同时请求相机和相册权限（合并预请求弹窗）
+ * 用于扫码功能，避免弹出两次预请求弹窗
+ */
+export async function requestCameraAndAlbumPermission(
+  notify?: NotifyFunctions,
+  autoNavigateToSetting: boolean = false
+): Promise<{ camera: PermissionResult; album: PermissionResult }> {
+  // 1. 先检查权限状态
+  const cameraStatus = await checkPermissionStatus(PermissionType.CAMERA)
+  const albumStatus = await checkPermissionStatus(PermissionType.ALBUM)
+
+  console.log(`[权限请求] 相机权限状态: ${cameraStatus}, 相册权限状态: ${albumStatus}`)
+
+  // 如果两个权限都已授权，直接返回
+  if (cameraStatus === PermissionStatus.AUTHORIZED && albumStatus === PermissionStatus.AUTHORIZED) {
+    console.log('[权限请求] 相机和相册权限都已授权')
+    return {
+      camera: { granted: true, status: PermissionStatus.AUTHORIZED },
+      album: { granted: true, status: PermissionStatus.AUTHORIZED }
+    }
+  }
+
+  // 2. Android 显示合并的预请求弹窗
+  const needCameraPreRequest = cameraStatus !== PermissionStatus.AUTHORIZED
+  const needAlbumPreRequest = albumStatus !== PermissionStatus.AUTHORIZED
+
+  if (AppInfo.isAndroidApp() && (needCameraPreRequest || needAlbumPreRequest)) {
+    console.log('[权限预请求] Android 显示相机+相册合并预请求弹窗')
+    
+    const userConfirmed = await new Promise<boolean>((resolve) => {
+      uni.showModal({
+        title: $t('permission_prerequest.camera_album_title'),
+        content: $t('permission_prerequest.camera_album_desc'),
+        showCancel: true,
+        cancelText: $t('common.cancel'),
+        confirmText: $t('permission_prerequest.confirm'),
+        success: (res) => {
+          if (res.confirm) {
+            console.log('[权限预请求] 用户确认，继续请求相机和相册权限')
+            resolve(true)
+          } else {
+            console.log('[权限预请求] 用户取消，不请求相机和相册权限')
+            resolve(false)
+          }
+        },
+        fail: () => {
+          resolve(true)
+        }
+      })
+    })
+
+    if (!userConfirmed) {
+      return {
+        camera: { granted: false, status: PermissionStatus.DENIED, message: $t('permission.user_cancelled') },
+        album: { granted: false, status: PermissionStatus.DENIED, message: $t('permission.user_cancelled') }
+      }
+    }
+  }
+
+  // 3. 请求相机权限（跳过预请求弹窗，因为已经显示了合并弹窗）
+  let cameraResult: PermissionResult
+  if (cameraStatus === PermissionStatus.AUTHORIZED) {
+    cameraResult = { granted: true, status: PermissionStatus.AUTHORIZED }
+  } else {
+    cameraResult = await requestPermissionWithoutPreRequest(PermissionType.CAMERA, notify, autoNavigateToSetting)
+  }
+
+  // 4. 请求相册权限（跳过预请求弹窗）
+  let albumResult: PermissionResult
+  if (albumStatus === PermissionStatus.AUTHORIZED) {
+    albumResult = { granted: true, status: PermissionStatus.AUTHORIZED }
+  } else {
+    // 相册权限不自动跳转设置，因为是可选功能
+    albumResult = await requestPermissionWithoutPreRequest(PermissionType.ALBUM, notify, false)
+  }
+
+  return { camera: cameraResult, album: albumResult }
+}
+
+/**
+ * 内部方法：请求权限但跳过预请求弹窗
+ * 用于合并权限请求场景
+ */
+async function requestPermissionWithoutPreRequest(
+  type: PermissionType,
+  notify?: NotifyFunctions,
+  autoNavigateToSetting: boolean = false
+): Promise<PermissionResult> {
+  const config = PERMISSION_CONFIG[type]
+  console.log(`[权限请求] 尝试请求${config.title}（跳过预请求弹窗）`)
+
+  // 检查权限状态
+  const status = await checkPermissionStatus(type)
+  console.log(`[权限请求] ${config.title}状态: ${status}`)
+
+  // 已授权直接返回
+  if (status === PermissionStatus.AUTHORIZED) {
+    return { granted: true, status: PermissionStatus.AUTHORIZED }
+  }
+
+  // iOS 已拒绝需引导用户去设置
+  if (AppInfo.isIOSApp() && status === PermissionStatus.DENIED && AppInfo.isApp()) {
+    if (autoNavigateToSetting) {
+      setTimeout(() => openPermissionSetting(), 1500)
+    }
+    return { granted: false, status: PermissionStatus.DENIED, message: $t('permission.denied_setting') }
+  }
+
+  // 显示请求说明
+  if (notify) {
+    notify.show(generateNotifyMessage(type, NotifyMessageType.REQUESTING))
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
+  // 请求权限
+  const REQUEST_TIMEOUT = 60000
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  const timeoutPromise = new Promise<number>((resolve) => {
+    timeoutId = setTimeout(() => resolve(0), REQUEST_TIMEOUT)
+  })
+
+  const clearTimeoutIfNeeded = () => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId)
+      timeoutId = null
+    }
+  }
+
+  try {
+    if (AppInfo.isAndroidApp()) {
+      const permissions = getAndroidPermissionsForType(type)
+      const result = await Promise.race([
+        requestAndroidPermission(permissions, type),
+        timeoutPromise
+      ])
+      clearTimeoutIfNeeded()
+
+      if (result === 1) {
+        if (notify) notify.close()
+        return { granted: true, status: PermissionStatus.AUTHORIZED }
+      } else if (result === -1) {
+        if (notify) notify.close()
+        if (autoNavigateToSetting) {
+          setTimeout(() => openPermissionSetting(), 1500)
+        }
+        return { granted: false, status: PermissionStatus.DENIED, message: $t('permission.denied_setting') }
+      } else {
+        if (notify) notify.close()
+        return { granted: false, status: PermissionStatus.DENIED, message: $t('permission.denied') }
+      }
+    } else if (AppInfo.isIOSApp()) {
+      const result = await Promise.race([
+        requestIOSPermission(type),
+        timeoutPromise
+      ])
+      clearTimeoutIfNeeded()
+
+      if (result === 1) {
+        if (notify) notify.close()
+        return { granted: true, status: PermissionStatus.AUTHORIZED }
+      } else {
+        if (notify) notify.close()
+        return { granted: false, status: PermissionStatus.DENIED, message: $t('permission.denied') }
+      }
+    }
+  } catch (error) {
+    clearTimeoutIfNeeded()
+    console.error(`[权限请求] ${config.title}请求异常:`, error)
+    if (notify) notify.close()
+  }
+
+  return { granted: false, status: PermissionStatus.DENIED, message: $t('permission.request_failed') }
 }

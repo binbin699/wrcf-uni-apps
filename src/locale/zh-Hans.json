@@ -847,6 +847,8 @@
   "permission_prerequest.confirm": "一键开启",
   "permission_prerequest.camera_record_title": "开启相机和麦克风",
   "permission_prerequest.camera_record_desc": "需要您开启相机、录音权限用于扫描二维码和录制音频",
+  "permission_prerequest.camera_album_title": "申请相机和相册权限",
+  "permission_prerequest.camera_album_desc": "需要您开启相机权限用于扫描二维码，开启相册权限用于选择二维码图片绑定设备",
   "permission_prerequest.camera": "申请相机权限",
   "permission_prerequest.camera_desc": "需要您开启相机权限，用于扫描二维码绑定设备",
   "permission_prerequest.record": "申请麦克风权限",

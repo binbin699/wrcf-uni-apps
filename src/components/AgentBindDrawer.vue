@@ -91,7 +91,7 @@
 import { PageMap, Pages } from '@/utils/route';
 import { agentApi, deviceApi } from '../api/index';
 import { gotoCreateAgentBy } from '@/pages/agent/create';
-import { requestCameraPermission, requestAlbumPermission, checkPermissionStatus, PermissionType, PermissionStatus, openPermissionSetting } from '@/utils/permission';
+import { requestCameraAndAlbumPermission, checkPermissionStatus, PermissionType, PermissionStatus, openPermissionSetting } from '@/utils/permission';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 import { AppInfo } from '@/const';
 
@@ -268,16 +268,12 @@ export default {
             return;
           }
         } else {
-          // 非 iOS 平台请求相机权限
-          const permissionResult = await requestCameraPermission({}, true);
-          if (!permissionResult.granted) {
+          // 非 iOS 平台：使用合并的预请求弹窗同时请求相机和相册权限
+          const permissionResult = await requestCameraAndAlbumPermission({}, true);
+          if (!permissionResult.camera.granted) {
             return;
           }
-
-          // Android: 同时请求相册权限（带预请求弹窗），这样用户在扫码界面点击相册时权限已有
-          if (AppInfo.isAndroidApp()) {
-            await requestAlbumPermission({}, false); // 不自动跳转设置，因为相册是可选功能
-          }
+          // 相册权限是可选的，不影响扫码流程
         }
 
         // 扫码

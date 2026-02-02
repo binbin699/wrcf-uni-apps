@@ -847,6 +847,8 @@
   "permission_prerequest.confirm": "Enable Now",
   "permission_prerequest.camera_record_title": "Enable Camera and Microphone",
   "permission_prerequest.camera_record_desc": "Camera and microphone permissions are required to scan QR codes and record audio",
+  "permission_prerequest.camera_album_title": "Camera and Album Permission",
+  "permission_prerequest.camera_album_desc": "Camera permission is required to scan QR codes, and album permission is required to select QR code images to bind devices",
   "permission_prerequest.camera": "Camera Permission",
   "permission_prerequest.camera_desc": "We need camera access to scan QR codes and bind your device",
   "permission_prerequest.record": "Microphone Permission",

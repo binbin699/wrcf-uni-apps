@@ -867,6 +867,8 @@
   "permission_prerequest.confirm": "Включить сейчас",
   "permission_prerequest.camera_record_title": "Включить камеру и микрофон",
   "permission_prerequest.camera_record_desc": "Для сканирования QR-кодов и записи аудио требуются разрешения камеры и микрофона",
+  "permission_prerequest.camera_album_title": "Разрешение камеры и галереи",
+  "permission_prerequest.camera_album_desc": "Разрешение камеры необходимо для сканирования QR-кодов, а разрешение галереи — для выбора изображений QR-кодов для привязки устройств",
   "permission_prerequest.camera": "Разрешение камеры",
   "permission_prerequest.camera_desc": "Нам нужен доступ к камере для сканирования QR-кодов и привязки устройства",
   "permission_prerequest.record": "Разрешение микрофона",
