@@ -1,0 +1,83 @@
+# Linx-App Coding Rules
+
+## ⚠️ 重要
+**请严格遵循 `.agents/RULES.md` 中的所有开发规范。**
+
+以下为核心规则速查，完整规范请查看 `.agents/RULES.md`
+
+## 核心规则速查
+
+### 技术栈
+- Vue 3 + TypeScript + Pinia + uni-app + wot-design-uni
+- Cursor (开发) / HBuilderX (打包)
+
+### TypeScript
+- ✅ 严格类型，禁止 `any` (新代码)
+- ⚠️ 历史遗留: 存在 `.js` 文件和 `@ts-nocheck`，逐步迁移中
+
+### 组件库优先级
+1. uni-app 内置组件
+2. **wot-design-uni** (主要)
+3. uni-ui (备选)
+4. 自定义组件
+
+### 页面组件化
+- 弹窗、卡片、列表项、表单 → 抽离为独立组件
+- 位置: `src/pages/[page]/components/`
+- `index.vue` 只负责组合组件
+
+### API 调用层级
+```
+页面/组件 → src/api/*.ts → request.ts → uni.request
+```
+- ⚠️ 当前状态: `src/api/index.ts` 单文件 (逐步拆分中)
+- 禁止页面直接调用 `request.ts` 或 `uni.request`
+
+### 加载状态
+| 场景 | 方式 |
+|------|------|
+| 页面初始加载 | `loading = ref(false)` |
+| 表单提交 | 按钮 `:loading` 属性 |
+| 全局操作 | `uni.showLoading()` |
+
+### 错误处理标准
+```typescript
+try {
+  uni.showLoading({ title: $t('common.loading'), mask: true });
+  const result = await someApi();
+  toast.success($t('common.success'));
+} catch (error: any) {
+  console.error('[操作名称] 失败:', error);
+  toast.error(error.message || $t('common.error'));
+} finally {
+  uni.hideLoading();
+}
+```
+
+### 平台兼容
+- 条件编译: `#ifdef MP-WEIXIN` / `#ifdef APP-PLUS`
+- 运行时判断: `AppInfo.isWeixin` / `AppInfo.isApp`
+- 原生 API: 检查 `typeof plus !== 'undefined'`
+
+### 添加新 API
+1. **必须定义类型** (如无类型，向用户索取)
+2. 在 `src/api/` 创建函数
+3. 使用 `request.ts` 封装
+
+### 提交前检查
+- `pnpm fmt` - 代码格式化 (Prettier)
+- `pnpm type-check` - 类型检查
+
+### 禁止操作
+- ❌ 手动修改 `manifest.json` (用 HBuilderX)
+- ❌ 绕过 `request.ts` 直接调用 `uni.request`
+- ❌ 新代码使用 `any`
+- ❌ 提交敏感信息
+
+## 详细规范
+请查看 `.agents/RULES.md` 获取完整规范，包括：
+- Composables 模式
+- uni-app 配置文件说明
+- 完整的 AppInfo API
+- 文件组织结构
+- 性能优化建议
