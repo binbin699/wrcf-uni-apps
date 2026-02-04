@@ -9,64 +9,64 @@
       </view>
     </view>
 
-    <!-- 内容区域 -->
-    <scroll-view class="content-scroll" scroll-y="true">
-      <!-- 搜索框 -->
-      <view class="search-container">
-        <view class="search-box">
-          <input
-            class="search-input"
-            :placeholder="$t('square.search')"
-            placeholder-style="color: #374151;"
-            v-model="searchKeyword"
-            @input="onSearchInput" />
+    <!-- 搜索框 - 移到 scroll-view 外部 -->
+    <view class="search-container">
+      <view class="search-box">
+        <input
+          class="search-input"
+          :placeholder="$t('square.search')"
+          placeholder-style="color: #374151;"
+          v-model="searchKeyword"
+          @input="onSearchInput" />
+      </view>
+    </view>
+
+    <!-- 语言选择下拉框 - 移到 scroll-view 外部避免被裁剪 -->
+    <view class="language-selector-container" v-if="availableLanguages.length > 0">
+      <view
+        class="language-selector"
+        :class="{ expanded: showLanguagePicker }"
+        @click="showLanguagePicker = !showLanguagePicker">
+        <view class="language-selector-inner">
+          <text class="language-icon">🌐</text>
+          <text class="language-label">{{ selectedLanguageLabel }}</text>
+        </view>
+        <view class="language-arrow-wrapper" :class="{ rotated: showLanguagePicker }">
+          <image class="language-arrow" src="/static/icons/arrow-down.svg" mode="aspectFit" />
         </view>
       </view>
 
-      <!-- 语言选择下拉框 -->
-      <view class="language-selector-container" v-if="availableLanguages.length > 0">
-        <view
-          class="language-selector"
-          :class="{ expanded: showLanguagePicker }"
-          @click="showLanguagePicker = !showLanguagePicker">
-          <view class="language-selector-inner">
-            <text class="language-icon">🌐</text>
-            <text class="language-label">{{ selectedLanguageLabel }}</text>
-          </view>
-          <view class="language-arrow-wrapper" :class="{ rotated: showLanguagePicker }">
-            <image class="language-arrow" src="/static/icons/arrow-down.svg" mode="aspectFit" />
-          </view>
-        </view>
-
-        <!-- 语言下拉列表 -->
-        <view class="language-dropdown" :class="{ show: showLanguagePicker }">
-          <view class="language-dropdown-inner">
-            <view
-              v-for="(lang, index) in availableLanguages"
-              :key="lang.langCode"
-              class="language-option"
-              :class="{ active: selectedLanguage === lang.langCode }"
-              :style="{ animationDelay: showLanguagePicker ? `${index * 30}ms` : '0ms' }"
-              @click.stop="selectLanguage(lang.langCode)">
-              <view class="language-option-content">
-                <text class="language-option-text">{{ lang.language }}</text>
-              </view>
-              <view v-if="selectedLanguage === lang.langCode" class="language-check-wrapper">
-                <view class="language-check-circle">
-                  <image class="language-check" src="/static/icons/check.svg" mode="aspectFit" />
-                </view>
+      <!-- 语言下拉列表 -->
+      <view class="language-dropdown" :class="{ show: showLanguagePicker }">
+        <view class="language-dropdown-inner">
+          <view
+            v-for="(lang, index) in availableLanguages"
+            :key="lang.langCode"
+            class="language-option"
+            :class="{ active: selectedLanguage === lang.langCode }"
+            :style="{ animationDelay: showLanguagePicker ? `${index * 30}ms` : '0ms' }"
+            @click.stop="selectLanguage(lang.langCode)">
+            <view class="language-option-content">
+              <text class="language-option-text">{{ lang.language }}</text>
+            </view>
+            <view v-if="selectedLanguage === lang.langCode" class="language-check-wrapper">
+              <view class="language-check-circle">
+                <image class="language-check" src="/static/icons/check.svg" mode="aspectFit" />
               </view>
             </view>
           </view>
         </view>
       </view>
+    </view>
 
-      <!-- 点击外部关闭下拉框 -->
-      <view
-        v-if="showLanguagePicker"
-        class="language-picker-overlay"
-        @click="showLanguagePicker = false"></view>
+    <!-- 点击外部关闭下拉框 -->
+    <view
+      v-if="showLanguagePicker"
+      class="language-picker-overlay"
+      @click="showLanguagePicker = false"></view>
 
+    <!-- 内容区域 -->
+    <scroll-view class="content-scroll" scroll-y="true">
       <!-- 标签分类 -->
       <view class="tag-container">
         <scroll-view class="tag-scroll" scroll-x="true" show-scrollbar="false">
@@ -253,7 +253,7 @@
     </view>
 
     <!-- 自定义 TabBar -->
-    <CustomTabBar :current="1" />
+    <CustomTabBar :current="2" />
   </view>
 </template>
 
@@ -877,7 +877,7 @@ function handleBindCancel() {
   width: 100%;
   overflow-y: auto;
   position: relative;
-  z-index: 2;
+  z-index: 100;
 }
 
 /* 搜索框样式 */
@@ -939,7 +939,7 @@ function handleBindCancel() {
   padding: 0 40rpx;
   margin-bottom: 24rpx;
   position: relative;
-  z-index: 100;
+  z-index: 200;
 }
 
 .language-selector {
@@ -1019,7 +1019,7 @@ function handleBindCancel() {
   opacity: 0;
   transform: translateY(-8rpx);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 101;
+  z-index: 201;
 }
 
 .language-dropdown.show {

@@ -153,17 +153,29 @@ export default {
     },
 
     async bindAgentToDevice() {
+      // 优先使用 agentId (UUID格式)，数字 id 不是有效的绑定ID
+      const agentId = this.agent?.agentId;
+      
       if (!this.agent || !this.selectedDeviceId) {
         return {
           success: false,
           message: this.$t('agent_bind_drawer.params_incomplete')
         };
       }
+      
+      // 检查 agentId 是否有效（非空字符串）
+      if (!agentId || agentId === '') {
+        console.warn('[绑定] 智能体缺少有效的 agentId:', this.agent);
+        return {
+          success: false,
+          message: this.$t('agent_bind_drawer.agent_data_invalid') || '智能体数据异常，请刷新后重试'
+        };
+      }
 
       try {
         const res = await agentApi.bind({
           deviceId: this.selectedDeviceId,
-          agentId: this.agent.agentId
+          agentId: agentId
         });
 
         if (res.code === 1000) {
@@ -185,9 +197,31 @@ export default {
         }
       } catch (error) {
         console.error(this.$t('agent_bind_drawer.bind_device_failed') + ':', error);
+        
+        // 检查错误消息（兼容多种错误格式）
+        const errorMsg = error?.message || error?.errMsg || 
+          (typeof error === 'string' ? error : '');
+        
+        // 处理特定错误
+        if (errorMsg.includes('设备已存在灵矽平台')) {
+          return {
+            success: false,
+            message: this.$t('agent_bind_drawer.device_exist')
+          };
+        }
+        
+        // 超时错误
+        if (errorMsg.includes('timeout') || errorMsg.includes('abort')) {
+          return {
+            success: false,
+            message: this.$t('agent_bind_drawer.request_timeout') || '请求超时，请重试'
+          };
+        }
+        
+        // 其他错误，显示通用绑定失败消息
         return {
           success: false,
-          message: this.$t('agent_bind_drawer.network_error')
+          message: this.$t('agent_bind_drawer.bind_failed')
         };
       }
     },

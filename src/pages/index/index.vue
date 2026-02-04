@@ -48,16 +48,15 @@
       :visible="showBindDrawer"
       :agent="selectedAgent"
       :configAble="userStore.userId === selectedAgent?.userId"
-      :templateAble="selectedAgent?.isTemplate"
+      :templateAble="!!selectedAgent?.isTemplate"
       @update:visible="showBindDrawer = $event"
       @success="handleBindSuccess"
       @error="handleBindError"
       @cancel="handleBindCancel" />
 
-    <!-- 没有设备时的引导弹窗；测试阶段 isDev 时无论有无设备都先显示 -->
-    <view v-if="showWelcomeGuide" class="welcome-overlay" :class="{ 'is-single': setupMode !== 'both' }">
+    <!-- 没有设备时的引导弹窗 - 暂时禁用，改为在设备页显示 -->
+    <view v-if="false && showWelcomeGuide" class="welcome-overlay" :class="{ 'is-single': setupMode !== 'both' }">
       <view class="welcome-popup">
-        <!-- 两种模式并行 (默认) -->
         <view v-if="setupMode === 'both'" class="welcome-content">
           <view class="welcome-title">{{ $t('welcome.guide_title') }}</view>
           <view class="welcome-actions">
@@ -90,8 +89,6 @@
             </view>
           </view>
         </view>
-
-        <!-- 单个模式 (扫码或蓝牙) -->
         <view v-else class="welcome-content-single">
           <view class="welcome-icon-wrapper single" :class="setupMode">
             <image
@@ -140,7 +137,7 @@
     </view>
 
     <!-- 自定义 TabBar -->
-    <CustomTabBar :current="0" />
+    <CustomTabBar :current="1" />
   </view>
 </template>
 
@@ -647,7 +644,6 @@ function handleHelpClick() {
 
 .empty-btn-text {
   height: 22px;
-  font-family: 'PingFang SC';
   font-style: normal;
   font-weight: 400;
   font-size: 16px;

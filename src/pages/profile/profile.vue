@@ -64,7 +64,7 @@
     </view>
     
     <!-- 自定义 TabBar -->
-    <CustomTabBar :current="2" />
+    <CustomTabBar :current="3" />
     </view>
   </view>
 </template>

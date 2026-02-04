@@ -20,6 +20,16 @@
       }
     },
     {
+      "path": "pages/device-status/device-status",
+      "style": {
+        "navigationBarTitleText": "%pages.device_status%",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
       "path": "pages/webview/webview",
       "style": {
         "navigationBarTitleText": "",
@@ -203,6 +213,12 @@
     "borderStyle": "white",
     "backgroundColor": "#ffffff",
     "list": [
+      {
+        "pagePath": "pages/device-status/device-status",
+        "iconPath": "static/tab-device.png",
+        "selectedIconPath": "static/tab-device-active.png",
+        "text": "%tabbar.device%"
+      },
       {
         "pagePath": "pages/index/index",
         "iconPath": "static/tab-agent.png",

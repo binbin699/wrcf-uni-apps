@@ -211,7 +211,7 @@ function goToLogin() {
 
 function redirectToMain() {
   uni.switchTab({
-    url: '/pages/index/index'
+    url: '/pages/device-status/device-status'
   });
 }
 </script>
