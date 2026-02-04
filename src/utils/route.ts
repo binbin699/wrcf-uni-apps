@@ -7,6 +7,7 @@ export enum Pages {
   Login = 'login',
   Register = 'register',
   Index = 'index',
+  DeviceStatus = 'device-status',
   AgentCreate = 'create-agent',
   AgentEdit = 'edit-agent',
   Profile = 'profile',
@@ -36,6 +37,12 @@ export const PageMap = {
     path: 'pages/index/index',
     url: '/pages/index/index',
     title: $t('index.my_agents'),
+    isTab: true
+  },
+  [Pages.DeviceStatus]: {
+    path: 'pages/device-status/device-status',
+    url: '/pages/device-status/device-status',
+    title: $t('pages.device_status'),
     isTab: true
   },
   [Pages.AgentCreate]: {

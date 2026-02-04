@@ -452,7 +452,7 @@ function getWxCode(): Promise<any> {
 
 function redirectToHome() {
   uni.switchTab({
-    url: PageMap[Pages.Index].url
+    url: PageMap[Pages.DeviceStatus].url
   });
 }
 
