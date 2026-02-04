@@ -49,6 +49,7 @@
   "login.register_account": "注册账号",
   "login.password_login": "账号密码登录",
   "login.login_success": "登录成功",
+  "login.device_bind_hint": "设备需绑定账号使用，如不想授权可选择游客模式",
   "login.login_failed": "登录失败，请重试",
   "login.auth_failed": "授权失败，请重试",
   "login.auth_success": "信息授权成功",
@@ -122,6 +123,8 @@
   "welcome.setup_qrcode": "扫码添加",
   "welcome.setup_bluetooth": "蓝牙添加",
   "welcome.skip_for_now": "稍后再说",
+  "welcome.skip_and_browse": "暂不绑定，先看一看",
+
   "agent.name_label": "智能体名称",
   "agent.desc_label": "角色描述",
   "agent.desc_placeholder": "请描述这个智能体的功能和用途",
