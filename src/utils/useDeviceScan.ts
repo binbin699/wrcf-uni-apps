@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { useI18n } from 'vue-i18n';
+import i18n from '@/locale';
 // @ts-ignore
 import { deviceApi } from '@/api/index';
 import { PageMap, Pages } from '@/utils/route';
@@ -15,7 +15,8 @@ import {
 import { AppInfo } from '@/const';
 
 export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNotify?: any }) {
-    const { t: $t } = useI18n();
+    // 安全获取 $t，避免非 setup 上下文调用 useI18n 引发错误
+    const $t = (key: string) => (i18n?.global?.t ? i18n.global.t(key) : key);
     const toast = options?.toast || useToast();
     const showNotify = options?.showNotify || useNotify().showNotify;
     const closeNotify = options?.closeNotify || useNotify().closeNotify;
@@ -32,14 +33,16 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
         isNavigating.value = true;
 
         try {
-            if (uni.getSystemInfoSync().platform === 'ios') {
+            // 小程序端：仅检查已拒绝，其余情况直接调 uni.scanCode（由扫码页触发授权，避免登录后自动续接时预请求失败）
+            const isMiniProgram = !AppInfo.isApp();
+            const isIOS = uni.getSystemInfoSync().platform === 'ios';
+            if (isMiniProgram || isIOS) {
                 const status = await checkPermissionStatus(PermissionType.CAMERA);
                 if (status === PermissionStatus.DENIED) {
                     showNotify({
                         type: 'warning',
                         message: $t('permission.camera_denied_guide')
                     });
-                    // 处理已拒绝的情况
                     uni.showModal({
                         title: $t('common.tip'),
                         content: $t('permission.camera_denied_guide'),
@@ -55,9 +58,8 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
                     return;
                 }
                 // 对于 authorized 或 notDetermined，直接进行扫码
-                // iOS 的 uni.scanCode 会自动触发第一次授权弹窗，且体验比 requestCameraPermission 的拍照回退更好
             } else {
-                // 非 iOS 平台：使用合并的预请求弹窗同时请求相机和相册权限
+                // App 非 iOS：使用合并的预请求弹窗同时请求相机和相册权限
                 const permissionResult = await requestCameraAndAlbumPermission({
                     show: showNotify,
                     close: closeNotify
@@ -67,7 +69,6 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
                     isNavigating.value = false;
                     return;
                 }
-                // 相册权限是可选的，不影响扫码流程
             }
 
             uni.scanCode({

@@ -54,7 +54,7 @@
       @error="handleBindError"
       @cancel="handleBindCancel" />
 
-    <!-- 没有设备时的引导弹窗 -->
+    <!-- 没有设备时的引导弹窗；测试阶段 isDev 时无论有无设备都先显示 -->
     <view v-if="showWelcomeGuide" class="welcome-overlay" :class="{ 'is-single': setupMode !== 'both' }">
       <view class="welcome-popup">
         <!-- 两种模式并行 (默认) -->
@@ -75,11 +75,18 @@
                 <text class="welcome-setup-text">{{ $t('welcome.setup_bluetooth') }}</text>
               </view>
             </view>
+            <!-- #ifndef MP-WEIXIN -->
             <view class="welcome-help-link" @click="handleHelpClick">
               <text>{{ $t('profile.instructions_tutorials') }}</text>
             </view>
+            <!-- #endif -->
             <view class="welcome-skip" @click="handleSkipSetup">
+              <!-- #ifdef MP-WEIXIN -->
+              {{ $t('welcome.skip_and_browse') }}
+              <!-- #endif -->
+              <!-- #ifndef MP-WEIXIN -->
               {{ $t('welcome.skip_for_now') }}
+              <!-- #endif -->
             </view>
           </view>
         </view>
@@ -105,11 +112,18 @@
               @click="setupMode === 'qrcode' ? handleStartSetup() : handleBluetoothSetup()">
               {{ setupMode === 'qrcode' ? $t('welcome.setup_qrcode') : $t('welcome.setup_bluetooth') }}
             </view>
+            <!-- #ifndef MP-WEIXIN -->
             <view class="welcome-help-link single-mode" @click="handleHelpClick">
               <text>{{ $t('profile.instructions_tutorials') }}</text>
             </view>
+            <!-- #endif -->
             <view class="welcome-skip-single" @click="handleSkipSetup">
+              <!-- #ifdef MP-WEIXIN -->
+              {{ $t('welcome.skip_and_browse') }}
+              <!-- #endif -->
+              <!-- #ifndef MP-WEIXIN -->
               {{ $t('welcome.skip_for_now') }}
+              <!-- #endif -->
             </view>
           </view>
         </view>
@@ -168,6 +182,8 @@ const isDev = process.env.NODE_ENV === 'development';
 const showWelcomeGuide = ref(false);
 const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
 let isCheckingDevice = false;
+const PENDING_BIND_KEY = 'pendingBindAction';
+type PendingBindAction = 'qrcode' | 'bluetooth';
 
 // 生命周期钩子
 function updateNavigationTitle() {
@@ -175,6 +191,15 @@ function updateNavigationTitle() {
 }
 
 onLoad(async () => {
+  // #ifndef MP-WEIXIN
+  // App 端：未登录时跳转登录页
+  if (!userStore.isLoggedIn) {
+    uni.redirectTo({
+      url: PageMap[Pages.Login].url
+    });
+    return;
+  }
+  // #endif
   await loadAgentList(true);
   await checkDeviceBinding();
   updateNavigationTitle();
@@ -188,6 +213,10 @@ onShow(() => {
   updateSquareTabBadge();
   // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
+  // #ifdef MP-WEIXIN
+  // 登录后续接绑定流程（仅小程序端）
+  resumePendingBindAction();
+  // #endif
 });
 
 watch(
@@ -236,10 +265,19 @@ async function loadAgentList(showLoading = false) {
 }
 
 async function checkDeviceBinding() {
+  // #ifdef MP-WEIXIN
+  // 小程序端：已有专门的落地页，index 页面不显示引导弹窗
+  showWelcomeGuide.value = false;
+  return;
+  // #endif
+
+  // #ifndef MP-WEIXIN
+  // 非小程序端：未登录时不显示引导弹窗
   if (!userStore.isLoggedIn) {
     showWelcomeGuide.value = false;
     return;
   }
+  // #endif
 
   if (isCheckingDevice) {
     return;
@@ -352,7 +390,63 @@ function handleAgentDelete(agent: Agent) {
 
 const { scanAndBind } = useDeviceScan({ toast, showNotify, closeNotify });
 
+// 判断用户是否真正登录（有有效token且有真实用户信息）
+function isUserAuthenticated(): boolean {
+  return userStore.isLoggedIn && userStore.userId > 0;
+}
+
+// 校验登录状态，未登录则记录待执行动作并跳转登录页（仅小程序端校验）
+function requireLoginForBind(action: PendingBindAction): boolean {
+  // #ifdef MP-WEIXIN
+  if (!isUserAuthenticated()) {
+    uni.setStorageSync(PENDING_BIND_KEY, action);
+    uni.navigateTo({
+      url: PageMap[Pages.Login].url
+    });
+    return false;
+  }
+  // #endif
+  return true;
+}
+
+// 登录成功后自动续接绑定流程（仅小程序端）
+function resumePendingBindAction() {
+  const pending = uni.getStorageSync(PENDING_BIND_KEY) as PendingBindAction | '';
+  if (!pending) {
+    return;
+  }
+  // 轮询等待登录状态就绪后再执行（解决 switchTab 回首页时 store 尚未更新的情况）
+  const maxAttempts = 20;
+  let attempts = 0;
+  const tryResume = () => {
+    attempts += 1;
+    if (isUserAuthenticated()) {
+      uni.removeStorageSync(PENDING_BIND_KEY);
+      showWelcomeGuide.value = false;
+      if (pending === 'qrcode') {
+        scanAndBind({
+          onScanSuccess: () => {
+            showWelcomeGuide.value = false;
+          }
+        });
+      } else if (pending === 'bluetooth') {
+        uni.navigateTo({
+          url: PageMap[Pages.BluetoothConfig].url
+        });
+      }
+      return;
+    }
+    if (attempts < maxAttempts) {
+      setTimeout(tryResume, 300);
+    }
+  };
+  setTimeout(tryResume, 300);
+}
+
 async function handleStartSetup() {
+  if (!requireLoginForBind('qrcode')) {
+    return;
+  }
   await scanAndBind({
     onScanSuccess: () => {
       showWelcomeGuide.value = false;
@@ -361,13 +455,34 @@ async function handleStartSetup() {
 }
 
 function handleBluetoothSetup() {
+  if (!requireLoginForBind('bluetooth')) {
+    return;
+  }
   uni.navigateTo({
     url: PageMap[Pages.BluetoothConfig].url
   });
 }
 
-function handleSkipSetup() {
-  // 用户选择跳过，隐藏引导
+async function handleSkipSetup() {
+  // #ifdef MP-WEIXIN
+  // 小程序端：未登录时触发游客登录
+  if (!isUserAuthenticated()) {
+    toast.loading({ msg: '', cover: true });
+    try {
+      const success = await userStore.guestLogin();
+      toast.close();
+      if (success) {
+        showWelcomeGuide.value = false;
+        loadAgentList(false);
+      }
+    } catch (error) {
+      toast.close();
+      console.error('游客登录失败:', error);
+    }
+    return;
+  }
+  // #endif
+  // 已登录时直接隐藏引导
   showWelcomeGuide.value = false;
 }
 

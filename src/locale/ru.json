@@ -51,6 +51,7 @@
   "login.register_account": "Зарегистрировать аккаунт",
   "login.password_login": "Вход по паролю",
   "login.login_success": "Вход выполнен успешно",
+  "login.device_bind_hint": "Устройство требует привязки к аккаунту. Можно использовать гостевой режим.",
   "login.login_failed": "Ошибка входа, попробуйте снова",
   "login.auth_failed": "Ошибка авторизации, попробуйте снова",
   "login.auth_success": "Авторизация успешна",
@@ -124,6 +125,7 @@
   "welcome.setup_qrcode": "QR-код",
   "welcome.setup_bluetooth": "Bluetooth",
   "welcome.skip_for_now": "Позже",
+  "welcome.skip_and_browse": "Пропустить привязку, сначала посмотреть",
 
   "agent.name_label": "Имя агента",
   "agent.desc_label": "Описание роли",

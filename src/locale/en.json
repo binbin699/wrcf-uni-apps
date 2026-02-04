@@ -51,6 +51,7 @@
   "login.register_account": "Register Account",
   "login.password_login": "Account/Password Login",
   "login.login_success": "Login successful",
+  "login.device_bind_hint": "Device requires account binding. You may use guest mode if you prefer not to authorize.",
   "login.login_failed": "Login failed, please try again",
   "login.auth_failed": "Authorization failed, please try again",
   "login.auth_success": "Information authorization successful",
@@ -122,6 +123,8 @@
   "welcome.setup_qrcode": "QR Code",
   "welcome.setup_bluetooth": "Bluetooth",
   "welcome.skip_for_now": "Skip for now",
+  "welcome.skip_and_browse": "Skip binding, take a look first",
+
   "agent.name_label": "Agent Name",
   "agent.desc_label": "Role Description",
   "agent.desc_placeholder": "Please describe the function and purpose of this agent",

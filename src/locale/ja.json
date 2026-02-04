@@ -51,6 +51,7 @@
   "login.register_account": "アカウント登録",
   "login.password_login": "パスワードでログイン",
   "login.login_success": "ログイン成功",
+  "login.device_bind_hint": "デバイスはアカウントへのバインドが必要です。認証を希望しない場合はゲストモードをご利用ください。",
   "login.login_failed": "ログイン失敗、もう一度お試しください",
   "login.auth_failed": "認証失敗、もう一度お試しください",
   "login.auth_success": "認証成功",
@@ -124,6 +125,7 @@
   "welcome.setup_qrcode": "QRコード",
   "welcome.setup_bluetooth": "Bluetooth",
   "welcome.skip_for_now": "後で",
+  "welcome.skip_and_browse": "今はバインドせず、先に見てみる",
 
   "agent.name_label": "エージェント名",
   "agent.desc_label": "役割の説明",

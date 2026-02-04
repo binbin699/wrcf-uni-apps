@@ -1,5 +1,14 @@
 {
   "pages": [
+    // #ifdef MP-WEIXIN
+    {
+      "path": "pages/mp-landing/mp-landing",
+      "style": {
+        "navigationBarTitleText": "",
+        "navigationStyle": "custom"
+      }
+    },
+    // #endif
     {
       "path": "pages/login/login",
       "style": {
@@ -28,15 +37,6 @@
       "style": {
         "navigationBarTitleText": "%pages.register%",
         "navigationStyle": "custom",
-        "app-plus": {
-          "bounce": "none"
-        }
-      }
-    },
-    {
-      "path": "pages/index/index",
-      "style": {
-        "navigationBarTitleText": "%index.my_agents%",
         "app-plus": {
           "bounce": "none"
         }
@@ -112,6 +112,15 @@
       "path": "pages/net-config/net-config",
       "style": {
         "navigationBarTitleText": "%pages.net_config%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "%index.my_agents%",
         "app-plus": {
           "bounce": "none"
         }
