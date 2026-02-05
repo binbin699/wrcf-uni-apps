@@ -9,7 +9,7 @@
       </view>
 
       <!-- 智能体列表区域 -->
-      <view v-else>
+      <view v-else class="agent-list-container">
         <!-- AI生成内容合规提示 -->
         <view class="ai-disclaimer">
           <text class="ai-disclaimer-text">{{ $t('index.ai_generated_disclaimer') }}</text>
@@ -28,11 +28,16 @@
 
         <!-- 如果列表为空但仍在渲染（理论上被外部 v-else-if 挡住，但为了保险） -->
         <view class="empty-state" v-if="agentList.length === 0">
-          <image class="empty-icon" src="/static/icons/agent-icon.png" mode="aspectFit"></image>
-          <view class="empty-title">{{ $t('index.no_agents') }}</view>
-          <view class="empty-desc">{{ $t('index.no_agents_desc') }}</view>
+          <view class="empty-content">
+            <image class="empty-icon" src="/static/icons/agent-icon.png" mode="aspectFit"></image>
+            <view class="empty-text">
+              <view class="empty-title">{{ $t('index.no_agents') }}</view>
+              <view class="empty-desc">{{ $t('index.no_agents_desc') }}</view>
+            </view>
+          </view>
           <view class="empty-btn primary" @click="handleCreateAgent">
-            <text class="empty-btn-text">{{ $t('index.create_agent') }}</text>
+            <image class="empty-btn-icon" src="/static/icons/add.svg" mode="aspectFit"></image>
+            <text class="empty-btn-text">{{ $t('create_agent.create') }}</text>
           </view>
         </view>
       </view>
@@ -70,6 +75,9 @@
                 <text class="welcome-setup-text">{{ $t('welcome.setup_bluetooth') }}</text>
               </view>
             </view>
+            <view class="welcome-help-link" @click="handleHelpClick">
+              <text>{{ $t('profile.instructions_tutorials') }}</text>
+            </view>
             <view class="welcome-skip" @click="handleSkipSetup">
               {{ $t('welcome.skip_for_now') }}
             </view>
@@ -97,6 +105,9 @@
               @click="setupMode === 'qrcode' ? handleStartSetup() : handleBluetoothSetup()">
               {{ setupMode === 'qrcode' ? $t('welcome.setup_qrcode') : $t('welcome.setup_bluetooth') }}
             </view>
+            <view class="welcome-help-link single-mode" @click="handleHelpClick">
+              <text>{{ $t('profile.instructions_tutorials') }}</text>
+            </view>
             <view class="welcome-skip-single" @click="handleSkipSetup">
               {{ $t('welcome.skip_for_now') }}
             </view>
@@ -104,6 +115,16 @@
         </view>
       </view>
     </view>
+    <!-- 浮动创建按钮（有智能体时显示，滚动时收起） -->
+    <view 
+      class="fab-btn" 
+      :class="{ 'fab-collapsed': isScrolling }" 
+      v-if="agentList.length > 0" 
+      @click="handleCreateAgent">
+      <image class="fab-btn-icon" src="/static/icons/add.svg" mode="aspectFit"></image>
+      <text class="fab-btn-text">{{ $t('create_agent.create') }}</text>
+    </view>
+
     <!-- 自定义 TabBar -->
     <CustomTabBar :current="0" />
   </view>
@@ -116,7 +137,7 @@ import { useI18n } from 'vue-i18n';
 import { agentApi, deviceApi } from '@/api/index';
 import { PageMap, Pages } from '@/utils/route';
 import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
-import { onLoad, onShow } from '@dcloudio/uni-app';
+import { onLoad, onShow, onPageScroll } from '@dcloudio/uni-app';
 import { Agent } from './types';
 import { useUserStore } from '@/store';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
@@ -141,6 +162,8 @@ const agentList = ref<Agent[]>([]);
 const showBindDrawer = ref(false);
 const selectedAgent = ref<Agent | null>(null);
 const loading = ref(false);
+const isScrolling = ref(false);
+let scrollTimer: ReturnType<typeof setTimeout> | null = null;
 const isDev = process.env.NODE_ENV === 'development';
 const showWelcomeGuide = ref(false);
 const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
@@ -173,6 +196,11 @@ watch(
     updateNavigationTitle();
   }
 );
+
+// 页面滚动监听（用于控制 FAB 按钮收起/展开）
+onPageScroll((e: { scrollTop: number }) => {
+  handleScroll(e);
+});
 
 // onShareAppMessage(() => {
 //   console.log('page share');
@@ -237,6 +265,22 @@ async function checkDeviceBinding() {
 
 
 
+// 滚动处理函数
+function handleScroll(e: { scrollTop: number }) {
+  // 开始滚动时，收起按钮
+  isScrolling.value = true;
+  
+  // 清除之前的定时器
+  if (scrollTimer) {
+    clearTimeout(scrollTimer);
+  }
+  
+  // 停止滚动后 300ms 恢复按钮
+  scrollTimer = setTimeout(() => {
+    isScrolling.value = false;
+  }, 300);
+}
+
 function handleAgentClick(agent: Agent) {
   selectedAgent.value = agent;
   showBindDrawer.value = true;
@@ -275,42 +319,35 @@ function handleBindCancel() {
 }
 
 function handleAgentDelete(agent: Agent) {
-  uni.showModal({
-    title: $t('common.confirm_delete'),
-    content: `${$t('index.confirm_delete_agent')} ${agent.agentName}?`,
-    success: (res) => {
-      if (res.confirm) {
-        agentApi
-          .deleteAgent(agent.agentId)
-          .then(async (res: any) => {
-            if (res.code === 1000) {
-              toast.success({
-                msg: $t('common.delete_success'),
-                duration: 2000
-              });
-              await loadAgentList(false); // 刷新智能体列表
-            } else if (res.code === 1001) {
-              toast.warning({
-                msg: `${$t('common.failed_with_message')}: ${res.message || res.errMsg}`,
-                duration: 2000
-              });
-            } else {
-              toast.error({
-                msg: res.message || $t('common.delete_failed'),
-                duration: 2000
-              });
-            }
-          })
-          .catch((err: any) => {
-            console.error('删除失败:', err);
-            toast.error({
-              msg: `${$t('common.delete_failed_with_message')}: ${err.message || err.errMsg}`,
-              duration: 2000
-            });
-          });
+  // 直接执行删除，确认弹窗已在 AgentCard 组件中处理
+  agentApi
+    .deleteAgent(agent.agentId)
+    .then(async (res: any) => {
+      if (res.code === 1000) {
+        toast.success({
+          msg: $t('common.delete_success'),
+          duration: 2000
+        });
+        await loadAgentList(false); // 刷新智能体列表
+      } else if (res.code === 1001) {
+        toast.warning({
+          msg: `${$t('common.failed_with_message')}: ${res.message || res.errMsg}`,
+          duration: 2000
+        });
+      } else {
+        toast.error({
+          msg: res.message || $t('common.delete_failed'),
+          duration: 2000
+        });
       }
-    }
-  });
+    })
+    .catch((err: any) => {
+      console.error('删除失败:', err);
+      toast.error({
+        msg: `${$t('common.delete_failed_with_message')}: ${err.message || err.errMsg}`,
+        duration: 2000
+      });
+    });
 }
 
 const { scanAndBind } = useDeviceScan({ toast, showNotify, closeNotify });
@@ -333,6 +370,12 @@ function handleSkipSetup() {
   // 用户选择跳过，隐藏引导
   showWelcomeGuide.value = false;
 }
+
+function handleHelpClick() {
+  uni.navigateTo({
+    url: '/pages/profile/help'
+  });
+}
 </script>
 
 <style lang="scss" scoped>
@@ -349,15 +392,31 @@ function handleSkipSetup() {
   padding-bottom: calc(max(160rpx, 110rpx + env(safe-area-inset-bottom)));
 }
 
+.agent-list-container {
+  width: 100%;
+}
+
 .ai-disclaimer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   padding: 8px 16px;
-  background-color: #f8f9fa;
+  gap: 10px;
+  width: 100%;
+  height: 36px;
+  background: #F3F4F7;
+  box-sizing: border-box;
 }
 
 .ai-disclaimer-text {
-  font-size: 12px;
-  color: #9ca3af;
-  line-height: 1.4;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #98A5B8;
 }
 
 .page-title {
@@ -372,49 +431,183 @@ function handleSkipSetup() {
   display: flex;
   flex-direction: column;
   gap: 0px;
+  padding-bottom: 20px;
 }
 
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60px 36px;
-  text-align: center;
+  padding: 0px;
+  gap: 24px;
+  width: 358px;
+  height: 258px;
+  margin: 0 auto;
+  margin-top: 154px;
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0px;
+  gap: 16px;
+  width: 358px;
+  height: 180px;
+  flex: none;
+  order: 0;
+  align-self: stretch;
+  flex-grow: 0;
 }
 
 .empty-icon {
-  max-width: 40%;
-  margin: 0 auto;
-  margin-bottom: 20px;
+  width: 120px;
+  height: 120px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+.empty-text {
+  width: 358px;
+  height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  order: 1;
+  align-self: stretch;
+  flex-grow: 0;
 }
 
 .empty-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #222530;
-  margin-bottom: 8px;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 22px;
+  text-align: center;
+  color: #60718B;
 }
 
 .empty-desc {
+  font-style: normal;
+  font-weight: 400;
   font-size: 14px;
-  color: #8b8e9a;
-  line-height: 1.5;
-  margin-bottom: 32px;
+  line-height: 22px;
+  text-align: center;
+  color: #60718B;
 }
 
 .empty-btn {
-  border-radius: 24px;
-  padding: 12px 32px;
+  min-width: 96px;
+  height: 54px;
+  border-radius: 12px;
+  padding: 16px 19px;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  background: #3E5CEE;
+  box-shadow: 0 4px 12px rgba(62, 92, 238, 0.3);
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+}
+
+.empty-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.empty-btn-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  filter: brightness(0) invert(1);
 }
 
 .empty-btn-text {
-  color: #ffffff;
+  height: 22px;
+  font-family: 'PingFang SC';
+  font-style: normal;
+  font-weight: 400;
   font-size: 16px;
-  font-weight: 600;
+  line-height: 22px;
+  color: #FFFFFF;
+  white-space: nowrap;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+}
+
+/* 浮动创建按钮（FAB） */
+.fab-btn {
+  position: fixed;
+  right: 24px;
+  /* 设计稿：距离 tab bar 顶部 24px，tab bar 高度约 98px */
+  bottom: calc(98px + 24px + env(safe-area-inset-bottom));
+  min-width: 54px;
+  height: 54px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 19px;
+  background: #3E5CEE;
+  border-radius: 12px;
+  box-sizing: border-box;
+  z-index: 998;
+  box-shadow: 0 4px 12px rgba(62, 92, 238, 0.3);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.15s ease;
+  overflow: hidden;
+}
+
+/* 滚动时收起为圆形图标按钮 */
+.fab-btn.fab-collapsed {
+  width: 54px;
+  padding: 16px;
+  gap: 0;
+}
+
+.fab-btn:active {
+  transform: scale(0.95);
+}
+
+.fab-btn-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  filter: brightness(0) invert(1);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-btn.fab-collapsed .fab-btn-icon {
+  transform: scale(1.1);
+}
+
+.fab-btn-text {
+  height: 22px;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 22px;
+  color: #FFFFFF;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 收起时隐藏文字 */
+.fab-btn.fab-collapsed .fab-btn-text {
+  opacity: 0;
+  max-width: 0;
 }
 
 .loading-state {
@@ -572,6 +765,34 @@ function handleSkipSetup() {
   font-size: 26rpx;
   font-weight: 500;
   color: #334155;
+}
+
+/* 说明与教程链接样式 */
+.welcome-help-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 16rpx 40rpx 8rpx;
+  margin-top: 16rpx;
+  color: #3b82f6;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.welcome-help-link:active {
+  opacity: 0.7;
+}
+
+.welcome-help-link.single-mode {
+  margin-top: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.welcome-help-icon {
+  width: 32rpx;
+  height: 32rpx;
 }
 
 .welcome-skip {

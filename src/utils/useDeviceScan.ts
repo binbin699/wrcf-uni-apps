@@ -6,12 +6,13 @@ import { PageMap, Pages } from '@/utils/route';
 import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 import {
-    requestCameraPermission,
+    requestCameraAndAlbumPermission,
     checkPermissionStatus,
     PermissionType,
     PermissionStatus,
     openPermissionSetting
 } from '@/utils/permission';
+import { AppInfo } from '@/const';
 
 export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNotify?: any }) {
     const { t: $t } = useI18n();
@@ -56,16 +57,17 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
                 // 对于 authorized 或 notDetermined，直接进行扫码
                 // iOS 的 uni.scanCode 会自动触发第一次授权弹窗，且体验比 requestCameraPermission 的拍照回退更好
             } else {
-                // 非 iOS 平台或已授权情况，走标准流程
-                const permissionResult = await requestCameraPermission({
+                // 非 iOS 平台：使用合并的预请求弹窗同时请求相机和相册权限
+                const permissionResult = await requestCameraAndAlbumPermission({
                     show: showNotify,
                     close: closeNotify
                 }, true);
 
-                if (!permissionResult.granted) {
+                if (!permissionResult.camera.granted) {
                     isNavigating.value = false;
                     return;
                 }
+                // 相册权限是可选的，不影响扫码流程
             }
 
             uni.scanCode({

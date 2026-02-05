@@ -161,9 +161,8 @@ class Request {
             uni.hideLoading();
           }
 
+          const response = res.data as RequestResponse<T>;
           if (res.statusCode === 200) {
-            const response = res.data as RequestResponse<T>;
-
             // 成功
             if (response.code === 1000) {
               // 请求成功，清除重试计数
@@ -208,16 +207,18 @@ class Request {
               this.handleAuthError();
               reject(response);
             } else {
+              const reqId = res.header['x-request-id'] || 'error';
               uni.showToast({
-                title: response.message || $t('common.request_failed'),
+                title: `[${reqId}] ${response.message || $t('common.request_failed')}`,
                 icon: 'none',
                 duration: 2000
               });
               reject(response);
             }
           } else {
+            const reqId = res.header['x-request-id'] || 'error';
             uni.showToast({
-              title: $t('common.network_error'),
+              title: `[${reqId}] ${response.message || $t('common.network_error')}`,
               icon: 'none',
               duration: 2000
             });

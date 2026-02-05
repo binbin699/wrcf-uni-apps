@@ -201,12 +201,6 @@
         "text": "%tabbar.agent%"
       },
       {
-        "pagePath": "pages/agent/create",
-        "iconPath": "static/tab-create.png",
-        "selectedIconPath": "static/tab-create-active.png",
-        "text": "%tabbar.create%"
-      },
-      {
         "pagePath": "pages/square/square",
         "iconPath": "static/tab-square.png",
         "selectedIconPath": "static/tab-square-active.png",

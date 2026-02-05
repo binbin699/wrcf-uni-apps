@@ -28,6 +28,7 @@ declare const APP_CONFIG: {
   MANUAL_ZH_URL: string;
   MANUAL_EN_URL: string;
   TUTORIAL_VIDEO_URL: string;
+  TUTORIAL_VIDEO_EN_URL: string;
   GOOGLE_OAUTH_CLIENT_ID_WEB: string;
   ARMS_PID: string;
   ARMS_ENDPOINT: string;

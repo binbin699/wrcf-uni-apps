@@ -66,9 +66,9 @@ onLaunch(() => {
   // 初始化 ARMS 监控
   initArmsMonitoring();
 
-  // Android 12+ 在 App 启动时立即请求蓝牙权限
-  // 这样 SDK 后续调用蓝牙 API 时权限就已经授予了
-  requestBluetoothPermissionsForAndroid12();
+  // Android 12+ 蓝牙权限请求已移至蓝牙配网页面
+  // 在用户实际使用蓝牙功能时才请求（带预请求弹窗说明）
+  // requestBluetoothPermissionsForAndroid12();
 
   userStore.initUserState();
   applyLocaleResources();

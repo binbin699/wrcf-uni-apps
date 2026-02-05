@@ -15,8 +15,8 @@
               :src="current === index ? item.selectedIconPath : item.iconPath"
               mode="aspectFit"
             />
-            <!-- 红点提示 -->
-            <view v-if="index === 2 && showSquareBadge" class="tabbar-badge"></view>
+            <!-- 红点提示（广场 tab 索引为 1） -->
+            <view v-if="index === 1 && showSquareBadge" class="tabbar-badge"></view>
           </view>
           <text class="tabbar-text">{{ item.text }}</text>
         </view>
@@ -58,19 +58,13 @@ onMounted(() => {
   }
 });
 
-// Tab 配置
+// Tab 配置（已移除"创建"选项，创建智能体改为二级页面）
 const tabList = computed(() => [
   {
     pagePath: '/pages/index/index',
     iconPath: '/static/tab-agent.png',
     selectedIconPath: '/static/tab-agent-active.png',
     text: $t('tabbar.agent')
-  },
-  {
-    pagePath: '/pages/agent/create',
-    iconPath: '/static/tab-create.png',
-    selectedIconPath: '/static/tab-create-active.png',
-    text: $t('tabbar.create')
   },
   {
     pagePath: '/pages/square/square',

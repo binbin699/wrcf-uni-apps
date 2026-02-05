@@ -305,13 +305,14 @@ import { useUserStore } from '@/store';
 import type { Device as UserDevice } from '../device/types';
 import { getWifiList, WifiScanError, WifiScanErrorType, startWifiSafe, stopWifiSafe, getConnectedWifiBestEffort } from '@/utils/wifi';
 import {
-  requestCameraPermission,
+  requestCameraAndAlbumPermission,
   requestLocationPermission,
   checkPermissionStatus,
   openPermissionSetting,
   PermissionType,
   PermissionStatus
 } from '@/utils/permission';
+import { AppInfo } from '@/const';
 import { useNotify } from '@/uni_modules/wot-design-uni';
 
 const toast = useToast();
@@ -483,16 +484,17 @@ async function handleScanQr() {
     return;
   }
 
-  // 非 iOS 平台：使用原有的权限请求流程
-  const permissionResult = await requestCameraPermission({
+  // 非 iOS 平台：使用合并的预请求弹窗同时请求相机和相册权限
+  const permissionResult = await requestCameraAndAlbumPermission({
     show: showNotify,
     close: closeNotify
   }, true);
-  if (!permissionResult.granted) {
+  if (!permissionResult.camera.granted) {
     // 权限请求工具已经显示了相应的提示，返回上一页
     uni.navigateBack();
     return;
   }
+  // 相册权限是可选的，不影响扫码流程
 
   uni.scanCode({
     scanType: ['qrCode'],

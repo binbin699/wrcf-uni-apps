@@ -22,7 +22,7 @@ export function gotoCreateAgentBy(agent: { id: number; agentId: string }) {
     agentId: agent.agentId
   });
 
-  uni.switchTab({
+  uni.navigateTo({
     url: PageMap[Pages.AgentCreate].url
   });
 }

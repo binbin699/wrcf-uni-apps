@@ -91,8 +91,9 @@
 import { PageMap, Pages } from '@/utils/route';
 import { agentApi, deviceApi } from '../api/index';
 import { gotoCreateAgentBy } from '@/pages/agent/create';
-import { requestCameraPermission, checkPermissionStatus, PermissionType, PermissionStatus, openPermissionSetting } from '@/utils/permission';
+import { requestCameraAndAlbumPermission, checkPermissionStatus, PermissionType, PermissionStatus, openPermissionSetting } from '@/utils/permission';
 import { updateSquareTabBadge } from '@/utils/tabBarBadge';
+import { AppInfo } from '@/const';
 
 export default {
   name: 'AgentBindDrawer',
@@ -267,11 +268,12 @@ export default {
             return;
           }
         } else {
-          // 非 iOS 平台请求相机权限
-          const permissionResult = await requestCameraPermission({}, true);
-          if (!permissionResult.granted) {
+          // 非 iOS 平台：使用合并的预请求弹窗同时请求相机和相册权限
+          const permissionResult = await requestCameraAndAlbumPermission({}, true);
+          if (!permissionResult.camera.granted) {
             return;
           }
+          // 相册权限是可选的，不影响扫码流程
         }
 
         // 扫码

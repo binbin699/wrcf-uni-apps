@@ -245,10 +245,8 @@ export default {
         if (error.message && error.message.includes('超时')) {
           // 检查是否可能是WiFi密码错误
           if (this.wifiConnectionStuck) {
-            errorMessage = 'WiFi连接超时，请检查WiFi密码是否正确';
+            errorMessage = this.$t('bluetooth.wifi_timeout_check_password');
           }
-        } else if (error.message) {
-          errorMessage = error.message;
         }
 
         this.configError = errorMessage;

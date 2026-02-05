@@ -19,7 +19,7 @@ export function useTemplateSelector(
   // 加载语言选项
   async function loadLanguageOptions() {
     try {
-      chatLanguageOptions.value = await getChatLanguageOptions($t);
+      chatLanguageOptions.value = await getChatLanguageOptions();
     } catch (error) {
       console.error('加载语言选项失败:', error);
     }
@@ -47,7 +47,7 @@ export function useTemplateSelector(
     return [
       { label: $t('create_agent.all_languages'), value: 'all' },
       ...availableLangOptions.map(opt => ({
-        label: opt.label,
+        label: opt.language,
         value: opt.langCode // 使用 langCode 作为 value（如 'zh_CN', 'en_US'）
       }))
     ];

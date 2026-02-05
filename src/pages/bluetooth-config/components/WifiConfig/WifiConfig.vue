@@ -286,7 +286,7 @@ export default {
       } catch (error) {
         console.error('WiFi扫描失败:', error);
         uni.showToast({
-          title: error.message || this.$t('bluetooth.wifi.scan_failed'),
+          title: this.$t('bluetooth.wifi.scan_failed'),
           icon: 'none',
           duration: 3000
         });
@@ -493,7 +493,7 @@ export default {
         console.error('WiFi配置发送失败:', error);
         uni.hideLoading();
         uni.showToast({
-          title: error.message || this.$t('common.operation_failed'),
+          title: this.$t('bluetooth.wifi_config_failed'),
           icon: 'none',
           duration: 3000
         });

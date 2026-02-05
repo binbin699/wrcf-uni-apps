@@ -52,6 +52,8 @@
             loop
             class="tutorial-video"
             object-fit="contain"
+            :direction="0"
+            :enable-play-gesture="false"
           />
         </view>
       </view>
@@ -70,8 +72,7 @@ const { t: $t } = useI18n();
 
 const statusBarHeight = ref<number>(44);
 const navContentHeight = ref<number>(44);
-
-const videoUrl = APP_CONFIG.TUTORIAL_VIDEO_URL;
+const videoUrl = ref<string>('');
 
 /**
  * 获取应用界面语言
@@ -103,6 +104,16 @@ onLoad(() => {
   // 稳健的标题栏高度计算
   navContentHeight.value = (capsule.top - (systemInfo.statusBarHeight || 0)) * 2 + capsule.height;
   // #endif
+
+  // 2. 新的视频选择逻辑
+  const lang = getAppLanguage();
+  if (lang === 'zh') {
+    // 中文界面显示 tutorial_en.mp4（中文视频）
+    videoUrl.value = APP_CONFIG.TUTORIAL_VIDEO_EN_URL;
+  } else {
+    // 其他界面显示 tutorial.mp4（英文视频）
+    videoUrl.value = APP_CONFIG.TUTORIAL_VIDEO_URL;
+  }
 });
 
 function goBack() {
@@ -218,7 +229,6 @@ function openManual() {
 }
 
 .nav-title {
-  font-family: PingFang SC, -apple-system, blinkmacsystemfont, 'Helvetica Neue', helvetica, 'lucida grande', 'arial', verdana, 'microsoft yahei', sans-serif;
   font-weight: 500;
   font-size: 20px;
   line-height: 100%;

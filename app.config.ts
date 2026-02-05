@@ -59,8 +59,11 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
   const APP_SETUP_MODE = 'both';
 
   // 是否支持声纹（微信小程序不支持）
-  const APP_USE_VOICEPRINT = platform !== 'mp-weixin';
+  // const APP_USE_VOICEPRINT = platform !== 'mp-weixin';
 
+  // 是否支持声纹（暂时在所有平台启用）
+  const APP_USE_VOICEPRINT = true;
+  
   // 用户协议和隐私政策 URL（微信小程序不显示）
   const TERMS_URL = platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/user-agreement';
   const PRIVACY_URL = platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/privacy-right';
@@ -73,6 +76,7 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
   const MANUAL_ZH_URL = 'https://mengdiantansuo.com.cn/files/manual_zh.pdf';
   const MANUAL_EN_URL = 'https://mengdiantansuo.com.cn/files/manual_en.pdf';
   const TUTORIAL_VIDEO_URL = 'https://mengdiantansuo.com.cn/files/tutorial.mp4';
+  const TUTORIAL_VIDEO_EN_URL = 'https://mengdiantansuo.com.cn/files/tutorial_en.mp4';
 
   // Google 授权登录，海外版需要配置 Google Client ID
   const GOOGLE_OAUTH_CLIENT_ID_WEB =
@@ -105,6 +109,7 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
     MANUAL_ZH_URL,
     MANUAL_EN_URL,
     TUTORIAL_VIDEO_URL,
+    TUTORIAL_VIDEO_EN_URL,
     GOOGLE_OAUTH_CLIENT_ID_WEB,
     ARMS_PID,
     ARMS_ENDPOINT,
