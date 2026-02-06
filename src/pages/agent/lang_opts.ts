@@ -134,6 +134,15 @@ export async function initLanguageDisplayNameCache(): Promise<void> {
   await ensureCacheLoaded();
 }
 
+export function getLanguageDisplayNameByLangCode(langCode: string, fallback?: string): string {
+  if (!langCode) return fallback || '';
+  if (languageCache) {
+    const found = languageCache.find((opt) => opt.langCode === langCode);
+    if (found) return found.language;
+  }
+  return fallback || langCode;
+}
+
 export function getLanguageDisplayName(voiceCode: string, fallback?: string): string {
   if (!voiceCode) {
     return fallback || '';
