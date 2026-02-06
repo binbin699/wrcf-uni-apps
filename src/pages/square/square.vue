@@ -275,7 +275,13 @@ import {
   resetUserGuideState
 } from '@/utils/userGuide';
 import { updateSquareTabBadge, showSquareBadge } from '@/utils/tabBarBadge';
-import { getChatLanguageOptions, backendLangToLangCode, getSystemLangCode, initLanguageDisplayNameCache, type ChatLanguageOption } from '../agent/lang_opts';
+import {
+  getChatLanguageOptions,
+  backendLangToLangCode,
+  getSystemLangCode,
+  initLanguageDisplayNameCache,
+  type ChatLanguageOption
+} from '../agent/lang_opts';
 
 type SquareAgent = Agent & {
   name: string;
@@ -1838,7 +1844,7 @@ function handleBindCancel() {
   gap: 16rpx;
   min-height: 112rpx;
   background: #ededf9;
-  z-index: 99;
+  z-index: 101;
 }
 
 .info-bar-icon {
