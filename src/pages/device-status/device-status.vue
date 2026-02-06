@@ -285,6 +285,10 @@ import { deviceApi, agentApi, voiceApi } from '@/api/index';
 import { PageMap, Pages } from '@/utils/route';
 import { useDeviceScan } from '@/utils/useDeviceScan';
 import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
+import {
+  initLanguageDisplayNameCache,
+  getLanguageDisplayNameByLangCode
+} from '@/pages/agent/lang_opts';
 import CustomTabBar from '@/components/CustomTabBar.vue';
 
 const { t: $t } = useI18n();
@@ -305,24 +309,31 @@ const showEditName = ref(false);
 const editDeviceName = ref('');
 const isDescExpanded = ref(false);
 const showDeviceDropdown = ref(false);
+let loadDevicesVersion = 0; // 用于取消过期的加载请求
 
 // 加载设备列表
 const loadDevices = async () => {
+  const version = ++loadDevicesVersion;
   try {
     loading.value = true;
     // 记住当前选中的设备ID
     const previousDeviceId = currentDevice.value?.id;
 
     const res = await deviceApi.getList();
+    // 如果在等待期间又触发了新的加载，则丢弃本次结果
+    if (version !== loadDevicesVersion) {
+      console.log('[设备状态] 丢弃过期的设备列表响应');
+      return;
+    }
     console.log('[设备状态] 设备列表响应:', res);
-    if (res && res.data) {
+    if (res && res.code === 1000 && res.data) {
       deviceList.value = Array.isArray(res.data) ? res.data : [];
       console.log('[设备状态] 设备列表:', deviceList.value);
 
       if (deviceList.value.length > 0) {
         // 尝试保持之前选中的设备，如果不存在则选择第一个
         const previousDevice = previousDeviceId
-          ? deviceList.value.find((d) => d.id === previousDeviceId)
+          ? deviceList.value.find((d: any) => d.id === previousDeviceId)
           : null;
 
         if (previousDevice) {
@@ -332,7 +343,7 @@ const loadDevices = async () => {
           currentDevice.value = deviceList.value[0];
           console.log('[设备状态] 选择第一个设备:', currentDevice.value);
         }
-        await loadBoundAgent();
+        await loadBoundAgent(version);
       } else {
         // 设备列表为空时，清空当前设备和智能体
         currentDevice.value = null;
@@ -346,18 +357,22 @@ const loadDevices = async () => {
       boundAgent.value = null;
     }
   } catch (error) {
+    // 过期请求不处理错误
+    if (version !== loadDevicesVersion) return;
     console.error('加载设备列表失败:', error);
     // 出错时也清空，避免显示旧数据
     deviceList.value = [];
     currentDevice.value = null;
     boundAgent.value = null;
   } finally {
-    loading.value = false;
+    if (version === loadDevicesVersion) {
+      loading.value = false;
+    }
   }
 };
 
 // 加载绑定的智能体
-const loadBoundAgent = async () => {
+const loadBoundAgent = async (version?: number) => {
   console.log('[设备状态] 尝试加载绑定的智能体, agentId:', currentDevice.value?.agentId);
   if (!currentDevice.value?.agentId) {
     console.log('[设备状态] 设备未绑定智能体');
@@ -366,75 +381,115 @@ const loadBoundAgent = async () => {
   }
   try {
     const res = await agentApi.getInfo(currentDevice.value.agentId);
+    // 如果在等待期间又触发了新的加载，则丢弃本次结果
+    if (version !== undefined && version !== loadDevicesVersion) {
+      console.log('[设备状态] 丢弃过期的智能体详情响应');
+      return;
+    }
     console.log('[设备状态] 智能体详情响应:', res);
     // 检查 API 返回是否成功且数据有效
     if (res && res.code === 1000 && res.data) {
-      boundAgent.value = res.data;
-      console.log('[设备状态] 绑定的智能体:', boundAgent.value);
+      // 构建完整的 agent 数据对象，避免后续直接修改 ref 的嵌套属性导致响应式丢失
+      const agentData = { ...res.data };
+      console.log('[设备状态] 绑定的智能体:', agentData);
 
-      // 根据ID查询音色名称和LLM名称
-      if (boundAgent.value.config) {
+      // 根据ID查询语言显示名称、音色名称和LLM名称
+      if (agentData.config) {
+        // 复制 config 以便安全修改
+        agentData.config = { ...agentData.config };
+
+        // 通过 langCode 查找翻译后的语言显示名称
+        if (agentData.config.langCode) {
+          await initLanguageDisplayNameCache();
+          const langDisplayName = getLanguageDisplayNameByLangCode(
+            agentData.config.langCode,
+            agentData.config.language
+          );
+          agentData.config.language = langDisplayName;
+        }
+
+        // 并行查询音色名称和LLM名称
+        const promises: Promise<void>[] = [];
+
         // 查询音色名称
-        if (boundAgent.value.config.ttsVoiceId) {
-          try {
-            const voiceRes = await voiceApi.getList();
-            console.log('[设备状态] 音色列表响应:', voiceRes);
-            if (voiceRes && voiceRes.data) {
-              const voiceList = Array.isArray(voiceRes.data)
-                ? voiceRes.data
-                : voiceRes.data.list
-                  ? voiceRes.data.list
-                  : Object.values(voiceRes.data);
-              console.log('[设备状态] 音色列表:', voiceList);
-              const voice = voiceList.find(
-                (v: any) =>
-                  v.voiceId === boundAgent.value.config.ttsVoiceId ||
-                  v.id === boundAgent.value.config.ttsVoiceId
-              );
-              if (voice) {
-                boundAgent.value.config.voiceName = voice.voiceName || voice.name;
-                console.log('[设备状态] 找到音色:', voice);
+        if (agentData.config.ttsVoiceId) {
+          promises.push(
+            (async () => {
+              try {
+                const voiceRes = await voiceApi.getList();
+                console.log('[设备状态] 音色列表响应:', voiceRes);
+                if (voiceRes && voiceRes.data) {
+                  const voiceList = Array.isArray(voiceRes.data)
+                    ? voiceRes.data
+                    : voiceRes.data.list
+                      ? voiceRes.data.list
+                      : Object.values(voiceRes.data);
+                  console.log('[设备状态] 音色列表:', voiceList);
+                  const voice = voiceList.find(
+                    (v: any) =>
+                      v.voiceId === agentData.config.ttsVoiceId ||
+                      v.id === agentData.config.ttsVoiceId
+                  );
+                  if (voice) {
+                    agentData.config.voiceName = voice.voiceName || voice.name;
+                    console.log('[设备状态] 找到音色:', voice);
+                  }
+                }
+              } catch (e) {
+                console.error('查询音色名称失败:', e);
               }
-            }
-          } catch (e) {
-            console.error('查询音色名称失败:', e);
-          }
+            })()
+          );
         }
 
         // 查询LLM名称
-        if (boundAgent.value.config.llmModelId) {
-          try {
-            const llmRes = await agentApi.getLLMlist();
-            console.log('[设备状态] LLM列表响应:', llmRes);
-            if (llmRes && llmRes.data) {
-              // LLM列表在 data.llm 数组中
-              const llmList =
-                llmRes.data.llm ||
-                llmRes.data.list ||
-                (Array.isArray(llmRes.data) ? llmRes.data : []);
-              console.log('[设备状态] LLM列表:', llmList);
-              // 尝试多种ID字段匹配
-              const llm = llmList.find(
-                (l: any) =>
-                  l.id === boundAgent.value.config.llmModelId ||
-                  l.llmId === boundAgent.value.config.llmModelId ||
-                  l.modelId === boundAgent.value.config.llmModelId
-              );
-              if (llm) {
-                boundAgent.value.config.llmModelName = llm.name || llm.llmName || llm.modelName;
-                console.log('[设备状态] 找到LLM:', llm);
-              } else {
-                console.log(
-                  '[设备状态] 未找到匹配的LLM, llmModelId:',
-                  boundAgent.value.config.llmModelId
-                );
+        if (agentData.config.llmModelId) {
+          promises.push(
+            (async () => {
+              try {
+                const llmRes = await agentApi.getLLMlist();
+                console.log('[设备状态] LLM列表响应:', llmRes);
+                if (llmRes && llmRes.data) {
+                  // LLM列表在 data.llm 数组中
+                  const llmList =
+                    llmRes.data.llm ||
+                    llmRes.data.list ||
+                    (Array.isArray(llmRes.data) ? llmRes.data : []);
+                  console.log('[设备状态] LLM列表:', llmList);
+                  // 尝试多种ID字段匹配
+                  const llm = llmList.find(
+                    (l: any) =>
+                      l.id === agentData.config.llmModelId ||
+                      l.llmId === agentData.config.llmModelId ||
+                      l.modelId === agentData.config.llmModelId
+                  );
+                  if (llm) {
+                    agentData.config.llmModelName = llm.name || llm.llmName || llm.modelName;
+                    console.log('[设备状态] 找到LLM:', llm);
+                  } else {
+                    console.log(
+                      '[设备状态] 未找到匹配的LLM, llmModelId:',
+                      agentData.config.llmModelId
+                    );
+                  }
+                }
+              } catch (e) {
+                console.error('查询LLM名称失败:', e);
               }
-            }
-          } catch (e) {
-            console.error('查询LLM名称失败:', e);
-          }
+            })()
+          );
         }
+
+        await Promise.all(promises);
       }
+
+      // 再次检查版本，避免异步查询期间的竞态
+      if (version !== undefined && version !== loadDevicesVersion) {
+        console.log('[设备状态] 丢弃过期的智能体数据（查询音色/LLM期间已过期）');
+        return;
+      }
+      // 一次性赋值完整数据，确保 Vue 响应式能检测到变更
+      boundAgent.value = agentData;
     } else {
       // API返回失败或智能体不存在，清空绑定的智能体
       console.log('[设备状态] 智能体不存在或获取失败, code:', res?.code, 'message:', res?.message);
