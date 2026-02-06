@@ -70,8 +70,11 @@
       </view>
 
       <!-- 无设备状态 - 欢迎引导样式 -->
-      <view class="welcome-guide" v-else-if="!currentDevice">
-        <view class="welcome-card">
+      <view
+        class="welcome-guide"
+        v-else-if="!currentDevice"
+        :class="{ 'is-single': setupMode !== 'both' }">
+        <view class="welcome-card" v-if="setupMode === 'both'">
           <view class="welcome-title">{{ $t('welcome.guide_title') }}</view>
           <view class="welcome-actions">
             <view class="welcome-setup-options">
@@ -94,9 +97,42 @@
                 <text class="welcome-setup-text">{{ $t('welcome.setup_bluetooth') }}</text>
               </view>
             </view>
+            <!-- #ifndef MP-WEIXIN -->
             <view class="welcome-help-link" @click="handleHelpClick">
               <text>{{ $t('profile.instructions_tutorials') }}</text>
             </view>
+            <!-- #endif -->
+          </view>
+        </view>
+        <view class="welcome-card-single" v-else>
+          <view class="welcome-icon-wrapper single" :class="setupMode">
+            <image
+              v-if="setupMode === 'qrcode'"
+              class="welcome-setup-icon-large"
+              src="/static/icons/scan-qrcode.svg"
+              mode="aspectFit" />
+            <image
+              v-else
+              class="welcome-setup-icon-large"
+              src="/static/icons/bluetooth.svg"
+              mode="aspectFit" />
+          </view>
+          <view class="welcome-title-single">{{ $t('welcome.guide_title') }}</view>
+          <view class="welcome-actions-single">
+            <view
+              class="welcome-primary-btn"
+              @click="
+                setupMode === 'qrcode' ? handleAddDeviceQrcode() : handleAddDeviceBluetooth()
+              ">
+              {{
+                setupMode === 'qrcode' ? $t('welcome.setup_qrcode') : $t('welcome.setup_bluetooth')
+              }}
+            </view>
+            <!-- #ifndef MP-WEIXIN -->
+            <view class="welcome-help-link single-mode" @click="handleHelpClick">
+              <text>{{ $t('profile.instructions_tutorials') }}</text>
+            </view>
+            <!-- #endif -->
           </view>
         </view>
       </view>
@@ -255,6 +291,9 @@ const { t: $t } = useI18n();
 const toast = useToast();
 const { showNotify, closeNotify } = useNotify();
 const { scanAndBind, isNavigating } = useDeviceScan({ toast, showNotify, closeNotify });
+
+// 配置
+const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
 
 // 状态
 const loading = ref(true);
@@ -911,6 +950,88 @@ uni.$on('deviceStatusRefresh', () => {
 
   &:active {
     opacity: 0.7;
+  }
+
+  &.single-mode {
+    margin-top: 8rpx;
+    margin-bottom: 8rpx;
+  }
+}
+
+// 单个按钮布局样式（qrcode / bluetooth 模式）
+.welcome-card-single {
+  width: 100%;
+  max-width: 640rpx;
+  background: #ffffff;
+  border-radius: 48rpx;
+  padding: 80rpx 48rpx 60rpx;
+  box-shadow: 0 32rpx 80rpx rgba(37, 99, 235, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-icon-wrapper.single {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+  box-shadow: 0 16rpx 32rpx rgba(0, 0, 0, 0.1);
+
+  &.qrcode {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 16rpx 32rpx rgba(16, 185, 129, 0.25);
+  }
+
+  &.bluetooth {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    box-shadow: 0 16rpx 32rpx rgba(59, 130, 246, 0.25);
+  }
+}
+
+.welcome-setup-icon-large {
+  width: 72rpx;
+  height: 72rpx;
+}
+
+.welcome-title-single {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.5;
+  white-space: pre-line;
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.welcome-actions-single {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-primary-btn {
+  width: 100%;
+  height: 100rpx;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #ffffff;
+  border-radius: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-shadow: 0 12rpx 24rpx rgba(37, 99, 235, 0.25);
+  margin-bottom: 32rpx;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.97);
+    opacity: 0.9;
   }
 }
 
