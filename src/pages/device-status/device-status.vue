@@ -1,8 +1,10 @@
 <template>
+  <wd-toast />
+  <wd-notify />
   <view class="device-status-container">
     <!-- 渐变背景 -->
     <view class="gradient-bg"></view>
-    
+
     <!-- 光晕装饰 -->
     <view class="halo-decoration">
       <view class="halo-line halo-line-1"></view>
@@ -17,35 +19,45 @@
       <view class="navbar-status-bar"></view>
       <view class="navbar-content">
         <!-- 切换设备按钮 - 仅当有多个设备时显示 -->
-        <view class="switch-device-btn" v-if="deviceList.length > 1" @click.stop="toggleDeviceDropdown">
+        <view
+          class="switch-device-btn"
+          v-if="deviceList.length > 1"
+          @click.stop="toggleDeviceDropdown">
           <text class="switch-device-text">{{ $t('device_status.switch') }}</text>
           <view class="switch-device-icon">
-            <image src="/static/icons/arrow-down.svg" mode="aspectFit" :class="{ rotated: showDeviceDropdown }"></image>
+            <image
+              src="/static/icons/arrow-down.svg"
+              mode="aspectFit"
+              :class="{ rotated: showDeviceDropdown }"></image>
           </view>
         </view>
         <text class="navbar-title">{{ $t('tabbar.device') }}</text>
       </view>
     </view>
-    
+
     <!-- 设备切换下拉菜单 -->
-    <view class="device-dropdown-overlay" v-if="showDeviceDropdown" @click="showDeviceDropdown = false"></view>
+    <view
+      class="device-dropdown-overlay"
+      v-if="showDeviceDropdown"
+      @click="showDeviceDropdown = false"></view>
     <view class="device-dropdown" v-if="showDeviceDropdown">
       <view class="device-dropdown-list">
-        <view 
-          class="device-dropdown-item" 
-          v-for="(device, index) in deviceList" 
+        <view
+          class="device-dropdown-item"
+          v-for="(device, index) in deviceList"
           :key="device.id"
           :class="{ active: device.id === currentDevice?.id }"
           @click="selectDeviceFromDropdown(device)">
-          <text class="device-dropdown-item-name" :class="{ active: device.id === currentDevice?.id }">
+          <text
+            class="device-dropdown-item-name"
+            :class="{ active: device.id === currentDevice?.id }">
             {{ device.macAddress ? 'MAC: ' + device.macAddress : device.deviceName }}
           </text>
-          <image 
-            v-if="device.id === currentDevice?.id" 
-            class="device-dropdown-item-check" 
-            src="/static/icons/check.svg" 
-            mode="aspectFit">
-          </image>
+          <image
+            v-if="device.id === currentDevice?.id"
+            class="device-dropdown-item-check"
+            src="/static/icons/check.svg"
+            mode="aspectFit"></image>
         </view>
       </view>
     </view>
@@ -65,13 +77,19 @@
             <view class="welcome-setup-options">
               <view class="welcome-setup-card" @click="handleAddDeviceQrcode">
                 <view class="welcome-setup-icon-wrapper qr">
-                  <image class="welcome-setup-icon" src="/static/icons/scan-qrcode.svg" mode="aspectFit" />
+                  <image
+                    class="welcome-setup-icon"
+                    src="/static/icons/scan-qrcode.svg"
+                    mode="aspectFit" />
                 </view>
                 <text class="welcome-setup-text">{{ $t('welcome.setup_qrcode') }}</text>
               </view>
               <view class="welcome-setup-card" @click="handleAddDeviceBluetooth">
                 <view class="welcome-setup-icon-wrapper bluetooth">
-                  <image class="welcome-setup-icon" src="/static/icons/bluetooth.svg" mode="aspectFit" />
+                  <image
+                    class="welcome-setup-icon"
+                    src="/static/icons/bluetooth.svg"
+                    mode="aspectFit" />
                 </view>
                 <text class="welcome-setup-text">{{ $t('welcome.setup_bluetooth') }}</text>
               </view>
@@ -88,7 +106,13 @@
         <!-- 设备卡片 -->
         <view class="device-card">
           <view class="device-card-content">
-            <text class="device-name">{{ currentDevice.macAddress ? 'MAC: ' + currentDevice.macAddress : currentDevice.deviceName }}</text>
+            <text class="device-name">
+              {{
+                currentDevice.macAddress
+                  ? 'MAC: ' + currentDevice.macAddress
+                  : currentDevice.deviceName
+              }}
+            </text>
             <!-- 编辑按钮暂时注释，等后端接口完成后启用
             <view class="device-edit-btn" @click.stop="showEditNamePopup">
               <image class="edit-icon" src="/static/icons/icon-edit.svg" mode="aspectFit"></image>
@@ -118,23 +142,35 @@
                   </view>
                 </view>
                 <view class="agent-tags">
-                  <text class="agent-tag">{{ boundAgent.config?.language || $t('device_status.default_language') }}</text>
+                  <text class="agent-tag">
+                    {{ boundAgent.config?.language || $t('device_status.default_language') }}
+                  </text>
                   <view class="agent-tag-divider"></view>
-                  <text class="agent-tag">{{ boundAgent.config?.voiceName || $t('device_status.default_voice') }}</text>
+                  <text class="agent-tag">
+                    {{ boundAgent.config?.voiceName || $t('device_status.default_voice') }}
+                  </text>
                   <view class="agent-tag-divider"></view>
-                  <text class="agent-tag">{{ boundAgent.config?.llmModelName || $t('device_status.default_llm') }}</text>
+                  <text class="agent-tag">
+                    {{ boundAgent.config?.llmModelName || $t('device_status.default_llm') }}
+                  </text>
                 </view>
                 <view class="agent-divider"></view>
-                <text class="agent-desc" :class="{ 'is-expanded': isDescExpanded }" @click.stop="toggleDescExpand">
+                <text
+                  class="agent-desc"
+                  :class="{ 'is-expanded': isDescExpanded }"
+                  @click.stop="toggleDescExpand">
                   {{ boundAgent.config?.systemPrompt || $t('device_status.no_description') }}
                 </text>
               </view>
             </view>
-            
+
             <!-- 底部当前角色标签 -->
             <view class="agent-section-footer">
               <view class="agent-section-header">
-                <image class="agent-section-icon" src="/static/icons/icon-agent.svg" mode="aspectFit"></image>
+                <image
+                  class="agent-section-icon"
+                  src="/static/icons/icon-agent.svg"
+                  mode="aspectFit"></image>
                 <text class="agent-section-title">{{ $t('device_status.current_agent') }}</text>
               </view>
             </view>
@@ -149,12 +185,11 @@
         <view class="edit-name-header">
           <text class="edit-name-title">{{ $t('device_status.edit_device_name') }}</text>
           <view class="edit-name-input-wrapper">
-            <input 
-              class="edit-name-input" 
-              v-model="editDeviceName" 
+            <input
+              class="edit-name-input"
+              v-model="editDeviceName"
               :placeholder="$t('device_status.enter_device_name')"
-              maxlength="20"
-            />
+              maxlength="20" />
             <view class="edit-name-clear" v-if="editDeviceName" @click="editDeviceName = ''">
               <image class="clear-icon" src="/static/icons/icon-clear.svg" mode="aspectFit"></image>
             </view>
@@ -181,13 +216,15 @@
           </view>
         </view>
         <scroll-view class="device-selector-list" scroll-y>
-          <view 
-            class="device-selector-item" 
-            v-for="device in deviceList" 
+          <view
+            class="device-selector-item"
+            v-for="device in deviceList"
             :key="device.id"
             :class="{ active: device.id === currentDevice?.id }"
             @click="handleSelectDevice(device)">
-            <text class="device-selector-item-name">{{ device.macAddress ? 'MAC: ' + device.macAddress : device.deviceName }}</text>
+            <text class="device-selector-item-name">
+              {{ device.macAddress ? 'MAC: ' + device.macAddress : device.deviceName }}
+            </text>
             <view class="device-selector-item-check" v-if="device.id === currentDevice?.id">
               <image src="/static/icons/check.svg" mode="aspectFit"></image>
             </view>
@@ -211,10 +248,13 @@ import { onShow } from '@dcloudio/uni-app';
 import { deviceApi, agentApi, voiceApi } from '@/api/index';
 import { PageMap, Pages } from '@/utils/route';
 import { useDeviceScan } from '@/utils/useDeviceScan';
+import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
 import CustomTabBar from '@/components/CustomTabBar.vue';
 
 const { t: $t } = useI18n();
-const { scanAndBind } = useDeviceScan();
+const toast = useToast();
+const { showNotify, closeNotify } = useNotify();
+const { scanAndBind, isNavigating } = useDeviceScan({ toast, showNotify, closeNotify });
 
 // 状态
 const loading = ref(true);
@@ -233,19 +273,19 @@ const loadDevices = async () => {
     loading.value = true;
     // 记住当前选中的设备ID
     const previousDeviceId = currentDevice.value?.id;
-    
+
     const res = await deviceApi.getList();
     console.log('[设备状态] 设备列表响应:', res);
     if (res && res.data) {
       deviceList.value = Array.isArray(res.data) ? res.data : [];
       console.log('[设备状态] 设备列表:', deviceList.value);
-      
+
       if (deviceList.value.length > 0) {
         // 尝试保持之前选中的设备，如果不存在则选择第一个
-        const previousDevice = previousDeviceId 
-          ? deviceList.value.find(d => d.id === previousDeviceId)
+        const previousDevice = previousDeviceId
+          ? deviceList.value.find((d) => d.id === previousDeviceId)
           : null;
-        
+
         if (previousDevice) {
           currentDevice.value = previousDevice;
           console.log('[设备状态] 保持之前选中的设备:', currentDevice.value);
@@ -292,7 +332,7 @@ const loadBoundAgent = async () => {
     if (res && res.code === 1000 && res.data) {
       boundAgent.value = res.data;
       console.log('[设备状态] 绑定的智能体:', boundAgent.value);
-      
+
       // 根据ID查询音色名称和LLM名称
       if (boundAgent.value.config) {
         // 查询音色名称
@@ -301,12 +341,16 @@ const loadBoundAgent = async () => {
             const voiceRes = await voiceApi.getList();
             console.log('[设备状态] 音色列表响应:', voiceRes);
             if (voiceRes && voiceRes.data) {
-              const voiceList = Array.isArray(voiceRes.data) ? voiceRes.data : 
-                                (voiceRes.data.list ? voiceRes.data.list : Object.values(voiceRes.data));
+              const voiceList = Array.isArray(voiceRes.data)
+                ? voiceRes.data
+                : voiceRes.data.list
+                  ? voiceRes.data.list
+                  : Object.values(voiceRes.data);
               console.log('[设备状态] 音色列表:', voiceList);
-              const voice = voiceList.find((v: any) => 
-                v.voiceId === boundAgent.value.config.ttsVoiceId || 
-                v.id === boundAgent.value.config.ttsVoiceId
+              const voice = voiceList.find(
+                (v: any) =>
+                  v.voiceId === boundAgent.value.config.ttsVoiceId ||
+                  v.id === boundAgent.value.config.ttsVoiceId
               );
               if (voice) {
                 boundAgent.value.config.voiceName = voice.voiceName || voice.name;
@@ -317,7 +361,7 @@ const loadBoundAgent = async () => {
             console.error('查询音色名称失败:', e);
           }
         }
-        
+
         // 查询LLM名称
         if (boundAgent.value.config.llmModelId) {
           try {
@@ -325,20 +369,26 @@ const loadBoundAgent = async () => {
             console.log('[设备状态] LLM列表响应:', llmRes);
             if (llmRes && llmRes.data) {
               // LLM列表在 data.llm 数组中
-              const llmList = llmRes.data.llm || llmRes.data.list || 
-                              (Array.isArray(llmRes.data) ? llmRes.data : []);
+              const llmList =
+                llmRes.data.llm ||
+                llmRes.data.list ||
+                (Array.isArray(llmRes.data) ? llmRes.data : []);
               console.log('[设备状态] LLM列表:', llmList);
               // 尝试多种ID字段匹配
-              const llm = llmList.find((l: any) => 
-                l.id === boundAgent.value.config.llmModelId ||
-                l.llmId === boundAgent.value.config.llmModelId ||
-                l.modelId === boundAgent.value.config.llmModelId
+              const llm = llmList.find(
+                (l: any) =>
+                  l.id === boundAgent.value.config.llmModelId ||
+                  l.llmId === boundAgent.value.config.llmModelId ||
+                  l.modelId === boundAgent.value.config.llmModelId
               );
               if (llm) {
                 boundAgent.value.config.llmModelName = llm.name || llm.llmName || llm.modelName;
                 console.log('[设备状态] 找到LLM:', llm);
               } else {
-                console.log('[设备状态] 未找到匹配的LLM, llmModelId:', boundAgent.value.config.llmModelId);
+                console.log(
+                  '[设备状态] 未找到匹配的LLM, llmModelId:',
+                  boundAgent.value.config.llmModelId
+                );
               }
             }
           } catch (e) {
@@ -415,7 +465,7 @@ const handleSaveDeviceName = async () => {
     });
     return;
   }
-  
+
   try {
     await deviceApi.update({
       id: currentDevice.value.id,
@@ -429,8 +479,8 @@ const handleSaveDeviceName = async () => {
     });
   } catch (error: any) {
     console.error('更新设备名称失败:', error);
-    const errorMsg = error?.message?.includes('Not Found') 
-      ? $t('common.operation_failed') 
+    const errorMsg = error?.message?.includes('Not Found')
+      ? $t('common.operation_failed')
       : $t('common.save_failed');
     uni.showToast({
       title: errorMsg,
@@ -495,6 +545,8 @@ const handleBindAgent = () => {
 onShow(() => {
   // 隐藏系统 TabBar（解决双重导航栏问题）
   uni.hideTabBar({ animation: false });
+  // 重置扫码导航状态，防止 Tab 页持久化导致 isNavigating 卡住
+  isNavigating.value = false;
   // 刷新设备列表（onShow 在页面首次显示时也会触发，无需在 onMounted 中重复调用）
   loadDevices();
 });
@@ -519,7 +571,7 @@ uni.$on('deviceStatusRefresh', () => {
   height: 100%;
   left: 0;
   top: 0;
-  background: linear-gradient(180deg, #9CBDFF 0%, #D2DBFF 22.97%, #FCFDFF 100%);
+  background: linear-gradient(180deg, #9cbdff 0%, #d2dbff 22.97%, #fcfdff 100%);
   z-index: 0;
 }
 
@@ -567,7 +619,7 @@ uni.$on('deviceStatusRefresh', () => {
   font-size: 16px;
   font-weight: 400;
   line-height: 22px;
-  color: #36404F;
+  color: #36404f;
 }
 
 .switch-device-icon {
@@ -576,12 +628,12 @@ uni.$on('deviceStatusRefresh', () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   image {
     width: 16px;
     height: 16px;
     transition: transform 0.2s ease;
-    
+
     &.rotated {
       transform: rotate(180deg);
     }
@@ -604,7 +656,7 @@ uni.$on('deviceStatusRefresh', () => {
   top: calc(var(--status-bar-height, 44px) + 44px + 2px);
   width: 199px;
   max-height: 220px;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
   z-index: 101;
@@ -626,15 +678,15 @@ uni.$on('deviceStatusRefresh', () => {
   align-items: center;
   padding: 9px 12px;
   min-height: 44px;
-  background: #FFFFFF;
-  border-bottom: 0.5px solid #F3F4F7;
-  
+  background: #ffffff;
+  border-bottom: 0.5px solid #f3f4f7;
+
   &:last-child {
     border-bottom: none;
   }
-  
+
   &.active {
-    background: #FFFFFF;
+    background: #ffffff;
   }
 }
 
@@ -647,9 +699,9 @@ uni.$on('deviceStatusRefresh', () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  
+
   &.active {
-    color: #3E5DEF;
+    color: #3e5def;
   }
 }
 
@@ -673,7 +725,7 @@ uni.$on('deviceStatusRefresh', () => {
 
 .halo-line {
   position: absolute;
-  background: linear-gradient(90deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
   filter: blur(6px);
   transform: rotate(34.28deg);
 }
@@ -710,7 +762,7 @@ uni.$on('deviceStatusRefresh', () => {
   height: 209px;
   left: -57px;
   bottom: 150px;
-  background: #EBEFFF;
+  background: #ebefff;
   opacity: 0.6;
   filter: blur(26px);
 }
@@ -720,7 +772,7 @@ uni.$on('deviceStatusRefresh', () => {
   height: 181px;
   right: -77px;
   bottom: 120px;
-  background: #EAEEFF;
+  background: #eaeeff;
   opacity: 0.5;
   filter: blur(20px);
 }
@@ -744,7 +796,7 @@ uni.$on('deviceStatusRefresh', () => {
 
 .loading-text {
   font-size: 14px;
-  color: #60718B;
+  color: #60718b;
 }
 
 // 欢迎引导样式
@@ -753,7 +805,10 @@ uni.$on('deviceStatusRefresh', () => {
   justify-content: center;
   align-items: center;
   // 计算可用高度：100vh - 顶部导航栏高度 - 顶部padding - 底部TabBar区域 - 底部padding
-  min-height: calc(100vh - var(--status-bar-height, 44px) - 44px - 16px - 120px - env(safe-area-inset-bottom) - 16px);
+  min-height: calc(
+    100vh - var(--status-bar-height, 44px) - 44px - 16px - 120px - env(safe-area-inset-bottom) -
+      16px
+  );
   padding: 0 30rpx;
 }
 
@@ -806,7 +861,7 @@ uni.$on('deviceStatusRefresh', () => {
   border: 2rpx solid #f1f5f9;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
-  
+
   &:active {
     transform: scale(0.96);
     background: #f8fafc;
@@ -821,11 +876,11 @@ uni.$on('deviceStatusRefresh', () => {
   align-items: center;
   justify-content: center;
   box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.1);
-  
+
   &.qr {
     background: linear-gradient(135deg, #10b981, #059669);
   }
-  
+
   &.bluetooth {
     background: linear-gradient(135deg, #3b82f6, #2563eb);
   }
@@ -853,7 +908,7 @@ uni.$on('deviceStatusRefresh', () => {
   font-size: 28rpx;
   font-weight: 500;
   transition: all 0.2s ease;
-  
+
   &:active {
     opacity: 0.7;
   }
@@ -870,7 +925,7 @@ uni.$on('deviceStatusRefresh', () => {
 .device-card {
   width: 100%;
   height: 72px;
-  background: linear-gradient(274.82deg, #637DF2 0%, #3E5EEF 100%);
+  background: linear-gradient(274.82deg, #637df2 0%, #3e5eef 100%);
   box-shadow: 0px 0px 12px rgba(91, 118, 248, 0.06);
   border-radius: 16px;
   position: relative;
@@ -891,7 +946,7 @@ uni.$on('deviceStatusRefresh', () => {
 .device-name {
   font-size: 20px;
   font-weight: 500;
-  color: #FFFFFF;
+  color: #ffffff;
   line-height: 36px;
   flex: 1;
 }
@@ -927,7 +982,7 @@ uni.$on('deviceStatusRefresh', () => {
   display: flex;
   flex-direction: row;
   padding: 20px 16px;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 16px;
   box-shadow: 0px 0px 12px rgba(91, 118, 248, 0.06);
   gap: 12px;
@@ -941,8 +996,8 @@ uni.$on('deviceStatusRefresh', () => {
   padding: 0 16px 13px;
   height: 70px;
   margin-top: -26px;
-  background: #EDF9FF;
-  border: 0.5px solid #D5DAE2;
+  background: #edf9ff;
+  border: 0.5px solid #d5dae2;
   border-radius: 0 0 20px 20px;
   box-sizing: border-box;
   z-index: -1;
@@ -962,7 +1017,7 @@ uni.$on('deviceStatusRefresh', () => {
 
 .agent-section-title {
   font-size: 14px;
-  color: #60718B;
+  color: #60718b;
   line-height: 24px;
 }
 
@@ -973,7 +1028,7 @@ uni.$on('deviceStatusRefresh', () => {
 .avatar-bg {
   width: 44px;
   height: 44px;
-  background: #E3F6FF;
+  background: #e3f6ff;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -983,7 +1038,7 @@ uni.$on('deviceStatusRefresh', () => {
 .avatar-text {
   font-size: 18px;
   font-weight: 500;
-  color: #3E5DEF;
+  color: #3e5def;
   line-height: 24px;
   text-align: center;
 }
@@ -1018,7 +1073,7 @@ uni.$on('deviceStatusRefresh', () => {
   width: 16px;
   height: 16px;
   opacity: 0.8;
-  
+
   image {
     width: 100%;
     height: 100%;
@@ -1030,7 +1085,7 @@ uni.$on('deviceStatusRefresh', () => {
   flex-direction: row;
   align-items: center;
   padding: 6px 12px;
-  background: #E3F6FF;
+  background: #e3f6ff;
   border-radius: 6px;
   gap: 8px;
   flex-wrap: wrap;
@@ -1038,33 +1093,33 @@ uni.$on('deviceStatusRefresh', () => {
 
 .agent-tag {
   font-size: 13px;
-  color: #36404F;
+  color: #36404f;
 }
 
 .agent-tag-divider {
   width: 1px;
   height: 8px;
-  background: #98A5B8;
+  background: #98a5b8;
   opacity: 0.5;
 }
 
 .agent-divider {
   width: 100%;
   height: 1px;
-  background: #D5DAE2;
+  background: #d5dae2;
   margin: 8px 0;
 }
 
 .agent-desc {
   font-size: 14px;
   line-height: 22px;
-  color: #4B586D;
+  color: #4b586d;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   line-clamp: 3;
   overflow: hidden;
-  
+
   &.is-expanded {
     -webkit-line-clamp: unset;
     line-clamp: unset;
@@ -1077,7 +1132,7 @@ uni.$on('deviceStatusRefresh', () => {
   flex-direction: row;
   align-items: center;
   padding: 20px 16px;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 16px;
   box-shadow: 0px 0px 12px rgba(91, 118, 248, 0.06);
   gap: 12px;
@@ -1086,12 +1141,12 @@ uni.$on('deviceStatusRefresh', () => {
 .no-agent-icon {
   width: 44px;
   height: 44px;
-  background: #F3F4F7;
+  background: #f3f4f7;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   image {
     width: 24px;
     height: 24px;
@@ -1114,13 +1169,13 @@ uni.$on('deviceStatusRefresh', () => {
 
 .no-agent-desc {
   font-size: 14px;
-  color: #60718B;
+  color: #60718b;
 }
 
 .no-agent-arrow {
   width: 20px;
   height: 20px;
-  
+
   image {
     width: 100%;
     height: 100%;
@@ -1144,7 +1199,7 @@ uni.$on('deviceStatusRefresh', () => {
 // 编辑设备名称弹窗
 .edit-name-dialog {
   width: 700rpx;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 32rpx;
   overflow: hidden;
 }
@@ -1168,8 +1223,8 @@ uni.$on('deviceStatusRefresh', () => {
 .edit-name-input-wrapper {
   width: 100%;
   height: 48px;
-  background: #F3F4F7;
-  border: 1.5px solid #3D77FC;
+  background: #f3f4f7;
+  border: 1.5px solid #3d77fc;
   border-radius: 12px;
   display: flex;
   flex-direction: row;
@@ -1216,15 +1271,15 @@ uni.$on('deviceStatusRefresh', () => {
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-  
+
   &.cancel {
-    background: #F3F4F7;
+    background: #f3f4f7;
     color: #212730;
   }
-  
+
   &.confirm {
-    background: #3E5DEF;
-    color: #FFFFFF;
+    background: #3e5def;
+    color: #ffffff;
   }
 }
 
@@ -1251,7 +1306,7 @@ uni.$on('deviceStatusRefresh', () => {
 .device-selector-close {
   width: 24px;
   height: 24px;
-  
+
   image {
     width: 100%;
     height: 100%;
@@ -1270,11 +1325,11 @@ uni.$on('deviceStatusRefresh', () => {
   padding: 16px;
   border-radius: 12px;
   margin-bottom: 8px;
-  background: #F3F4F7;
-  
+  background: #f3f4f7;
+
   &.active {
-    background: #E3F6FF;
-    border: 1px solid #3E5DEF;
+    background: #e3f6ff;
+    border: 1px solid #3e5def;
   }
 }
 
@@ -1286,7 +1341,7 @@ uni.$on('deviceStatusRefresh', () => {
 .device-selector-item-check {
   width: 20px;
   height: 20px;
-  
+
   image {
     width: 100%;
     height: 100%;
