@@ -25,6 +25,7 @@ declare const APP_CONFIG: {
   TERMS_URL: string;
   PRIVACY_URL: string;
   FEEDBACK_EMAIL: string;
+  SHOW_INSTRUCTIONS_TUTORIALS: boolean;
   MANUAL_ZH_URL: string;
   MANUAL_EN_URL: string;
   TUTORIAL_VIDEO_URL: string;
@@ -34,3 +35,6 @@ declare const APP_CONFIG: {
   ARMS_ENDPOINT: string;
   ARMS_ENV: 'prod' | 'gray' | 'pre' | 'daily' | 'local';
 };
+
+// 应用版本号（从 manifest.json 读取）
+declare const APP_VERSION: string;

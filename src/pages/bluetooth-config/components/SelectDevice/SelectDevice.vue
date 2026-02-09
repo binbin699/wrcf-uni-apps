@@ -418,6 +418,8 @@ export default {
   justify-content: center;
   flex: 1;
   padding: 48rpx 32rpx;
+  /* 小程序端需要明确高度才能垂直居中 */
+  min-height: 65vh;
 }
 
 .empty-content {

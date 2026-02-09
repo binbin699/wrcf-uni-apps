@@ -74,10 +74,13 @@ export default function getAppConfig(
   const PRIVACY_URL =
     platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/privacy-right';
 
-  // 用户反馈邮箱（留空则不显示反馈入口）
+  // 用户反馈邮箱（留空则不显示反馈入口，微信小程序不显示）
   // 灵矽：jubao@qiniu.com
   // 萌点：luomiaoxia@szsmdt.cn
-  const FEEDBACK_EMAIL = 'jubao@qiniu.com';
+  const FEEDBACK_EMAIL = platform === 'mp-weixin' ? '' : 'jubao@qiniu.com';
+
+  // 是否显示说明与教程（微信小程序不显示）
+  const SHOW_INSTRUCTIONS_TUTORIALS = platform !== 'mp-weixin';
 
   const MANUAL_ZH_URL = 'https://mengdiantansuo.com.cn/files/manual_zh.pdf';
   const MANUAL_EN_URL = 'https://mengdiantansuo.com.cn/files/manual_en.pdf';
@@ -116,6 +119,7 @@ export default function getAppConfig(
     TERMS_URL,
     PRIVACY_URL,
     FEEDBACK_EMAIL,
+    SHOW_INSTRUCTIONS_TUTORIALS,
     MANUAL_ZH_URL,
     MANUAL_EN_URL,
     MANUAL_JA_URL,
