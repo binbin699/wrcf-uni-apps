@@ -113,9 +113,19 @@ class Request {
       duration: 2000
     });
 
+    // #ifdef MP-WEIXIN
+    // 小程序端：跳转到落地页而不是直接跳登录页
+    uni.reLaunch({
+      url: '/pages/mp-landing/mp-landing'
+    });
+    // #endif
+
+    // #ifndef MP-WEIXIN
+    // 非小程序端：直接跳转登录页
     uni.redirectTo({
       url: PageMap[Pages.Login].url
     });
+    // #endif
   }
 
   /**

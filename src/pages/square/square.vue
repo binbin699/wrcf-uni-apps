@@ -183,7 +183,9 @@
           <view class="overlay-guide-title">{{ $t('guide.overlay_title') }}</view>
           <rich-text class="overlay-guide-desc" :nodes="$t('guide.overlay_desc')"></rich-text>
           <view class="overlay-guide-illustration">
-            <image src="/static/guide-illustration.svg" mode="aspectFit" class="illustration-img" />
+            <image src="/static/guide-illustration.png" mode="aspectFit" class="illustration-img" />
+            <!-- 指向绑定按钮的箭头 -->
+            <image src="/static/icons/arrow-pointer.svg" mode="aspectFit" class="illustration-arrow" />
           </view>
           <view class="overlay-guide-btn" @click.stop="handleOverlayDismiss">
             <text class="overlay-guide-btn-text">{{ $t('guide.overlay_action') }}</text>
@@ -1633,6 +1635,7 @@ function handleBindCancel() {
 }
 
 .overlay-guide-illustration {
+  position: relative;
   width: 468rpx;
   height: 224rpx;
   background: rgba(255, 255, 255, 0.5);
@@ -1640,7 +1643,16 @@ function handleBindCancel() {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
+}
+
+/* 指向绑定按钮的箭头 */
+.illustration-arrow {
+  position: absolute;
+  width: 52rpx;
+  height: 56rpx;
+  left: 300rpx;
+  top: 98rpx;
 }
 
 .illustration-img {

@@ -384,6 +384,35 @@ export class ConfigProtocol {
               return;
             }
 
+            // 错误帧 (subType 0x12) - 设备报告协议错误
+            if (mainType === 0x01 && subType === 0x12) {
+              const errorData = frameCtrl & 0x10 ? value.slice(6, 6 + curDataLen) : value.slice(4, 4 + curDataLen);
+              const errorCode = errorData.length > 0 ? errorData[0] : -1;
+              const errorMessages = {
+                0x00: '序列号错误(SEQUENCE_ERROR)',
+                0x01: '校验和错误(CHECKSUM_ERROR)',
+                0x02: '解密错误(DECRYPT_ERROR)',
+                0x03: '加密错误(ENCRYPT_ERROR)',
+                0x04: '安全初始化错误(INIT_SECURITY_ERROR)',
+                0x05: 'DH内存分配错误(DH_MALLOC_ERROR)',
+                0x06: 'DH参数错误(DH_PARAM_ERROR)',
+                0x07: '读取参数错误(READ_PARAM_ERROR)',
+                0x08: '公钥生成错误(MAKE_PUBLIC_ERROR)'
+              };
+              const errorMsg = errorMessages[errorCode] || `未知错误(code: 0x${errorCode.toString(16)})`;
+              console.error('设备报告BluFi协议错误:', errorMsg);
+
+              // 如果有等待中的配网结果，通知失败
+              const errorResult = {
+                success: false,
+                error: `设备协议错误: ${errorMsg}`,
+                code: 'PROTOCOL_ERROR'
+              };
+              this.configResult = errorResult;
+              this.emit('config-result', errorResult);
+              return;
+            }
+
             // WiFi列表数据包 (0x45 = 数据帧类型1 + 子类型17)
             if (mainType === 0x01 && subType === 0x11) {
               // WiFi列表数据包

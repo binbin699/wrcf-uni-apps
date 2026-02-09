@@ -127,23 +127,17 @@ function sendFeedbackEmail() {
 const hiddenClickCount = ref<number>(0);
 const statusBarHeight = ref<number>(44);
 
-// 获取应用版本号
-const appVersion = ref<string>('');
+// 获取应用版本号（从 manifest.json 自动读取，构建时注入）
+const appVersion = ref<string>(APP_VERSION);
 function getAppVersion() {
   // #ifdef APP-PLUS
-  // 使用 getProperty 获取应用真实版本号，避免获取到 HBuilderX 版本
+  // App 环境下优先使用运行时版本号
   const appId = plus.runtime.appid;
   if (appId) {
     plus.runtime.getProperty(appId, (info) => {
-      appVersion.value = info.version || '1.1.3';
+      appVersion.value = info.version || APP_VERSION;
     });
-  } else {
-    appVersion.value = '1.1.3';
   }
-  // #endif
-  // #ifndef APP-PLUS
-  // 非 App 环境使用 manifest.json 中的版本号
-  appVersion.value = '1.1.3';
   // #endif
 }
 
@@ -226,12 +220,12 @@ const menuItems = computed(() => {
           url: PageMap[Pages.VoiceClone].url
         })
     } : undefined,
-    {
+    APP_CONFIG.SHOW_INSTRUCTIONS_TUTORIALS ? {
       id: 'instructions_tutorials',
       title: $t('profile.instructions_tutorials'),
       icon: '/static/icons/setting.svg',
       handleClick: () => uni.navigateTo({ url: '/pages/profile/help' })
-    },
+    } : undefined,
     APP_CONFIG.TERMS_URL ? {
       id: 'user_agreement',
       title: $t('profile.user_agreement'),

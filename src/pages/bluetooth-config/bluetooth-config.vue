@@ -39,6 +39,9 @@
       <!-- 选择WiFi + 输入密码步骤（合并） -->
       <WifiConfig v-if="state.currentStep === CONFIG_STEPS.SELECT_WIFI" />
 
+      <!-- 手动配置步骤 -->
+      <ManualConfig v-if="state.currentStep === CONFIG_STEPS.MANUAL_CONFIG" />
+
       <!-- 提交配置步骤 -->
       <SubmitConfig v-if="state.currentStep === CONFIG_STEPS.SUBMIT_CONFIG" />
     </view>
@@ -56,6 +59,7 @@ import bluetoothConfigManager, { CONFIG_STEPS } from './store/bluetoothConfigSto
 import { configProtocol } from './utils/configProtocol';
 import SelectDevice from './components/SelectDevice/SelectDevice.vue';
 import WifiConfig from './components/WifiConfig/WifiConfig.vue';
+import ManualConfig from './components/ManualConfig/ManualConfig.vue';
 import SubmitConfig from './components/SubmitConfig/SubmitConfig.vue';
 import { PageMap, Pages } from '@/utils/route';
 
@@ -213,6 +217,14 @@ function handleBack() {
     
     // 返回上一步
     bluetoothConfigManager.prevStep();
+  } else if (state.value.currentStep === CONFIG_STEPS.MANUAL_CONFIG) {
+    // 从手动配置页面返回到WiFi列表
+    console.log('从手动配置页返回WiFi列表页');
+    bluetoothConfigManager.setCurrentStep(CONFIG_STEPS.SELECT_WIFI);
+  } else if (state.value.currentStep === CONFIG_STEPS.SUBMIT_CONFIG) {
+    // 从提交配置页面返回到WiFi列表（无论是从列表选择还是手动配置来的）
+    console.log('从提交配置页返回WiFi列表页');
+    bluetoothConfigManager.setCurrentStep(CONFIG_STEPS.SELECT_WIFI);
   } else {
     // 其他步骤，返回上一步
     bluetoothConfigManager.prevStep();
@@ -393,7 +405,7 @@ async function cleanupBluetooth() {
 
 .step-content {
   flex: 1;
-  background-color: #f9fafb;
+  background-color: #fff;
   display: flex;
   flex-direction: column;
 }
