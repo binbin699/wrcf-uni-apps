@@ -900,5 +900,35 @@
   "permission_prerequest.bluetooth": "Bluetooth Permission",
   "permission_prerequest.bluetooth_desc": "We need Bluetooth access to search nearby devices for pairing",
   "permission_prerequest.album": "Photo Library Permission",
-  "permission_prerequest.album_desc": "We need photo library access to select QR code images for binding"
+  "permission_prerequest.album_desc": "Photo library permission is needed to select QR code images for binding",
+
+  "bluetooth.input_pwd.step_title": "Step: Enter WiFi Password",
+  "bluetooth.input_pwd.secure_network": "🔒 Secure Network",
+  "bluetooth.input_pwd.wifi_password_label": "WiFi Password",
+  "bluetooth.input_pwd.wifi_password_placeholder": "Enter WiFi password",
+  "bluetooth.input_pwd.tip_correct_password": "Please enter the correct password for this network",
+  "bluetooth.input_pwd.tip_avoid_failure": "Make sure the password is correct to avoid connection failure",
+  "bluetooth.input_pwd.back_select_wifi": "← Reselect WiFi",
+  "bluetooth.input_pwd.confirm_password": "Confirm Password →",
+  "bluetooth.input_pwd.configuring_wifi": "Configuring WiFi...",
+  "bluetooth.input_pwd.missing_config": "Missing required configuration",
+
+  "bluetooth.submit.unknown_device": "Unknown Device",
+  "bluetooth.submit.config_incomplete": "Configuration info incomplete",
+  "bluetooth.submit.no_bluetooth_device": "No connected Bluetooth device found",
+  "bluetooth.submit.config_success": "Configuration successful",
+  "bluetooth.submit.config_failed": "Configuration failed",
+  "bluetooth.submit.binding_loading": "Binding device...",
+  "bluetooth.submit.bind_device_success": "Device bound successfully",
+  "bluetooth.submit.config_success_bind_failed": "WiFi configured, but device binding failed",
+  "bluetooth.submit.config_ok_no_bind": "Device WiFi configured successfully",
+
+  "common.record_failed": "Recording failed",
+  "common.play_failed": "Playback failed",
+
+  "login.google_login_failed": "Google login failed",
+  "login.wx_login_failed": "WeChat login failed",
+  "login.apple_login_failed": "Apple login failed",
+  "login.guest_login_failed": "Guest login failed",
+  "login.register_failed": "Registration failed"
 }

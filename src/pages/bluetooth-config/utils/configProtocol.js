@@ -95,8 +95,17 @@ function parseWifiList(data) {
     );
 
     // 检查数据完整性
-    if (length === 0 || offset + length >= data.length) {
-      console.log('数据不完整，跳过');
+    // 每条WiFi记录占 length+1 字节（1字节length字段 + length字节payload）
+    // 当 offset + length + 1 > data.length 时才算数据不完整
+    if (length === 0 || offset + length + 1 > data.length) {
+      console.log(
+        '数据不完整，跳过。length:',
+        length,
+        'offset:',
+        offset,
+        'data.length:',
+        data.length
+      );
       break;
     }
 
@@ -313,7 +322,14 @@ export class ConfigProtocol {
             const mainType = type & 0x03; // 低2位是主类型
             const subType = type >> 2; // 高6位是子类型
 
-            console.log('帧类型解析 - Type:', '0x' + type.toString(16), 'MainType:', mainType, 'SubType:', '0x' + subType.toString(16));
+            console.log(
+              '帧类型解析 - Type:',
+              '0x' + type.toString(16),
+              'MainType:',
+              mainType,
+              'SubType:',
+              '0x' + subType.toString(16)
+            );
 
             // Wi-Fi 连接状态报告数据包 (subType=0x0f)
             // 注意：ESP32 BluFi 可能使用控制帧(mainType=0)或数据帧(mainType=1)发送状态报告
@@ -328,11 +344,23 @@ export class ConfigProtocol {
               const sta_status = payloadData[1];
               const softap_conn_num = payloadData.length > 2 ? payloadData[2] : 0;
 
-              console.log('解析配网状态 - opmode:', opmode, 'sta_status:', sta_status, 'softap_conn_num:', softap_conn_num);
-              console.log('Payload原始数据:', Array.from(payloadData).map(b => '0x' + b.toString(16)).join(' '));
+              console.log(
+                '解析配网状态 - opmode:',
+                opmode,
+                'sta_status:',
+                sta_status,
+                'softap_conn_num:',
+                softap_conn_num
+              );
+              console.log(
+                'Payload原始数据:',
+                Array.from(payloadData)
+                  .map((b) => '0x' + b.toString(16))
+                  .join(' ')
+              );
 
               let result = null;
-              
+
               // ESP32 BluFi sta_status 定义（根据ESP-IDF文档）:
               // 0x00 = ESP_BLUFI_STA_CONN_SUCCESS (连接成功)
               // 0x01 = ESP_BLUFI_STA_CONN_FAIL (连接失败)
@@ -341,7 +369,7 @@ export class ConfigProtocol {
               //
               // 注意：不同版本的ESP-IDF可能有不同的定义
               // 某些开发板的sta_status=0x02可能表示连接成功
-              
+
               // 判断配网成功的条件：
               // 1. sta_status === 0x00 (标准成功状态)
               // 2. sta_status === 0x02 且设备随后断开蓝牙连接（某些开发板的行为）
@@ -356,7 +384,7 @@ export class ConfigProtocol {
               } else {
                 // sta_status其他值表示连接失败或进行中
                 let errorMsg = '无法连接到 WiFi';
-                switch(sta_status) {
+                switch (sta_status) {
                   case 0x01:
                     errorMsg = 'WiFi连接失败';
                     break;
@@ -386,7 +414,8 @@ export class ConfigProtocol {
 
             // 错误帧 (subType 0x12) - 设备报告协议错误
             if (mainType === 0x01 && subType === 0x12) {
-              const errorData = frameCtrl & 0x10 ? value.slice(6, 6 + curDataLen) : value.slice(4, 4 + curDataLen);
+              const errorData =
+                frameCtrl & 0x10 ? value.slice(6, 6 + curDataLen) : value.slice(4, 4 + curDataLen);
               const errorCode = errorData.length > 0 ? errorData[0] : -1;
               const errorMessages = {
                 0x00: '序列号错误(SEQUENCE_ERROR)',
@@ -399,7 +428,8 @@ export class ConfigProtocol {
                 0x07: '读取参数错误(READ_PARAM_ERROR)',
                 0x08: '公钥生成错误(MAKE_PUBLIC_ERROR)'
               };
-              const errorMsg = errorMessages[errorCode] || `未知错误(code: 0x${errorCode.toString(16)})`;
+              const errorMsg =
+                errorMessages[errorCode] || `未知错误(code: 0x${errorCode.toString(16)})`;
               console.error('设备报告BluFi协议错误:', errorMsg);
 
               // 如果有等待中的配网结果，通知失败
@@ -425,7 +455,9 @@ export class ConfigProtocol {
               });
 
               // 检查是否是最后一个包
-              if (frameCtrl === 0x04) {
+              // frameCtrl 是位掩码，bit2 表示"无后续分片"
+              // 使用按位与检测，避免其他位（如 checksum、total-length）干扰判断
+              if (frameCtrl & 0x04) {
                 // 按序列号排序并合并数据
                 const sortedData = this.receivedData
                   .sort((a, b) => a.sequence - b.sequence)
