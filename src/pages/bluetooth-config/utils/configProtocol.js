@@ -455,9 +455,9 @@ export class ConfigProtocol {
               });
 
               // 检查是否是最后一个包
-              // frameCtrl 是位掩码，bit2 表示"无后续分片"
-              // 使用按位与检测，避免其他位（如 checksum、total-length）干扰判断
-              if (frameCtrl & 0x04) {
+              // FrameCtrl bit4 (0x10) 是分片标志：1=有后续分片，0=完整帧/最后一片
+              // bit2 (0x04) 是方向标志（设备→客户端），不能用来判断分片结束
+              if (!(frameCtrl & 0x10)) {
                 // 按序列号排序并合并数据
                 const sortedData = this.receivedData
                   .sort((a, b) => a.sequence - b.sequence)
