@@ -900,5 +900,35 @@
   "permission_prerequest.bluetooth": "申请蓝牙权限",
   "permission_prerequest.bluetooth_desc": "需要您开启蓝牙权限，用于搜索附近的设备进行配网",
   "permission_prerequest.album": "申请相册权限",
-  "permission_prerequest.album_desc": "需要您开启相册权限，用于选择二维码图片绑定设备"
+  "permission_prerequest.album_desc": "需要您开启相册权限，用于选择二维码图片绑定设备",
+
+  "bluetooth.input_pwd.step_title": "当前步骤：输入WiFi密码",
+  "bluetooth.input_pwd.secure_network": "🔒 加密网络",
+  "bluetooth.input_pwd.wifi_password_label": "WiFi密码",
+  "bluetooth.input_pwd.wifi_password_placeholder": "请输入WiFi密码",
+  "bluetooth.input_pwd.tip_correct_password": "请根据网络要求输入正确密码",
+  "bluetooth.input_pwd.tip_avoid_failure": "请确保密码正确，避免连接失败",
+  "bluetooth.input_pwd.back_select_wifi": "← 重新选择WiFi",
+  "bluetooth.input_pwd.confirm_password": "确认密码 →",
+  "bluetooth.input_pwd.configuring_wifi": "正在配置WiFi...",
+  "bluetooth.input_pwd.missing_config": "缺少必要的配置信息",
+
+  "bluetooth.submit.unknown_device": "未知设备",
+  "bluetooth.submit.config_incomplete": "配网信息不完整",
+  "bluetooth.submit.no_bluetooth_device": "未找到已连接的蓝牙设备",
+  "bluetooth.submit.config_success": "配网成功",
+  "bluetooth.submit.config_failed": "配网失败",
+  "bluetooth.submit.binding_loading": "绑定设备中...",
+  "bluetooth.submit.bind_device_success": "设备绑定成功",
+  "bluetooth.submit.config_success_bind_failed": "配网成功，设备绑定失败",
+  "bluetooth.submit.config_ok_no_bind": "设备已配网成功",
+
+  "common.record_failed": "录音失败",
+  "common.play_failed": "播放失败",
+
+  "login.google_login_failed": "Google登录失败",
+  "login.wx_login_failed": "微信登录失败",
+  "login.apple_login_failed": "Apple登录失败",
+  "login.guest_login_failed": "游客登录失败",
+  "login.register_failed": "注册失败"
 }

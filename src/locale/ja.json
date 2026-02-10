@@ -189,7 +189,7 @@
   "edit_agent.network_error": "ネットワークエラー",
   "edit_agent.voice_load_failed_retry": "音声の読み込みに失敗しました。クリックして再試行",
   "edit_agent.network_error_retry": "ネットワークエラー、もう一度お試しください",
-  "edit_agent.update_success": "更新成功",
+  "edit_agent.update_success": "更新しました",
   "edit_agent.update_failed": "更新失敗",
   "edit_agent.llm_type": "LLMタイプ",
   "edit_agent.select_llm": "LLMを選択してください",
@@ -918,6 +918,35 @@
   "permission_prerequest.bluetooth": "Bluetooth権限の申請",
   "permission_prerequest.bluetooth_desc": "近くのデバイスを検索してペアリングするために、Bluetooth権限が必要です",
   "permission_prerequest.album": "フォトライブラリ権限の申請",
-  "permission_prerequest.album_desc": "QRコード画像を選択してバインドするために、フォトライブラリ権限が必要です"
-}
+  "permission_prerequest.album_desc": "QRコード画像を選択してバインドするために、フォトライブラリ権限が必要です",
 
+  "bluetooth.input_pwd.step_title": "現在のステップ：WiFiパスワード入力",
+  "bluetooth.input_pwd.secure_network": "🔒 セキュアネットワーク",
+  "bluetooth.input_pwd.wifi_password_label": "WiFiパスワード",
+  "bluetooth.input_pwd.wifi_password_placeholder": "WiFiパスワードを入力",
+  "bluetooth.input_pwd.tip_correct_password": "ネットワークの要件に応じて正しいパスワードを入力してください",
+  "bluetooth.input_pwd.tip_avoid_failure": "接続失敗を避けるため、パスワードが正しいことを確認してください",
+  "bluetooth.input_pwd.back_select_wifi": "← WiFiを再選択",
+  "bluetooth.input_pwd.confirm_password": "パスワード確認 →",
+  "bluetooth.input_pwd.configuring_wifi": "WiFi設定中...",
+  "bluetooth.input_pwd.missing_config": "必要な設定情報がありません",
+
+  "bluetooth.submit.unknown_device": "不明なデバイス",
+  "bluetooth.submit.config_incomplete": "設定情報が不完全です",
+  "bluetooth.submit.no_bluetooth_device": "接続されたBluetoothデバイスが見つかりません",
+  "bluetooth.submit.config_success": "設定成功",
+  "bluetooth.submit.config_failed": "設定失敗",
+  "bluetooth.submit.binding_loading": "デバイスをバインド中...",
+  "bluetooth.submit.bind_device_success": "デバイスのバインドに成功しました",
+  "bluetooth.submit.config_success_bind_failed": "WiFi設定成功、デバイスバインド失敗",
+  "bluetooth.submit.config_ok_no_bind": "デバイスのWiFi設定に成功しました",
+
+  "common.record_failed": "録音失敗",
+  "common.play_failed": "再生失敗",
+
+  "login.google_login_failed": "Googleログイン失敗",
+  "login.wx_login_failed": "WeChatログイン失敗",
+  "login.apple_login_failed": "Appleログイン失敗",
+  "login.guest_login_failed": "ゲストログイン失敗",
+  "login.register_failed": "登録失敗"
+}

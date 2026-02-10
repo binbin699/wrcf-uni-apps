@@ -918,6 +918,35 @@
   "permission_prerequest.bluetooth": "Разрешение Bluetooth",
   "permission_prerequest.bluetooth_desc": "Нам нужен доступ к Bluetooth для поиска ближайших устройств для сопряжения",
   "permission_prerequest.album": "Разрешение фотогалереи",
-  "permission_prerequest.album_desc": "Нам нужен доступ к фотогалерее для выбора QR-кодов для привязки"
-}
+  "permission_prerequest.album_desc": "Нам нужен доступ к фотогалерее для выбора QR-кодов для привязки",
 
+  "bluetooth.input_pwd.step_title": "Шаг: Введите пароль WiFi",
+  "bluetooth.input_pwd.secure_network": "🔒 Защищённая сеть",
+  "bluetooth.input_pwd.wifi_password_label": "Пароль WiFi",
+  "bluetooth.input_pwd.wifi_password_placeholder": "Введите пароль WiFi",
+  "bluetooth.input_pwd.tip_correct_password": "Введите правильный пароль для этой сети",
+  "bluetooth.input_pwd.tip_avoid_failure": "Убедитесь, что пароль верный, чтобы избежать ошибки подключения",
+  "bluetooth.input_pwd.back_select_wifi": "← Выбрать WiFi заново",
+  "bluetooth.input_pwd.confirm_password": "Подтвердить пароль →",
+  "bluetooth.input_pwd.configuring_wifi": "Настройка WiFi...",
+  "bluetooth.input_pwd.missing_config": "Недостаточно данных для настройки",
+
+  "bluetooth.submit.unknown_device": "Неизвестное устройство",
+  "bluetooth.submit.config_incomplete": "Данные настройки неполные",
+  "bluetooth.submit.no_bluetooth_device": "Подключённое Bluetooth устройство не найдено",
+  "bluetooth.submit.config_success": "Настройка выполнена",
+  "bluetooth.submit.config_failed": "Настройка не удалась",
+  "bluetooth.submit.binding_loading": "Привязка устройства...",
+  "bluetooth.submit.bind_device_success": "Устройство успешно привязано",
+  "bluetooth.submit.config_success_bind_failed": "WiFi настроен, но привязка устройства не удалась",
+  "bluetooth.submit.config_ok_no_bind": "WiFi устройства успешно настроен",
+
+  "common.record_failed": "Ошибка записи",
+  "common.play_failed": "Ошибка воспроизведения",
+
+  "login.google_login_failed": "Ошибка входа через Google",
+  "login.wx_login_failed": "Ошибка входа через WeChat",
+  "login.apple_login_failed": "Ошибка входа через Apple",
+  "login.guest_login_failed": "Ошибка гостевого входа",
+  "login.register_failed": "Ошибка регистрации"
+}

@@ -116,31 +116,31 @@ const PERMISSION_CONFIG: Record<PermissionType, PermissionConfig> = {
     type: PermissionType.CAMERA,
     scope: 'scope.camera',
     // 允许获得您的{title}权限，以便{description}
-    title: '相机权限',
-    description: '扫描二维码，绑定设备'
+    title: 'permission.camera_title',
+    description: 'permission.camera_description'
   },
   [PermissionType.ALBUM]: {
     type: PermissionType.ALBUM,
     scope: 'scope.album',
-    title: '相册权限',
-    description: '扫描二维码，绑定设备'
+    title: 'permission.album_title',
+    description: 'permission.album_description'
   },
   [PermissionType.LOCATION]: {
     type: PermissionType.LOCATION,
     scope: 'scope.userLocation',
-    title: '位置权限',
-    description: '优化设备联网信号推荐'
+    title: 'permission.location_title',
+    description: 'permission.location_description'
   },
   [PermissionType.RECORD]: {
     type: PermissionType.RECORD,
     scope: 'scope.record',
-    title: '麦克风权限',
-    description: '录制音频，上传声纹信息'
+    title: 'permission.record_title',
+    description: 'permission.record_description'
   },
   [PermissionType.BLUETOOTH]: {
     type: PermissionType.BLUETOOTH,
-    title: '蓝牙权限',
-    description: '搜索附近的蓝牙设备进行配网'
+    title: 'permission.bluetooth_title',
+    description: 'permission.bluetooth_description'
   }
 };
 
