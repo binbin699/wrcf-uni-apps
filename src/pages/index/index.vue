@@ -864,7 +864,7 @@ function handleHelpClick() {
 
 .welcome-help-link.single-mode {
   margin-top: 8rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: 8rpx;
 }
 
 .welcome-help-icon {
