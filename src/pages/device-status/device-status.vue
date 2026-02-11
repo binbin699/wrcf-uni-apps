@@ -16,8 +16,8 @@
 
     <!-- 自定义导航栏 -->
     <view class="custom-navbar">
-      <view class="navbar-status-bar"></view>
-      <view class="navbar-content">
+      <view class="navbar-status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+      <view class="navbar-content" :style="{ height: navBarHeight + 'px' }">
         <!-- 切换设备按钮 - 仅当有多个设备时显示 -->
         <view
           class="switch-device-btn"
@@ -40,7 +40,7 @@
       class="device-dropdown-overlay"
       v-if="showDeviceDropdown"
       @click="showDeviceDropdown = false"></view>
-    <view class="device-dropdown" v-if="showDeviceDropdown">
+    <view class="device-dropdown" v-if="showDeviceDropdown" :style="{ top: (statusBarHeight + navBarHeight + 2) + 'px' }">
       <view class="device-dropdown-list">
         <view
           class="device-dropdown-item"
@@ -63,7 +63,7 @@
     </view>
 
     <!-- 主要内容区域 -->
-    <view class="content-area">
+    <view class="content-area" :style="{ paddingTop: (statusBarHeight + navBarHeight + 16) + 'px' }">
       <!-- 加载状态 -->
       <view class="loading-state" v-if="loading">
         <text class="loading-text">{{ $t('common.loading') }}</text>
@@ -290,6 +290,7 @@ import {
   getLanguageDisplayNameByLangCode
 } from '@/pages/agent/lang_opts';
 import CustomTabBar from '@/components/CustomTabBar.vue';
+import { useUserStore } from '@/store';
 
 const { t: $t } = useI18n();
 const toast = useToast();
@@ -298,6 +299,65 @@ const { scanAndBind, isNavigating } = useDeviceScan({ toast, showNotify, closeNo
 
 // 配置
 const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
+
+// 导航栏高度
+const statusBarHeight = ref(20);
+const navBarHeight = ref(44);
+
+function setNavBarHeight() {
+  const systemInfo = uni.getSystemInfoSync();
+  statusBarHeight.value = systemInfo.statusBarHeight || 20;
+  const isAndroid = systemInfo.platform === 'android';
+  try {
+    const menuButtonInfo =
+      typeof uni.getMenuButtonBoundingClientRect === 'function'
+        ? uni.getMenuButtonBoundingClientRect()
+        : null;
+    if (menuButtonInfo && menuButtonInfo.height) {
+      const topGap = menuButtonInfo.top - statusBarHeight.value;
+      navBarHeight.value = menuButtonInfo.height + Math.max(topGap, 0) * 2;
+    } else {
+      navBarHeight.value = isAndroid ? 48 : 44;
+    }
+  } catch {
+    navBarHeight.value = isAndroid ? 48 : 44;
+  }
+}
+setNavBarHeight();
+const userStore = useUserStore();
+const PENDING_BIND_KEY = 'pendingBindAction';
+type PendingBindAction = 'qrcode' | 'bluetooth';
+
+function isUserAuthenticated(): boolean {
+  return userStore.isLoggedIn && userStore.userId > 0;
+}
+
+// 登录成功后自动续接绑定流程（仅小程序端）
+function resumePendingBindAction() {
+  const pending = uni.getStorageSync(PENDING_BIND_KEY) as PendingBindAction | '';
+  if (!pending) return;
+
+  const maxAttempts = 20;
+  let attempts = 0;
+  const tryResume = () => {
+    attempts += 1;
+    if (isUserAuthenticated()) {
+      uni.removeStorageSync(PENDING_BIND_KEY);
+      if (pending === 'qrcode') {
+        scanAndBind({});
+      } else if (pending === 'bluetooth') {
+        uni.navigateTo({
+          url: PageMap[Pages.BluetoothConfig].url
+        });
+      }
+      return;
+    }
+    if (attempts < maxAttempts) {
+      setTimeout(tryResume, 300);
+    }
+  };
+  setTimeout(tryResume, 300);
+}
 
 // 状态
 const loading = ref(true);
@@ -643,6 +703,10 @@ onShow(() => {
   isNavigating.value = false;
   // 刷新设备列表（onShow 在页面首次显示时也会触发，无需在 onMounted 中重复调用）
   loadDevices();
+  // #ifdef MP-WEIXIN
+  // 登录后续接绑定流程（仅小程序端）
+  resumePendingBindAction();
+  // #endif
 });
 
 // 页面显示时刷新数据
