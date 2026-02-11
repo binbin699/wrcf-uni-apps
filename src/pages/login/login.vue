@@ -298,6 +298,20 @@ onLoad(async () => {
     return;
   }
 
+  // #ifdef MP-WEIXIN
+  // 检测是否来自设备绑定流程，显示提示
+  const PENDING_BIND_KEY = 'pendingBindAction';
+  const pendingAction = uni.getStorageSync(PENDING_BIND_KEY);
+  if (pendingAction) {
+    setTimeout(() => {
+      toast.info({
+        msg: $t('login.device_bind_hint'),
+        duration: 4000
+      });
+    }, 500);
+  }
+  // #endif
+
   // #ifdef APP-PLUS || APP-HARMONY
   // 读取上次登录账号名缓存
   const lastLoginUnionId = storage.get(STORAGE_LOGIN_Unionid_KEY);
@@ -438,7 +452,7 @@ function getWxCode(): Promise<any> {
 
 function redirectToHome() {
   uni.switchTab({
-    url: PageMap[Pages.Index].url
+    url: PageMap[Pages.DeviceStatus].url
   });
 }
 

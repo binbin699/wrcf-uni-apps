@@ -7,10 +7,11 @@
 export const CONFIG_STEPS = {
   SELECT_DEVICE: 'select-device',
   SELECT_WIFI: 'select-wifi',
+  MANUAL_CONFIG: 'manual-config',
   SUBMIT_CONFIG: 'submit-config'
 };
 
-// 配网步骤数组
+// 主流程步骤数组（线性顺序，不包含分支步骤 manual-config）
 export const configSteps = ['select-device', 'select-wifi', 'submit-config'];
 
 // 初始状态
@@ -279,26 +280,24 @@ class BluetoothConfigManager {
   }
 
   /**
-   * 进入下一步
+   * 进入下一步（仅在主流程步骤间导航，分支步骤如 manual-config 需使用 setCurrentStep）
    */
   nextStep() {
-    const steps = Object.values(CONFIG_STEPS);
-    const currentIndex = steps.indexOf(this.state.currentStep);
+    const currentIndex = configSteps.indexOf(this.state.currentStep);
 
-    if (currentIndex < steps.length - 1) {
-      this.setCurrentStep(steps[currentIndex + 1]);
+    if (currentIndex >= 0 && currentIndex < configSteps.length - 1) {
+      this.setCurrentStep(configSteps[currentIndex + 1]);
     }
   }
 
   /**
-   * 返回上一步
+   * 返回上一步（仅在主流程步骤间导航，分支步骤如 manual-config 需使用 setCurrentStep）
    */
   prevStep() {
-    const steps = Object.values(CONFIG_STEPS);
-    const currentIndex = steps.indexOf(this.state.currentStep);
+    const currentIndex = configSteps.indexOf(this.state.currentStep);
 
     if (currentIndex > 0) {
-      this.setCurrentStep(steps[currentIndex - 1]);
+      this.setCurrentStep(configSteps[currentIndex - 1]);
     }
   }
 

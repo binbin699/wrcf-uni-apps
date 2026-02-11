@@ -12,59 +12,59 @@
     <!-- 内容区域 -->
     <view class="container">
       <view class="profile-header">
-      <view class="user-info">
-        <image
-          class="avatar"
-          :src="displayAvatar"
-          mode="aspectFill"></image>
-        <view class="user-details">
-          <view class="nickname-container" @click="handleUpdateUserInfo">
-            <text class="nickname">{{ userStore.nickname || $t('profile.no_nickname') }}</text>
-            <image
-              v-if="!userStore.phone?.startsWith('0000')"
-              class="edit-icon"
-              src="/static/icons/right-arrow.svg"
-              mode="aspectFit"></image>
-          </view>
-          <!-- 测试账号不显示手机号，没有手机号也不显示 -->
-          <text class="phone" v-if="userStore.phone && !userStore.phone?.startsWith('0000')">
-            {{ $t('profile.phone') }}：{{ hidePhone(userStore.phone) || '' }}
-          </text>
-        </view>
-      </view>
-    </view>
-
-    <view class="menu-list">
-      <template v-for="item in menuItems" :key="item.title">
-        <view class="menu-item" @click="item.handleClick">
-          <view class="menu-icon">
-            <image class="icon-image" :src="item.icon" mode="aspectFit"></image>
-          </view>
-          <text class="menu-title">{{ item.title }}</text>
-          <view class="menu-arrow">
-            <image class="arrow-image" src="/static/icons/right-arrow.svg" mode="aspectFit"></image>
+        <view class="user-info">
+          <image class="avatar" :src="displayAvatar" mode="aspectFill"></image>
+          <view class="user-details">
+            <view class="nickname-container" @click="handleUpdateUserInfo">
+              <text class="nickname">{{ userStore.nickname || $t('profile.no_nickname') }}</text>
+              <image
+                v-if="!userStore.phone?.startsWith('0000')"
+                class="edit-icon"
+                src="/static/icons/right-arrow.svg"
+                mode="aspectFit"></image>
+            </view>
+            <!-- 测试账号不显示手机号，没有手机号也不显示 -->
+            <text class="phone" v-if="userStore.phone && !userStore.phone?.startsWith('0000')">
+              {{ $t('profile.phone') }}：{{ hidePhone(userStore.phone) || '' }}
+            </text>
           </view>
         </view>
-      </template>
-    </view>
-
-    <view class="logout-section">
-      <button class="logout-btn danger" @click="handleLogout">
-        {{ $t('profile.logout') }}
-      </button>
-      <button class="logout-btn outlined" @click="goDeleteAccount">
-        {{ $t('profile.delete_account') }}
-      </button>
-      <!-- 版本号显示 -->
-      <view class="version-info">
-        <text class="version-text">v{{ appVersion }}</text>
       </view>
-      <!-- 隐藏的可交互元素，点击7次后跳转到mock-test页面 -->
-      <view class="hidden-trigger" @click="handleHiddenClick"></view>
-    </view>
-    
-    <!-- 自定义 TabBar -->
-    <CustomTabBar :current="2" />
+
+      <view class="menu-list">
+        <template v-for="item in menuItems" :key="item.title">
+          <view class="menu-item" @click="item.handleClick">
+            <view class="menu-icon">
+              <image class="icon-image" :src="item.icon" mode="aspectFit"></image>
+            </view>
+            <text class="menu-title">{{ item.title }}</text>
+            <view class="menu-arrow">
+              <image
+                class="arrow-image"
+                src="/static/icons/right-arrow.svg"
+                mode="aspectFit"></image>
+            </view>
+          </view>
+        </template>
+      </view>
+
+      <view class="logout-section">
+        <button class="logout-btn danger" @click="handleLogout">
+          {{ $t('profile.logout') }}
+        </button>
+        <button class="logout-btn outlined" @click="goDeleteAccount">
+          {{ $t('profile.delete_account') }}
+        </button>
+        <!-- 版本号显示 -->
+        <view class="version-info">
+          <text class="version-text">v{{ appVersion }}</text>
+        </view>
+        <!-- 隐藏的可交互元素，点击7次后跳转到mock-test页面 -->
+        <view class="hidden-trigger" @click="handleHiddenClick"></view>
+      </view>
+
+      <!-- 自定义 TabBar -->
+      <CustomTabBar :current="3" />
     </view>
   </view>
 </template>
@@ -105,7 +105,6 @@ const displayAvatar = computed(() => {
   return userStore.avatar || defaultAvatar.value;
 });
 
-
 function openExternal(src: string) {
   const encoded = encodeURIComponent(src);
   uni.navigateTo({ url: '/pages/webview/webview?src=' + encoded });
@@ -114,10 +113,12 @@ function openExternal(src: string) {
 function sendFeedbackEmail() {
   const email = APP_CONFIG.FEEDBACK_EMAIL;
   if (!email) return;
-  
+
   // 使用 mailto: 协议打开邮件客户端
   // #ifdef APP-PLUS
-  plus.runtime.openURL(`mailto:${email}?subject=${encodeURIComponent($t('profile.feedback_subject'))}`);
+  plus.runtime.openURL(
+    `mailto:${email}?subject=${encodeURIComponent($t('profile.feedback_subject'))}`
+  );
   // #endif
   // #ifndef APP-PLUS
   window.location.href = `mailto:${email}?subject=${encodeURIComponent($t('profile.feedback_subject'))}`;
@@ -127,23 +128,17 @@ function sendFeedbackEmail() {
 const hiddenClickCount = ref<number>(0);
 const statusBarHeight = ref<number>(44);
 
-// 获取应用版本号
-const appVersion = ref<string>('');
+// 获取应用版本号（从 manifest.json 自动读取，构建时注入）
+const appVersion = ref<string>(APP_VERSION);
 function getAppVersion() {
   // #ifdef APP-PLUS
-  // 使用 getProperty 获取应用真实版本号，避免获取到 HBuilderX 版本
+  // App 环境下优先使用运行时版本号
   const appId = plus.runtime.appid;
   if (appId) {
     plus.runtime.getProperty(appId, (info) => {
-      appVersion.value = info.version || '1.1.3';
+      appVersion.value = info.version || APP_VERSION;
     });
-  } else {
-    appVersion.value = '1.1.3';
   }
-  // #endif
-  // #ifndef APP-PLUS
-  // 非 App 环境使用 manifest.json 中的版本号
-  appVersion.value = '1.1.3';
   // #endif
 }
 
@@ -173,24 +168,6 @@ const menuItems = computed(() => {
         })
     },
     {
-      id: 'bluetooth_config',
-      title: $t('profile.bluetooth_config'),
-      icon: '/static/icons/bluetooth.svg',
-      handleClick: () =>
-        uni.navigateTo({
-          url: PageMap[Pages.BluetoothConfig].url
-        })
-    },
-    {
-      id: 'wifi_config_bluetooth',
-      title: $t('profile.wifi_config_bluetooth'),
-      icon: '/static/icons/bluetooth-config.svg',
-      handleClick: () =>
-        uni.navigateTo({
-          url: PageMap[Pages.BluetoothConfig].url + '?configOnly=1'
-        })
-    },
-    {
       id: 'net_config',
       title: $t('profile.net_config'),
       icon: '/static/icons/scan-qrcode.svg',
@@ -208,57 +185,89 @@ const menuItems = computed(() => {
         });
       }
     },
-    APP_CONFIG.APP_USE_VOICEPRINT ? {
-      id: 'voice_manage',
-      title: $t('profile.voice_manage'),
-      icon: '/static/icons/voice-manage.svg',
-      handleClick: () =>
-        uni.navigateTo({
-          url: PageMap[Pages.VoiceManage].url
-        })
-    } : undefined,
-    APP_CONFIG.APP_USE_VOICEPRINT ? {
-      id: 'voice_clone',
-      title: $t('profile.voice_clone'),
-      icon: '/static/icons/voice-clone.svg',
-      handleClick: () =>
-        uni.navigateTo({
-          url: PageMap[Pages.VoiceClone].url
-        })
-    } : undefined,
     {
-      id: 'instructions_tutorials',
-      title: $t('profile.instructions_tutorials'),
-      icon: '/static/icons/setting.svg',
-      handleClick: () => uni.navigateTo({ url: '/pages/profile/help' })
+      id: 'bluetooth_config',
+      title: $t('profile.bluetooth_config'),
+      icon: '/static/icons/bluetooth.svg',
+      handleClick: () =>
+        uni.navigateTo({
+          url: PageMap[Pages.BluetoothConfig].url
+        })
     },
-    APP_CONFIG.TERMS_URL ? {
-      id: 'user_agreement',
-      title: $t('profile.user_agreement'),
-      icon: '/static/icons/setting.svg',
-      handleClick: () => openExternal(APP_CONFIG.TERMS_URL)
-    } : undefined,
-    APP_CONFIG.PRIVACY_URL ? {
-      id: 'privacy_policy',
-      title: $t('profile.privacy_policy'),
-      icon: '/static/icons/setting.svg',
-      handleClick: () => openExternal(APP_CONFIG.PRIVACY_URL)
-    } : undefined,
-    APP_CONFIG.FEEDBACK_EMAIL ? {
-      id: 'feedback',
-      title: $t('profile.feedback'),
-      icon: '/static/icons/feedback.svg',
-      handleClick: () => sendFeedbackEmail()
-    } : undefined
+    {
+      id: 'wifi_config_bluetooth',
+      title: $t('profile.wifi_config_bluetooth'),
+      icon: '/static/icons/bluetooth-config.svg',
+      handleClick: () =>
+        uni.navigateTo({
+          url: PageMap[Pages.BluetoothConfig].url + '?configOnly=1'
+        })
+    },
+    APP_CONFIG.APP_USE_VOICEPRINT
+      ? {
+          id: 'voice_manage',
+          title: $t('profile.voice_manage'),
+          icon: '/static/icons/voice-manage.svg',
+          handleClick: () =>
+            uni.navigateTo({
+              url: PageMap[Pages.VoiceManage].url
+            })
+        }
+      : undefined,
+    APP_CONFIG.APP_USE_VOICEPRINT
+      ? {
+          id: 'voice_clone',
+          title: $t('profile.voice_clone'),
+          icon: '/static/icons/voice-clone.svg',
+          handleClick: () =>
+            uni.navigateTo({
+              url: PageMap[Pages.VoiceClone].url
+            })
+        }
+      : undefined,
+    APP_CONFIG.SHOW_INSTRUCTIONS_TUTORIALS
+      ? {
+          id: 'instructions_tutorials',
+          title: $t('profile.instructions_tutorials'),
+          icon: '/static/icons/setting.svg',
+          handleClick: () => uni.navigateTo({ url: '/pages/profile/help' })
+        }
+      : undefined,
+    APP_CONFIG.TERMS_URL
+      ? {
+          id: 'user_agreement',
+          title: $t('profile.user_agreement'),
+          icon: '/static/icons/setting.svg',
+          handleClick: () => openExternal(APP_CONFIG.TERMS_URL)
+        }
+      : undefined,
+    APP_CONFIG.PRIVACY_URL
+      ? {
+          id: 'privacy_policy',
+          title: $t('profile.privacy_policy'),
+          icon: '/static/icons/setting.svg',
+          handleClick: () => openExternal(APP_CONFIG.PRIVACY_URL)
+        }
+      : undefined,
+    APP_CONFIG.FEEDBACK_EMAIL
+      ? {
+          id: 'feedback',
+          title: $t('profile.feedback'),
+          icon: '/static/icons/feedback.svg',
+          handleClick: () => sendFeedbackEmail()
+        }
+      : undefined
   ];
 
-  return items.filter(item => item !== undefined).filter((item) => {
-    if (setupMode === 'qrcode' && item.id === 'bluetooth_config') return false;
-    if (setupMode === 'qrcode' && item.id === 'wifi_config_bluetooth') return false;
-    if (setupMode === 'bluetooth' && item.id === 'net_config') return false;
-    if (setupMode === 'bluetooth' && item.id === 'wifi_config_qrcode') return false;
-    return true;
-  });
+  return items
+    .filter((item) => item !== undefined)
+    .filter((item) => {
+      if (setupMode === 'qrcode' && item.id === 'bluetooth_config') return false;
+      if (setupMode === 'qrcode' && item.id === 'wifi_config_bluetooth') return false;
+      if (setupMode === 'bluetooth' && item.id === 'net_config') return false;
+      if (setupMode === 'bluetooth' && item.id === 'wifi_config_qrcode') return false;
+      return true;
+    });
 });
 
 onLoad(() => {
@@ -410,9 +419,9 @@ function goDeleteAccount() {
   /* 基础渐变背景 */
   background: linear-gradient(
     135deg,
-    rgba(255, 252, 245, 0.6) 0%,       /* 左上极淡黄 */
-    rgba(210, 200, 245, 0.25) 45%,     /* 中间蓝紫色 */
-    rgba(255, 253, 248, 0.5) 100%      /* 右下淡黄白 */
+    rgba(255, 252, 245, 0.6) 0%,
+    /* 左上极淡黄 */ rgba(210, 200, 245, 0.25) 45%,
+    /* 中间蓝紫色 */ rgba(255, 253, 248, 0.5) 100% /* 右下淡黄白 */
   );
 }
 
@@ -638,7 +647,7 @@ function goDeleteAccount() {
 
 /* 退出登录按钮 - 按设计稿 */
 .logout-btn.danger {
-  background: #FB3748;
+  background: #fb3748;
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 8px 32px rgba(255, 82, 82, 0.2);
@@ -653,7 +662,7 @@ function goDeleteAccount() {
 /* 注销账号按钮 */
 .logout-btn.outlined {
   background: rgba(255, 255, 255, 0.6);
-  color: #FB3748;
+  color: #fb3748;
   border: 1px solid rgba(251, 55, 72, 0.3);
   box-shadow: none;
   backdrop-filter: blur(10px);

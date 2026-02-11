@@ -3,6 +3,9 @@
  * 提供音频播放的基础功能，可以在任何地方使用
  */
 
+import i18n from '@/locale';
+const $t = i18n.global.t;
+
 export interface AudioItem {
   id?: string;
   src: string;
@@ -155,7 +158,7 @@ export class AudioPlayerManager {
       this.cleanupCurrentAudio();
 
       uni.showToast({
-        title: '播放失败',
+        title: $t('common.play_failed'),
         icon: 'none'
       });
     });
@@ -194,7 +197,11 @@ export class AudioPlayerManager {
       // 这在某些 iOS 版本的小程序/APP 环境下对事件触发至关重要
       let finalSrc = audioObj.src;
       // #ifdef APP-PLUS || APP-HARMONY
-      if (uni.getSystemInfoSync().platform === 'ios' && finalSrc.startsWith('/') && !finalSrc.startsWith('file://')) {
+      if (
+        uni.getSystemInfoSync().platform === 'ios' &&
+        finalSrc.startsWith('/') &&
+        !finalSrc.startsWith('file://')
+      ) {
         finalSrc = 'file://' + finalSrc;
       }
       // #endif
@@ -232,7 +239,7 @@ export class AudioPlayerManager {
       this.events.onError?.(error, audio as AudioItem);
 
       uni.showToast({
-        title: '播放失败',
+        title: $t('common.play_failed'),
         icon: 'none'
       });
 
@@ -303,7 +310,11 @@ export class AudioPlayerManager {
       // 同样进行路径标准化，确保比较时的准确性
       let normalizedSrc = audioObj.src;
       // #ifdef APP-PLUS || APP-HARMONY
-      if (uni.getSystemInfoSync().platform === 'ios' && normalizedSrc.startsWith('/') && !normalizedSrc.startsWith('file://')) {
+      if (
+        uni.getSystemInfoSync().platform === 'ios' &&
+        normalizedSrc.startsWith('/') &&
+        !normalizedSrc.startsWith('file://')
+      ) {
         normalizedSrc = 'file://' + normalizedSrc;
       }
       // #endif
@@ -426,7 +437,7 @@ export class AudioPlayerManager {
           this.audioContext.stop();
         }
 
-        const emptyCallback = () => { };
+        const emptyCallback = () => {};
 
         // 移除所有事件监听器
         this.audioContext.offPlay(emptyCallback);

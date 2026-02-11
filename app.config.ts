@@ -3,16 +3,19 @@ type Platform = 'mp-weixin' | 'app-ios' | 'app-android' | 'app-harmony';
 /**
  * 获取应用配置
  * 根据不同的版本返回不同的功能配置
- * 
+ *
  * @param platform 平台类型
  * iOS：app-ios
  * Android：app-android
  * 鸿蒙：app-harmony
  * 微信小程序：mp-weixin
- * 
+ *
  * @param appEdition 版本类型，可选值：full, cn, intl
  */
-export default function getAppConfig(platform: Platform, appEdition: 'full' | 'cn' | 'intl'): Record<string, any> {
+export default function getAppConfig(
+  platform: Platform,
+  appEdition: 'full' | 'cn' | 'intl'
+): Record<string, any> {
   // 基础 API 地址
   let BASE_API_URL: string;
 
@@ -21,7 +24,8 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
     BASE_API_URL = 'https://lingxiwmp.qiniu.com/user';
   } else {
     // App 端根据版本选择服务器
-    BASE_API_URL = appEdition === 'intl' ? 'http://204.141.229.218:8000' : 'http://111.62.241.103:8000';
+    BASE_API_URL =
+      appEdition === 'intl' ? 'http://204.141.229.218:8000' : 'http://111.62.241.103:8000';
   }
 
   // 是否支持微信小程序手机号登录
@@ -61,20 +65,29 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
   // 是否支持声纹（微信小程序不支持）
   // const APP_USE_VOICEPRINT = platform !== 'mp-weixin';
 
-  // 是否支持声纹（暂时在所有平台启用）
-  const APP_USE_VOICEPRINT = true;
-  
-  // 用户协议和隐私政策 URL（微信小程序不显示）
-  const TERMS_URL = platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/user-agreement';
-  const PRIVACY_URL = platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/privacy-right';
+  // 是否支持声纹（微信小程序不支持）
+  const APP_USE_VOICEPRINT = platform !== 'mp-weixin';
 
-  // 用户反馈邮箱（留空则不显示反馈入口）
+  // 用户协议和隐私政策 URL（微信小程序不显示）
+  const TERMS_URL =
+    platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/user-agreement';
+  const PRIVACY_URL =
+    platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/privacy-right';
+
+  // 用户反馈邮箱（留空则不显示反馈入口，微信小程序不显示）
   // 灵矽：jubao@qiniu.com
   // 萌点：luomiaoxia@szsmdt.cn
-  const FEEDBACK_EMAIL = 'jubao@qiniu.com';
+  const FEEDBACK_EMAIL = platform === 'mp-weixin' ? '' : 'jubao@qiniu.com';
+
+  // 是否显示说明与教程（微信小程序不显示）
+  const SHOW_INSTRUCTIONS_TUTORIALS = platform !== 'mp-weixin';
 
   const MANUAL_ZH_URL = 'https://mengdiantansuo.com.cn/files/manual_zh.pdf';
   const MANUAL_EN_URL = 'https://mengdiantansuo.com.cn/files/manual_en.pdf';
+  const MANUAL_JA_URL = 'https://mengdiantansuo.com.cn/files/manual_ja.pdf';
+  const MANUAL_KO_URL = 'https://mengdiantansuo.com.cn/files/manual_ko.pdf';
+  const MANUAL_RU_URL = 'https://mengdiantansuo.com.cn/files/manual_ru.pdf';
+  const MANUAL_AR_URL = 'https://mengdiantansuo.com.cn/files/manual_ar.pdf';
   const TUTORIAL_VIDEO_URL = 'https://mengdiantansuo.com.cn/files/tutorial.mp4';
   const TUTORIAL_VIDEO_EN_URL = 'https://mengdiantansuo.com.cn/files/tutorial_en.mp4';
 
@@ -106,8 +119,13 @@ export default function getAppConfig(platform: Platform, appEdition: 'full' | 'c
     TERMS_URL,
     PRIVACY_URL,
     FEEDBACK_EMAIL,
+    SHOW_INSTRUCTIONS_TUTORIALS,
     MANUAL_ZH_URL,
     MANUAL_EN_URL,
+    MANUAL_JA_URL,
+    MANUAL_KO_URL,
+    MANUAL_RU_URL,
+    MANUAL_AR_URL,
     TUTORIAL_VIDEO_URL,
     TUTORIAL_VIDEO_EN_URL,
     GOOGLE_OAUTH_CLIENT_ID_WEB,

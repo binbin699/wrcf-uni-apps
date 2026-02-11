@@ -3,6 +3,9 @@
  * 提供录音功能的基础操作，采用单例模式
  */
 
+import i18n from '@/locale';
+const $t = i18n.global.t;
+
 /**
  * 录音管理工具类选项
  */
@@ -168,7 +171,7 @@ export class AudioRecorderManager {
       this.events.onError?.(err);
 
       uni.showToast({
-        title: '录音失败',
+        title: $t('common.record_failed'),
         icon: 'none'
       });
     });

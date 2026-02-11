@@ -218,6 +218,11 @@ export const deviceApi = {
     return request.delete('/app/device/remove', data);
   },
 
+  // 更新设备信息(暂时还没有实现)
+  update(data) {
+    return request.post('/app/device/update', data);
+  },
+
   /**
    * 绑定声纹到设备
    * @param {deviceId: number, roleId?: string, audioUrl?: string, threshold?: number} data

@@ -1,6 +1,6 @@
 /**
  * 应用信息管理
- * 
+ *
  * 导出平台相关信息：
  * - platform: 运行平台 (mp-weixin, app-plus 等)
  * - os: 操作系统 (ios, android, windows 等)
@@ -8,7 +8,14 @@
  * - androidApiLevel: Android API 级别（仅 Android）
  */
 
-import { OsType, PLATFORM, detectOsType, detectOsVersion, getAndroidApiLevel } from './env';
+import {
+  OsType,
+  PLATFORM,
+  detectOsType,
+  detectOsVersion,
+  getAndroidApiLevel,
+  isHarmonyRom
+} from './env';
 
 export const AppInfo = {
   platform: PLATFORM,
@@ -34,7 +41,7 @@ export const AppInfo = {
   },
 
   /**
-   * 判断是否为 Android App 平台
+   * 判断是否为 Android App 平台（包括 HarmonyOS 4.x 等运行在 Android 内核上的设备）
    */
   isAndroidApp: (): boolean => {
     return PLATFORM === 'app' && detectOsType() === 'android';
@@ -48,10 +55,20 @@ export const AppInfo = {
   },
 
   /**
-   * 判断是否为鸿蒙 App 平台
+   * 判断是否为鸿蒙 NEXT App 平台（通过 APP-HARMONY 编译）
+   * 注意：HarmonyOS 4.x 及更早版本运行在 Android 内核上，isAndroidApp() 返回 true
    */
   isHarmonyApp: (): boolean => {
     return PLATFORM === 'app' && detectOsType() === 'harmony';
+  },
+
+  /**
+   * 判断是否运行在鸿蒙 ROM 上（包括 HarmonyOS on Android 和 HarmonyOS NEXT）
+   * 仅用于日志、调试、UI 显示等场景
+   * 注意：功能性判断请使用 isAndroidApp() 或 isHarmonyApp()
+   */
+  isHarmonyRom: (): boolean => {
+    return isHarmonyRom();
   },
 
   /**
@@ -77,5 +94,5 @@ export const AppInfo = {
       // @ts-ignore
       return typeof wx !== 'undefined';
     }
-  },
+  }
 };

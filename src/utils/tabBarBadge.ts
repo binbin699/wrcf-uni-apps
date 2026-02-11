@@ -4,6 +4,7 @@ import { deviceApi } from '@/api/index';
 import { isSquareOverlayDismissed } from './userGuide';
 
 // 广场 Tab 的索引（从 0 开始）
+// Tab 顺序：设备(0) → 智能体(1) → 广场(2) → 我的(3)
 const SQUARE_TAB_INDEX = 2;
 
 // 响应式状态，供自定义 TabBar 使用

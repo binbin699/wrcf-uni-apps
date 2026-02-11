@@ -1,7 +1,7 @@
 <template>
   <view class="input-pwd">
     <!-- 步骤标题 -->
-    <view class="step-title">当前步骤：输入WiFi密码</view>
+    <view class="step-title">{{ $t('bluetooth.input_pwd.step_title') }}</view>
 
     <!-- 选中的WiFi信息 -->
     <view v-if="selectedWifi" class="selected-wifi">
@@ -9,7 +9,7 @@
         <view class="wifi-icon">📶</view>
         <view class="wifi-info">
           <view class="wifi-name">{{ selectedWifi.SSID }}</view>
-          <view class="wifi-security">🔒 加密网络</view>
+          <view class="wifi-security">{{ $t('bluetooth.input_pwd.secure_network') }}</view>
         </view>
         <view class="wifi-signal">
           <WifiSignal :strength="selectedWifi.signalStrength" />
@@ -19,13 +19,13 @@
 
     <!-- 密码输入 -->
     <view class="password-section">
-      <view class="input-label">WiFi密码</view>
+      <view class="input-label">{{ $t('bluetooth.input_pwd.wifi_password_label') }}</view>
       <view class="input-container">
         <input
           v-model="password"
           class="password-input"
           :type="isPasswordVisible ? 'text' : 'password'"
-          placeholder="请输入WiFi密码"
+          :placeholder="$t('bluetooth.input_pwd.wifi_password_placeholder')"
           :maxlength="64"
           @input="handlePasswordInput" />
         <view class="toggle-visibility" @click="togglePasswordVisibility">
@@ -37,23 +37,22 @@
       <view class="password-tips">
         <view class="tip">
           <view class="icon">💡</view>
-          <text>请根据网络要求输入正确密码</text>
+          <text>{{ $t('bluetooth.input_pwd.tip_correct_password') }}</text>
         </view>
         <view class="tip">
           <view class="icon">🔐</view>
-          <text>请确保密码正确，避免连接失败</text>
+          <text>{{ $t('bluetooth.input_pwd.tip_avoid_failure') }}</text>
         </view>
       </view>
     </view>
 
     <!-- 操作按钮 -->
     <view class="actions">
-      <view class="action-btn secondary" @click="goBackToSelectWifi">← 重新选择WiFi</view>
+      <view class="action-btn secondary" @click="goBackToSelectWifi">{{ $t('bluetooth.input_pwd.back_select_wifi') }}</view>
 
       <view class="action-btn primary" @click="confirmPassword">
-        确认密码 →
+        {{ $t('bluetooth.input_pwd.confirm_password') }}
       </view>
-    </view>
   </view>
 </template>
 
@@ -90,7 +89,7 @@ export default {
       this.goBackToSelectWifi();
       return;
     }
-    
+
     // 如果是开放网络，自动跳转到下一步
     if (this.selectedWifi && !this.selectedWifi.secure) {
       console.log('开放网络，无需密码，自动跳转到下一步');
@@ -142,7 +141,7 @@ export default {
       try {
         // 显示加载状态
         uni.showLoading({
-          title: '正在配置WiFi...',
+          title: this.$t('bluetooth.input_pwd.configuring_wifi'),
           mask: true
         });
 
@@ -152,7 +151,7 @@ export default {
         const selectedWifi = state.selectedWifi;
 
         if (!selectedDevice || !selectedWifi) {
-          throw new Error('缺少必要的配置信息');
+          throw new Error(this.$t('bluetooth.input_pwd.missing_config'));
         }
 
         // 通过蓝牙发送WiFi配置

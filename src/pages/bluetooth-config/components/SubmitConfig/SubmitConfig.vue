@@ -12,7 +12,7 @@
         <text class="status-title">{{ $t('bluetooth.submit.title') }}</text>
         <text class="status-desc">{{ $t('bluetooth.submit.waiting') }}</text>
         <text class="waiting-time">{{ waitingTime }}s</text>
-        
+
         <!-- 进度停滞提示 -->
         <view v-if="showStuckWarning" class="warning-card">
           <wd-icon name="warning" size="36rpx" color="#f59e0b" />
@@ -29,7 +29,7 @@
         </view>
         <text class="status-title success-text">{{ $t('bluetooth.submit.success_title') }}</text>
         <text class="status-desc">{{ $t('bluetooth.submit.success_desc') }}</text>
-        
+
         <!-- 配网信息摘要 -->
         <view class="info-card">
           <view class="info-item">
@@ -49,7 +49,7 @@
       <view class="status-content">
         <image class="status-image" src="/static/icons/config-failed.svg" mode="aspectFit" />
         <text class="status-title error-text">{{ $t('bluetooth.submit.failed_title') }}</text>
-        <text class="status-desc">{{ configError || '设备响应超时，请检查设备状态' }}</text>
+        <text class="status-desc">{{ configError || $t('bluetooth.submit.device_timeout') }}</text>
       </view>
     </view>
 
@@ -59,7 +59,7 @@
         <image class="status-image" src="/static/icons/wifi-scan.svg" mode="aspectFit" />
         <text class="status-title">{{ $t('bluetooth.submit.title') }}</text>
         <text class="status-desc">{{ $t('bluetooth.submit.ready_desc') }}</text>
-        
+
         <!-- 配置信息摘要 -->
         <view class="info-card">
           <view class="info-item">
@@ -128,8 +128,12 @@ export default {
       return bluetoothConfigManager.getState().passwordState;
     },
     deviceDisplayName() {
-      if (!this.selectedDevice) return '未知设备';
-      return this.selectedDevice.name || this.selectedDevice.deviceId || '未知设备';
+      if (!this.selectedDevice) return this.$t('bluetooth.submit.unknown_device');
+      return (
+        this.selectedDevice.name ||
+        this.selectedDevice.deviceId ||
+        this.$t('bluetooth.submit.unknown_device')
+      );
     },
     isWifiPasswordError() {
       return this.configError && this.configError.includes('WiFi密码');
@@ -150,7 +154,7 @@ export default {
     if (!this.selectedDevice || !this.selectedWifi) {
       console.error('配网信息不完整');
       uni.showToast({
-        title: '配网信息不完整',
+        title: this.$t('bluetooth.submit.config_incomplete'),
         icon: 'none',
         duration: 2000
       });
@@ -206,7 +210,7 @@ export default {
         const selectedDevice = state.selectedDevice;
 
         if (!selectedDevice || !selectedDevice.deviceId) {
-          throw new Error('未找到已连接的蓝牙设备');
+          throw new Error(this.$t('bluetooth.submit.no_bluetooth_device'));
         }
 
         console.log('开始监听配网结果...');
@@ -229,12 +233,12 @@ export default {
           }
 
           uni.showToast({
-            title: '配网成功',
+            title: this.$t('bluetooth.submit.config_success'),
             icon: 'success',
             duration: 2000
           });
         } else {
-          throw new Error(configResult.error || '配网失败');
+          throw new Error(configResult.error || this.$t('bluetooth.submit.config_failed'));
         }
       } catch (error) {
         console.error('配网失败:', error);
@@ -301,7 +305,7 @@ export default {
         console.log('正在绑定设备到用户账号...', deviceData);
 
         uni.showLoading({
-          title: '绑定设备中...',
+          title: this.$t('bluetooth.submit.binding_loading'),
           mask: true
         });
 
@@ -312,14 +316,14 @@ export default {
         if (result && result.code === 1000) {
           console.log('设备绑定成功', result);
           uni.showToast({
-            title: '设备绑定成功',
+            title: this.$t('bluetooth.submit.bind_device_success'),
             icon: 'success',
             duration: 2000
           });
         } else {
           console.warn('设备绑定响应异常', result);
           uni.showToast({
-            title: '设备已配网成功',
+            title: this.$t('bluetooth.submit.config_ok_no_bind'),
             icon: 'success',
             duration: 2000
           });
@@ -330,7 +334,7 @@ export default {
 
         // 即使绑定失败，配网已成功，给用户提示
         uni.showToast({
-          title: '配网成功，设备绑定失败',
+          title: this.$t('bluetooth.submit.config_success_bind_failed'),
           icon: 'none',
           duration: 3000
         });
@@ -546,7 +550,7 @@ export default {
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #335CFF 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #335cff 100%);
   color: #fff;
   box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.3);
 }

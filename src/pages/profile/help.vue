@@ -11,23 +11,18 @@
         <view class="nav-center">
           <text class="nav-title">{{ $t('profile.instructions_tutorials') }}</text>
         </view>
-        <view class="nav-right"></view> <!-- 占位平衡 -->
+        <view class="nav-right"></view>
+        <!-- 占位平衡 -->
       </view>
     </view>
 
     <!-- 2. 主内容区域 -->
-    <view 
-      class="main-content" 
-      :style="{ paddingTop: (statusBarHeight + navContentHeight) + 'px' }"
-    >
+    <view class="main-content" :style="{ paddingTop: statusBarHeight + navContentHeight + 'px' }">
       <!-- 说明书部分 -->
       <view class="section manual-section">
         <view class="section-title">{{ $t('help.manual_title') }}</view>
-        
-        <view 
-          class="manual-card" 
-          @click="openManual"
-        >
+
+        <view class="manual-card" @click="openManual">
           <view class="card-left">
             <view class="icon-box zh-theme">
               <image class="pdf-icon" src="/static/icons/setting.svg" mode="aspectFit" />
@@ -53,8 +48,7 @@
             class="tutorial-video"
             object-fit="contain"
             :direction="0"
-            :enable-play-gesture="false"
-          />
+            :enable-play-gesture="false" />
         </view>
       </view>
 
@@ -76,15 +70,31 @@ const videoUrl = ref<string>('');
 
 /**
  * 获取应用界面语言
- * @returns 'zh' 表示简体中文界面，'en' 表示其他语言界面
+ * @returns 语言代码：zh（简体中文）、ja（日语）、ko（韩语）、ru（俄语）、ar（阿拉伯语）、en（其他语言）
  */
-function getAppLanguage(): 'zh' | 'en' {
+function getAppLanguage(): 'zh' | 'en' | 'ja' | 'ko' | 'ru' | 'ar' {
   try {
-    const appLocale = uni.getLocale() || 'en';
-    
-    // 只判断简体中文（zh-Hans 或 zh），其他所有语言（包括繁体中文）都返回英文
-    if (appLocale === 'zh-Hans' || appLocale === 'zh') {
+    const appLocale = (uni.getLocale() || 'en').toLowerCase();
+
+    // 简体中文
+    if (appLocale === 'zh-hans' || appLocale === 'zh') {
       return 'zh';
+    }
+    // 日语
+    if (appLocale === 'ja' || appLocale.startsWith('ja-')) {
+      return 'ja';
+    }
+    // 韩语
+    if (appLocale === 'ko' || appLocale.startsWith('ko-')) {
+      return 'ko';
+    }
+    // 俄语
+    if (appLocale === 'ru' || appLocale.startsWith('ru-')) {
+      return 'ru';
+    }
+    // 阿拉伯语
+    if (appLocale === 'ar' || appLocale.startsWith('ar-')) {
+      return 'ar';
     }
     // 其他语言统一返回英文
     return 'en';
@@ -127,19 +137,27 @@ function goBack() {
 
 /**
  * 打开使用说明书
- * 根据应用界面语言自动选择中文或英文说明书
+ * 根据应用界面语言自动选择对应语言的说明书
  */
 function openManual() {
   const lang = getAppLanguage();
-  const url = lang === 'zh' ? APP_CONFIG.MANUAL_ZH_URL : APP_CONFIG.MANUAL_EN_URL;
-  
+  const manualUrlMap: Record<string, string> = {
+    zh: APP_CONFIG.MANUAL_ZH_URL,
+    en: APP_CONFIG.MANUAL_EN_URL,
+    ja: APP_CONFIG.MANUAL_JA_URL,
+    ko: APP_CONFIG.MANUAL_KO_URL,
+    ru: APP_CONFIG.MANUAL_RU_URL,
+    ar: APP_CONFIG.MANUAL_AR_URL
+  };
+  const url = manualUrlMap[lang] || APP_CONFIG.MANUAL_EN_URL;
+
   if (!url) {
     uni.showToast({ title: 'Config Error', icon: 'none' });
     return;
   }
-  
+
   uni.showLoading({ title: $t('common.loading'), mask: true });
-  
+
   uni.downloadFile({
     url: url,
     success: (res) => {
@@ -149,9 +167,9 @@ function openManual() {
           showMenu: true,
           fail: (err) => {
             console.error('Open PDF Failed:', err);
-            uni.showToast({ 
-              title: $t('webview.cannotOpenPage'), 
-              icon: 'none' 
+            uni.showToast({
+              title: $t('webview.cannotOpenPage'),
+              icon: 'none'
             });
           }
         });
@@ -291,8 +309,12 @@ function openManual() {
   margin-right: 24rpx;
 }
 
-.zh-theme { background: #e0e7ff; }
-.en-theme { background: #fef3c7; }
+.zh-theme {
+  background: #e0e7ff;
+}
+.en-theme {
+  background: #fef3c7;
+}
 
 .pdf-icon {
   width: 48rpx;
@@ -331,7 +353,7 @@ function openManual() {
   overflow: hidden;
   box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.12);
   /* 强制硬件加速，有助于同层渲染 */
-  transform: translateZ(0); 
+  transform: translateZ(0);
 }
 
 .tutorial-video {

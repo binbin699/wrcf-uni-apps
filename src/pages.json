@@ -1,9 +1,28 @@
 {
   "pages": [
+    // #ifdef MP-WEIXIN
+    {
+      "path": "pages/mp-landing/mp-landing",
+      "style": {
+        "navigationBarTitleText": "",
+        "navigationStyle": "custom"
+      }
+    },
+    // #endif
     {
       "path": "pages/login/login",
       "style": {
         "navigationBarTitleText": "%pages.login%",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/device-status/device-status",
+      "style": {
+        "navigationBarTitleText": "%pages.device_status%",
         "navigationStyle": "custom",
         "app-plus": {
           "bounce": "none"
@@ -28,15 +47,6 @@
       "style": {
         "navigationBarTitleText": "%pages.register%",
         "navigationStyle": "custom",
-        "app-plus": {
-          "bounce": "none"
-        }
-      }
-    },
-    {
-      "path": "pages/index/index",
-      "style": {
-        "navigationBarTitleText": "%index.my_agents%",
         "app-plus": {
           "bounce": "none"
         }
@@ -112,6 +122,15 @@
       "path": "pages/net-config/net-config",
       "style": {
         "navigationBarTitleText": "%pages.net_config%",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "%index.my_agents%",
         "app-plus": {
           "bounce": "none"
         }
@@ -194,6 +213,12 @@
     "borderStyle": "white",
     "backgroundColor": "#ffffff",
     "list": [
+      {
+        "pagePath": "pages/device-status/device-status",
+        "iconPath": "static/tab-device.png",
+        "selectedIconPath": "static/tab-device-active.png",
+        "text": "%tabbar.device%"
+      },
       {
         "pagePath": "pages/index/index",
         "iconPath": "static/tab-agent.png",

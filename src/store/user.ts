@@ -10,6 +10,8 @@ import type {
 } from '@/api/types/login';
 import { loginApi } from '@/api/login';
 import { useTokenStore } from './token';
+import i18n from '@/locale';
+const $t = i18n.global.t;
 
 // 初始化状态
 const userInfoState: IUserInfoRes = {
@@ -88,7 +90,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('Google登录失败:', error);
-        loginError.value = error.message || 'Google登录失败';
+        loginError.value = error.message || $t('login.google_login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -135,14 +137,18 @@ export const useUserStore = defineStore(
         });
 
         // 检查是否是用户取消
-        if (errMsg.includes('cancel') || errMsg.includes('取消') || errMsg.includes('user cancelled')) {
+        if (
+          errMsg.includes('cancel') ||
+          errMsg.includes('取消') ||
+          errMsg.includes('user cancelled')
+        ) {
           console.log('用户取消了微信登录授权');
           loginError.value = 'user cancelled';
           return false;
         }
 
         console.error('微信登录失败原因:', errMsg || '未知错误');
-        loginError.value = errMsg || '微信登录失败';
+        loginError.value = errMsg || $t('login.wx_login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -172,7 +178,7 @@ export const useUserStore = defineStore(
           return false;
         }
 
-        loginError.value = errMsg || 'Apple登录失败';
+        loginError.value = errMsg || $t('login.apple_login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -197,7 +203,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('账号密码登录失败:', error);
-        loginError.value = error.message || '登录失败';
+        loginError.value = error.message || $t('login.login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -222,7 +228,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('邮箱密码登录失败:', error);
-        loginError.value = error.message || '登录失败';
+        loginError.value = error.message || $t('login.login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -247,7 +253,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('小程序手机号登录失败:', error);
-        loginError.value = error.message || '登录失败';
+        loginError.value = error.message || $t('login.login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -272,7 +278,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('注册失败:', error);
-        loginError.value = error.message || '注册失败';
+        loginError.value = error.message || $t('login.register_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -294,7 +300,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('短信登录失败:', error);
-        loginError.value = error.message || '登录失败';
+        loginError.value = error.message || $t('login.login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -319,7 +325,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('游客登录失败:', error);
-        loginError.value = error.message || '游客登录失败';
+        loginError.value = error.message || $t('login.guest_login_failed');
         return false;
       } finally {
         isLoading.value = false;

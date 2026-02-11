@@ -28,4 +28,4 @@ dist
 .hbuilderx
 
 # AI Agent files
-AGENTS.md
+.cli-path
