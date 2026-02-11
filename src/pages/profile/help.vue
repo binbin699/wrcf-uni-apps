@@ -69,38 +69,39 @@ const navContentHeight = ref<number>(44);
 const videoUrl = ref<string>('');
 
 /**
- * 获取应用界面语言
+ * 获取设备系统语言（非应用界面语言）
+ * 用于选择说明书/视频等多语言资源，确保韩语、阿拉伯语等未作为界面语言的语种也能正确匹配
  * @returns 语言代码：zh（简体中文）、ja（日语）、ko（韩语）、ru（俄语）、ar（阿拉伯语）、en（其他语言）
  */
-function getAppLanguage(): 'zh' | 'en' | 'ja' | 'ko' | 'ru' | 'ar' {
+function getSystemLanguage(): 'zh' | 'en' | 'ja' | 'ko' | 'ru' | 'ar' {
   try {
-    const appLocale = (uni.getLocale() || 'en').toLowerCase();
+    const systemInfo = uni.getSystemInfoSync();
+    const systemLang = (systemInfo.language || 'en').toLowerCase();
 
     // 简体中文
-    if (appLocale === 'zh-hans' || appLocale === 'zh') {
+    if (systemLang.includes('zh') && (systemLang.includes('hans') || systemLang.includes('cn'))) {
       return 'zh';
     }
     // 日语
-    if (appLocale === 'ja' || appLocale.startsWith('ja-')) {
+    if (systemLang.includes('ja')) {
       return 'ja';
     }
     // 韩语
-    if (appLocale === 'ko' || appLocale.startsWith('ko-')) {
+    if (systemLang.includes('ko')) {
       return 'ko';
     }
     // 俄语
-    if (appLocale === 'ru' || appLocale.startsWith('ru-')) {
+    if (systemLang.includes('ru')) {
       return 'ru';
     }
     // 阿拉伯语
-    if (appLocale === 'ar' || appLocale.startsWith('ar-')) {
+    if (systemLang.includes('ar')) {
       return 'ar';
     }
     // 其他语言统一返回英文
     return 'en';
   } catch (error) {
-    console.error('获取应用界面语言失败:', error);
-    // 异常情况默认使用英文
+    console.error('获取系统语言失败:', error);
     return 'en';
   }
 }
@@ -115,8 +116,8 @@ onLoad(() => {
   navContentHeight.value = (capsule.top - (systemInfo.statusBarHeight || 0)) * 2 + capsule.height;
   // #endif
 
-  // 2. 新的视频选择逻辑
-  const lang = getAppLanguage();
+  // 2. 根据系统语言选择视频
+  const lang = getSystemLanguage();
   if (lang === 'zh') {
     // 中文界面显示 tutorial_en.mp4（中文视频）
     videoUrl.value = APP_CONFIG.TUTORIAL_VIDEO_EN_URL;
@@ -140,7 +141,7 @@ function goBack() {
  * 根据应用界面语言自动选择对应语言的说明书
  */
 function openManual() {
-  const lang = getAppLanguage();
+  const lang = getSystemLanguage();
   const manualUrlMap: Record<string, string> = {
     zh: APP_CONFIG.MANUAL_ZH_URL,
     en: APP_CONFIG.MANUAL_EN_URL,
