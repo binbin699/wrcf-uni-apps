@@ -48,15 +48,16 @@
       :visible="showBindDrawer"
       :agent="selectedAgent"
       :configAble="userStore.userId === selectedAgent?.userId"
-      :templateAble="!!selectedAgent?.isTemplate"
+      :templateAble="selectedAgent?.isTemplate"
       @update:visible="showBindDrawer = $event"
       @success="handleBindSuccess"
       @error="handleBindError"
       @cancel="handleBindCancel" />
 
-    <!-- 没有设备时的引导弹窗 - 暂时禁用，改为在设备页显示 -->
-    <view v-if="false && showWelcomeGuide" class="welcome-overlay" :class="{ 'is-single': setupMode !== 'both' }">
+    <!-- 没有设备时的引导弹窗；测试阶段 isDev 时无论有无设备都先显示 -->
+    <view v-if="showWelcomeGuide" class="welcome-overlay" :class="{ 'is-single': setupMode !== 'both' }">
       <view class="welcome-popup">
+        <!-- 两种模式并行 (默认) -->
         <view v-if="setupMode === 'both'" class="welcome-content">
           <view class="welcome-title">{{ $t('welcome.guide_title') }}</view>
           <view class="welcome-actions">
@@ -89,6 +90,8 @@
             </view>
           </view>
         </view>
+
+        <!-- 单个模式 (扫码或蓝牙) -->
         <view v-else class="welcome-content-single">
           <view class="welcome-icon-wrapper single" :class="setupMode">
             <image
@@ -210,10 +213,6 @@ onShow(() => {
   updateSquareTabBadge();
   // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
-  // #ifdef MP-WEIXIN
-  // 登录后续接绑定流程（仅小程序端）
-  resumePendingBindAction();
-  // #endif
 });
 
 watch(
@@ -406,39 +405,6 @@ function requireLoginForBind(action: PendingBindAction): boolean {
   return true;
 }
 
-// 登录成功后自动续接绑定流程（仅小程序端）
-function resumePendingBindAction() {
-  const pending = uni.getStorageSync(PENDING_BIND_KEY) as PendingBindAction | '';
-  if (!pending) {
-    return;
-  }
-  // 轮询等待登录状态就绪后再执行（解决 switchTab 回首页时 store 尚未更新的情况）
-  const maxAttempts = 20;
-  let attempts = 0;
-  const tryResume = () => {
-    attempts += 1;
-    if (isUserAuthenticated()) {
-      uni.removeStorageSync(PENDING_BIND_KEY);
-      showWelcomeGuide.value = false;
-      if (pending === 'qrcode') {
-        scanAndBind({
-          onScanSuccess: () => {
-            showWelcomeGuide.value = false;
-          }
-        });
-      } else if (pending === 'bluetooth') {
-        uni.navigateTo({
-          url: PageMap[Pages.BluetoothConfig].url
-        });
-      }
-      return;
-    }
-    if (attempts < maxAttempts) {
-      setTimeout(tryResume, 300);
-    }
-  };
-  setTimeout(tryResume, 300);
-}
 
 async function handleStartSetup() {
   if (!requireLoginForBind('qrcode')) {
@@ -898,7 +864,7 @@ function handleHelpClick() {
 
 .welcome-help-link.single-mode {
   margin-top: 8rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: 8rpx;
 }
 
 .welcome-help-icon {

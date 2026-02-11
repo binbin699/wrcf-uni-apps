@@ -88,10 +88,10 @@ function isUserAuthenticated(): boolean {
   return userStore.isLoggedIn && userStore.userId > 0;
 }
 
-// 跳转到首页
+// 跳转到设备页
 function redirectToHome() {
   uni.switchTab({
-    url: PageMap[Pages.Index].url
+    url: PageMap[Pages.DeviceStatus].url
   });
 }
 
