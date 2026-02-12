@@ -272,6 +272,11 @@
     <!-- 底部插图 -->
     <image class="bottom-illustration" src="/static/bg_removal.png" mode="aspectFill"></image>
 
+    <!-- AI 生成提示 -->
+    <view v-if="deviceList.length > 0" class="ai-generated-tip">
+      <text class="ai-generated-text">{{ $t('common.ai_generated_disclaimer') }}</text>
+    </view>
+
     <!-- 自定义 TabBar -->
     <CustomTabBar :current="0" />
   </view>
@@ -1434,6 +1439,28 @@ uni.$on('deviceStatusRefresh', () => {
   opacity: 0.08;
   z-index: 1;
   pointer-events: none;
+}
+
+// AI 生成提示
+.ai-generated-tip {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  // TabBar 上方，底部插图之上
+  bottom: calc(158rpx + 8px);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-generated-text {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 18px;
+  color: #60718B;
+  text-align: center;
+  white-space: nowrap;
 }
 
 // 编辑设备名称弹窗
