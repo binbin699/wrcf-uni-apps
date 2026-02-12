@@ -1,6 +1,11 @@
 <template>
   <wd-toast />
   <view class="page-container">
+    <!-- 顶部波浪装饰 -->
+    <image class="top-wave-decoration" src="/static/icons/profile-top-wave.svg" mode="aspectFill" />
+    <!-- 右上角模糊圆 -->
+    <view class="top-ellipse"></view>
+
     <!-- 自定义导航栏 -->
     <view class="custom-navbar">
       <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
@@ -18,10 +23,10 @@
             <view class="nickname-container" @click="handleUpdateUserInfo">
               <text class="nickname">{{ userStore.nickname || $t('profile.no_nickname') }}</text>
               <image
-                v-if="!userStore.phone?.startsWith('0000')"
-                class="edit-icon"
-                src="/static/icons/right-arrow.svg"
-                mode="aspectFit"></image>
+                v-if="userStore.phone && !userStore.phone?.startsWith('0000')"
+                class="nickname-arrow"
+                src="/static/icons/chevron-right-dark.svg"
+                mode="aspectFit" />
             </view>
             <!-- 测试账号不显示手机号，没有手机号也不显示 -->
             <text class="phone" v-if="userStore.phone && !userStore.phone?.startsWith('0000')">
@@ -32,29 +37,34 @@
       </view>
 
       <view class="menu-list">
-        <template v-for="item in menuItems" :key="item.title">
-          <view class="menu-item" @click="item.handleClick">
-            <view class="menu-icon">
+        <view v-for="(group, gIdx) in menuGroups" :key="gIdx" class="menu-group">
+          <view
+            v-for="(item, iIdx) in group"
+            :key="item.id"
+            class="menu-item"
+           
+            @click="item.handleClick">
+            <view class="menu-icon-wrapper">
               <image class="icon-image" :src="item.icon" mode="aspectFit"></image>
             </view>
             <text class="menu-title">{{ item.title }}</text>
             <view class="menu-arrow">
               <image
                 class="arrow-image"
-                src="/static/icons/right-arrow.svg"
+                src="/static/icons/chevron-right.svg"
                 mode="aspectFit"></image>
             </view>
           </view>
-        </template>
+        </view>
       </view>
 
       <view class="logout-section">
-        <button class="logout-btn danger" @click="handleLogout">
-          {{ $t('profile.logout') }}
-        </button>
-        <button class="logout-btn outlined" @click="goDeleteAccount">
-          {{ $t('profile.delete_account') }}
-        </button>
+        <view class="logout-btn danger" @click="handleLogout">
+          <text>{{ $t('profile.logout') }}</text>
+        </view>
+        <view class="logout-btn outlined" @click="goDeleteAccount">
+          <text>{{ $t('profile.delete_account') }}</text>
+        </view>
         <!-- 版本号显示 -->
         <view class="version-info">
           <text class="version-text">v{{ appVersion }}</text>
@@ -170,7 +180,7 @@ const menuItems = computed(() => {
     {
       id: 'net_config',
       title: $t('profile.net_config'),
-      icon: '/static/icons/scan-qrcode.svg',
+      icon: '/static/icons/add-device-qrcode.svg',
       handleClick: () => {
         handleScanAndBindDevice();
       }
@@ -178,7 +188,7 @@ const menuItems = computed(() => {
     {
       id: 'wifi_config_qrcode',
       title: $t('profile.wifi_config_qrcode'),
-      icon: '/static/icons/wifi-config.svg',
+      icon: '/static/icons/wifi-config-qrcode.svg',
       handleClick: () => {
         uni.navigateTo({
           url: PageMap[Pages.NetConfig].url + '?bound=1'
@@ -229,7 +239,7 @@ const menuItems = computed(() => {
       ? {
           id: 'instructions_tutorials',
           title: $t('profile.instructions_tutorials'),
-          icon: '/static/icons/setting.svg',
+          icon: '/static/icons/instructions.svg',
           handleClick: () => uni.navigateTo({ url: '/pages/profile/help' })
         }
       : undefined,
@@ -237,7 +247,7 @@ const menuItems = computed(() => {
       ? {
           id: 'user_agreement',
           title: $t('profile.user_agreement'),
-          icon: '/static/icons/setting.svg',
+          icon: '/static/icons/user-agreement.svg',
           handleClick: () => openExternal(APP_CONFIG.TERMS_URL)
         }
       : undefined,
@@ -245,7 +255,7 @@ const menuItems = computed(() => {
       ? {
           id: 'privacy_policy',
           title: $t('profile.privacy_policy'),
-          icon: '/static/icons/setting.svg',
+          icon: '/static/icons/privacy-policy.svg',
           handleClick: () => openExternal(APP_CONFIG.PRIVACY_URL)
         }
       : undefined,
@@ -268,6 +278,31 @@ const menuItems = computed(() => {
       if (setupMode === 'bluetooth' && item.id === 'wifi_config_qrcode') return false;
       return true;
     });
+});
+
+// 菜单分组定义
+const groupDefs: string[][] = [
+  ['device_management'],
+  ['net_config', 'wifi_config_qrcode'],
+  ['bluetooth_config', 'wifi_config_bluetooth'],
+  ['voice_manage', 'voice_clone'],
+  ['instructions_tutorials'],
+  ['user_agreement', 'privacy_policy'],
+  ['feedback']
+];
+
+const menuGroups = computed(() => {
+  const items = menuItems.value;
+  const groups: MenuItem[][] = [];
+  for (const def of groupDefs) {
+    const group = def
+      .map((id) => items.find((item) => item.id === id))
+      .filter((item): item is MenuItem => !!item);
+    if (group.length > 0) {
+      groups.push(group);
+    }
+  }
+  return groups;
 });
 
 onLoad(() => {
@@ -416,39 +451,33 @@ function goDeleteAccount() {
   flex-direction: column;
   box-sizing: border-box;
   position: relative;
-  /* 基础渐变背景 */
-  background: linear-gradient(
-    135deg,
-    rgba(255, 252, 245, 0.6) 0%,
-    /* 左上极淡黄 */ rgba(210, 200, 245, 0.25) 45%,
-    /* 中间蓝紫色 */ rgba(255, 253, 248, 0.5) 100% /* 右下淡黄白 */
-  );
+  background: linear-gradient(180deg, #EFF2FF 18.68%, #FFFFFF 124.53%);
+  overflow: hidden;
 }
 
-/* 右上角蓝色光晕 */
-.page-container::before {
-  content: '';
+/* 顶部波浪装饰 */
+.top-wave-decoration {
   position: absolute;
-  top: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at top right, rgba(143, 211, 244, 0.25) 0%, transparent 45%);
-  pointer-events: none;
+  width: calc(100% + 18px);
+  height: 161px;
+  left: -9px;
+  top: -4px;
   z-index: 0;
+  pointer-events: none;
 }
 
-/* 左上角极淡黄色光晕 */
-.page-container::after {
-  content: '';
+/* 右上角模糊圆 */
+.top-ellipse {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at top left, rgba(255, 248, 220, 0.25) 0%, transparent 35%);
-  pointer-events: none;
+  width: 168px;
+  height: 168px;
+  right: -62px;
+  top: -72px;
+  background: #EDF0FF;
+  border-radius: 50%;
+  filter: blur(4px);
   z-index: 0;
+  pointer-events: none;
 }
 
 /* 内容区域 - 透明背景 */
@@ -536,9 +565,14 @@ function goDeleteAccount() {
 }
 
 .nickname {
-  color: #0f172a;
-  font-size: 36rpx;
-  font-weight: 600;
+  color: #212730;
+  font-size: 32rpx;
+  font-weight: 500;
+}
+
+.nickname-arrow {
+  width: 24rpx;
+  height: 24rpx;
 }
 
 .edit-icon {
@@ -557,52 +591,48 @@ function goDeleteAccount() {
 .menu-list {
   display: flex;
   flex-direction: column;
-  gap: 30rpx;
+  gap: 24rpx;
   position: relative;
   z-index: 1;
 }
 
-.menu-item {
-  height: 128rpx;
-  position: relative;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 40rpx;
-  box-shadow: 0 16rpx 64rpx rgba(100, 100, 255, 0.1);
-  border: 2rpx solid rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10rpx);
+.menu-group {
   display: flex;
-  align-items: center;
-  padding: 0 50rpx;
+  flex-direction: column;
+  background: #FFFFFF;
+  border-radius: 32rpx;
+  overflow: hidden;
 }
 
-.menu-icon {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 32rpx;
+.menu-item {
+  height: 112rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 32rpx;
+}
+
+
+.menu-icon-wrapper {
+  width: 36rpx;
+  height: 36rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 50rpx;
+  margin-right: 12rpx;
 }
 
 .icon-image {
-  width: 48rpx;
-  height: 48rpx;
-}
-
-/* .menu-item:nth-child(1) .menu-icon {
-  background: linear-gradient(135deg, #8b5cf6 0%, #93c5fd 100%);
-} */
-
-.menu-item .menu-icon {
-  background: linear-gradient(135deg, #93c5fd 0%, #f9a8d4 100%);
+  width: 36rpx;
+  height: 36rpx;
+  /* 将彩色图标统一调整为 #212730 深色 */
+  filter: brightness(0) saturate(100%) invert(13%) sepia(10%) saturate(600%) hue-rotate(180deg) brightness(92%);
 }
 
 .menu-title {
   flex: 1;
-  color: #1f2937;
+  color: #212730;
   font-size: 32rpx;
-  font-weight: 500;
+  font-weight: 400;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -610,63 +640,54 @@ function goDeleteAccount() {
 }
 
 .menu-arrow {
-  width: 48rpx;
-  height: 48rpx;
+  width: 32rpx;
+  height: 32rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .menu-arrow image {
-  width: 48rpx;
-  height: 48rpx;
+  width: 32rpx;
+  height: 32rpx;
 }
 
 .logout-section {
-  /* margin-top: auto; */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   position: relative;
   z-index: 1;
 }
 
 .logout-btn {
   width: 100%;
-  max-width: 350px;
-  height: 48px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
+  height: 44px;
+  border-radius: 12px;
+  font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  margin: 0 auto;
+  margin: 0;
+  border: none;
+  box-shadow: none;
 }
 
-/* 退出登录按钮 - 按设计稿 */
+/* 退出登录按钮 */
 .logout-btn.danger {
-  background: #fb3748;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 8px 32px rgba(255, 82, 82, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.logout-btn + .logout-btn {
-  margin-top: 12px;
+  background: #D5DAE2;
+  color: #212730;
+  font-size: 16px;
+  line-height: 24px;
 }
 
 /* 注销账号按钮 */
 .logout-btn.outlined {
-  background: rgba(255, 255, 255, 0.6);
-  color: #fb3748;
-  border: 1px solid rgba(251, 55, 72, 0.3);
-  box-shadow: none;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: transparent;
+  color: #60718B;
+  font-size: 14px;
+  line-height: 24px;
 }
 
 /* 版本号显示 */
