@@ -107,7 +107,6 @@
   "index.my_agents": "Мои агенты",
   "index.others_agents": "Другие агенты",
   "index.loading": "Загрузка...",
-  "index.ai_generated_disclaimer": "Ответы агентов генерируются ИИ",
   "index.empty_title": "Нет агентов",
   "index.empty_desc": "Вы ещё не создали агентов. Создайте первого!",
   "index.no_agents": "Нет агентов",
@@ -723,6 +722,7 @@
 
   "common.back": "Назад",
   "common.loading": "Загрузка...",
+  "common.ai_generated_disclaimer": "Контент создан ИИ",
   "common.confirm": "Подтвердить",
   "common.cancel": "Отмена",
   "common.i_know": "Понятно",

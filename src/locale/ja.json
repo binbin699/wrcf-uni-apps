@@ -107,7 +107,6 @@
   "index.my_agents": "マイエージェント",
   "index.others_agents": "他のエージェント",
   "index.loading": "読み込み中...",
-  "index.ai_generated_disclaimer": "エージェントの回答はAIが生成しています",
   "index.empty_title": "エージェントなし",
   "index.empty_desc": "まだエージェントを作成していません。作成してみましょう！",
   "index.no_agents": "エージェントなし",
@@ -723,6 +722,7 @@
 
   "common.back": "戻る",
   "common.loading": "読み込み中...",
+  "common.ai_generated_disclaimer": "コンテンツは AI により生成",
   "common.confirm": "確認",
   "common.cancel": "キャンセル",
   "common.i_know": "わかりました",

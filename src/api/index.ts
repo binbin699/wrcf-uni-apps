@@ -155,9 +155,9 @@ export const voiceApi = {
     return request.post('/app/voice/detail', { voiceId });
   },
 
-  // 同步音色状态
-  syncVoiceStatus(voiceId) {
-    return request.post('/app/voice/sync', { voiceId });
+  // 同步音色状态（保留接口，myList 已集成自动同步）
+  syncVoiceStatus() {
+    return request.post('/app/voice/sync');
   },
 
   // 删除音色
