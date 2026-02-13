@@ -66,12 +66,8 @@
     <!-- 底部按钮区域（双按钮垂直排列） -->
     <view class="bottom-action-wrapper">
       <view class="bottom-action-container">
-        <!-- 上方：确认/重新扫描按钮（蓝色） -->
-        <button v-if="canConnect" class="primary-btn blue-btn" @click="handleConnect">
-          <text>{{ $t('common.confirm') }}</text>
-        </button>
+        <!-- 上方：重新扫描按钮（蓝色） -->
         <button
-          v-else
           class="primary-btn blue-btn"
           :class="{ disabled: isLoadingWifi }"
           :disabled="isLoadingWifi"
@@ -122,9 +118,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { AppInfo } from '@/const';
 import { bluetoothConfigManager, CONFIG_STEPS } from '../../store/bluetoothConfigStore';
 import { configProtocol } from '../../utils/configProtocol';
 import * as native from '../../utils/native';
@@ -133,7 +128,7 @@ import {
   validateWifiCredentials,
   ensureBLEConnection,
   sendWifiConfig,
-  getWifiSendErrorMessage,
+  getWifiSendErrorMessage
 } from '../../utils/wifiConfigHelper';
 
 /** WiFi 项类型 */
@@ -157,13 +152,6 @@ const scrollHeight = ref('600rpx');
 const showPasswordModal = ref(false);
 const passwordInputFocus = ref(false); // 控制密码输入框聚焦（iOS 需要延迟聚焦）
 const pendingWifi = ref<WifiItem | null>(null);
-
-// 计算属性
-const canConnect = computed(() => {
-  if (wifiList.value.length === 0) return false;
-  if (!selectedWifi.value) return false;
-  return true;
-});
 
 // 方法
 function calculateScrollHeight() {
@@ -209,7 +197,7 @@ async function startWifiScan() {
 
   wifiList.value = result.data!.map((wifi: WifiItem) => ({
     ...wifi,
-    signalStrength: Math.floor((wifi.signalStrength / 100) * 4),
+    signalStrength: Math.floor((wifi.signalStrength / 100) * 4)
   }));
 
   console.log('[WifiConfig] WiFi扫描完成:', wifiList.value);
@@ -242,8 +230,10 @@ function handleSelectWifi(wifi: WifiItem) {
       });
     }
   } else {
+    // 开放网络，无需密码，直接配网
     password.value = '';
     bluetoothConfigManager.setSelectedWifi(wifi);
+    handleConnect();
   }
 }
 
@@ -267,10 +257,12 @@ function confirmPassword() {
   bluetoothConfigManager.setSelectedWifi(selectedWifi.value);
   bluetoothConfigManager.setPasswordState({
     password: password.value,
-    isVisible: isPasswordVisible.value,
+    isVisible: isPasswordVisible.value
   });
   showPasswordModal.value = false;
   passwordInputFocus.value = false;
+  // 确认密码后直接进入配网
+  handleConnect();
 }
 
 function togglePasswordVisibility() {
@@ -289,10 +281,8 @@ function goToManualConfig() {
 }
 
 async function handleConnect() {
-  if (!canConnect.value) {
-    if (!selectedWifi.value) {
-      native.toast($t('bluetooth.wifi.please_select'), 2000);
-    }
+  if (!selectedWifi.value) {
+    native.toast($t('bluetooth.wifi.please_select'), 2000);
     return;
   }
 
@@ -313,7 +303,7 @@ async function handleConnect() {
   // 保存密码状态
   bluetoothConfigManager.setPasswordState({
     password: password.value,
-    isVisible: isPasswordVisible.value,
+    isVisible: isPasswordVisible.value
   });
 
   // 1. WiFi 凭据校验
@@ -331,7 +321,7 @@ async function handleConnect() {
     native.toast(
       bleResult.errCode === WIFI_CONFIG_ERROR.BLE_RECONNECT_TIMEOUT
         ? $t('bluetooth.reconnect_timeout')
-        : $t('bluetooth.connection_lost'),
+        : $t('bluetooth.connection_lost')
     );
     return;
   }
@@ -363,13 +353,6 @@ async function handleConnect() {
 // 生命周期
 onMounted(async () => {
   console.log('[WifiConfig] 组件加载');
-
-  // 检测平台：iOS 和鸿蒙不支持 WiFi 扫描，直接进入手动配置
-  if (AppInfo.isIOSApp() || AppInfo.isHarmonyApp() || AppInfo.isHarmonyRom()) {
-    console.log('[WifiConfig] iOS/鸿蒙平台，直接进入手动配置页面');
-    bluetoothConfigManager.setCurrentStep(CONFIG_STEPS.MANUAL_CONFIG);
-    return;
-  }
 
   calculateScrollHeight();
 
