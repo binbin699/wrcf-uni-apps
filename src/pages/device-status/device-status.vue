@@ -40,7 +40,10 @@
       class="device-dropdown-overlay"
       v-if="showDeviceDropdown"
       @click="showDeviceDropdown = false"></view>
-    <view class="device-dropdown" v-if="showDeviceDropdown" :style="{ top: (statusBarHeight + navBarHeight + 2) + 'px' }">
+    <view
+      class="device-dropdown"
+      v-if="showDeviceDropdown"
+      :style="{ top: statusBarHeight + navBarHeight + 2 + 'px' }">
       <view class="device-dropdown-list">
         <view
           class="device-dropdown-item"
@@ -63,7 +66,7 @@
     </view>
 
     <!-- 主要内容区域 -->
-    <view class="content-area" :style="{ paddingTop: (statusBarHeight + navBarHeight + 16) + 'px' }">
+    <view class="content-area" :style="{ paddingTop: statusBarHeight + navBarHeight + 16 + 'px' }">
       <!-- 加载状态 -->
       <view class="loading-state" v-if="loading">
         <text class="loading-text">{{ $t('common.loading') }}</text>
@@ -375,6 +378,8 @@ const editDeviceName = ref('');
 const isDescExpanded = ref(false);
 const showDeviceDropdown = ref(false);
 let loadDevicesVersion = 0; // 用于取消过期的加载请求
+// 标记用户是否从欢迎引导发起了设备配置，配置完成后跳转智能体广场
+const pendingSetupRedirect = ref(false);
 
 // 加载设备列表
 const loadDevices = async () => {
@@ -585,6 +590,7 @@ const toggleDescExpand = () => {
 
 // 处理添加设备（扫码）
 const handleAddDeviceQrcode = () => {
+  pendingSetupRedirect.value = true;
   scanAndBind({
     onScanSuccess: () => {
       // 扫码成功后刷新设备列表
@@ -595,6 +601,7 @@ const handleAddDeviceQrcode = () => {
 
 // 处理添加设备（蓝牙）
 const handleAddDeviceBluetooth = () => {
+  pendingSetupRedirect.value = true;
   uni.navigateTo({
     url: PageMap[Pages.BluetoothConfig].url
   });
@@ -701,13 +708,30 @@ const handleBindAgent = () => {
   });
 };
 
-onShow(() => {
+onShow(async () => {
   // 隐藏系统 TabBar（解决双重导航栏问题）
   uni.hideTabBar({ animation: false });
   // 重置扫码导航状态，防止 Tab 页持久化导致 isNavigating 卡住
   isNavigating.value = false;
+
+  // 记录是否需要在加载完成后跳转智能体广场
+  const shouldRedirect = pendingSetupRedirect.value;
+  if (shouldRedirect) {
+    pendingSetupRedirect.value = false;
+  }
+
   // 刷新设备列表（onShow 在页面首次显示时也会触发，无需在 onMounted 中重复调用）
-  loadDevices();
+  await loadDevices();
+
+  // 配置完成后，如果设备已成功添加，跳转智能体广场方便用户绑定智能体
+  if (shouldRedirect && deviceList.value.length > 0) {
+    console.log('[设备状态] 配置完成，跳转智能体广场');
+    uni.switchTab({
+      url: '/pages/square/square'
+    });
+    return;
+  }
+
   // #ifdef MP-WEIXIN
   // 登录后续接绑定流程（仅小程序端）
   resumePendingBindAction();
@@ -986,6 +1010,12 @@ uni.$on('deviceStatusRefresh', () => {
   flex-direction: column;
   align-items: center;
   gap: 32rpx;
+
+  /* #ifdef MP-WEIXIN */
+  // 小程序隐藏了"说明与教程"链接，增加内边距让卡片更协调
+  padding: 72rpx 40rpx 64rpx;
+  gap: 48rpx;
+  /* #endif */
 }
 
 .welcome-title {
@@ -1024,6 +1054,12 @@ uni.$on('deviceStatusRefresh', () => {
   border: 2rpx solid #f1f5f9;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
+
+  /* #ifdef MP-WEIXIN */
+  // 小程序隐藏了"说明与教程"，增加卡片高度补偿
+  padding: 52rpx 20rpx;
+  gap: 28rpx;
+  /* #endif */
 
   &:active {
     transform: scale(0.96);
@@ -1446,8 +1482,8 @@ uni.$on('deviceStatusRefresh', () => {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  // TabBar 上方，底部插图之上
-  bottom: calc(158rpx + 8px);
+  // TabBar 上方，留出足够间距
+  bottom: calc(158rpx + 24px);
   z-index: 3;
   display: flex;
   align-items: center;
@@ -1458,7 +1494,7 @@ uni.$on('deviceStatusRefresh', () => {
   font-weight: 400;
   font-size: 12px;
   line-height: 18px;
-  color: #60718B;
+  color: #60718b;
   text-align: center;
   white-space: nowrap;
 }

@@ -14,15 +14,13 @@
           class="empty-image"
           src="/static/icons/bluetooth-scan.svg"
           mode="aspectFit" />
-        <image
-          v-else
-          class="empty-image"
-          src="/static/icons/no-device.svg"
-          mode="aspectFit" />
+        <image v-else class="empty-image" src="/static/icons/no-device.svg" mode="aspectFit" />
         <text class="empty-text">
           {{ getEmptyText() }}
         </text>
-        <text v-if="!isLoadingDevices && deviceList !== null && deviceList.length === 0" class="empty-hint">
+        <text
+          v-if="!isLoadingDevices && deviceList !== null && deviceList.length === 0"
+          class="empty-hint">
           {{ $t('bluetooth.device_list.check_power') }}
         </text>
       </view>
@@ -40,15 +38,19 @@
             <image class="icon-img" src="/static/icons/phone.svg" mode="aspectFit" />
           </view>
           <view class="device-info">
-            <view class="device-name">{{ device.name || 'DTXZ_' + (device.macAddress || device.deviceId).slice(-8) }}</view>
+            <view class="device-name">
+              {{ device.name || 'DTXZ_' + (device.macAddress || device.deviceId).slice(-8) }}
+            </view>
             <view class="device-id">ID：{{ device.macAddress || device.deviceId }}</view>
             <view class="device-signal">
               <text class="signal-label">{{ $t('bluetooth.device_list.signal_strength') }}：</text>
               <view class="signal-progress">
                 <view class="signal-progress-bg"></view>
-                <view class="signal-progress-fill" :style="{ width: getSignalWidth(device.RSSI) }"></view>
-                <view class="signal-divider" style="left: 20rpx;"></view>
-                <view class="signal-divider" style="left: 44rpx;"></view>
+                <view
+                  class="signal-progress-fill"
+                  :style="{ width: getSignalWidth(device.RSSI) }"></view>
+                <view class="signal-divider" style="left: 20rpx"></view>
+                <view class="signal-divider" style="left: 44rpx"></view>
               </view>
             </view>
           </view>
@@ -197,10 +199,13 @@ export default {
 
           // Android: 蓝牙扫描需要位置权限，单独请求以确保有预请求弹窗
           if (AppInfo.isAndroidApp()) {
-            const locationResult = await requestLocationPermission({
-              show: this._showNotify,
-              close: this._closeNotify
-            }, true);
+            const locationResult = await requestLocationPermission(
+              {
+                show: this._showNotify,
+                close: this._closeNotify
+              },
+              true
+            );
             if (!locationResult.granted) {
               this.isLoadingDevices = false;
               // 权限请求工具已经显示了相应的提示
@@ -237,6 +242,9 @@ export default {
         const [normalizedDevices, invalidDevices] = normalizeDeviceList(dedupeDevices, this.isIOS);
         console.log('蓝牙-规范化后的设备:', normalizedDevices);
         console.log('蓝牙-无法规范化的设备:', invalidDevices);
+
+        // 按 RSSI 降序排序（信号越强越靠前）
+        normalizedDevices.sort((a, b) => (b.RSSI || -100) - (a.RSSI || -100));
         this.deviceList = normalizedDevices;
 
         if (normalizedDevices.length === 0) {
@@ -535,7 +543,7 @@ export default {
   height: 24rpx;
   left: 0;
   top: 0;
-  background: #E0FAEC;
+  background: #e0faec;
   border-radius: 40rpx;
 }
 
@@ -544,7 +552,7 @@ export default {
   height: 24rpx;
   left: 0;
   top: 0;
-  background: #3CCD62;
+  background: #3ccd62;
   border-radius: 40rpx;
   transition: width 0.3s ease;
 }
@@ -554,7 +562,7 @@ export default {
   width: 2rpx;
   height: 16rpx;
   top: 4rpx;
-  background: #FFFFFF;
+  background: #ffffff;
   opacity: 0.4;
   border-radius: 40rpx;
 }
@@ -582,7 +590,7 @@ export default {
   gap: 12rpx;
   width: 100%;
   height: 96rpx;
-  background: linear-gradient(135deg, #3b82f6 0%, #335CFF 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #335cff 100%);
   border-radius: 48rpx;
   font-size: 32rpx;
   font-weight: 600;
