@@ -66,10 +66,12 @@ export function backendLangToLangCode(backendLang: string): string {
     if (exact) return exact.langCode;
   }
 
-  // 短格式匹配
+  // 短格式匹配（如 'zh' 匹配 'zh_CN'，'ja' 匹配 'ja_JP'）
   const shortCode = normalized.split('_')[0];
   if (languageCache) {
-    const match = languageCache.find((opt) => opt.langCode === shortCode);
+    const match = languageCache.find(
+      (opt) => opt.langCode.split('_')[0].toLowerCase() === shortCode
+    );
     if (match) return match.langCode;
   }
 
