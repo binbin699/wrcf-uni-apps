@@ -1,292 +1,316 @@
-# 灵矽AI APP/小程序
+# 灵矽 AI App / 小程序
 
-基于uni-app框架开发的多平台小程序项目，支持微信小程序、安卓、iOS、鸿蒙多个平台。
+基于 uni-app 框架开发的多平台应用项目，支持微信小程序、Android、iOS、HarmonyOS NEXT 多个平台。
+
+代码仓库：[https://github.com/Qiniu-linx/linx-app](https://github.com/Qiniu-linx/linx-app)
+
+> **注意**：请使用最新分支（形如 `feat/v1.X.X`，版本号越大越新）。`linx-android-app` 与 `linx-ios-app` 已废弃，请勿使用。
+
+完整文档站点：[https://lingxiwmp.qiniu.com/docs/publish/](https://lingxiwmp.qiniu.com/docs/publish/)
 
 ## 项目结构
 
-```txt
-MINIPROGRAM
-│  .env.example            环境变量示例
-│  app.config.ts           应用功能配置(根据版本和平台返回不同的功能配置)
-│  
-├─.hbuilderx
-│      launch.json
-│       
-├─docs/
-│          
-├─harmony-configs          鸿蒙打包的一些配置
-│      
-├─node_modules/
-│      
-├─src
-│  │  App.vue                    vue主入口
-│  │  env.d.ts
-│  │  main.ts                    程序主入口
-│  │  manifest.json              应用配置文件
-│  │  pages.json                 页面配置文件
-│  │  shime-uni.d.ts
-│  │  uni.scss
-│  │  
-│  ├─api                         api封装
-│  │  │  common.ts
-│  │  │  index.js
-│  │  │  login.ts
-│  │  │  
-│  │  └─types/                   api中的一些类型
-│  │          
-│  ├─components
-│  │      AgentBindDrawer.vue    智能体绑定设备抽屉组件
-│  │      AgentCard.vue          智能体卡片组件
-│  │      VoiceSelector.vue      音色选择器组件
-│  │      
-│  ├─const       
-│  │      env.ts                 环境变量管理
-│  │      index.ts               应用信息管理(AppInfo对象，包含平台信息与平台判断方法)
-│  │      
-│  ├─js_sdk                      引入的js-sdk
-│  │  └─wa-permission
-│  │          permission.js      权限sdk
-│  │          
-│  ├─locale                      i18n
-│  │      en.json
-│  │      index.ts
-│  │      readme.md
-│  │      zh-Hans.json
-│  │      
-│  ├─pages/                       页面
-│  │           
-│  ├─static/                      静态文件，图标等
-│  │          
-│  ├─store
-│  │      index.ts
-│  │      token.ts
-│  │      user.ts
-│  │      
-│  ├─styles/                      全局通用样式
-│  │      
-│  ├─types/                       类型
-│  │      
-│  ├─uni_modules/                 使用的uni插件
-│  │                  
-│  └─utils                        实用工具，包含、录音器、权限管理器、声波配网
-│          arrayPlayer.ts         音频播放器
-│          audioPlayer.ts         音频播放器
-│          audioRecorder.ts       录音器
-│          permission.ts          权限管理器
-│          promise.js
-│          request.ts             请求封装
-│          route.ts               路由管理
-│          soundWave.ts           声波配网实现
-│          storage.ts             统一存储接口
-│          userGuide.ts           
-│          wifi.ts                wifi接口
-│          wifiConfig.ts          wifi配网工具
-│          
-└─unpackage                       打包生成的资源
-    ├─res
-    │  └─icons/                   HBuilderX生成的icon
-    └─resources                   HBuilderX生成的APP打包资源
-        ├─uni_modules/            uts插件
-        └─__UNI__0510B30/         基础打包资源
+```
+linx-app
+├── .env.example              环境变量示例
+├── app.config.ts             应用功能配置（根据版本和平台返回不同配置）
+├── vite.config.ts            Vite 构建配置
+├── tsconfig.json             TypeScript 配置
+├── package.json              项目依赖与脚本
+├── project.config.json       微信小程序项目配置
+│
+├── scripts/
+│   └── cloud-pack.sh         云打包脚本（支持交互式与命令行模式）
+│
+├── docs/                     项目内文档
+│
+└── src/
+    ├── App.vue               Vue 主入口
+    ├── main.ts               程序主入口
+    ├── manifest.json          应用配置文件
+    ├── pages.json             页面路由配置
+    ├── uni.scss               全局 SCSS 变量
+    │
+    ├── api/                   API 封装层
+    │   ├── index.ts           API 主入口
+    │   ├── common.ts          通用 API
+    │   ├── login.ts           登录/认证 API
+    │   └── types/             API 类型定义
+    │
+    ├── components/            全局组件
+    │   ├── AgentBindDrawer.vue  智能体绑定设备抽屉
+    │   ├── AgentCard.vue        智能体卡片
+    │   ├── CustomTabBar.vue     自定义底部导航栏
+    │   └── VoiceSelector.vue    音色选择器
+    │
+    ├── pages/                 页面模块
+    │   ├── index/             首页
+    │   ├── agent/             智能体创建/编辑
+    │   ├── bluetooth-config/  蓝牙配网
+    │   ├── device/            设备管理
+    │   ├── device-status/     设备状态
+    │   ├── login/             登录/注册
+    │   ├── net-config/        WiFi 配网
+    │   ├── profile/           用户设置
+    │   ├── square/            广场/发现
+    │   ├── voice/             音色管理/声纹/克隆
+    │   ├── mp-landing/        小程序落地页
+    │   └── webview/           内嵌网页
+    │
+    ├── const/                 常量与环境配置
+    │   ├── index.ts           AppInfo 对象（平台信息与判断方法）
+    │   └── env.ts             环境变量管理
+    │
+    ├── store/                 Pinia 状态管理
+    │   ├── token.ts           认证 Token 管理
+    │   └── user.ts            用户状态管理
+    │
+    ├── locale/                i18n 国际化（zh-Hans, en, ja, ru）
+    │
+    ├── utils/                 工具库
+    │   ├── request.ts         请求封装（基于 uni.request）
+    │   ├── audioPlayer.ts     音频播放器
+    │   ├── audioRecorder.ts   录音器
+    │   ├── permission.ts      权限管理
+    │   ├── route.ts           路由管理
+    │   ├── storage.ts         统一存储接口
+    │   ├── wifi.ts            WiFi 接口
+    │   ├── wifiConfig.ts      WiFi 配网工具
+    │   ├── soundWave.ts       声波配网
+    │   ├── useDeviceScan.ts   设备扫描 Composable
+    │   └── bluetoothPermission.ts  蓝牙权限处理
+    │
+    ├── types/                 全局类型定义
+    ├── styles/                全局通用样式
+    ├── static/                静态资源（图标等）
+    ├── pkg/                   内置包（ARMS 监控等）
+    ├── js_sdk/                第三方 JS SDK
+    └── uni_modules/           uni-app 插件模块
+        ├── wot-design-uni/    UI 组件库（主要）
+        ├── lime-qrcode/       二维码生成
+        └── uni-wifi/          WiFi API 插件
 ```
 
-## 开发工具
+## 环境准备
 
-核心工具
+### 前置要求
 
-- HBuilderX
-- VS Code (可选，如果不习惯HBuilderX)
+- **Node.js** >= 16.x
+- **pnpm**（推荐的包管理器）
+- **HBuilderX**（最新版本）
 
-按目标平台需要的工具
+按目标平台还需要：
 
-- 微信开发者工具 (微信小程序)
-- DevEco Studio (鸿蒙)
-- Android Studio (安卓)
-- Xcode (iOS)  *需要macOS系统15.0+*
+| 平台       | 工具                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------ |
+| 微信小程序 | [微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)  |
+| Android    | HBuilderX 云打包（无需本地环境）                                                           |
+| iOS        | HBuilderX 云打包 + Apple Developer 证书                                                    |
+| HarmonyOS  | [DevEco Studio](https://developer.huawei.com/consumer/cn/deveco-studio/) + HBuilderX 4.61+ |
 
-## 开发流程
-
-完成代码修改后
-
-## 配置
-
-在运行前，需要完成一些配置。
-
-### 环境变量配置
-
-在项目根目录创建 `.env` 文件来配置环境变量：
-
-```bash
-# 复制示例配置
-# 注意：如果 .env 文件不存在，需要手动创建
-
-# 在项目根目录（miniprogram/）创建 .env 文件
-touch .env
-```
-
-在 `.env` 文件中添加以下内容：
-
-```env
-# 版本控制：'full' | 'cn' | 'intl'
-# full: 全功能版本，支持所有功能（部分功能可能受平台限制）
-# cn: 国内版，适配国内登录方式和服务
-# intl: 国际版，使用海外服务器和登录方式
-VITE_APP_EDITION=cn
-```
-
-**说明：**
-- `VITE_APP_EDITION` 控制应用的功能版本，不同版本会启用不同的登录方式、API 地址等配置
-- 具体配置详见 `app.config.ts` 文件
-
-### 应用打包配置
-
-多数配置在 `src/manifest.json` 文件中，建议通过HBuilderX打开项目(不是包含后台项目的文件夹，是miniprogram这个)，再打开manifest.json文件通过图形化界面进行配置。
-
-请先到[dcloud](https://dev.dcloud.net.cn/pages/app/list)注册账号并创建一个新的app项目，获取appid(`__UNI__XXXXXXX`)。
-
-- appid (__UNI__XXXXXXX)
-
-- appid (wx123123123...) (仅微信)
-
-- 包名 (com.qiniu.linx)
-
-- 图标 (可以在hbuilderx通过一张1024x1024的图标生成其余分辨率)
-
-### 应用功能配置
-
-分发到国内、国外时，需要的登录方式往往不同，本项目通过 [app.config.ts](./app.config.ts) 
-定义配置函数，根据平台和版本返回不同的功能配置，包括后端 URL (request baseUrl)、支持的登录方式、蓝牙配网设置等。
-
-版本类型：
-- **full**: 全功能版本，尽可能多的支持功能（部分功能可能受平台限制，如微信登录）
-- **cn**: 国内版，适配国内登录方式和服务
-- **intl**: 国际版，使用海外服务器和登录方式
-
-主要配置项：
-- API 地址（国内/国外不同）
-- 各种登录方式的支持情况（微信小程序手机号、游客登录、Google、Apple、密码、邮箱、短信等）
-- 蓝牙配网相关设置
-- 用户协议和隐私政策 URL
-- Google OAuth Client ID
-- ARMS 监控配置
-
-版本取值通过环境变量 `VITE_APP_EDITION` 来控制，具体的版本细节请参考 `app.config.ts` 文件。
-
-### 其他
-
-其他的配置项可以在hbuilderx中打开manifest.json文件，通过图形化界面配置。
-
-## 安装依赖
+### 安装依赖
 
 ```bash
 pnpm install
 ```
 
-## 开发命令
+### 环境变量配置
 
-没有什么命令，主要需要的命令需要在hbuilderx中运行,通过图形化界面使用。(背后是通过使用内置的huilderx cli)
+复制示例配置文件：
+
+```bash
+cp .env.example .env
+```
+
+在 `.env` 文件中配置：
+
+```env
+# 版本控制：'full' | 'cn' | 'intl'
+# full: 全功能版本
+# cn: 国内版，适配国内登录方式和服务
+# intl: 国际版，使用海外服务器和登录方式
+VITE_APP_EDITION=cn
+```
+
+- `VITE_APP_EDITION` 控制应用的功能版本，不同版本会启用不同的登录方式、API 地址等
+- 具体配置逻辑详见 `app.config.ts`
+
+### 应用配置
+
+在 `src/manifest.json` 中配置（建议通过 HBuilderX 图形界面）：
+
+1. 到 [DCloud 开发者中心](https://dev.dcloud.net.cn/) 创建应用，获取 AppID（`__UNI__XXXXXXX`）
+2. 配置应用图标、包名等基本信息
+3. 如需微信小程序，还需在 [微信公众平台](https://mp.weixin.qq.com/) 申请 AppID
+
+### 功能配置 (`app.config.ts`)
+
+`app.config.ts` 根据平台（mp-weixin / app-ios / app-android / app-harmony）和版本（cn / intl / full）返回不同的功能配置，包括：
+
+- API 地址（国内/海外）
+- 登录方式（微信手机号、Google、Apple、邮箱、短信、游客、密码等）
+- 蓝牙配网设置
+- 声纹功能开关
+- 用户协议和隐私政策 URL
+- ARMS 监控配置
 
 ## 开发
 
-### 微信小程序开发模式
-
-开发，热更新
+### 微信小程序
 
 ```bash
-pnpm run dev:mp-weixin
+# 开发模式（热更新）
+pnpm dev:mp-weixin
+
+# 生产构建
+pnpm build:mp-weixin
 ```
 
-构建
+构建产物：
+
+- 开发版：`dist/dev/mp-weixin`（本地调试用）
+- 生产版：`dist/build/mp-weixin`（上传发布用）
+
+> **重要**：上线必须使用 `pnpm build:mp-weixin` 的生产构建版本，dev 版本未压缩、体积大，且会暴露源码。
+
+### App 开发（Android / iOS）
+
+通过 HBuilderX 打开项目，点击 **「运行」** -> **「运行到手机或模拟器」** 选择目标设备。
+
+### 其他常用命令
 
 ```bash
-pnpm run build:mp-weixin
+pnpm fmt           # 格式化代码（Prettier）
+pnpm type-check    # TypeScript 类型检查
+pnpm dev:h5        # H5 开发模式
+pnpm build:h5      # H5 生产构建
 ```
 
-### APP开发模式
+## 打包发布
 
-以安卓平台为例，其他平台类似。
+### Android 打包
 
-#### 开发调试
+> 详细文档：[Android 前置配置](https://lingxiwmp.qiniu.com/docs/publish/android/prerequisites) | [打包流程](https://lingxiwmp.qiniu.com/docs/publish/android/build)
 
-通过HBuilderX打开项目，点击工具栏的`运行`->`运行到安卓设备`即可。
+**方式一：HBuilderX 图形界面**
 
-#### 构建
+1. HBuilderX 中选择 **「发行」** -> **「App-Android/iOS-云打包」**
+2. 选择 Android(apk 包)、填写包名、使用云端证书、打正式包、传统打包
+3. 点击打包，等待完成后通过控制台下载链接获取安装包
 
-有云打包与本地打包两种方式
+**方式二：脚本**
 
-- 云打包：在hbuilderx中点击工具栏的`发行`->`APP-Android/iOS-云打包`。
-- 本地打包：在hbuilderx中点击工具栏的`发行`->`APP-Android/iOS-本地打包`->`生成本地打包资源`。
+```bash
+# 交互模式
+./scripts/cloud-pack.sh
 
-建议先使用云打包快速尝鲜，本地打包再慢慢调。
+# 命令行模式
+./scripts/cloud-pack.sh \
+  --platform android \
+  --edition cn \
+  --version 1.1.5 \
+  --version-code 101050 \
+  --abi 64 \
+  --package-name com.example.yourapp \
+  -y
 
-##### 云打包
+# Google Play AAB 打包
+./scripts/cloud-pack.sh \
+  --platform android \
+  --edition intl \
+  --version 1.1.5 \
+  --version-code 101050 \
+  --abi 64 \
+  --package-name com.example.yourapp \
+  --android-format aab \
+  -y
+```
 
-按照图形界面操作即可。
+> Google Play 上架指南：[Google Play 配置与打包](https://lingxiwmp.qiniu.com/docs/publish/android/google-play)
 
-##### 本地打包
+### iOS 打包
 
-1. 先按照目标平台，配置好环境（Android Studio、DevEco Studio、Xcode等）。
+> 详细文档：[iOS 前置配置](https://lingxiwmp.qiniu.com/docs/publish/ios/prerequisites) | [打包流程](https://lingxiwmp.qiniu.com/docs/publish/ios/build)
 
-2. 在准备原生工程
+前置条件：
 
-这一步强烈建议下载最新的sdk包（hbuilderx中点击工具栏的`发行`->`APP-Android/iOS-本地打包`->`本地打包指南`），对比提供的原生工程来定制自己的工程，原因很多：
+- 加入 [Apple Developer Program](https://developer.apple.com/programs/)
+- 创建 App ID（Identifier）、申请发布证书（`.p12`）、创建描述文件（`.mobileprovision`）
 
-- 上来就给配置好了的工程目录有点懵，先看点官方文档压压惊
+```bash
+# 脚本打包
+./scripts/cloud-pack.sh \
+  --platform ios \
+  --edition cn \
+  --version 1.1.5 \
+  --version-code 101050 \
+  --ios-region cn \
+  --ios-bundle-id com.example.yourapp \
+  --ios-profile ~/certs/app.mobileprovision \
+  --ios-cert ~/certs/app.p12 \
+  --ios-cert-password yourpassword \
+  -y
+```
 
-- 需要配置的地方比较多（包括但不限于APP包名、版本、权限、打包Key、证书、图标等），我开发时寻找的一些教程/文档也都不能一个涵盖完全，我这里也没法说的很清楚，但把干净的SDK与配置好的工程目录对比一下，就知道需要哪些地方配置
+### HarmonyOS 打包
 
-- 避免下载安装的HBuilderX版本与SDK版本对应不一致
+> 详细文档：[鸿蒙前置配置](https://lingxiwmp.qiniu.com/docs/publish/harmony/prerequisites) | [打包流程](https://lingxiwmp.qiniu.com/docs/publish/harmony/build)
 
-3. 准备证书等
+鸿蒙打包流程：
 
-4. 更新打包资源
+1. 在 [AppGallery Connect](https://developer.huawei.com/consumer/cn/service/josp/agc/index.html) 创建应用
+2. 在 HBuilderX 中配置签名证书（调试/发布）
+3. HBuilderX **「运行到鸿蒙」** 生成 `dist/dev/app-harmony` 工程
+4. 用 DevEco Studio 打开工程，配置签名后打包
 
-   安卓、ios需要先在hbuilderx中点击工具栏的`发行`->`APP-Android/iOS-本地打包`->`生成本地打包资源`，鸿蒙略过。
+### 微信小程序发布
 
-   会生成资源到[unpackage/resources](./unpackage/resources/)，包含一个以appid(__UNI__XXXXXXX)命名的目录与一个名为`uni_modules`的目录。
+> 详细文档：[微信前置配置](https://lingxiwmp.qiniu.com/docs/publish/weixin/prerequisites) | [构建与发布](https://lingxiwmp.qiniu.com/docs/publish/weixin/build)
 
-   其中，appid目录需要转移到原生工程对应目录：
-   - 安卓：`src/main/assets/apps/`__UNI__XXXXXXX/www/...
-   - IOS：`Pandora/apps/`__UNI__XXXXXXX/www/...
+1. 在微信公众平台配置 AppID 和服务器域名
+2. 执行 `pnpm build:mp-weixin` 生成生产版本
+3. 微信开发者工具导入 `dist/build/mp-weixin`
+4. 上传代码 -> 设置体验版测试 -> 提交审核 -> 正式发布
 
-   uni_modules中的每一个目录，都是uts插件，需要参考文档完成原生工程lib创建（示例项目以及配置好了`uni-wifi`这个插件）
-   - [安卓](https://nativesupport.dcloud.net.cn/AppDocs/usesdk/android.html#utsconfig)
-   - [IOS](https://nativesupport.dcloud.net.cn/AppDocs/usesdk/ios.html#utsconfig)
+服务器域名配置（使用官方服务器时）：
 
-   - 鸿蒙暂无
+| 域名类型              | 域名地址                      |
+| --------------------- | ----------------------------- |
+| request 合法域名      | `https://lingxiwmp.qiniu.com` |
+| uploadFile 合法域名   | `https://lingxiwmp.qiniu.com` |
+| downloadFile 合法域名 | `https://lingxiwmp.qiniu.com` |
 
-5. 在对应的开发工具中打包
+> 如需自建后端，参考 [linx-app-backend 部署文档](https://github.com/Qiniu-linx/linx-app-backend/blob/master/backend/deploy.md)
 
-打包位置：
+## 打包脚本参数一览
 
-- 安卓：在Android Studio中，工具栏点击`Build`->`Generate Signed App Bundle or APK(s)`，按照图形界面配置，打包完成会有应用内通知
-- iOS：在Xcode中打开项目，工具栏点击`Product`->`Archive`，等待打包完成会有弹窗。
-- 鸿蒙：在HBuilderX中配置好证书，其余全自动
+| 参数                  | 说明         | 可选值                      |
+| --------------------- | ------------ | --------------------------- |
+| `-h, --help`          | 显示帮助     |                             |
+| `-y, --yes`           | 跳过确认     |                             |
+| `--edition`           | 版本类型     | cn / intl / full            |
+| `--version`           | 版本号       | 如 1.1.5                    |
+| `--version-code`      | 版本代码     | 如 101050                   |
+| `--platform`          | 打包平台     | android / ios               |
+| `--abi`               | CPU 架构     | 32 / 64 / both              |
+| `--package-name`      | Android 包名 | com.example.yourapp         |
+| `--android-format`    | 打包格式     | apk / aab                   |
+| `--ios-region`        | iOS 区域     | cn / intl                   |
+| `--ios-bundle-id`     | Bundle ID    | com.example.yourapp         |
+| `--ios-profile`       | 描述文件路径 | ~/certs/app.mobileprovision |
+| `--ios-cert`          | 证书文件路径 | ~/certs/app.p12             |
+| `--ios-cert-password` | 证书密码     |                             |
 
-## 主要参考文档
+## 参考文档
 
-- 框架 [uni-app](https://uniapp.dcloud.net.cn/quickstart.html)
+- [uni-app 官方文档](https://uniapp.dcloud.net.cn/)（注意：本项目是 uni-app，不是 uni-app-x）
+- [灵矽 App 完整文档站](https://lingxiwmp.qiniu.com/docs/publish/)
+- [后端服务仓库](https://github.com/Qiniu-linx/linx-app-backend)
+- [DCloud 开发者中心](https://dev.dcloud.net.cn/)
 
-   注意项目是uni-app，不是uni-app-x
+## 提交前检查
 
-- [离线打包教程](https://nativesupport.dcloud.net.cn/AppDocs/)
-
-   注意页面左侧导航栏的内容，不要只看一页概述
-
-其他需要的文档大多可以直接在hbuilderx中直接打开
-
-## 其他配置
-
-### OAuth 登录配置
-
-#### Google
-
-然后要在manifest中配置sdkConfigs中的 oauth google clientId （IOS OAUTH）
-
-文档参考[uniapp](https://uniapp.dcloud.net.cn/tutorial/app-oauth-google.html)
-
-后端也需要完成相关配置，具体参考后端[deploy.md](../backend/deploy.md#配置)。
-
-### 隐私协议
-
-参考[uniapp](https://uniapp.dcloud.net.cn/tutorial/app-privacy-android.html)与[uniapp](https://uniapp.dcloud.net.cn/app/android-store.html#oauth)
+```bash
+pnpm fmt          # 格式化代码
+pnpm type-check   # 类型检查
+```
