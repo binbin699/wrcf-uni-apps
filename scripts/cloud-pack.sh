@@ -270,8 +270,15 @@ check_cli() {
 # 检查配置文件是否存在
 check_config_files() {
     if [ ! -f "$ENV_FILE" ]; then
-        print_error ".env 文件未找到: $ENV_FILE"
-        exit 1
+        local example_file="${PROJECT_PATH}/.env.example"
+        if [ -f "$example_file" ]; then
+            print_warning ".env 文件未找到，从 .env.example 自动复制"
+            cp "$example_file" "$ENV_FILE"
+            print_success "已创建 .env 文件: $ENV_FILE"
+        else
+            print_error ".env 文件未找到且 .env.example 不存在: $ENV_FILE"
+            exit 1
+        fi
     fi
     if [ ! -f "$MANIFEST_FILE" ]; then
         print_error "manifest.json 文件未找到: $MANIFEST_FILE"
