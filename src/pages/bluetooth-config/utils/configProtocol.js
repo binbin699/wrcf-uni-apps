@@ -362,27 +362,28 @@ export class ConfigProtocol {
               let result = null;
 
               // ESP32 BluFi sta_status 定义（根据ESP-IDF文档）:
-              // 0x00 = ESP_BLUFI_STA_CONN_SUCCESS (连接成功)
+              // 0x00 = ESP_BLUFI_STA_CONN_SUCCESS (连接成功，已获取IP)
               // 0x01 = ESP_BLUFI_STA_CONN_FAIL (连接失败)
-              // 0x02 = ESP_BLUFI_STA_CONNECTING (正在连接) - 某些版本可能表示成功
-              // 0x03 = ESP_BLUFI_STA_NO_IP (无IP)
-              //
-              // 注意：不同版本的ESP-IDF可能有不同的定义
-              // 某些开发板的sta_status=0x02可能表示连接成功
+              // 0x02 = ESP_BLUFI_STA_CONNECTING (正在连接中，中间状态)
+              // 0x03 = ESP_BLUFI_STA_NO_IP (已连接但未获取到IP)
 
               // 判断配网成功的条件：
-              // 1. sta_status === 0x00 (标准成功状态)
-              // 2. sta_status === 0x02 且设备随后断开蓝牙连接（某些开发板的行为）
-              if (sta_status === 0x00 || sta_status === 0x02) {
-                // sta_status为0或2表示WiFi连接成功
+              // 只有 sta_status === 0x00 才表示配网成功（WiFi已连接且已获取IP）
+              // sta_status === 0x02 是中间状态（正在连接），需要继续等待设备上报最终结果
+              if (sta_status === 0x00) {
+                // WiFi连接成功且已获取IP
                 result = {
                   success: true,
                   message: '配网成功',
                   deviceInfo: this.deviceInfo
                 };
-                console.log('配网成功！sta_status=' + sta_status);
+                console.log('配网成功！sta_status=0x00 (connected with IP)');
+              } else if (sta_status === 0x02) {
+                // 正在连接中，这是中间状态，不做最终判定，继续等待后续状态上报
+                console.log('设备正在连接WiFi中(sta_status=0x02 connecting)，继续等待最终结果...');
+                return; // 不发送config-result事件，继续等待
               } else {
-                // sta_status其他值表示连接失败或进行中
+                // sta_status其他值表示连接失败
                 let errorMsg = '无法连接到 WiFi';
                 switch (sta_status) {
                   case 0x01:
