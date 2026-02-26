@@ -54,7 +54,7 @@
           <text
             class="device-dropdown-item-name"
             :class="{ active: device.id === currentDevice?.id }">
-            {{ device.macAddress ? 'MAC: ' + device.macAddress : device.deviceName }}
+            {{ device.deviceName || $t('device_status.unknown_device') }}
           </text>
           <image
             v-if="device.id === currentDevice?.id"
@@ -146,17 +146,12 @@
         <view class="device-card">
           <view class="device-card-content">
             <text class="device-name">
-              {{
-                currentDevice.macAddress
-                  ? 'MAC: ' + currentDevice.macAddress
-                  : currentDevice.deviceName
-              }}
+              {{ currentDevice.deviceName || $t('device_status.unknown_device') }}
             </text>
-            <!-- 编辑按钮暂时注释，等后端接口完成后启用
+            <!-- 编辑按钮暂时注释，等后端接口完成后启用 -->
             <view class="device-edit-btn" @click.stop="showEditNamePopup">
               <image class="edit-icon" src="/static/icons/icon-edit.svg" mode="aspectFit"></image>
             </view>
-            -->
           </view>
         </view>
 
@@ -262,7 +257,7 @@
             :class="{ active: device.id === currentDevice?.id }"
             @click="handleSelectDevice(device)">
             <text class="device-selector-item-name">
-              {{ device.macAddress ? 'MAC: ' + device.macAddress : device.deviceName }}
+              {{ device.deviceName || $t('device_status.unknown_device') }}
             </text>
             <view class="device-selector-item-check" v-if="device.id === currentDevice?.id">
               <image src="/static/icons/check.svg" mode="aspectFit"></image>
@@ -633,7 +628,7 @@ const handleSaveDeviceName = async () => {
   }
 
   try {
-    await deviceApi.update({
+    await deviceApi.updateName({
       id: currentDevice.value.id,
       deviceName: editDeviceName.value.trim()
     });

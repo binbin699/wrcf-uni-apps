@@ -218,9 +218,9 @@ export const deviceApi = {
     return request.delete('/app/device/remove', data);
   },
 
-  // 更新设备信息(暂时还没有实现)
-  update(data) {
-    return request.post('/app/device/update', data);
+  // 更新设备名称（App 端调用）
+  updateName(data) {
+    return request.post('/app/device/update-name', data);
   },
 
   /**

@@ -1,5 +1,9 @@
 <template>
   <wd-toast />
+  <!-- 鸿蒙端：首次打开时在登录页显示隐私政策弹窗 -->
+  <!-- #ifdef APP-HARMONY -->
+  <PrivacyAgreementDialog />
+  <!-- #endif -->
   <view class="login-container">
     <!-- 装饰性背景元素 -->
     <view class="decoration-bottom"></view>
@@ -258,6 +262,9 @@ import type { IPasswordLoginForm } from '@/api/types/login';
 import storage from '@/utils/storage';
 import { isWechatExist } from '@/utils/isWechatExist';
 import SmsLoginModal from './components/sms_login_modal.vue';
+// #ifdef APP-HARMONY
+import PrivacyAgreementDialog from '@/components/PrivacyAgreementDialog.vue';
+// #endif
 // #ifdef APP-PLUS
 import { requestBluetoothPermissionsForAndroid12 } from '@/utils/bluetoothPermission';
 // #endif
