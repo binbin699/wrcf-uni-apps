@@ -22,42 +22,46 @@
     <!-- WiFi列表 -->
     <view v-else class="wifi-list-container">
       <scroll-view scroll-y class="wifi-scroll-list" :style="{ maxHeight: scrollHeight }">
-        <view
-          v-for="wifi in wifiList"
-          :key="wifi.SSID"
-          class="wifi-card"
-          :class="{ selected: selectedWifi && selectedWifi.SSID === wifi.SSID }"
-          @click="handleSelectWifi(wifi)">
-          <view class="wifi-content">
-            <view class="wifi-icon">
-              <wd-icon
-                name="wifi"
-                size="48rpx"
-                :color="selectedWifi && selectedWifi.SSID === wifi.SSID ? '#FFFFFF' : '#9ca3af'" />
-            </view>
-            <view class="wifi-info">
-              <text class="wifi-name">{{ wifi.SSID }}</text>
-              <view v-if="wifi.secure" class="wifi-lock">
-                <image
-                  :src="
-                    selectedWifi && selectedWifi.SSID === wifi.SSID
-                      ? '/static/icons/wifi-lock-selected.svg'
-                      : '/static/icons/wifi-lock.svg'
-                  "
-                  mode="aspectFit"
-                  class="wifi-lock-icon" />
+        <view class="wifi-list-inner">
+          <view
+            v-for="wifi in wifiList"
+            :key="wifi.SSID"
+            class="wifi-card"
+            :class="{ selected: selectedWifi && selectedWifi.SSID === wifi.SSID }"
+            @click="handleSelectWifi(wifi)">
+            <view class="wifi-content">
+              <view class="wifi-icon">
+                <wd-icon
+                  name="wifi"
+                  size="48rpx"
+                  :color="
+                    selectedWifi && selectedWifi.SSID === wifi.SSID ? '#FFFFFF' : '#9ca3af'
+                  " />
+              </view>
+              <view class="wifi-info">
+                <text class="wifi-name">{{ wifi.SSID }}</text>
+                <view v-if="wifi.secure" class="wifi-lock">
+                  <image
+                    :src="
+                      selectedWifi && selectedWifi.SSID === wifi.SSID
+                        ? '/static/icons/wifi-lock-selected.svg'
+                        : '/static/icons/wifi-lock.svg'
+                    "
+                    mode="aspectFit"
+                    class="wifi-lock-icon" />
+                </view>
               </view>
             </view>
-          </view>
-          <view class="wifi-arrow">
-            <image
-              :src="
-                selectedWifi && selectedWifi.SSID === wifi.SSID
-                  ? '/static/icons/wifi-arrow-selected.svg'
-                  : '/static/icons/wifi-arrow.svg'
-              "
-              mode="aspectFit"
-              class="wifi-arrow-icon" />
+            <view class="wifi-arrow">
+              <image
+                :src="
+                  selectedWifi && selectedWifi.SSID === wifi.SSID
+                    ? '/static/icons/wifi-arrow-selected.svg'
+                    : '/static/icons/wifi-arrow.svg'
+                "
+                mode="aspectFit"
+                class="wifi-arrow-icon" />
+            </view>
           </view>
         </view>
       </scroll-view>
@@ -65,6 +69,7 @@
 
     <!-- 底部按钮区域（双按钮垂直排列） -->
     <view class="bottom-action-wrapper">
+      <view class="gradient-fade"></view>
       <view class="bottom-action-container">
         <!-- 上方：重新扫描按钮（蓝色） -->
         <button
@@ -162,7 +167,7 @@ function calculateScrollHeight() {
   const navContentHeight = 88 * rpxToPx;
   const topAreaHeight = statusBarHeight + navContentHeight;
 
-  const bottomBtnRpx = 32 + 96 + 24 + 96 + 32; // 280rpx
+  const bottomBtnRpx = 16 + 96 + 24 + 96 + 32; // 264rpx → reduced top padding from 32 to 16
   const safeAreaBottom = systemInfo.safeAreaInsets ? systemInfo.safeAreaInsets.bottom : 0;
   const bottomAreaHeight = bottomBtnRpx * rpxToPx + safeAreaBottom;
 
@@ -388,7 +393,7 @@ onMounted(async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(280rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(240rpx + env(safe-area-inset-bottom));
   background-color: #fff;
 }
 
@@ -472,8 +477,12 @@ onMounted(async () => {
 /* WiFi列表 */
 .wifi-list-container {
   flex: 1;
-  padding: 24rpx;
+  padding: 0;
   overflow: hidden;
+}
+
+.wifi-list-inner {
+  padding: 24rpx 32rpx;
 }
 
 .wifi-card {
@@ -484,7 +493,7 @@ onMounted(async () => {
   align-items: center;
   padding: 32rpx;
   gap: 32rpx;
-  width: 700rpx;
+  width: 100%;
   height: 120rpx;
   margin: 0 auto 24rpx;
   background-color: #fff;
@@ -597,11 +606,21 @@ onMounted(async () => {
   background-color: #fff;
 }
 
+.gradient-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 60rpx;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+  pointer-events: none;
+}
+
 .bottom-action-container {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 32rpx 32rpx;
+  padding: 16rpx 32rpx;
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
   gap: 24rpx;
 }
@@ -612,7 +631,7 @@ onMounted(async () => {
   justify-content: center;
   width: 100%;
   height: 96rpx;
-  border-radius: 200rpx;
+  border-radius: 24rpx;
   font-size: 32rpx;
   font-weight: 500;
   color: #fff;
@@ -620,7 +639,6 @@ onMounted(async () => {
   transition: all 0.2s;
 
   &:active {
-    transform: scale(0.98);
     opacity: 0.9;
   }
 
@@ -630,7 +648,7 @@ onMounted(async () => {
 }
 
 .blue-btn {
-  background: #335cff;
+  background: #3e5def;
 }
 
 .green-btn {
@@ -713,8 +731,8 @@ onMounted(async () => {
   height: 96rpx;
 
   background: #ffffff;
-  border: 2rpx solid #335cff;
-  border-radius: 16rpx;
+  border: 2rpx solid #c2d0ff;
+  border-radius: 24rpx;
   /* 确保可以接收点击事件 */
   pointer-events: auto;
 }
@@ -761,8 +779,8 @@ onMounted(async () => {
   min-width: 346rpx;
   height: 88rpx;
   padding: 0 48rpx;
-  background: #335cff;
-  border-radius: 16rpx;
+  background: #3e5def;
+  border-radius: 24rpx;
 
   font-style: normal;
   font-weight: 500;

@@ -29,33 +29,37 @@
     <!-- 设备列表 -->
     <view v-else class="device-list-container">
       <scroll-view scroll-y class="device-scroll-list">
-        <view
-          v-for="device in deviceList"
-          :key="device.deviceId"
-          class="device-card"
-          @click="handleSelectDevice(device)">
-          <view class="device-icon">
-            <image class="icon-img" src="/static/icons/phone.svg" mode="aspectFit" />
-          </view>
-          <view class="device-info">
-            <view class="device-name">
-              {{ device.name || 'DTXZ_' + (device.macAddress || device.deviceId).slice(-8) }}
+        <view class="device-list-inner">
+          <view
+            v-for="device in deviceList"
+            :key="device.deviceId"
+            class="device-card"
+            @click="handleSelectDevice(device)">
+            <view class="device-icon">
+              <image class="icon-img" src="/static/icons/phone.svg" mode="aspectFit" />
             </view>
-            <view class="device-id">ID：{{ device.macAddress || device.deviceId }}</view>
-            <view class="device-signal">
-              <text class="signal-label">{{ $t('bluetooth.device_list.signal_strength') }}：</text>
-              <view class="signal-progress">
-                <view class="signal-progress-bg"></view>
-                <view
-                  class="signal-progress-fill"
-                  :style="{ width: getSignalWidth(device.RSSI) }"></view>
-                <view class="signal-divider" style="left: 20rpx"></view>
-                <view class="signal-divider" style="left: 44rpx"></view>
+            <view class="device-info">
+              <view class="device-name">
+                {{ device.name || 'DTXZ_' + (device.macAddress || device.deviceId).slice(-8) }}
+              </view>
+              <view class="device-id">ID：{{ device.macAddress || device.deviceId }}</view>
+              <view class="device-signal">
+                <text class="signal-label">
+                  {{ $t('bluetooth.device_list.signal_strength') }}：
+                </text>
+                <view class="signal-progress">
+                  <view class="signal-progress-bg"></view>
+                  <view
+                    class="signal-progress-fill"
+                    :style="{ width: getSignalWidth(device.RSSI) }"></view>
+                  <view class="signal-divider" style="left: 20rpx"></view>
+                  <view class="signal-divider" style="left: 44rpx"></view>
+                </view>
               </view>
             </view>
-          </view>
-          <view class="device-arrow">
-            <wd-icon name="arrow-right" size="36rpx" color="#9ca3af" />
+            <view class="device-arrow">
+              <wd-icon name="arrow-right" size="36rpx" color="#9ca3af" />
+            </view>
           </view>
         </view>
       </scroll-view>
@@ -63,6 +67,7 @@
 
     <!-- 底部按钮 -->
     <view class="bottom-action">
+      <view class="gradient-fade"></view>
       <button
         class="scan-btn"
         :class="{ loading: isLoadingDevices }"
@@ -129,6 +134,9 @@ export default {
     bluetoothConfigManager.setIsIOS(isIOS);
 
     console.log('设备类型:', isIOS ? 'iOS' : 'Android');
+
+    // 进入页面后自动开始扫描
+    this.startDeviceScan();
   },
   methods: {
     /**
@@ -319,9 +327,7 @@ export default {
       if (this.isLoadingDevices) {
         return this.$t('bluetooth.select_device.scan_button_loading');
       }
-      if (this.deviceList === null) {
-        return this.$t('bluetooth.select_device.scan_button_start');
-      }
+      // 自动扫描后，按钮始终显示"重新扫描"
       return this.$t('bluetooth.select_device.scan_button_retry');
     },
 
@@ -458,22 +464,26 @@ export default {
 
 /* 设备列表 */
 .device-list-container {
-  padding: 24rpx;
+  padding: 0;
 }
 
 .device-scroll-list {
   max-height: calc(100vh - 350rpx);
 }
 
+.device-list-inner {
+  padding: 24rpx 32rpx;
+}
+
 .device-card {
   display: flex;
   align-items: center;
-  padding: 28rpx 24rpx;
+  padding: 32rpx;
   margin-bottom: 20rpx;
   background-color: #fff;
-  border-radius: 20rpx;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
-  border: 1rpx solid #f3f4f6;
+  border-radius: 32rpx;
+  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.1);
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
   transition: all 0.2s;
 
   &:active {
@@ -503,9 +513,9 @@ export default {
 }
 
 .device-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #0e121b;
   margin-bottom: 8rpx;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -513,8 +523,8 @@ export default {
 }
 
 .device-id {
-  font-size: 24rpx;
-  color: #9ca3af;
+  font-size: 28rpx;
+  color: #717784;
   margin-bottom: 12rpx;
   font-family: monospace;
 }
@@ -583,6 +593,16 @@ export default {
   background-color: #fff;
 }
 
+.gradient-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 60rpx;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+  pointer-events: none;
+}
+
 .scan-btn {
   display: flex;
   align-items: center;
@@ -590,26 +610,24 @@ export default {
   gap: 12rpx;
   width: 100%;
   height: 96rpx;
-  background: linear-gradient(135deg, #3b82f6 0%, #335cff 100%);
-  border-radius: 48rpx;
+  background: #3e5def;
+  border-radius: 24rpx;
   font-size: 32rpx;
-  font-weight: 600;
+  font-weight: 500;
   color: #fff;
   border: none;
-  box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.3);
   transition: all 0.2s;
 
   &:active {
-    transform: scale(0.98);
-    box-shadow: 0 4rpx 16rpx rgba(59, 130, 246, 0.3);
+    opacity: 0.9;
   }
 
   &.loading {
-    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    background: #5a75f0;
   }
 
   &[disabled] {
-    opacity: 0.8;
+    opacity: 0.7;
   }
 }
 </style>

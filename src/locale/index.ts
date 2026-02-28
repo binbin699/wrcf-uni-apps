@@ -21,10 +21,10 @@ const locale: Ref<supportLang> = ref(
   systemLocale === 'zh-Hans' || systemLocale === 'zh'
     ? 'zh-Hans'
     : systemLocale === 'ja' || systemLocale === 'ja-JP'
-    ? 'ja'
-    : systemLocale === 'ru' || systemLocale === 'ru-RU'
-    ? 'ru'
-    : 'en'
+      ? 'ja'
+      : systemLocale === 'ru' || systemLocale === 'ru-RU'
+        ? 'ru'
+        : 'en'
 );
 
 console.log('systemLocale', systemLocale, 'locale', locale.value);

@@ -1,28 +1,32 @@
 <template>
   <view class="manual-config">
-    <!-- 手动配置卡片 -->
-    <view class="config-card">
-      <view class="card-title">{{ $t('bluetooth.wifi.manual_input_title') }}</view>
+    <!-- 页面内容区域 -->
+    <view class="config-content">
+      <view class="page-title">{{ $t('bluetooth.wifi.manual_input_title') }}</view>
 
-      <view class="form-container">
-        <!-- WiFi 名称输入框 -->
-        <view class="input-group">
+      <!-- WiFi 名称 -->
+      <view class="field-group">
+        <text class="field-label">{{ $t('bluetooth.wifi.wifi_name') }}</text>
+        <view class="input-wrapper">
           <input
             class="input-field"
             type="text"
             v-model="ssid"
-            :placeholder="$t('bluetooth.wifi.wifi_name')"
+            :placeholder="$t('bluetooth.wifi.input_placeholder')"
             confirm-type="next"
             :cursor-spacing="20" />
         </view>
+      </view>
 
-        <!-- WiFi 密码输入框 -->
-        <view class="input-group">
+      <!-- WiFi 密码 -->
+      <view class="field-group">
+        <text class="field-label">{{ $t('bluetooth.wifi.wifi_password') }}</text>
+        <view class="input-wrapper">
           <input
             class="input-field"
             v-model="password"
             :type="isPasswordVisible ? 'text' : 'password'"
-            :placeholder="$t('bluetooth.wifi.wifi_password')"
+            :placeholder="$t('bluetooth.wifi.input_placeholder')"
             :maxlength="64"
             confirm-type="done"
             :cursor-spacing="20"
@@ -34,16 +38,18 @@
               class="eye-icon" />
           </view>
         </view>
-
-        <!-- 确认按钮 -->
-        <button
-          class="submit-btn"
-          :class="{ disabled: !canSubmit }"
-          :disabled="!canSubmit"
-          @click="handleSubmit">
-          {{ $t('common.confirm') }}
-        </button>
       </view>
+    </view>
+
+    <!-- 底部确认按钮 -->
+    <view class="bottom-action">
+      <button
+        class="submit-btn"
+        :class="{ disabled: !canSubmit }"
+        :disabled="!canSubmit"
+        @click="handleSubmit">
+        {{ $t('common.confirm') }}
+      </button>
     </view>
   </view>
 </template>
@@ -60,7 +66,7 @@ import {
   validateWifiCredentials,
   ensureBLEConnection,
   sendWifiConfig,
-  getWifiSendErrorMessage,
+  getWifiSendErrorMessage
 } from '../../utils/wifiConfigHelper';
 
 const { t: $t } = useI18n();
@@ -118,7 +124,7 @@ async function handleSubmit() {
     native.toast(
       bleResult.errCode === WIFI_CONFIG_ERROR.BLE_RECONNECT_TIMEOUT
         ? $t('bluetooth.reconnect_timeout')
-        : $t('bluetooth.connection_lost'),
+        : $t('bluetooth.connection_lost')
     );
     isSubmitting.value = false;
     return;
@@ -152,7 +158,7 @@ async function handleSubmit() {
   bluetoothConfigManager.setSelectedWifi({ SSID: trimmedSsid, secure: true, signalStrength: 100 });
   bluetoothConfigManager.setPasswordState({
     password: wifiPassword,
-    isVisible: isPasswordVisible.value,
+    isVisible: isPasswordVisible.value
   });
 
   // 5. 发送 WiFi 配置
@@ -173,75 +179,55 @@ async function handleSubmit() {
 
 <style lang="scss" scoped>
 .manual-config {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  background-color: #ffffff;
-}
-
-.config-card {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 40rpx 32rpx;
-  gap: 20rpx;
-
-  width: 716rpx;
-  margin: 0 32rpx;
-
-  background: #ffffff;
-  box-shadow: 0px 0px 8rpx rgba(0, 0, 0, 0.25);
-  border-radius: 48rpx;
+  background-color: #ffffff;
+  padding-bottom: 200rpx;
 }
 
-.card-title {
-  width: 100%;
-  font-style: normal;
-  font-weight: 600;
+.config-content {
+  padding: 48rpx 32rpx 0;
+}
+
+.page-title {
+  font-weight: 500;
   font-size: 36rpx;
   line-height: 56rpx;
-  display: flex;
-  align-items: center;
-  text-align: center;
-  justify-content: center;
   color: #0e121b;
+  margin-bottom: 48rpx;
 }
 
-.form-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0;
-  gap: 48rpx;
-  width: 100%;
+.field-group {
+  margin-bottom: 32rpx;
 }
 
-.input-group {
+.field-label {
+  display: block;
+  font-weight: 400;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  color: #0e121b;
+  margin-bottom: 16rpx;
+}
+
+.input-wrapper {
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
   align-items: center;
   padding: 24rpx 32rpx;
   gap: 8rpx;
-
   width: 100%;
   height: 96rpx;
-
   background: #ffffff;
-  border: 2rpx solid #335cff;
-  border-radius: 16rpx;
+  border: 2rpx solid #c2d0ff;
+  border-radius: 24rpx;
 }
 
 .input-field {
   flex: 1;
   height: 44rpx;
-  font-style: normal;
   font-weight: 400;
   font-size: 32rpx;
   line-height: 44rpx;
@@ -272,17 +258,28 @@ async function handleSubmit() {
   height: 48rpx;
 }
 
+/* 底部操作按钮 */
+.bottom-action {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  background-color: #fff;
+}
+
 .submit-btn {
-  min-width: 346rpx;
-  height: 88rpx;
-  padding: 0 48rpx;
-  background: #335cff;
-  border-radius: 16rpx;
-  font-style: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 96rpx;
+  background: #3e5def;
+  border-radius: 24rpx;
   font-weight: 500;
   font-size: 32rpx;
-  line-height: 88rpx;
-
+  line-height: 48rpx;
   text-align: center;
   color: #ffffff;
   border: none;

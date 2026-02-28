@@ -8,7 +8,7 @@ import { configProtocol } from './configProtocol';
 /** WiFi 配置错误码常量 */
 export const WIFI_CONFIG_ERROR = {
   TIMEOUT: 'WIFI_CONFIG_TIMEOUT',
-  BLE_RECONNECT_TIMEOUT: 'BLE_RECONNECT_TIMEOUT',
+  BLE_RECONNECT_TIMEOUT: 'BLE_RECONNECT_TIMEOUT'
 } as const;
 
 /** i18n 翻译函数类型 */
@@ -23,8 +23,7 @@ interface WifiValidationResult {
 }
 
 /** WiFi 名称/密码格式校验正则 */
-const WIFI_CREDENTIAL_REGEX =
-  /^[a-zA-Z0-9_\-\s!@#$%^&*()+=.\[\]{}|\\:;"'<>,?/~`\u4e00-\u9fa5]+$/;
+const WIFI_CREDENTIAL_REGEX = /^[a-zA-Z0-9_\-\s!@#$%^&*()+=.\[\]{}|\\:;"'<>,?/~`\u4e00-\u9fa5]+$/;
 
 /**
  * 校验 WiFi 名称和密码格式
@@ -32,7 +31,7 @@ const WIFI_CREDENTIAL_REGEX =
 export function validateWifiCredentials(
   ssid: string,
   password: string,
-  $t: TranslateFunction,
+  $t: TranslateFunction
 ): WifiValidationResult {
   if (!WIFI_CREDENTIAL_REGEX.test(ssid)) {
     return { valid: false, message: $t('net_config.invalid_ssid_format') };
@@ -57,7 +56,7 @@ interface BLEConnectionResult {
  */
 export async function ensureBLEConnection(
   deviceId: string,
-  timeoutMs = 10000,
+  timeoutMs = 10000
 ): Promise<BLEConnectionResult> {
   const isConnected = await configProtocol.checkBLEConnection(deviceId);
 
@@ -81,9 +80,7 @@ export async function ensureBLEConnection(
     return {
       ok: false,
       errCode:
-        errMsg === 'BLE_RECONNECT_TIMEOUT'
-          ? WIFI_CONFIG_ERROR.BLE_RECONNECT_TIMEOUT
-          : undefined,
+        errMsg === 'BLE_RECONNECT_TIMEOUT' ? WIFI_CONFIG_ERROR.BLE_RECONNECT_TIMEOUT : undefined
     };
   }
 }
@@ -104,7 +101,7 @@ export async function sendWifiConfig(
   deviceId: string,
   ssid: string,
   password: string,
-  timeoutMs = 30000,
+  timeoutMs = 30000
 ): Promise<WifiConfigSendResult> {
   try {
     const sendPromise = configProtocol.sendWifiConfig(deviceId, ssid, password);
@@ -121,7 +118,7 @@ export async function sendWifiConfig(
     return {
       ok: false,
       errCode: errMsg === WIFI_CONFIG_ERROR.TIMEOUT ? WIFI_CONFIG_ERROR.TIMEOUT : error.code,
-      errMsg,
+      errMsg
     };
   }
 }
@@ -131,12 +128,15 @@ export async function sendWifiConfig(
  */
 export function getWifiSendErrorMessage(
   result: WifiConfigSendResult,
-  $t: TranslateFunction,
+  $t: TranslateFunction
 ): string {
   if (result.errCode === WIFI_CONFIG_ERROR.TIMEOUT) {
     return $t('bluetooth.wifi.config_timeout');
   }
-  if (result.errMsg && (result.errMsg.includes('蓝牙') || result.errMsg.includes('no connection'))) {
+  if (
+    result.errMsg &&
+    (result.errMsg.includes('蓝牙') || result.errMsg.includes('no connection'))
+  ) {
     return $t('bluetooth.connection_lost');
   }
   if (result.errCode === 10004 || result.errCode === 10006) {
