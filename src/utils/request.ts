@@ -1,4 +1,5 @@
 import { useTokenStore } from '@/store/token';
+import { useUserStore } from '@/store/user';
 import type { BaseResponse, UploadOptions, UploadResponse } from '@/types/request';
 import { PageMap, Pages } from './route';
 import { getLocale } from '@/locale/index';
@@ -21,7 +22,7 @@ interface RequestOptions {
 /**
  * 请求响应接口
  */
-interface RequestResponse<T = any> extends BaseResponse<T> { }
+interface RequestResponse<T = any> extends BaseResponse<T> {}
 
 /**
  * 网络请求封装类
@@ -105,6 +106,10 @@ class Request {
    * 处理认证错误
    */
   private handleAuthError(): void {
+    // 在清除 token 前，检查是否是曾经登录过的用户
+    const userStore = useUserStore();
+    const wasLoggedIn = userStore.userId > 0;
+
     this.tokenStore!.clearTokens();
 
     uni.showToast({
@@ -114,10 +119,17 @@ class Request {
     });
 
     // #ifdef MP-WEIXIN
-    // 小程序端：跳转到落地页而不是直接跳登录页
-    uni.reLaunch({
-      url: '/pages/mp-landing/mp-landing'
-    });
+    if (wasLoggedIn) {
+      // 返回用户：直接跳登录页，跳过设备引导
+      uni.reLaunch({
+        url: PageMap[Pages.Login].url
+      });
+    } else {
+      // 全新用户：走正常的落地页流程
+      uni.reLaunch({
+        url: PageMap[Pages.MpLanding].url
+      });
+    }
     // #endif
 
     // #ifndef MP-WEIXIN
@@ -258,7 +270,8 @@ class Request {
   get<T = any>(url: string, options: any = {}): Promise<RequestResponse<T>> {
     // 兼容旧调用方式：request.get(url, data)
     // 新调用方式：request.get(url, { data, headers })
-    const hasHeaders = options && typeof options === 'object' && ('headers' in options || 'data' in options);
+    const hasHeaders =
+      options && typeof options === 'object' && ('headers' in options || 'data' in options);
 
     if (hasHeaders) {
       return this.request<T>({
