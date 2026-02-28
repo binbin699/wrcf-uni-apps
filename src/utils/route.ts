@@ -19,7 +19,8 @@ export enum Pages {
   Square = 'square',
   VoiceClone = 'voice-clone',
   VoiceManage = 'voice-manage',
-  BindVoiceprint = 'bind-voiceprint'
+  BindVoiceprint = 'bind-voiceprint',
+  MpLanding = 'mp-landing'
 }
 
 export const PageMap = {
@@ -107,5 +108,10 @@ export const PageMap = {
     path: 'pages/voice/bind-voiceprint',
     url: '/pages/voice/bind-voiceprint',
     title: $t('pages.bind_voiceprint')
+  },
+  [Pages.MpLanding]: {
+    path: 'pages/mp-landing/mp-landing',
+    url: '/pages/mp-landing/mp-landing',
+    title: $t('pages.mp_landing')
   }
 };
