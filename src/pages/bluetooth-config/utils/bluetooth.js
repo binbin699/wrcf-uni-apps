@@ -19,7 +19,7 @@ export const bluetoothService = {
 /**
  * 设备名称正则表达式
  * 通过 APP_CONFIG.BLE_FILTER_ENABLED 控制是否启用筛选，默认启用
- * 
+ *
  * 调试提示：如果扫描不到设备，可以临时将 deviceNameReg 改为 deviceNameRegAll
  */
 const deviceNameRegFiltered = /^(DTXZ|BLUFI_DEVICE|ESP_|aichat_)/i;
@@ -56,14 +56,13 @@ async function requestAndroid12BluetoothPermissions() {
     return true;
   }
 
-  console.log('[蓝牙] Android 12+，检查/请求蓝牙权限（预请求弹窗已在外层处理，位置权限单独请求）...');
+  console.log(
+    '[蓝牙] Android 12+，检查/请求蓝牙权限（预请求弹窗已在外层处理，位置权限单独请求）...'
+  );
 
   return new Promise((resolve) => {
     plus.android.requestPermissions(
-      [
-        'android.permission.BLUETOOTH_SCAN',
-        'android.permission.BLUETOOTH_CONNECT'
-      ],
+      ['android.permission.BLUETOOTH_SCAN', 'android.permission.BLUETOOTH_CONNECT'],
       (result) => {
         console.log('[蓝牙] 权限请求结果:', JSON.stringify(result));
 
@@ -125,12 +124,20 @@ export async function initBluetooth() {
     }
 
     // 处理蓝牙未开启的情况
-    if (errMsg.includes('not available') || errMsg.includes('not turned on') || errMsg.includes('未开启')) {
+    if (
+      errMsg.includes('not available') ||
+      errMsg.includes('not turned on') ||
+      errMsg.includes('未开启')
+    ) {
       throw new Error('请开启手机蓝牙后重试');
     }
 
     // 处理权限问题
-    if (errMsg.includes('auth deny') || errMsg.includes('permission') || errMsg.includes('authorize')) {
+    if (
+      errMsg.includes('auth deny') ||
+      errMsg.includes('permission') ||
+      errMsg.includes('authorize')
+    ) {
       throw new Error('请授权蓝牙权限后重试');
     }
 
@@ -141,7 +148,7 @@ export async function initBluetooth() {
 
 /**
  * 重置蓝牙模块
- * 注意：某些情况下蓝牙适配器可能已经关闭，stopBluetoothDevicesDiscovery 和 closeBluetoothAdapter 
+ * 注意：某些情况下蓝牙适配器可能已经关闭，stopBluetoothDevicesDiscovery 和 closeBluetoothAdapter
  * 会失败，这些错误应该被安全忽略
  */
 export async function resetBluetooth() {
@@ -203,14 +210,14 @@ export async function searchBluetoothDevices() {
 
     // 开始搜索
     console.log('[蓝牙扫描] 调用 startBluetoothDevicesDiscovery...');
-    
+
     // 添加实时设备发现回调（静默收集，不打印日志）
     let foundCount = 0;
     const deviceFoundCallback = (res) => {
       foundCount += res.devices?.length || 0;
     };
     uni.onBluetoothDeviceFound(deviceFoundCallback);
-    
+
     // 辅助函数：安全地移除监听器
     const removeDeviceFoundListener = () => {
       // 某些平台（如 iOS）可能没有 offBluetoothDeviceFound API
@@ -222,12 +229,12 @@ export async function searchBluetoothDevices() {
         }
       }
     };
-    
+
     try {
       // 添加 5 秒超时，防止 API 挂起
       await Promise.race([
         uni.startBluetoothDevicesDiscovery({
-        allowDuplicatesKey: false
+          allowDuplicatesKey: false
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('开始扫描超时')), 5000))
       ]);
@@ -247,7 +254,7 @@ export async function searchBluetoothDevices() {
     // 等待一段时间以收集设备（增加到3秒）
     console.log('[蓝牙扫描] 等待 3 秒收集设备...');
     await new Promise((resolve) => setTimeout(resolve, 3000));
-    
+
     // 移除监听
     removeDeviceFoundListener();
     console.log('[蓝牙扫描] 等待结束，实时发现设备数:', foundCount);
@@ -262,7 +269,9 @@ export async function searchBluetoothDevices() {
 
     // 打印每个设备的信息
     devices.forEach((device, index) => {
-      console.log(`[蓝牙扫描] 设备${index + 1}: name=${device.name || '无名称'}, localName=${device.localName || '无'}, deviceId=${device.deviceId}, RSSI=${device.RSSI}`);
+      console.log(
+        `[蓝牙扫描] 设备${index + 1}: name=${device.name || '无名称'}, localName=${device.localName || '无'}, deviceId=${device.deviceId}, RSSI=${device.RSSI}`
+      );
     });
 
     console.log('蓝牙-搜索到的设备:', devices);
@@ -516,9 +525,13 @@ export function normalizeDeviceList(deviceList, isIOS = false) {
     if (macAddress) {
       // 调试日志：显示 MAC 来源
       if (macSource === 'deviceId') {
-        console.warn(`[蓝牙] 设备 ${device.name || '未知'} 的 MAC 来自 deviceId（可能是蓝牙MAC而非WiFi MAC）`);
+        console.warn(
+          `[蓝牙] 设备 ${device.name || '未知'} 的 MAC 来自 deviceId（可能是蓝牙MAC而非WiFi MAC）`
+        );
       } else {
-        console.log(`[蓝牙] 设备 ${device.name || '未知'} 的 WiFi MAC 来自 ${macSource}: ${macAddress}`);
+        console.log(
+          `[蓝牙] 设备 ${device.name || '未知'} 的 WiFi MAC 来自 ${macSource}: ${macAddress}`
+        );
       }
 
       // 创建新设备对象，避免修改原对象
@@ -579,7 +592,7 @@ export function getSignalColor(strength) {
 /**
  * 检查蓝牙权限
  * @returns {Promise<boolean>} 是否有蓝牙权限
- * 
+ *
  * 注意：Android 12+ 上不能在权限请求前调用 uni.getSystemSetting()，
  * 因为 DCloud SDK 内部会检查旧的 BLUETOOTH 权限，会导致异常。
  */
