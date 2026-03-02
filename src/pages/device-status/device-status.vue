@@ -210,6 +210,18 @@
             </view>
           </view>
         </view>
+
+        <!-- 未绑定智能体卡片 -->
+        <view class="no-agent-card" v-else>
+          <view class="no-agent-info">
+            <text class="no-agent-title">{{ $t('device_status.no_agent_title') }}</text>
+            <text class="no-agent-desc">{{ $t('device_status.no_agent_desc') }}</text>
+            <view class="no-agent-bind-btn" @click="handleGoToSquare">
+              <text class="no-agent-bind-btn-text">{{ $t('device_status.go_to_square_bind') }}</text>
+            </view>
+          </view>
+          <image class="no-agent-img" src="/static/icons/icon-nobound-device.svg" mode="aspectFit"></image>
+        </view>
       </view>
     </view>
 
@@ -700,6 +712,13 @@ const handleBindAgent = () => {
   // 跳转到智能体列表选择绑定
   uni.switchTab({
     url: '/pages/index/index'
+  });
+};
+
+// 跳转到智能体广场绑定智能体
+const handleGoToSquare = () => {
+  uni.switchTab({
+    url: PageMap[Pages.Square].url
   });
 };
 
@@ -1402,61 +1421,75 @@ uni.$on('deviceStatusRefresh', () => {
   }
 }
 
-// 未绑定智能体
+// 未绑定智能体卡片
 .no-agent-card {
+  position: relative;
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: space-between;
   padding: 20px 16px;
-  background: #ffffff;
+  background: linear-gradient(180deg, #F5F9FF 0%, #ECF4FF 46.48%, #F5F9FF 100%);
   border-radius: 16px;
-  box-shadow: 0px 0px 12px rgba(91, 118, 248, 0.06);
-  gap: 12px;
-}
-
-.no-agent-icon {
-  width: 44px;
-  height: 44px;
-  background: #f3f4f7;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  image {
-    width: 24px;
-    height: 24px;
-    opacity: 0.5;
-  }
+  box-shadow: 0px 0px 12px 0px rgba(91, 118, 248, 0.06);
+  border: 0.5px solid #eaeefc;
+  min-height: 112px;
+  overflow: hidden;
 }
 
 .no-agent-info {
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
+  padding-right: 16px;
 }
 
 .no-agent-title {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   color: #212730;
+  line-height: 24px;
+  margin-bottom: 2px;
 }
 
 .no-agent-desc {
   font-size: 14px;
   color: #60718b;
+  line-height: 22px;
+  margin-bottom: 12px;
 }
 
-.no-agent-arrow {
-  width: 20px;
-  height: 20px;
+.no-agent-bind-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 20px;
+  background: #3d77fc;
+  border-radius: 18px;
+  align-self: flex-start;
 
-  image {
-    width: 100%;
-    height: 100%;
-    opacity: 0.5;
+  &:active {
+    opacity: 0.85;
   }
+}
+
+.no-agent-bind-btn-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 36px;
+}
+
+.no-agent-img {
+  position: absolute;
+  top: 13px;
+  left: 233px;
+  width: 112px;
+  height: 112px;
+  opacity: 1;
 }
 
 // 底部插图
