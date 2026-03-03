@@ -42,7 +42,6 @@
             v-for="(item, iIdx) in group"
             :key="item.id"
             class="menu-item"
-           
             @click="item.handleClick">
             <view class="menu-icon-wrapper">
               <image class="icon-image" :src="item.icon" mode="aspectFit"></image>
@@ -88,7 +87,6 @@ import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useToast } from '@/uni_modules/wot-design-uni/components/wd-toast';
 import { useNotify } from '@/uni_modules/wot-design-uni';
 import { useDeviceScan } from '@/utils/useDeviceScan';
-import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 // @ts-ignore
 import { deviceApi } from '@/api/index';
 import CustomTabBar from '@/components/CustomTabBar.vue';
@@ -313,7 +311,6 @@ onLoad(() => {
 });
 
 onShow(() => {
-  updateSquareTabBadge();
   // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
 });
@@ -451,7 +448,7 @@ function goDeleteAccount() {
   flex-direction: column;
   box-sizing: border-box;
   position: relative;
-  background: linear-gradient(180deg, #EFF2FF 18.68%, #FFFFFF 124.53%);
+  background: linear-gradient(180deg, #eff2ff 18.68%, #ffffff 124.53%);
   overflow: hidden;
 }
 
@@ -473,7 +470,7 @@ function goDeleteAccount() {
   height: 168px;
   right: -62px;
   top: -72px;
-  background: #EDF0FF;
+  background: #edf0ff;
   border-radius: 50%;
   filter: blur(4px);
   z-index: 0;
@@ -599,7 +596,7 @@ function goDeleteAccount() {
 .menu-group {
   display: flex;
   flex-direction: column;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 32rpx;
   overflow: hidden;
 }
@@ -610,7 +607,6 @@ function goDeleteAccount() {
   align-items: center;
   padding: 0 32rpx;
 }
-
 
 .menu-icon-wrapper {
   width: 36rpx;
@@ -625,7 +621,8 @@ function goDeleteAccount() {
   width: 36rpx;
   height: 36rpx;
   /* 将彩色图标统一调整为 #212730 深色 */
-  filter: brightness(0) saturate(100%) invert(13%) sepia(10%) saturate(600%) hue-rotate(180deg) brightness(92%);
+  filter: brightness(0) saturate(100%) invert(13%) sepia(10%) saturate(600%) hue-rotate(180deg)
+    brightness(92%);
 }
 
 .menu-title {
@@ -676,7 +673,7 @@ function goDeleteAccount() {
 
 /* 退出登录按钮 */
 .logout-btn.danger {
-  background: #D5DAE2;
+  background: #d5dae2;
   color: #212730;
   font-size: 16px;
   line-height: 24px;
@@ -685,7 +682,7 @@ function goDeleteAccount() {
 /* 注销账号按钮 */
 .logout-btn.outlined {
   background: transparent;
-  color: #60718B;
+  color: #60718b;
   font-size: 14px;
   line-height: 24px;
 }

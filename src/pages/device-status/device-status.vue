@@ -217,10 +217,20 @@
             <text class="no-agent-title">{{ $t('device_status.no_agent_title') }}</text>
             <text class="no-agent-desc">{{ $t('device_status.no_agent_desc') }}</text>
             <view class="no-agent-bind-btn" @click="handleGoToSquare">
-              <text class="no-agent-bind-btn-text">{{ $t('device_status.go_to_square_bind') }}</text>
+              <text class="no-agent-bind-btn-text">
+                {{ $t('device_status.go_to_square_bind') }}
+              </text>
             </view>
           </view>
-          <image class="no-agent-img" src="/static/icons/icon-nobound-device.svg" mode="aspectFit"></image>
+          <view class="no-agent-icon-group">
+            <view class="no-agent-icon-card no-agent-icon-card--back"></view>
+            <view class="no-agent-icon-card no-agent-icon-card--front">
+              <image
+                class="no-agent-icon-logo"
+                src="/static/icons/icon-nobound-device.png"
+                mode="aspectFit" />
+            </view>
+          </view>
         </view>
       </view>
     </view>
@@ -1427,9 +1437,8 @@ uni.$on('deviceStatusRefresh', () => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
   padding: 20px 16px;
-  background: linear-gradient(180deg, #F5F9FF 0%, #ECF4FF 46.48%, #F5F9FF 100%);
+  background: linear-gradient(180deg, #f5f9ff 0%, #ecf4ff 46.48%, #f5f9ff 100%);
   border-radius: 16px;
   box-shadow: 0px 0px 12px 0px rgba(91, 118, 248, 0.06);
   border: 0.5px solid #eaeefc;
@@ -1439,11 +1448,12 @@ uni.$on('deviceStatusRefresh', () => {
 
 .no-agent-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  padding-right: 16px;
+  padding-right: 96px;
 }
 
 .no-agent-title {
@@ -1465,10 +1475,10 @@ uni.$on('deviceStatusRefresh', () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
-  padding: 0 20px;
+  min-height: 32px;
+  padding: 4px 20px;
   background: #3d77fc;
-  border-radius: 18px;
+  border-radius: 9999px;
   align-self: flex-start;
 
   &:active {
@@ -1480,16 +1490,53 @@ uni.$on('deviceStatusRefresh', () => {
   font-size: 14px;
   font-weight: 500;
   color: #ffffff;
-  line-height: 36px;
+  line-height: 22px;
+  text-align: center;
 }
 
 .no-agent-img {
+  flex-shrink: 0;
+  width: 88px;
+  height: 88px;
+}
+
+// 图标组：双旋转卡片 + logo
+.no-agent-icon-group {
   position: absolute;
-  top: 13px;
-  left: 233px;
-  width: 112px;
-  height: 112px;
-  opacity: 1;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 72px;
+  height: 72px;
+}
+
+.no-agent-icon-card {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  top: 50%;
+  left: 50%;
+
+  &--back {
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 0px 2px 8px 0px rgba(91, 118, 248, 0.1);
+    transform: translate(-50%, -50%) rotate(28.67deg);
+  }
+
+  &--front {
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0px 2px 8px 0px rgba(91, 118, 248, 0.12);
+    transform: translate(-50%, -50%) rotate(4.58deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.no-agent-icon-logo {
+  width: 51px;
+  height: 51px;
 }
 
 // 底部插图

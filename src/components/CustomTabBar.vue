@@ -7,16 +7,12 @@
           :key="index"
           class="tabbar-item"
           :class="{ active: current === index }"
-          @click="switchTab(index)"
-        >
+          @click="switchTab(index)">
           <view class="tabbar-icon-wrapper">
             <image
               class="tabbar-icon"
               :src="current === index ? item.selectedIconPath : item.iconPath"
-              mode="aspectFit"
-            />
-            <!-- 红点提示（广场 tab 索引为 2） -->
-            <view v-if="index === 2 && showSquareBadge" class="tabbar-badge"></view>
+              mode="aspectFit" />
           </view>
           <text class="tabbar-text">{{ item.text }}</text>
         </view>
@@ -28,15 +24,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { showSquareBadge } from '@/utils/tabBarBadge';
-
 const { t: $t } = useI18n();
 
-const props = withDefaults(defineProps<{
-  current?: number;
-}>(), {
-  current: 0
-});
+const props = withDefaults(
+  defineProps<{
+    current?: number;
+  }>(),
+  {
+    current: 0
+  }
+);
 
 const emit = defineEmits<{
   (e: 'change', index: number): void;
@@ -48,7 +45,7 @@ onMounted(() => {
   const systemInfo = uni.getSystemInfoSync();
   const isAndroid = systemInfo.platform === 'android';
   const bottom = systemInfo.safeAreaInsets?.bottom || 0;
-  
+
   if (isAndroid) {
     // 关键：安卓端如果返回很小（一般是0），强制给 54rpx 避开手势条；如果不为 0，在原有基础上补一点
     finalPaddingBottom.value = bottom < 5 ? '54rpx' : `calc(${bottom}px + 20rpx)`;
@@ -89,9 +86,9 @@ const tabList = computed(() => [
 // 切换 tab - 直接跳转，新页面会使用正确的 current 值
 function switchTab(index: number) {
   if (props.current === index) return;
-  
+
   emit('change', index);
-  
+
   const item = tabList.value[index];
   uni.switchTab({
     url: item.pagePath
@@ -126,7 +123,7 @@ function switchTab(index: number) {
 
 .tabbar-item {
   flex: 1;
-  min-width: 0;  /* 允许 flex 子元素收缩 */
+  min-width: 0; /* 允许 flex 子元素收缩 */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -135,10 +132,10 @@ function switchTab(index: number) {
   transition: all 0.2s ease;
   position: relative;
   padding: 0 8rpx;
-  
+
   &.active {
     .tabbar-text {
-      color: #335CFF;
+      color: #335cff;
       font-weight: 500;
     }
   }
@@ -160,17 +157,6 @@ function switchTab(index: number) {
   display: block;
 }
 
-.tabbar-badge {
-  position: absolute;
-  top: -2rpx;
-  right: -2rpx;
-  width: 14rpx;
-  height: 14rpx;
-  background-color: #ff4d4f;
-  border-radius: 50%;
-  border: 3rpx solid #ffffff;
-}
-
 .tabbar-text {
   font-size: 19rpx;
   color: #717784;
@@ -183,4 +169,3 @@ function switchTab(index: number) {
   padding: 0 4rpx;
 }
 </style>
-
