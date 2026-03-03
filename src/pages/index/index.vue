@@ -50,10 +50,10 @@
       @cancel="handleBindCancel" />
 
     <!-- 浮动创建按钮（有智能体时显示，滚动时收起） -->
-    <view 
-      class="fab-btn" 
-      :class="{ 'fab-collapsed': isScrolling }" 
-      v-if="agentList.length > 0" 
+    <view
+      class="fab-btn"
+      :class="{ 'fab-collapsed': isScrolling }"
+      v-if="agentList.length > 0"
       @click="handleCreateAgent">
       <image class="fab-btn-icon" src="/static/icons/add.svg" mode="aspectFit"></image>
       <text class="fab-btn-text">{{ $t('create_agent.create') }}</text>
@@ -74,7 +74,6 @@ import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
 import { onLoad, onShow, onPageScroll } from '@dcloudio/uni-app';
 import { Agent } from './types';
 import { useUserStore } from '@/store';
-import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 import { useDeviceScan } from '@/utils/useDeviceScan';
 import AgentCard from '@/components/AgentCard.vue';
 import AgentBindDrawer from '@/components/AgentBindDrawer.vue';
@@ -124,7 +123,6 @@ onShow(() => {
   showBindDrawer.value = false;
   loadAgentList(false);
   updateNavigationTitle();
-  updateSquareTabBadge();
   // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
 });
@@ -174,18 +172,16 @@ async function loadAgentList(showLoading = false) {
   }
 }
 
-
-
 // 滚动处理函数
 function handleScroll(e: { scrollTop: number }) {
   // 开始滚动时，收起按钮
   isScrolling.value = true;
-  
+
   // 清除之前的定时器
   if (scrollTimer) {
     clearTimeout(scrollTimer);
   }
-  
+
   // 停止滚动后 300ms 恢复按钮
   scrollTimer = setTimeout(() => {
     isScrolling.value = false;
@@ -196,8 +192,6 @@ function handleAgentClick(agent: Agent) {
   selectedAgent.value = agent;
   showBindDrawer.value = true;
 }
-
-
 
 function handleCreateAgent() {
   uni.navigateTo({
@@ -282,7 +276,6 @@ function requireLoginForBind(action: PendingBindAction): boolean {
   return true;
 }
 
-
 async function handleStartSetup() {
   if (!requireLoginForBind('qrcode')) {
     return;
@@ -298,7 +291,6 @@ function handleBluetoothSetup() {
     url: PageMap[Pages.BluetoothConfig].url
   });
 }
-
 </script>
 
 <style lang="scss" scoped>
@@ -387,7 +379,7 @@ function handleBluetoothSetup() {
   font-size: 14px;
   line-height: 22px;
   text-align: center;
-  color: #60718B;
+  color: #60718b;
 }
 
 .empty-desc {
@@ -396,7 +388,7 @@ function handleBluetoothSetup() {
   font-size: 14px;
   line-height: 22px;
   text-align: center;
-  color: #60718B;
+  color: #60718b;
 }
 
 .empty-btn {
@@ -409,7 +401,7 @@ function handleBluetoothSetup() {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #3E5CEE;
+  background: #3e5cee;
   box-shadow: 0 4px 12px rgba(62, 92, 238, 0.3);
   box-sizing: border-box;
   transition: all 0.2s ease;
@@ -436,7 +428,7 @@ function handleBluetoothSetup() {
   font-weight: 400;
   font-size: 16px;
   line-height: 22px;
-  color: #FFFFFF;
+  color: #ffffff;
   white-space: nowrap;
   flex: none;
   order: 1;
@@ -457,13 +449,14 @@ function handleBluetoothSetup() {
   justify-content: center;
   gap: 8px;
   padding: 16px 19px;
-  background: #3E5CEE;
+  background: #3e5cee;
   border-radius: 12px;
   box-sizing: border-box;
   z-index: 998;
   box-shadow: 0 4px 12px rgba(62, 92, 238, 0.3);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
-              transform 0.15s ease;
+  transition:
+    all 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.15s ease;
   overflow: hidden;
 }
 
@@ -496,11 +489,12 @@ function handleBluetoothSetup() {
   font-weight: 400;
   font-size: 16px;
   line-height: 22px;
-  color: #FFFFFF;
+  color: #ffffff;
   white-space: nowrap;
   opacity: 1;
-  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 收起时隐藏文字 */
