@@ -147,11 +147,11 @@
                         "clientid": "668197306109-hju8pngu20hqve9f0ee0bmq3ho7cmh9o.apps.googleusercontent.com"
                     },
                     "weixin": {
-                        "appid": "null",
-                        "UniversalLinks": ""
+                        "appid": "wxda3a97fbe2ab02ea",
+                        "UniversalLinks": "https://mengdiantansuo.com.cn/"
                     },
                     "apple": {
-                        "UniversalLinks": ""
+                        "UniversalLinks": "https://mengdiantansuo.com.cn/"
                     }
                 },
                 "geolocation": {
