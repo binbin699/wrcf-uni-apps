@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "fmt": "prettier --write \"**/*.{js,ts,mjs,cjs,json,tsx,css,less,scss,vue,html,md}\"",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "dev:custom": "uni -p",
     "dev:h5": "uni",
     "dev:h5:ssr": "uni --ssr",
@@ -68,12 +69,17 @@
     "@dcloudio/uni-stacktracey": "3.0.0-4080520251106001",
     "@dcloudio/uni-uts-v1": "3.0.0-4080520251106001",
     "@dcloudio/vite-plugin-uni": "3.0.0-4080520251106001",
+    "@eslint/js": "^10.0.1",
     "@vue/runtime-core": "^3.5.21",
     "@vue/tsconfig": "0.8.1",
-    "prettier": "^3.6.2",
+    "eslint": "^10.0.2",
+    "eslint-plugin-vue": "^10.8.0",
+    "globals": "^17.4.0",
     "sass": "1.77.8",
     "typescript": "5.9.2",
+    "typescript-eslint": "^8.56.1",
     "vite": "5.2.8",
+    "vue-eslint-parser": "^10.4.0",
     "vue-tsc": "3.1.0"
   }
 }
