@@ -31,64 +31,29 @@ CONFIG_DIR="${SCRIPT_DIR}/config"
 CLI_PATH=""
 
 # 命令行参数变量（可通过参数覆盖）
-ARG_EDITION=""
+ARG_CONFIG=""          # --config <目录名>，如 android-cn
 ARG_VERSION=""
 ARG_VERSION_CODE=""
-ARG_PLATFORM=""
 ARG_ABI=""
 ARG_PACKAGE_NAME=""
 ARG_ANDROID_FORMAT=""
-ARG_IOS_REGION=""
 ARG_IOS_BUNDLE_ID=""
 ARG_IOS_PROFILE=""
 ARG_IOS_CERT=""
 ARG_IOS_CERT_PASSWORD=""
 ARG_YES=false
 
-# 读取单个版本的 .pack-config 文件
-# 参数: $1 = 版本名 (cn/intl)
-_read_edition_pack_config() {
-    local edition="$1"
-    local config_file="${CONFIG_DIR}/${edition}/.pack-config"
+# 选择的配置（由 select_pack_config() 设置）
+SELECTED_CONFIG=""      # 选择的配置目录名，如 android-cn
+CONFIG_PATH=""          # 完整路径: ${CONFIG_DIR}/${SELECTED_CONFIG}
+SELECTED_PLATFORM=""    # 从目录名推导: android 或 ios
+SELECTED_EDITION=""     # 从目录名推导: cn, intl 等
+PACKAGE_NAME=""         # 从 .pack-config 读取
 
-    if [ ! -f "$config_file" ]; then
-        print_fail "配置文件不存在: ${config_file}"
-        echo -e "${RED}请确保 scripts/config/${edition}/.pack-config 存在且包含 ANDROID_PACKAGE_NAME 和 IOS_PACKAGE_NAME${NC}"
-        exit 1
-    fi
-
-    local android_pkg ios_pkg
-    android_pkg=$(grep "^ANDROID_PACKAGE_NAME=" "$config_file" | cut -d'=' -f2 | tr -d ' ')
-    ios_pkg=$(grep "^IOS_PACKAGE_NAME=" "$config_file" | cut -d'=' -f2 | tr -d ' ')
-
-    if [ -z "$android_pkg" ] || [ -z "$ios_pkg" ]; then
-        print_fail "配置文件缺少必要字段: ${config_file}"
-        echo -e "${RED}需要: ANDROID_PACKAGE_NAME 和 IOS_PACKAGE_NAME${NC}"
-        exit 1
-    fi
-
-    echo "${android_pkg}|${ios_pkg}"
-}
-
-# 加载打包配置文件（包名等）
-# 从 scripts/config/cn/.pack-config 和 scripts/config/intl/.pack-config 读取
-load_pack_config() {
-    local cn_result intl_result
-
-    cn_result=$(_read_edition_pack_config "cn")
-    ANDROID_CN_PACKAGE_NAME="${cn_result%%|*}"
-    IOS_CN_PACKAGE_NAME="${cn_result##*|}"
-
-    intl_result=$(_read_edition_pack_config "intl")
-    ANDROID_INTL_PACKAGE_NAME="${intl_result%%|*}"
-    IOS_INTL_PACKAGE_NAME="${intl_result##*|}"
-}
-
-# 复制版本图标到 unpackage/res/icons/
-# 从 scripts/config/{edition}/icons/ 复制到 unpackage/res/icons/
-copy_edition_icons() {
-    local edition="${SELECTED_EDITION:-cn}"
-    local src_dir="${CONFIG_DIR}/${edition}/icons"
+# 复制配置图标到 unpackage/res/icons/
+# 从 ${CONFIG_PATH}/icons/ 复制到 unpackage/res/icons/
+copy_config_icons() {
+    local src_dir="${CONFIG_PATH}/icons"
     local dst_dir="${PROJECT_PATH}/unpackage/res/icons"
 
     print_section "图标配置"
@@ -103,7 +68,7 @@ copy_edition_icons() {
     icon_count=$(find "$src_dir" -maxdepth 1 -name "*.png" 2>/dev/null | wc -l | tr -d ' ')
 
     if [ "$icon_count" -eq 0 ]; then
-        print_warning "${edition} 版本图标目录为空 (${src_dir})，跳过图标替换"
+        print_warning "图标目录为空 (${src_dir})，跳过图标替换"
         return 0
     fi
 
@@ -112,7 +77,7 @@ copy_edition_icons() {
 
     # 复制图标文件
     cp -f "${src_dir}"/*.png "$dst_dir/"
-    print_check "已替换 ${icon_count} 个图标文件 (${edition} → unpackage/res/icons/)"
+    print_check "已替换 ${icon_count} 个图标文件 (${SELECTED_CONFIG} → unpackage/res/icons/)"
 }
 
 # 显示帮助信息
@@ -126,19 +91,19 @@ uni-app 云打包脚本
   -h, --help                显示帮助信息
   -y, --yes                 跳过确认提示，直接打包
 
-  --edition <cn|intl>       版本类型 (cn=国内版, intl=海外版)
+  --config <配置目录>       打包配置目录名 (如 android-cn, ios-intl)
+                            脚本会扫描 scripts/config/ 下的子目录
+                            从目录名推导平台和版本: {platform}-{edition}
   --version <版本号>        版本号，如 1.1.5
   --version-code <代码>     版本代码，如 101050
-  --platform <android|ios>  打包平台
 
 Android 选项:
   --abi <32|64|both>        架构 (32=armeabi-v7a, 64=arm64-v8a, both=兼容包)
-  --package-name <包名>     Android 包名，如 com.example.app
+  --package-name <包名>     覆盖 .pack-config 中的 Android 包名
   --android-format <apk|aab> 打包格式 (apk=APK包, aab=AAB包用于Google Play)
 
 iOS 选项:
-  --ios-region <cn|intl>    iOS 区域 (cn=国内版, intl=海外版)
-  --ios-bundle-id <ID>      iOS Bundle ID
+  --ios-bundle-id <ID>      覆盖 .pack-config 中的 iOS Bundle ID
   --ios-profile <路径>      描述文件路径 (.mobileprovision)
   --ios-cert <路径>         证书文件路径 (.p12)
   --ios-cert-password <密码> 证书私钥密码
@@ -148,22 +113,20 @@ iOS 选项:
   $(basename "$0")
 
   # Android 打包（完整参数）
-  $(basename "$0") --platform android --edition cn --version 1.1.5 \\
-    --version-code 101050 --abi 64 --package-name com.example.app -y
+  $(basename "$0") --config android-cn --version 1.1.5 \\
+    --version-code 101050 --abi 64 -y
 
   # Android AAB 打包（用于 Google Play）
-  $(basename "$0") --platform android --edition intl --version 1.1.5 \\
-    --version-code 101050 --abi 64 --package-name com.example.app \\
-    --android-format aab -y
+  $(basename "$0") --config android-intl --version 1.1.5 \\
+    --version-code 101050 --abi 64 --android-format aab -y
 
   # iOS 打包（完整参数）
-  $(basename "$0") --platform ios --edition cn --version 1.1.5 \\
-    --version-code 101050 --ios-region cn --ios-bundle-id com.example.app \\
-    --ios-profile ~/cert/app.mobileprovision --ios-cert ~/cert/app.p12 \\
-    --ios-cert-password mypassword -y
+  $(basename "$0") --config ios-cn --version 1.1.5 \\
+    --version-code 101050 --ios-profile ~/cert/app.mobileprovision \\
+    --ios-cert ~/cert/app.p12 --ios-cert-password mypassword -y
 
   # 部分参数（其余交互输入）
-  $(basename "$0") --platform android --version 1.1.5
+  $(basename "$0") --config android-cn --version 1.1.5
 
 EOF
     exit 0
@@ -180,8 +143,8 @@ parse_args() {
                 ARG_YES=true
                 shift
                 ;;
-            --edition)
-                ARG_EDITION="$2"
+            --config)
+                ARG_CONFIG="$2"
                 shift 2
                 ;;
             --version)
@@ -190,10 +153,6 @@ parse_args() {
                 ;;
             --version-code)
                 ARG_VERSION_CODE="$2"
-                shift 2
-                ;;
-            --platform)
-                ARG_PLATFORM="$2"
                 shift 2
                 ;;
             --abi)
@@ -206,10 +165,6 @@ parse_args() {
                 ;;
             --android-format)
                 ARG_ANDROID_FORMAT="$2"
-                shift 2
-                ;;
-            --ios-region)
-                ARG_IOS_REGION="$2"
                 shift 2
                 ;;
             --ios-bundle-id)
@@ -275,14 +230,13 @@ BANNER
 
 # Step counter for interactive flow
 CURRENT_STEP=0
-TOTAL_STEPS=0
 
 # Print a numbered step header
 # Usage: print_step "选择版本类型"
 print_step() {
     CURRENT_STEP=$((CURRENT_STEP + 1))
     echo ""
-    echo -e "  ${PURPLE}${BOLD}STEP ${CURRENT_STEP}/${TOTAL_STEPS}${NC}  ${DIM}·${NC}  ${BOLD}$1${NC}"
+    echo -e "  ${PURPLE}${BOLD}STEP ${CURRENT_STEP}${NC}  ${DIM}·${NC}  ${BOLD}$1${NC}"
     echo -e "  ${DIM}$(printf '%.0s─' {1..50})${NC}"
     echo ""
 }
@@ -458,50 +412,109 @@ read_current_config() {
     CURRENT_VERSION_CODE=$(get_json_value "$MANIFEST_FILE" "versionCode")
     CURRENT_ABI_FILTERS=$(node -pe "JSON.parse(require('fs').readFileSync('$MANIFEST_FILE', 'utf8'))['app-plus'].distribute.android.abiFilters.join(', ')" 2>/dev/null || echo "")
 
-    # 从 .pack-config 加载包名（4 变量: 平台 × 版本）
-    load_pack_config
-    print_check "Pack config loaded"
-
     echo ""
     echo -e "    ${DIM}Edition${NC}        ${YELLOW}${CURRENT_EDITION}${NC}"
     echo -e "    ${DIM}Version${NC}        ${YELLOW}${CURRENT_VERSION}${NC} ${DIM}(${CURRENT_VERSION_CODE})${NC}"
     echo -e "    ${DIM}ABI${NC}            ${YELLOW}${CURRENT_ABI_FILTERS}${NC}"
-    echo -e "    ${DIM}Android CN${NC}     ${YELLOW}${ANDROID_CN_PACKAGE_NAME}${NC}"
-    echo -e "    ${DIM}Android Intl${NC}   ${YELLOW}${ANDROID_INTL_PACKAGE_NAME}${NC}"
-    echo -e "    ${DIM}iOS CN${NC}         ${YELLOW}${IOS_CN_PACKAGE_NAME}${NC}"
-    echo -e "    ${DIM}iOS Intl${NC}       ${YELLOW}${IOS_INTL_PACKAGE_NAME}${NC}"
     echo ""
 }
 
-# 用户选择版本类型
-select_edition() {
-    # 如果命令行参数已指定，直接使用
-    if [ -n "$ARG_EDITION" ]; then
-        SELECTED_EDITION="$ARG_EDITION"
-        print_info "使用命令行参数: 版本类型=${SELECTED_EDITION}"
-        return
-    fi
+# 选择打包配置
+# 扫描 scripts/config/ 目录，动态列出可用配置
+# 从目录名推导: platform (第一个 - 前的部分) 和 edition (剩余部分)
+# 读取 .pack-config 中的 PACKAGE_NAME
+select_pack_config() {
+    print_step "选择打包配置"
 
-    print_step "选择版本类型"
-    print_option "1" "cn  " "国内版"
-    print_option "2" "intl" "海外版"
-    print_current "${CURRENT_EDITION}"
-    read -p "  请选择 [1-2] (留空保持当前): " choice
+    # 扫描 config 目录下的子目录（忽略隐藏目录）
+    local configs=()
+    local dir_name
+    for dir in "${CONFIG_DIR}"/*/; do
+        [ -d "$dir" ] || continue
+        dir_name="$(basename "$dir")"
+        # 目录名必须包含 - 分隔符 (platform-edition)
+        [[ "$dir_name" == *-* ]] || continue
+        configs+=("$dir_name")
+    done
 
-    case $choice in
-        1) SELECTED_EDITION="cn" ;;
-        2) SELECTED_EDITION="intl" ;;
-        "") SELECTED_EDITION="$CURRENT_EDITION" ;;
-        *) print_error "无效选择，使用当前配置"; SELECTED_EDITION="$CURRENT_EDITION" ;;
-    esac
-
-    # full 仅用于开发环境，不支持打包
-    if [ "$SELECTED_EDITION" = "full" ]; then
-        print_error "full 版本仅用于开发环境，不支持云端打包。请选择 cn 或 intl。"
+    if [ ${#configs[@]} -eq 0 ]; then
+        print_error "未找到打包配置目录 (scripts/config/*-*/)"
+        echo -e "${RED}请创建配置目录，如 android-cn, ios-intl 等${NC}"
         exit 1
     fi
 
-    print_success "选择版本类型: ${SELECTED_EDITION}"
+    # 如果命令行参数已指定
+    if [ -n "$ARG_CONFIG" ]; then
+        local found=false
+        for cfg in "${configs[@]}"; do
+            if [ "$cfg" == "$ARG_CONFIG" ]; then
+                found=true
+                break
+            fi
+        done
+        if [ "$found" = false ]; then
+            print_error "配置目录不存在: ${ARG_CONFIG}"
+            echo -e "${RED}可用配置: ${configs[*]}${NC}"
+            exit 1
+        fi
+        SELECTED_CONFIG="$ARG_CONFIG"
+        print_info "使用命令行参数: 配置=${SELECTED_CONFIG}"
+    else
+        # 交互式选择
+        local i=1
+        for cfg in "${configs[@]}"; do
+            local platform="${cfg%%-*}"
+            local edition="${cfg#*-}"
+            print_option "$i" "$cfg" "${platform} / ${edition}"
+            i=$((i + 1))
+        done
+        echo ""
+        read -p "  请选择 [1-${#configs[@]}]: " choice
+
+        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#configs[@]} ]; then
+            SELECTED_CONFIG="${configs[$((choice - 1))]}"
+        else
+            print_error "无效选择"
+            exit 1
+        fi
+    fi
+
+    # 设置派生变量
+    CONFIG_PATH="${CONFIG_DIR}/${SELECTED_CONFIG}"
+    SELECTED_PLATFORM="${SELECTED_CONFIG%%-*}"    # 第一个 - 前面的部分
+    SELECTED_EDITION="${SELECTED_CONFIG#*-}"      # 第一个 - 后面的部分
+
+    # 读取 PACKAGE_NAME
+    local config_file="${CONFIG_PATH}/.pack-config"
+    if [ ! -f "$config_file" ]; then
+        print_error "配置文件不存在: ${config_file}"
+        exit 1
+    fi
+
+    PACKAGE_NAME=$(grep "^PACKAGE_NAME=" "$config_file" | cut -d'=' -f2 | tr -d ' ')
+    if [ -z "$PACKAGE_NAME" ]; then
+        print_error "配置文件缺少 PACKAGE_NAME: ${config_file}"
+        exit 1
+    fi
+
+    # 允许 CLI 参数覆盖包名
+    if [ -n "$ARG_PACKAGE_NAME" ]; then
+        PACKAGE_NAME="$ARG_PACKAGE_NAME"
+        print_info "使用命令行参数覆盖包名: ${PACKAGE_NAME}"
+    fi
+
+    # iOS 场景: 允许 CLI 参数覆盖 Bundle ID（否则使用 PACKAGE_NAME）
+    if [ "$SELECTED_PLATFORM" == "ios" ]; then
+        if [ -n "$ARG_IOS_BUNDLE_ID" ]; then
+            IOS_BUNDLE_ID="$ARG_IOS_BUNDLE_ID"
+            print_info "使用命令行参数: Bundle ID=${IOS_BUNDLE_ID}"
+        else
+            IOS_BUNDLE_ID="$PACKAGE_NAME"
+        fi
+    fi
+
+    print_success "配置: ${SELECTED_CONFIG} (${SELECTED_PLATFORM} / ${SELECTED_EDITION})"
+    print_info "包名: ${PACKAGE_NAME}"
 }
 
 # 用户选择版本号
@@ -550,30 +563,6 @@ select_version_code() {
     print_success "选择版本代码: ${SELECTED_VERSION_CODE}"
 }
 
-# 用户选择平台
-select_platform() {
-    # 如果命令行参数已指定，直接使用
-    if [ -n "$ARG_PLATFORM" ]; then
-        SELECTED_PLATFORM="$ARG_PLATFORM"
-        print_info "使用命令行参数: 平台=${SELECTED_PLATFORM}"
-        return
-    fi
-
-    print_step "选择打包平台"
-    print_option "1" "Android" "APK / AAB"
-    print_option "2" "iOS    " "IPA"
-    echo ""
-    read -p "  请选择 [1-2]: " choice
-
-    case $choice in
-        1) SELECTED_PLATFORM="android" ;;
-        2) SELECTED_PLATFORM="ios" ;;
-        *) print_error "无效选择，默认使用 Android"; SELECTED_PLATFORM="android" ;;
-    esac
-
-    print_success "选择平台: ${SELECTED_PLATFORM}"
-}
-
 # 用户选择安卓架构 (仅 Android)
 select_android_abi() {
     # 如果命令行参数已指定，直接使用
@@ -617,38 +606,6 @@ select_android_abi() {
     print_success "选择架构: ${SELECTED_ABI_FILTERS}"
 }
 
-# 用户选择 Android 包名
-select_android_package_name() {
-    # 如果命令行参数已指定，直接使用
-    if [ -n "$ARG_PACKAGE_NAME" ]; then
-        PACKAGE_NAME="$ARG_PACKAGE_NAME"
-        print_info "使用命令行参数: 包名=${PACKAGE_NAME}"
-        return
-    fi
-
-    print_step "选择 Android 包名"
-    # 根据当前版本类型确定默认包名
-    local default_pkg
-    if [ "$SELECTED_EDITION" == "intl" ]; then
-        default_pkg="$ANDROID_INTL_PACKAGE_NAME"
-    else
-        default_pkg="$ANDROID_CN_PACKAGE_NAME"
-    fi
-    echo -e "    ${DIM}默认包名:${NC}     ${YELLOW}${default_pkg}${NC}"
-    echo -e "    ${DIM}Android CN:${NC}   ${ANDROID_CN_PACKAGE_NAME}"
-    echo -e "    ${DIM}Android Intl:${NC} ${ANDROID_INTL_PACKAGE_NAME}"
-    echo ""
-    read -p "  输入新包名 (留空使用默认): " new_package_name
-
-    if [ -z "$new_package_name" ]; then
-        PACKAGE_NAME="$default_pkg"
-    else
-        PACKAGE_NAME="$new_package_name"
-    fi
-
-    print_success "选择包名: ${PACKAGE_NAME}"
-}
-
 # 用户选择 Android 打包格式
 select_android_format() {
     # 如果命令行参数已指定，直接使用
@@ -676,60 +633,6 @@ select_android_format() {
     esac
 
     print_success "选择打包格式: ${SELECTED_ANDROID_FORMAT}"
-}
-
-# 用户选择 iOS 区域版本
-select_ios_region() {
-    # 如果命令行参数已指定 Bundle ID，直接使用
-    if [ -n "$ARG_IOS_BUNDLE_ID" ]; then
-        IOS_BUNDLE_ID="$ARG_IOS_BUNDLE_ID"
-        SELECTED_IOS_REGION="${ARG_IOS_REGION:-cn}"
-        print_info "使用命令行参数: Bundle ID=${IOS_BUNDLE_ID}"
-        return
-    fi
-
-    # 如果指定了区域但没有指定 Bundle ID
-    if [ -n "$ARG_IOS_REGION" ]; then
-        SELECTED_IOS_REGION="$ARG_IOS_REGION"
-        if [ "$ARG_IOS_REGION" == "cn" ]; then
-            IOS_BUNDLE_ID="$IOS_CN_PACKAGE_NAME"
-            print_info "使用命令行参数: 区域=${SELECTED_IOS_REGION}, Bundle ID=${IOS_BUNDLE_ID}"
-            return
-        fi
-        # 海外版需要交互输入 Bundle ID
-    fi
-
-    print_step "选择 iOS 版本类型"
-    print_option "1" "国内版" "Bundle ID: ${IOS_CN_PACKAGE_NAME}"
-    print_option "2" "海外版" "Bundle ID: ${IOS_INTL_PACKAGE_NAME}"
-    echo ""
-    read -p "  请选择 [1-2]: " choice
-
-    case $choice in
-        1)
-            SELECTED_IOS_REGION="cn"
-            IOS_BUNDLE_ID="$IOS_CN_PACKAGE_NAME"
-            print_success "选择国内版，Bundle ID: ${IOS_BUNDLE_ID}"
-            ;;
-        2)
-            SELECTED_IOS_REGION="intl"
-            echo ""
-            echo "默认海外版 Bundle ID: ${IOS_INTL_PACKAGE_NAME}"
-            read -p "输入自定义 Bundle ID (留空使用默认): " custom_bundle_id
-
-            if [ -z "$custom_bundle_id" ]; then
-                IOS_BUNDLE_ID="$IOS_INTL_PACKAGE_NAME"
-            else
-                IOS_BUNDLE_ID="$custom_bundle_id"
-            fi
-            print_success "选择海外版，Bundle ID: ${IOS_BUNDLE_ID}"
-            ;;
-        *)
-            print_error "无效选择，使用国内版"
-            SELECTED_IOS_REGION="cn"
-            IOS_BUNDLE_ID="$IOS_CN_PACKAGE_NAME"
-            ;;
-    esac
 }
 
 # 配置 iOS 证书
@@ -767,7 +670,7 @@ configure_ios_certificate() {
     # 自动发现区域目录下的证书文件作为默认值
     local default_profile=""
     local default_cert=""
-    local region_dir="${CONFIG_DIR}/${SELECTED_IOS_REGION:-cn}/iOS_certificate"
+    local region_dir="${CONFIG_PATH}/cert"
 
     if [ -d "$region_dir" ]; then
         # 查找 .mobileprovision 文件（取第一个）
@@ -923,9 +826,10 @@ show_summary() {
     echo ""
     echo -e "  ${PURPLE}┌─── Build Summary ────────────────────────────────────┐${NC}"
     echo -e "  ${PURPLE}│${NC}                                                      ${PURPLE}│${NC}"
-    printf "  ${PURPLE}│${NC}  ${DIM}Edition:${NC}     %-40s ${PURPLE}│${NC}\n" "${SELECTED_EDITION}"
+    printf "  ${PURPLE}│${NC}  ${DIM}Config:${NC}      %-40s ${PURPLE}│${NC}\n" "${SELECTED_CONFIG}"
     printf "  ${PURPLE}│${NC}  ${DIM}Version:${NC}     %-40s ${PURPLE}│${NC}\n" "${SELECTED_VERSION} (${SELECTED_VERSION_CODE})"
     printf "  ${PURPLE}│${NC}  ${DIM}Platform:${NC}    %-40s ${PURPLE}│${NC}\n" "${SELECTED_PLATFORM}"
+    printf "  ${PURPLE}│${NC}  ${DIM}Edition:${NC}     %-40s ${PURPLE}│${NC}\n" "${SELECTED_EDITION}"
 
     if [ "$SELECTED_PLATFORM" == "android" ]; then
         printf "  ${PURPLE}│${NC}  ${DIM}Package:${NC}     %-40s ${PURPLE}│${NC}\n" "${PACKAGE_NAME}"
@@ -933,7 +837,6 @@ show_summary() {
         printf "  ${PURPLE}│${NC}  ${DIM}Format:${NC}      %-40s ${PURPLE}│${NC}\n" "${SELECTED_ANDROID_FORMAT}"
     else
         printf "  ${PURPLE}│${NC}  ${DIM}Bundle ID:${NC}   %-40s ${PURPLE}│${NC}\n" "${IOS_BUNDLE_ID}"
-        printf "  ${PURPLE}│${NC}  ${DIM}Region:${NC}      %-40s ${PURPLE}│${NC}\n" "${SELECTED_IOS_REGION}"
         printf "  ${PURPLE}│${NC}  ${DIM}Profile:${NC}     %-40s ${PURPLE}│${NC}\n" "$(basename "${IOS_PROFILE_FILE}")"
         printf "  ${PURPLE}│${NC}  ${DIM}Cert:${NC}        %-40s ${PURPLE}│${NC}\n" "$(basename "${IOS_CERT_FILE}")"
     fi
@@ -988,6 +891,83 @@ extract_download_link() {
         fi
 
         echo ""
+    fi
+}
+
+# Linux 环境准备（HBuilderX daemon 启动 + TLS 修复）
+# 仅在 Linux 上执行，macOS 不受影响
+prepare_linux_env() {
+    if [ "$(uname -s)" != "Linux" ]; then
+        return 0
+    fi
+
+    print_section "Linux 环境准备"
+
+    # 修复 TLS 静态块内存分配错误
+    #   错误: uts.linux-x64-gnu.node: cannot allocate memory in static TLS block
+    #   原因: glibc 默认预留的 TLS 静态空间不足，dlopen() 加载 .node 时失败
+    #   修复: 通过 GLIBC_TUNABLES 让 glibc 动态链接器额外预留 TLS 空间
+    #   重要: GLIBC_TUNABLES 必须在 daemon 启动前设置，因为编译实际运行在
+    #         daemon 进程内部的 node 子进程中，不是 cli pack 的子进程。
+    #         如果 daemon 已经在运行且没有此变量，必须重启 daemon。
+    export GLIBC_TUNABLES=glibc.rtld.optional_static_tls=16384
+
+    # 检查现有 daemon 是否带有 GLIBC_TUNABLES
+    local need_restart=false
+    local daemon_pid
+    daemon_pid=$(pgrep -f "HBuilderX" | head -1)
+
+    if [ -n "$daemon_pid" ]; then
+        # 检查 daemon 进程环境中是否已有 GLIBC_TUNABLES
+        if ! tr '\0' '\n' < "/proc/$daemon_pid/environ" 2>/dev/null | grep -q "GLIBC_TUNABLES"; then
+            print_warning "HBuilderX daemon 运行中但缺少 TLS fix，需要重启..."
+            need_restart=true
+        else
+            print_check "HBuilderX daemon 已在运行 (含 TLS 修复)"
+        fi
+    else
+        need_restart=true
+    fi
+
+    if [ "$need_restart" = true ]; then
+        # 杀掉现有 daemon（如有）
+        if [ -n "$daemon_pid" ]; then
+            print_info "停止现有 HBuilderX daemon..."
+            pkill -f "HBuilderX" 2>/dev/null || true
+            sleep 1
+        fi
+
+        # 带 GLIBC_TUNABLES 启动新 daemon
+        print_info "启动 HBuilderX daemon (含 TLS 修复)..."
+        nohup "$CLI_PATH" open > /tmp/hbuilderx-daemon.log 2>&1 &
+
+        # 等待 daemon 就绪
+        local wait_count=0
+        local max_wait=30
+        while [ $wait_count -lt $max_wait ]; do
+            if pgrep -f "HBuilderX" > /dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+            wait_count=$((wait_count + 1))
+        done
+
+        if ! pgrep -f "HBuilderX" > /dev/null 2>&1; then
+            print_error "HBuilderX daemon 启动失败 (等待 ${max_wait}s)"
+            exit 1
+        fi
+
+        # 验证新 daemon 确实带有 GLIBC_TUNABLES
+        local new_pid
+        new_pid=$(pgrep -f "HBuilderX" | head -1)
+        if tr '\0' '\n' < "/proc/$new_pid/environ" 2>/dev/null | grep -q "GLIBC_TUNABLES"; then
+            # 额外等待几秒让 daemon 初始化完成
+            sleep 3
+            print_check "HBuilderX daemon 已启动 (含 TLS 修复)"
+        else
+            print_error "HBuilderX daemon 已启动但 GLIBC_TUNABLES 未生效"
+            exit 1
+        fi
     fi
 }
 
@@ -1095,6 +1075,7 @@ EOF
 
     # 清理临时文件
     rm -f "$temp_output"
+
 }
 
 # 恢复 abiFilters 为兼容配置
@@ -1126,27 +1107,22 @@ main() {
     # 读取当前配置
     read_current_config
 
-    # 用户交互选择 (前4步对所有平台通用)
+    # 用户交互选择
     CURRENT_STEP=0
-    TOTAL_STEPS=7  # 默认 Android 步数, iOS 会动态调整
+    # STEP 编号由 print_step 自动递增
 
-    select_edition
-    copy_edition_icons
+    select_pack_config
+    copy_config_icons
     select_version
     select_version_code
-    select_platform
 
-    # 根据平台调整步数并执行平台特定配置
+    # 根据平台执行平台特定配置
     if [ "$SELECTED_PLATFORM" == "android" ]; then
-        TOTAL_STEPS=7
         select_android_abi
-        select_android_package_name
         select_android_format
     fi
 
     if [ "$SELECTED_PLATFORM" == "ios" ]; then
-        TOTAL_STEPS=6
-        select_ios_region
         configure_ios_certificate
     fi
 
@@ -1156,6 +1132,9 @@ main() {
     # 更新配置文件
     update_env_file
     update_manifest_file
+
+    # Linux 环境准备（daemon + TLS 修复）
+    prepare_linux_env
 
     # 执行打包
     execute_pack
