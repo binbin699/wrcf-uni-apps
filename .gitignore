@@ -27,9 +27,16 @@ dist
 
 .hbuilderx
 
-# iOS 证书文件（安全敏感，需手动放置）
-scripts/config/*/iOS_certificate/*.p12
-scripts/config/*/iOS_certificate/*.mobileprovision
+# 证书和签名文件（安全敏感，需手动放置）
+scripts/config/*/cert/*.p12
+scripts/config/*/cert/*.mobileprovision
+scripts/config/*/cert/*.cer
+scripts/config/*/cert/*.pem
+scripts/config/*/cert/*.key
+scripts/config/*/cert/*.pfx
+scripts/config/*/cert/*.keystore
+scripts/config/*/cert/*.jks
+scripts/config/*/cert/*.certSigningRequest
 
 # AI Agent files
 .cli-path
