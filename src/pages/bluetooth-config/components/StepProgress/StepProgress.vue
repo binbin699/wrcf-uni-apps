@@ -22,7 +22,10 @@
         <text class="step-title">{{ step.title }}</text>
 
         <!-- 连接线（除最后一个步骤） -->
-        <view v-if="index < steps.length - 1" class="step-line" :class="{ active: currentStepIndex > index }"></view>
+        <view
+          v-if="index < steps.length - 1"
+          class="step-line"
+          :class="{ active: currentStepIndex > index }"></view>
       </view>
     </view>
   </view>

@@ -40,7 +40,10 @@
       class="device-dropdown-overlay"
       v-if="showDeviceDropdown"
       @click="showDeviceDropdown = false"></view>
-    <view class="device-dropdown" v-if="showDeviceDropdown" :style="{ top: (statusBarHeight + navBarHeight + 2) + 'px' }">
+    <view
+      class="device-dropdown"
+      v-if="showDeviceDropdown"
+      :style="{ top: statusBarHeight + navBarHeight + 2 + 'px' }">
       <view class="device-dropdown-list">
         <view
           class="device-dropdown-item"
@@ -51,7 +54,7 @@
           <text
             class="device-dropdown-item-name"
             :class="{ active: device.id === currentDevice?.id }">
-            {{ device.macAddress ? 'MAC: ' + device.macAddress : device.deviceName }}
+            {{ device.deviceName || $t('device_status.unknown_device') }}
           </text>
           <image
             v-if="device.id === currentDevice?.id"
@@ -63,7 +66,7 @@
     </view>
 
     <!-- 主要内容区域 -->
-    <view class="content-area" :style="{ paddingTop: (statusBarHeight + navBarHeight + 16) + 'px' }">
+    <view class="content-area" :style="{ paddingTop: statusBarHeight + navBarHeight + 16 + 'px' }">
       <!-- 加载状态 -->
       <view class="loading-state" v-if="loading">
         <text class="loading-text">{{ $t('common.loading') }}</text>
@@ -143,17 +146,12 @@
         <view class="device-card">
           <view class="device-card-content">
             <text class="device-name">
-              {{
-                currentDevice.macAddress
-                  ? 'MAC: ' + currentDevice.macAddress
-                  : currentDevice.deviceName
-              }}
+              {{ currentDevice.deviceName || $t('device_status.unknown_device') }}
             </text>
-            <!-- 编辑按钮暂时注释，等后端接口完成后启用
+            <!-- 编辑按钮暂时注释，等后端接口完成后启用 -->
             <view class="device-edit-btn" @click.stop="showEditNamePopup">
               <image class="edit-icon" src="/static/icons/icon-edit.svg" mode="aspectFit"></image>
             </view>
-            -->
           </view>
         </view>
 
@@ -212,6 +210,28 @@
             </view>
           </view>
         </view>
+
+        <!-- 未绑定智能体卡片 -->
+        <view class="no-agent-card" v-else>
+          <view class="no-agent-info">
+            <text class="no-agent-title">{{ $t('device_status.no_agent_title') }}</text>
+            <text class="no-agent-desc">{{ $t('device_status.no_agent_desc') }}</text>
+            <view class="no-agent-bind-btn" @click="handleGoToSquare">
+              <text class="no-agent-bind-btn-text">
+                {{ $t('device_status.go_to_square_bind') }}
+              </text>
+            </view>
+          </view>
+          <view class="no-agent-icon-group">
+            <view class="no-agent-icon-card no-agent-icon-card--back"></view>
+            <view class="no-agent-icon-card no-agent-icon-card--front">
+              <image
+                class="no-agent-icon-logo"
+                src="/static/icons/icon-nobound-device.png"
+                mode="aspectFit" />
+            </view>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -259,7 +279,7 @@
             :class="{ active: device.id === currentDevice?.id }"
             @click="handleSelectDevice(device)">
             <text class="device-selector-item-name">
-              {{ device.macAddress ? 'MAC: ' + device.macAddress : device.deviceName }}
+              {{ device.deviceName || $t('device_status.unknown_device') }}
             </text>
             <view class="device-selector-item-check" v-if="device.id === currentDevice?.id">
               <image src="/static/icons/check.svg" mode="aspectFit"></image>
@@ -271,6 +291,11 @@
 
     <!-- 底部插图 -->
     <image class="bottom-illustration" src="/static/bg_removal.png" mode="aspectFill"></image>
+
+    <!-- AI 生成提示 -->
+    <view v-if="deviceList.length > 0" class="ai-generated-tip">
+      <text class="ai-generated-text">{{ $t('common.ai_generated_disclaimer') }}</text>
+    </view>
 
     <!-- 自定义 TabBar -->
     <CustomTabBar :current="0" />
@@ -370,6 +395,8 @@ const editDeviceName = ref('');
 const isDescExpanded = ref(false);
 const showDeviceDropdown = ref(false);
 let loadDevicesVersion = 0; // 用于取消过期的加载请求
+// 标记用户是否从欢迎引导发起了设备配置，配置完成后跳转智能体广场
+const pendingSetupRedirect = ref(false);
 
 // 加载设备列表
 const loadDevices = async () => {
@@ -580,6 +607,7 @@ const toggleDescExpand = () => {
 
 // 处理添加设备（扫码）
 const handleAddDeviceQrcode = () => {
+  pendingSetupRedirect.value = true;
   scanAndBind({
     onScanSuccess: () => {
       // 扫码成功后刷新设备列表
@@ -590,6 +618,7 @@ const handleAddDeviceQrcode = () => {
 
 // 处理添加设备（蓝牙）
 const handleAddDeviceBluetooth = () => {
+  pendingSetupRedirect.value = true;
   uni.navigateTo({
     url: PageMap[Pages.BluetoothConfig].url
   });
@@ -621,7 +650,7 @@ const handleSaveDeviceName = async () => {
   }
 
   try {
-    await deviceApi.update({
+    await deviceApi.updateName({
       id: currentDevice.value.id,
       deviceName: editDeviceName.value.trim()
     });
@@ -696,13 +725,37 @@ const handleBindAgent = () => {
   });
 };
 
-onShow(() => {
+// 跳转到智能体广场绑定智能体
+const handleGoToSquare = () => {
+  uni.switchTab({
+    url: PageMap[Pages.Square].url
+  });
+};
+
+onShow(async () => {
   // 隐藏系统 TabBar（解决双重导航栏问题）
   uni.hideTabBar({ animation: false });
   // 重置扫码导航状态，防止 Tab 页持久化导致 isNavigating 卡住
   isNavigating.value = false;
+
+  // 记录是否需要在加载完成后跳转智能体广场
+  const shouldRedirect = pendingSetupRedirect.value;
+  if (shouldRedirect) {
+    pendingSetupRedirect.value = false;
+  }
+
   // 刷新设备列表（onShow 在页面首次显示时也会触发，无需在 onMounted 中重复调用）
-  loadDevices();
+  await loadDevices();
+
+  // 配置完成后，如果设备已成功添加，跳转智能体广场方便用户绑定智能体
+  if (shouldRedirect && deviceList.value.length > 0) {
+    console.log('[设备状态] 配置完成，跳转智能体广场');
+    uni.switchTab({
+      url: '/pages/square/square'
+    });
+    return;
+  }
+
   // #ifdef MP-WEIXIN
   // 登录后续接绑定流程（仅小程序端）
   resumePendingBindAction();
@@ -981,6 +1034,12 @@ uni.$on('deviceStatusRefresh', () => {
   flex-direction: column;
   align-items: center;
   gap: 32rpx;
+
+  /* #ifdef MP-WEIXIN */
+  // 小程序隐藏了"说明与教程"链接，增加内边距让卡片更协调
+  padding: 72rpx 40rpx 64rpx;
+  gap: 48rpx;
+  /* #endif */
 }
 
 .welcome-title {
@@ -1019,6 +1078,12 @@ uni.$on('deviceStatusRefresh', () => {
   border: 2rpx solid #f1f5f9;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
+
+  /* #ifdef MP-WEIXIN */
+  // 小程序隐藏了"说明与教程"，增加卡片高度补偿
+  padding: 52rpx 20rpx;
+  gap: 28rpx;
+  /* #endif */
 
   &:active {
     transform: scale(0.96);
@@ -1366,61 +1431,112 @@ uni.$on('deviceStatusRefresh', () => {
   }
 }
 
-// 未绑定智能体
+// 未绑定智能体卡片
 .no-agent-card {
+  position: relative;
   display: flex;
   flex-direction: row;
   align-items: center;
   padding: 20px 16px;
-  background: #ffffff;
+  background: linear-gradient(180deg, #f5f9ff 0%, #ecf4ff 46.48%, #f5f9ff 100%);
   border-radius: 16px;
-  box-shadow: 0px 0px 12px rgba(91, 118, 248, 0.06);
-  gap: 12px;
-}
-
-.no-agent-icon {
-  width: 44px;
-  height: 44px;
-  background: #f3f4f7;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  image {
-    width: 24px;
-    height: 24px;
-    opacity: 0.5;
-  }
+  box-shadow: 0px 0px 12px 0px rgba(91, 118, 248, 0.06);
+  border: 0.5px solid #eaeefc;
+  min-height: 112px;
+  overflow: hidden;
 }
 
 .no-agent-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
+  padding-right: 96px;
 }
 
 .no-agent-title {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   color: #212730;
+  line-height: 24px;
+  margin-bottom: 2px;
 }
 
 .no-agent-desc {
   font-size: 14px;
   color: #60718b;
+  line-height: 22px;
+  margin-bottom: 12px;
 }
 
-.no-agent-arrow {
-  width: 20px;
-  height: 20px;
+.no-agent-bind-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 4px 20px;
+  background: #3d77fc;
+  border-radius: 9999px;
+  align-self: flex-start;
 
-  image {
-    width: 100%;
-    height: 100%;
-    opacity: 0.5;
+  &:active {
+    opacity: 0.85;
   }
+}
+
+.no-agent-bind-btn-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 22px;
+  text-align: center;
+}
+
+.no-agent-img {
+  flex-shrink: 0;
+  width: 88px;
+  height: 88px;
+}
+
+// 图标组：双旋转卡片 + logo
+.no-agent-icon-group {
+  position: absolute;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 72px;
+  height: 72px;
+}
+
+.no-agent-icon-card {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  top: 50%;
+  left: 50%;
+
+  &--back {
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 0px 2px 8px 0px rgba(91, 118, 248, 0.1);
+    transform: translate(-50%, -50%) rotate(28.67deg);
+  }
+
+  &--front {
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0px 2px 8px 0px rgba(91, 118, 248, 0.12);
+    transform: translate(-50%, -50%) rotate(4.58deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.no-agent-icon-logo {
+  width: 51px;
+  height: 51px;
 }
 
 // 底部插图
@@ -1434,6 +1550,28 @@ uni.$on('deviceStatusRefresh', () => {
   opacity: 0.08;
   z-index: 1;
   pointer-events: none;
+}
+
+// AI 生成提示
+.ai-generated-tip {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  // TabBar 上方，留出足够间距
+  bottom: calc(158rpx + 24px);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-generated-text {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 18px;
+  color: #60718b;
+  text-align: center;
+  white-space: nowrap;
 }
 
 // 编辑设备名称弹窗

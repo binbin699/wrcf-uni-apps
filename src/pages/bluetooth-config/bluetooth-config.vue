@@ -19,7 +19,9 @@
             <wd-icon name="arrow-left" size="44rpx" color="#000000" />
           </view>
         </view>
-        <text class="nav-title">{{ state.configOnly ? $t('bluetooth.wifi_config_title') : $t('bluetooth.title') }}</text>
+        <text class="nav-title">
+          {{ state.configOnly ? $t('bluetooth.wifi_config_title') : $t('bluetooth.title') }}
+        </text>
         <view class="nav-right">
           <!-- #ifndef MP-WEIXIN -->
           <!-- 非小程序平台显示刷新按钮，避免与小程序原生按钮重叠 -->
@@ -114,13 +116,13 @@ onLoad((options) => {
 
   // 初始化状态
   bluetoothConfigManager.resetState();
-  
+
   // 设置仅配网模式（从 URL 参数读取）
   if (options?.configOnly === '1') {
     bluetoothConfigManager.setConfigOnly(true);
     console.log('仅配网模式已启用');
   }
-  
+
   state.value = bluetoothConfigManager.getState();
 
   console.log('初始状态:', {
@@ -164,19 +166,15 @@ function onStoreStateChange(newState: any) {
 }
 
 function handleBack() {
-  // 如果配网已完成，直接返回"我的"页面
+  // 如果配网已完成，跳转到智能体广场方便用户绑定智能体
   if (state.value.configCompleted) {
-    console.log('配网已完成，直接返回');
-    try {
-      uni.navigateBack();
-    } catch (error: any) {
-      uni.switchTab({
-        url: PageMap[Pages.Profile].url
-      });
-    }
+    console.log('配网已完成，跳转智能体广场');
+    uni.switchTab({
+      url: '/pages/square/square'
+    });
     return;
   }
-  
+
   if (state.value.currentStep === CONFIG_STEPS.SELECT_DEVICE) {
     // 第一步，返回上一页
     try {
@@ -193,7 +191,7 @@ function handleBack() {
   } else if (state.value.currentStep === CONFIG_STEPS.SELECT_WIFI) {
     // 从WiFi选择页返回设备选择页，需要断开蓝牙连接并重置状态
     console.log('从WiFi页返回设备扫描页，断开蓝牙并重置状态');
-    
+
     // 断开当前蓝牙连接
     const selectedDevice = state.value.selectedDevice;
     if (selectedDevice && selectedDevice.deviceId) {
@@ -207,14 +205,14 @@ function handleBack() {
         }
       });
     }
-    
+
     // 重置配网协议状态
     configProtocol.reset();
-    
+
     // 清除选中的设备和WiFi
     bluetoothConfigManager.setSelectedDevice(null);
     bluetoothConfigManager.setSelectedWifi(null);
-    
+
     // 返回上一步
     bluetoothConfigManager.prevStep();
   } else if (state.value.currentStep === CONFIG_STEPS.MANUAL_CONFIG) {

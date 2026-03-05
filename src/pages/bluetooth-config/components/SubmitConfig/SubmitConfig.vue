@@ -280,9 +280,11 @@ export default {
       // 重置状态
       bluetoothConfigManager.resetState();
 
-      // 返回上一页
+      // 跳转到智能体广场，方便用户绑定智能体
       setTimeout(() => {
-        uni.navigateBack();
+        uni.switchTab({
+          url: '/pages/square/square'
+        });
       }, 500);
     },
 

@@ -60,7 +60,7 @@
             {{ $t('agent_bind_drawer.confirm') }}
           </button>
         </template>
-        
+
         <!-- 无设备时：根据 setupMode 显示不同按钮 -->
         <template v-else>
           <!-- both 模式：显示扫码添加和蓝牙添加两个按钮 -->
@@ -91,8 +91,13 @@
 import { PageMap, Pages } from '@/utils/route';
 import { agentApi, deviceApi } from '../api/index';
 import { gotoCreateAgentBy } from '@/pages/agent/create';
-import { requestCameraAndAlbumPermission, checkPermissionStatus, PermissionType, PermissionStatus, openPermissionSetting } from '@/utils/permission';
-import { updateSquareTabBadge } from '@/utils/tabBarBadge';
+import {
+  requestCameraAndAlbumPermission,
+  checkPermissionStatus,
+  PermissionType,
+  PermissionStatus,
+  openPermissionSetting
+} from '@/utils/permission';
 import { AppInfo } from '@/const';
 
 export default {
@@ -155,14 +160,14 @@ export default {
     async bindAgentToDevice() {
       // 优先使用 agentId (UUID格式)，数字 id 不是有效的绑定ID
       const agentId = this.agent?.agentId;
-      
+
       if (!this.agent || !this.selectedDeviceId) {
         return {
           success: false,
           message: this.$t('agent_bind_drawer.params_incomplete')
         };
       }
-      
+
       // 检查 agentId 是否有效（非空字符串）
       if (!agentId || agentId === '') {
         console.warn('[绑定] 智能体缺少有效的 agentId:', this.agent);
@@ -197,11 +202,11 @@ export default {
         }
       } catch (error) {
         console.error(this.$t('agent_bind_drawer.bind_device_failed') + ':', error);
-        
+
         // 检查错误消息（兼容多种错误格式）
-        const errorMsg = error?.message || error?.errMsg || 
-          (typeof error === 'string' ? error : '');
-        
+        const errorMsg =
+          error?.message || error?.errMsg || (typeof error === 'string' ? error : '');
+
         // 处理特定错误
         if (errorMsg.includes('设备已存在灵矽平台')) {
           return {
@@ -209,7 +214,7 @@ export default {
             message: this.$t('agent_bind_drawer.device_exist')
           };
         }
-        
+
         // 超时错误
         if (errorMsg.includes('timeout') || errorMsg.includes('abort')) {
           return {
@@ -217,7 +222,7 @@ export default {
             message: this.$t('agent_bind_drawer.request_timeout') || '请求超时，请重试'
           };
         }
-        
+
         // 其他错误，显示通用绑定失败消息
         return {
           success: false,
@@ -282,7 +287,7 @@ export default {
     // 扫码添加设备
     async handleScanAdd() {
       this.$emit('update:visible', false);
-      
+
       try {
         // iOS 特殊处理
         if (uni.getSystemInfoSync().platform === 'ios') {
@@ -346,7 +351,6 @@ export default {
               const result = await deviceApi.bindByQrcode(qrcodeData);
               if (result && result.code === 1000) {
                 console.log('设备绑定成功', result);
-                updateSquareTabBadge();
               } else {
                 throw new Error(result?.message || this.$t('net_config.device_bind_fail'));
               }
@@ -477,7 +481,7 @@ export default {
 
 .config-link {
   font-size: 14px;
-  color: #335CFF;
+  color: #335cff;
   margin-left: 8px;
 }
 
@@ -586,17 +590,17 @@ export default {
 }
 
 .cancel-btn {
-  background: #F2F5F8;
+  background: #f2f5f8;
   color: #333333;
 }
 
 .confirm-btn {
-  background: #335CFF;
+  background: #335cff;
   color: #ffffff;
 }
 
 .confirm-btn:disabled {
-  background: #335CFF;
+  background: #335cff;
   opacity: 0.5;
 }
 </style>

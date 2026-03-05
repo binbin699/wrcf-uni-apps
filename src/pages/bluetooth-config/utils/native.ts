@@ -16,7 +16,7 @@ export const BLE_ERROR_CODE = {
   NO_CONNECTION: 10006,
   PROPERTY_NOT_SUPPORT: 10007,
   SYSTEM_ERROR: 10008,
-  OPERATE_TIMEOUT: 10012,
+  OPERATE_TIMEOUT: 10012
 } as const;
 
 // ===================== Result 类型 =====================
@@ -61,7 +61,7 @@ export async function safeAsync<T>(fn: () => Promise<T>): Promise<NativeResult<T
     return {
       ok: false,
       errCode: getBLEErrorCode(err),
-      errMsg: String(e.message || e.errMsg || err),
+      errMsg: String(e.message || e.errMsg || err)
     };
   }
 }
@@ -78,9 +78,9 @@ export function openBluetoothAdapter(): Promise<NativeResult> {
         resolve({
           ok: false,
           errCode: getBLEErrorCode(err),
-          errMsg: err.errMsg,
+          errMsg: err.errMsg
         });
-      },
+      }
     });
   });
 }
@@ -111,6 +111,6 @@ export function showBluetoothDisabledModal($t: TranslateFunction) {
     title: $t('bluetooth.bluetooth_disabled_title'),
     content: $t('bluetooth.bluetooth_disabled_content'),
     showCancel: false,
-    confirmText: $t('common.confirm'),
+    confirmText: $t('common.confirm')
   });
 }

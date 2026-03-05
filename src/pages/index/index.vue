@@ -10,11 +10,6 @@
 
       <!-- 智能体列表区域 -->
       <view v-else class="agent-list-container">
-        <!-- AI生成内容合规提示 -->
-        <view class="ai-disclaimer">
-          <text class="ai-disclaimer-text">{{ $t('index.ai_generated_disclaimer') }}</text>
-        </view>
-        
         <!-- 统一的智能体列表 -->
         <view class="agent-list">
           <AgentCard
@@ -54,86 +49,11 @@
       @error="handleBindError"
       @cancel="handleBindCancel" />
 
-    <!-- 没有设备时的引导弹窗；测试阶段 isDev 时无论有无设备都先显示 -->
-    <view v-if="showWelcomeGuide" class="welcome-overlay" :class="{ 'is-single': setupMode !== 'both' }">
-      <view class="welcome-popup">
-        <!-- 两种模式并行 (默认) -->
-        <view v-if="setupMode === 'both'" class="welcome-content">
-          <view class="welcome-title">{{ $t('welcome.guide_title') }}</view>
-          <view class="welcome-actions">
-            <view class="welcome-setup-options">
-              <view class="welcome-setup-card" @click="handleStartSetup">
-                <view class="welcome-setup-icon-wrapper qr">
-                  <image class="welcome-setup-icon" src="/static/icons/scan-qrcode.svg" mode="aspectFit" />
-                </view>
-                <text class="welcome-setup-text">{{ $t('welcome.setup_qrcode') }}</text>
-              </view>
-              <view class="welcome-setup-card" @click="handleBluetoothSetup">
-                <view class="welcome-setup-icon-wrapper bluetooth">
-                  <image class="welcome-setup-icon" src="/static/icons/bluetooth.svg" mode="aspectFit" />
-                </view>
-                <text class="welcome-setup-text">{{ $t('welcome.setup_bluetooth') }}</text>
-              </view>
-            </view>
-            <!-- #ifndef MP-WEIXIN -->
-            <view class="welcome-help-link" @click="handleHelpClick">
-              <text>{{ $t('profile.instructions_tutorials') }}</text>
-            </view>
-            <!-- #endif -->
-            <view class="welcome-skip" @click="handleSkipSetup">
-              <!-- #ifdef MP-WEIXIN -->
-              {{ $t('welcome.skip_and_browse') }}
-              <!-- #endif -->
-              <!-- #ifndef MP-WEIXIN -->
-              {{ $t('welcome.skip_for_now') }}
-              <!-- #endif -->
-            </view>
-          </view>
-        </view>
-
-        <!-- 单个模式 (扫码或蓝牙) -->
-        <view v-else class="welcome-content-single">
-          <view class="welcome-icon-wrapper single" :class="setupMode">
-            <image
-              v-if="setupMode === 'qrcode'"
-              class="welcome-setup-icon-large"
-              src="/static/icons/scan-qrcode.svg"
-              mode="aspectFit" />
-            <image
-              v-else
-              class="welcome-setup-icon-large"
-              src="/static/icons/bluetooth.svg"
-              mode="aspectFit" />
-          </view>
-          <view class="welcome-title-single">{{ $t('welcome.guide_title') }}</view>
-          <view class="welcome-actions-single">
-            <view
-              class="welcome-primary-btn"
-              @click="setupMode === 'qrcode' ? handleStartSetup() : handleBluetoothSetup()">
-              {{ setupMode === 'qrcode' ? $t('welcome.setup_qrcode') : $t('welcome.setup_bluetooth') }}
-            </view>
-            <!-- #ifndef MP-WEIXIN -->
-            <view class="welcome-help-link single-mode" @click="handleHelpClick">
-              <text>{{ $t('profile.instructions_tutorials') }}</text>
-            </view>
-            <!-- #endif -->
-            <view class="welcome-skip-single" @click="handleSkipSetup">
-              <!-- #ifdef MP-WEIXIN -->
-              {{ $t('welcome.skip_and_browse') }}
-              <!-- #endif -->
-              <!-- #ifndef MP-WEIXIN -->
-              {{ $t('welcome.skip_for_now') }}
-              <!-- #endif -->
-            </view>
-          </view>
-        </view>
-      </view>
-    </view>
     <!-- 浮动创建按钮（有智能体时显示，滚动时收起） -->
-    <view 
-      class="fab-btn" 
-      :class="{ 'fab-collapsed': isScrolling }" 
-      v-if="agentList.length > 0" 
+    <view
+      class="fab-btn"
+      :class="{ 'fab-collapsed': isScrolling }"
+      v-if="agentList.length > 0"
       @click="handleCreateAgent">
       <image class="fab-btn-icon" src="/static/icons/add.svg" mode="aspectFit"></image>
       <text class="fab-btn-text">{{ $t('create_agent.create') }}</text>
@@ -148,13 +68,12 @@
 import { ref, watch, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 // @ts-ignore
-import { agentApi, deviceApi } from '@/api/index';
+import { agentApi } from '@/api/index';
 import { PageMap, Pages } from '@/utils/route';
 import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
 import { onLoad, onShow, onPageScroll } from '@dcloudio/uni-app';
 import { Agent } from './types';
 import { useUserStore } from '@/store';
-import { updateSquareTabBadge } from '@/utils/tabBarBadge';
 import { useDeviceScan } from '@/utils/useDeviceScan';
 import AgentCard from '@/components/AgentCard.vue';
 import AgentBindDrawer from '@/components/AgentBindDrawer.vue';
@@ -178,10 +97,6 @@ const selectedAgent = ref<Agent | null>(null);
 const loading = ref(false);
 const isScrolling = ref(false);
 let scrollTimer: ReturnType<typeof setTimeout> | null = null;
-const isDev = process.env.NODE_ENV === 'development';
-const showWelcomeGuide = ref(false);
-const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
-let isCheckingDevice = false;
 const PENDING_BIND_KEY = 'pendingBindAction';
 type PendingBindAction = 'qrcode' | 'bluetooth';
 
@@ -201,16 +116,13 @@ onLoad(async () => {
   }
   // #endif
   await loadAgentList(true);
-  await checkDeviceBinding();
   updateNavigationTitle();
 });
 
 onShow(() => {
   showBindDrawer.value = false;
   loadAgentList(false);
-  checkDeviceBinding();
   updateNavigationTitle();
-  updateSquareTabBadge();
   // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
 });
@@ -260,55 +172,16 @@ async function loadAgentList(showLoading = false) {
   }
 }
 
-async function checkDeviceBinding() {
-  // #ifdef MP-WEIXIN
-  // 小程序端：已有专门的落地页，index 页面不显示引导弹窗
-  showWelcomeGuide.value = false;
-  return;
-  // #endif
-
-  // #ifndef MP-WEIXIN
-  // 非小程序端：未登录时不显示引导弹窗
-  if (!userStore.isLoggedIn) {
-    showWelcomeGuide.value = false;
-    return;
-  }
-  // #endif
-
-  if (isCheckingDevice) {
-    return;
-  }
-
-  isCheckingDevice = true;
-  try {
-    const result = await deviceApi.getList();
-    if (result?.code === 1000) {
-      const devices = Array.isArray(result.data) ? result.data : [];
-      showWelcomeGuide.value = devices.length === 0;
-    } else {
-      showWelcomeGuide.value = false;
-      console.warn('获取设备列表失败:', result?.message);
-    }
-  } catch (error) {
-    console.error('检查设备绑定状态失败', error);
-    showWelcomeGuide.value = false;
-  } finally {
-    isCheckingDevice = false;
-  }
-}
-
-
-
 // 滚动处理函数
 function handleScroll(e: { scrollTop: number }) {
   // 开始滚动时，收起按钮
   isScrolling.value = true;
-  
+
   // 清除之前的定时器
   if (scrollTimer) {
     clearTimeout(scrollTimer);
   }
-  
+
   // 停止滚动后 300ms 恢复按钮
   scrollTimer = setTimeout(() => {
     isScrolling.value = false;
@@ -319,8 +192,6 @@ function handleAgentClick(agent: Agent) {
   selectedAgent.value = agent;
   showBindDrawer.value = true;
 }
-
-
 
 function handleCreateAgent() {
   uni.navigateTo({
@@ -405,16 +276,11 @@ function requireLoginForBind(action: PendingBindAction): boolean {
   return true;
 }
 
-
 async function handleStartSetup() {
   if (!requireLoginForBind('qrcode')) {
     return;
   }
-  await scanAndBind({
-    onScanSuccess: () => {
-      showWelcomeGuide.value = false;
-    }
-  });
+  await scanAndBind({});
 }
 
 function handleBluetoothSetup() {
@@ -423,35 +289,6 @@ function handleBluetoothSetup() {
   }
   uni.navigateTo({
     url: PageMap[Pages.BluetoothConfig].url
-  });
-}
-
-async function handleSkipSetup() {
-  // #ifdef MP-WEIXIN
-  // 小程序端：未登录时触发游客登录
-  if (!isUserAuthenticated()) {
-    toast.loading({ msg: '', cover: true });
-    try {
-      const success = await userStore.guestLogin();
-      toast.close();
-      if (success) {
-        showWelcomeGuide.value = false;
-        loadAgentList(false);
-      }
-    } catch (error) {
-      toast.close();
-      console.error('游客登录失败:', error);
-    }
-    return;
-  }
-  // #endif
-  // 已登录时直接隐藏引导
-  showWelcomeGuide.value = false;
-}
-
-function handleHelpClick() {
-  uni.navigateTo({
-    url: '/pages/profile/help'
   });
 }
 </script>
@@ -472,29 +309,6 @@ function handleHelpClick() {
 
 .agent-list-container {
   width: 100%;
-}
-
-.ai-disclaimer {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 8px 16px;
-  gap: 10px;
-  width: 100%;
-  height: 36px;
-  background: #F3F4F7;
-  box-sizing: border-box;
-}
-
-.ai-disclaimer-text {
-  font-style: normal;
-  font-weight: 400;
-  font-size: 13px;
-  line-height: 20px;
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: #98A5B8;
 }
 
 .page-title {
@@ -565,7 +379,7 @@ function handleHelpClick() {
   font-size: 14px;
   line-height: 22px;
   text-align: center;
-  color: #60718B;
+  color: #60718b;
 }
 
 .empty-desc {
@@ -574,7 +388,7 @@ function handleHelpClick() {
   font-size: 14px;
   line-height: 22px;
   text-align: center;
-  color: #60718B;
+  color: #60718b;
 }
 
 .empty-btn {
@@ -587,7 +401,7 @@ function handleHelpClick() {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #3E5CEE;
+  background: #3e5cee;
   box-shadow: 0 4px 12px rgba(62, 92, 238, 0.3);
   box-sizing: border-box;
   transition: all 0.2s ease;
@@ -614,7 +428,7 @@ function handleHelpClick() {
   font-weight: 400;
   font-size: 16px;
   line-height: 22px;
-  color: #FFFFFF;
+  color: #ffffff;
   white-space: nowrap;
   flex: none;
   order: 1;
@@ -635,13 +449,14 @@ function handleHelpClick() {
   justify-content: center;
   gap: 8px;
   padding: 16px 19px;
-  background: #3E5CEE;
+  background: #3e5cee;
   border-radius: 12px;
   box-sizing: border-box;
   z-index: 998;
   box-shadow: 0 4px 12px rgba(62, 92, 238, 0.3);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
-              transform 0.15s ease;
+  transition:
+    all 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.15s ease;
   overflow: hidden;
 }
 
@@ -674,11 +489,12 @@ function handleHelpClick() {
   font-weight: 400;
   font-size: 16px;
   line-height: 22px;
-  color: #FFFFFF;
+  color: #ffffff;
   white-space: nowrap;
   opacity: 1;
-  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 收起时隐藏文字 */
@@ -743,220 +559,4 @@ function handleHelpClick() {
   margin-bottom: 20px;
   line-height: 1.4;
 }
-
-.welcome-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding-bottom: 160rpx;
-}
-
-.welcome-popup {
-  width: calc(100% - 120rpx);
-  max-width: 640rpx;
-}
-
-.welcome-content {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 36rpx;
-  padding: 48rpx 40rpx;
-  box-shadow: 0 28rpx 72rpx rgba(37, 99, 235, 0.22);
-  display: flex;
-  flex-direction: column;
-  gap: 32rpx;
-}
-
-.welcome-title {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #111827;
-  line-height: 1.5;
-  white-space: pre-line;
-  text-align: center;
-}
-
-.welcome-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40rpx;
-}
-
-.welcome-setup-options {
-  display: flex;
-  width: 100%;
-  gap: 24rpx;
-  justify-content: center;
-}
-
-.welcome-setup-card {
-  flex: 1;
-  background: #ffffff;
-  border-radius: 32rpx;
-  padding: 40rpx 24rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20rpx;
-  transition: all 0.2s ease;
-  border: 1rpx solid #f1f5f9;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
-}
-
-.welcome-setup-card:active {
-  transform: scale(0.96);
-  background: #f8fafc;
-}
-
-.welcome-setup-icon-wrapper {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 28rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.1);
-}
-
-.welcome-setup-icon-wrapper.qr {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.welcome-setup-icon-wrapper.bluetooth {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-}
-
-.welcome-setup-icon {
-  width: 48rpx;
-  height: 48rpx;
-}
-
-.welcome-setup-text {
-  font-size: 26rpx;
-  font-weight: 500;
-  color: #334155;
-}
-
-/* 说明与教程链接样式 */
-.welcome-help-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12rpx;
-  padding: 16rpx 40rpx 8rpx;
-  margin-top: 16rpx;
-  color: #3b82f6;
-  font-size: 28rpx;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.welcome-help-link:active {
-  opacity: 0.7;
-}
-
-.welcome-help-link.single-mode {
-  margin-top: 8rpx;
-  margin-bottom: 8rpx;
-}
-
-.welcome-help-icon {
-  width: 32rpx;
-  height: 32rpx;
-}
-
-.welcome-skip {
-  color: #94a3b8;
-  font-size: 26rpx;
-  padding: 10rpx 40rpx;
-}
-
-/* 单个按钮布局样式 (来自 fork) */
-.welcome-content-single {
-  background: #ffffff;
-  border-radius: 48rpx;
-  padding: 80rpx 48rpx 60rpx;
-  box-shadow: 0 32rpx 80rpx rgba(37, 99, 235, 0.18);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.welcome-icon-wrapper.single {
-  width: 140rpx;
-  height: 140rpx;
-  border-radius: 40rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 40rpx;
-  box-shadow: 0 16rpx 32rpx rgba(0, 0, 0, 0.1);
-}
-
-.welcome-icon-wrapper.single.qrcode {
-  background: linear-gradient(135deg, #10b981, #059669);
-  box-shadow: 0 16rpx 32rpx rgba(16, 185, 129, 0.25);
-}
-
-.welcome-icon-wrapper.single.bluetooth {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  box-shadow: 0 16rpx 32rpx rgba(59, 130, 246, 0.25);
-}
-
-.welcome-setup-icon-large {
-  width: 72rpx;
-  height: 72rpx;
-}
-
-.welcome-title-single {
-  font-size: 36rpx;
-  font-weight: 600;
-  color: #111827;
-  line-height: 1.5;
-  white-space: pre-line;
-  text-align: center;
-  margin-bottom: 60rpx;
-}
-
-.welcome-actions-single {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.welcome-primary-btn {
-  width: 100%;
-  height: 100rpx;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: #ffffff;
-  border-radius: 50rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32rpx;
-  font-weight: 600;
-  box-shadow: 0 12rpx 24rpx rgba(37, 99, 235, 0.25);
-  margin-bottom: 32rpx;
-  transition: all 0.2s ease;
-}
-
-.welcome-primary-btn:active {
-  transform: scale(0.97);
-  opacity: 0.9;
-}
-
-.welcome-skip-single {
-  color: #94a3b8;
-  font-size: 28rpx;
-  padding: 10rpx 40rpx;
-}
-
 </style>

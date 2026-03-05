@@ -185,7 +185,10 @@
           <view class="overlay-guide-illustration">
             <image src="/static/guide-illustration.png" mode="aspectFit" class="illustration-img" />
             <!-- 指向绑定按钮的箭头 -->
-            <image src="/static/icons/arrow-pointer.svg" mode="aspectFit" class="illustration-arrow" />
+            <image
+              src="/static/icons/arrow-pointer.svg"
+              mode="aspectFit"
+              class="illustration-arrow" />
           </view>
           <view class="overlay-guide-btn" @click.stop="handleOverlayDismiss">
             <text class="overlay-guide-btn-text">{{ $t('guide.overlay_action') }}</text>
@@ -276,7 +279,7 @@ import {
   dismissSquareOverlay,
   resetUserGuideState
 } from '@/utils/userGuide';
-import { updateSquareTabBadge, showSquareBadge } from '@/utils/tabBarBadge';
+
 import {
   getChatLanguageOptions,
   backendLangToLangCode,
@@ -409,17 +412,15 @@ async function refreshSquareGuideState() {
         const overlayDismissed = isSquareOverlayDismissed();
         console.log('[refreshSquareGuideState] overlayDismissed:', overlayDismissed);
         if (!overlayDismissed) {
-          // 首次进入：显示蒙层提示和红点
-          console.log('[refreshSquareGuideState] 显示蒙层提示和红点');
+          // 首次进入：显示蒙层提示
+          console.log('[refreshSquareGuideState] 显示蒙层提示');
           showOverlayGuide.value = true;
           showInfoBar.value = false;
-          showSquareBadge.value = true; // 显示红点
         } else {
-          // 再次进入：只显示信息提示条，不显示红点
+          // 再次进入：只显示信息提示条
           console.log('[refreshSquareGuideState] 显示信息提示条');
           showOverlayGuide.value = false;
           showInfoBar.value = true;
-          showSquareBadge.value = false; // 不显示红点
         }
         return;
       }
@@ -433,7 +434,6 @@ async function refreshSquareGuideState() {
   pendingGuideActivation.value = false;
   showOverlayGuide.value = false;
   showInfoBar.value = false;
-  showSquareBadge.value = false;
 }
 
 function startSquareBindGuide() {
@@ -485,9 +485,6 @@ function getFirstBindBtnPosition() {
 async function handleOverlayDismiss() {
   dismissSquareOverlay(); // 记录到本地存储
   showOverlayGuide.value = false;
-  // 隐藏红点
-  showSquareBadge.value = false;
-  uni.hideTabBarRedDot({ index: 2 });
 
   // 获取第一个绑定按钮的位置，然后显示第二个蒙层
   if (filteredAgents.value.length > 0) {
@@ -532,7 +529,6 @@ onShow(() => {
   // 页面显示时刷新数据
   loadPublicAgents();
   refreshSquareGuideState();
-  updateSquareTabBadge();
   // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
 });
@@ -818,7 +814,6 @@ const handleBindSuccess = (data: any) => {
     zIndex: 2005
   });
   loadPublicAgents();
-  updateSquareTabBadge(); // 更新红点状态
 };
 
 function handleBindError(data: any) {

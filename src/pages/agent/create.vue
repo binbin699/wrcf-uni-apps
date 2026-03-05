@@ -28,7 +28,9 @@
             :placeholder="$t('create_agent.agent_name_placeholder')"
             placeholder-class="input-placeholder"
             maxlength="20" />
-          <text class="use-template-btn" @click="openTemplateModal">{{ $t('create_agent.use_template') }}</text>
+          <text class="use-template-btn" @click="openTemplateModal">
+            {{ $t('create_agent.use_template') }}
+          </text>
         </view>
       </view>
 
@@ -39,8 +41,7 @@
           <AgentPromptPolish
             v-model="formData.systemPrompt"
             class="agent-prompt-polish"
-            placeholder-key="create_agent.agent_description_placeholder"
-          />
+            placeholder-key="create_agent.agent_description_placeholder" />
         </view>
       </view>
 
@@ -79,8 +80,12 @@
             @change="onChatLanguageChange">
             <view class="selector-trigger">
               <text v-if="loadingLanguages">{{ $t('common.loading') }}</text>
-              <text v-else-if="selectedChatLanguage" class="value-text">{{ selectedChatLanguage.language }}</text>
-              <text v-else class="placeholder-text">{{ $t('create_agent.select_chat_language') }}</text>
+              <text v-else-if="selectedChatLanguage" class="value-text">
+                {{ selectedChatLanguage.language }}
+              </text>
+              <text v-else class="placeholder-text">
+                {{ $t('create_agent.select_chat_language') }}
+              </text>
               <view class="arrow-icon"></view>
             </view>
           </picker>
@@ -118,7 +123,7 @@
           {{ $t('common.cancel') }}
         </button> -->
       </view>
-      
+
       <!-- Spacer for bottom balance -->
       <view class="bottom-spacer-small"></view>
     </scroll-view>
@@ -157,8 +162,11 @@ import type { LLM, Voice } from '@/pages/agent/types';
 import { PageMap, Pages } from '@/utils/route';
 import { loadOptions } from './create';
 import { relocalizeLLMOptions } from './llm';
-import { getChatLanguageOptions, langCodeToVoiceLanguage, type ChatLanguageOption } from './lang_opts';
-import { updateSquareTabBadge } from '@/utils/tabBarBadge';
+import {
+  getChatLanguageOptions,
+  langCodeToVoiceLanguage,
+  type ChatLanguageOption
+} from './lang_opts';
 import AgentPromptPolish from './components/AgentPromptPolish.vue';
 import { useTemplateSelector } from './composables/useTemplateSelector';
 import { applyTemplateLogic } from './composables/useApplyTemplate';
@@ -173,8 +181,8 @@ const formData = ref({
   systemPrompt: '',
   ttsVoiceId: '',
   llmModelId: '',
-  langCode: '',      // 默认为空，用户必须手动选择
-  language: ''       // 默认为空
+  langCode: '', // 默认为空，用户必须手动选择
+  language: '' // 默认为空
 });
 
 const creating = ref(false);
@@ -207,10 +215,10 @@ const navContentStyle = computed(() => ({
 const chatLanguageOptions = ref<ChatLanguageOption[]>([]);
 const loadingLanguages = ref(false);
 
-const selectedChatLanguageIndex = ref<number | null>(null);  // 默认未选择
-const selectedChatLanguage = computed(() => 
-  selectedChatLanguageIndex.value !== null 
-    ? chatLanguageOptions.value[selectedChatLanguageIndex.value] 
+const selectedChatLanguageIndex = ref<number | null>(null); // 默认未选择
+const selectedChatLanguage = computed(() =>
+  selectedChatLanguageIndex.value !== null
+    ? chatLanguageOptions.value[selectedChatLanguageIndex.value]
     : null
 );
 
@@ -229,12 +237,12 @@ async function loadLanguageOptions() {
 // 当前选择的语言对应的音色语言代码（用于 VoiceSelector 强制筛选）
 const currentVoiceLanguage = computed(() => {
   if (!formData.value.langCode) return '';
-  
+
   // 从已加载的语言选项中查找对应的 voiceLanguage
   const selectedLang = chatLanguageOptions.value.find(
-    lang => lang.langCode === formData.value.langCode
+    (lang) => lang.langCode === formData.value.langCode
   );
-  
+
   // 如果找到了，直接使用 voiceLanguage；否则使用兜底函数
   return selectedLang?.voiceLanguage || langCodeToVoiceLanguage(formData.value.langCode);
 });
@@ -248,7 +256,7 @@ const loadingAgent = ref(false);
 const canCreate = computed(() => {
   return (
     formData.value.agentName.trim().length > 0 &&
-    formData.value.langCode &&           // 对话语言必须被选择
+    formData.value.langCode && // 对话语言必须被选择
     selectedVoice.value &&
     selectedLLM.value &&
     voiceOptions.value.length > 0 &&
@@ -295,7 +303,6 @@ onShow(async () => {
   // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
   await checkTemplate();
-  updateSquareTabBadge();
 });
 
 onHide(() => {
@@ -309,12 +316,12 @@ function setStatusBarHeight() {
   const systemInfo = uni.getSystemInfoSync();
   statusBarHeight.value = systemInfo.statusBarHeight || 20;
   const isAndroid = systemInfo.platform === 'android';
-  
+
   try {
     const menuButtonInfo =
       typeof uni.getMenuButtonBoundingClientRect === 'function'
-      ? uni.getMenuButtonBoundingClientRect()
-      : null;
+        ? uni.getMenuButtonBoundingClientRect()
+        : null;
     if (menuButtonInfo && menuButtonInfo.height) {
       const topGap = menuButtonInfo.top - statusBarHeight.value;
       navBarHeight.value = menuButtonInfo.height + Math.max(topGap, 0) * 2;
@@ -463,7 +470,6 @@ async function loadVoiceOptions() {
     voiceOptions.value = [];
     selectedVoice.value = null;
     formData.value.ttsVoiceId = '';
-
   } finally {
     loadingVoices.value = false;
   }
@@ -514,7 +520,7 @@ function onChatLanguageChange(e: { detail: { value: number } }) {
   const selected = chatLanguageOptions.value[e.detail.value];
   formData.value.langCode = selected.langCode;
   formData.value.language = selected.language;
-  
+
   // 语言改变时，重置当前选择的音色，让用户重新选择对应该语言的音色
   selectedVoice.value = null;
   formData.value.ttsVoiceId = '';
@@ -551,7 +557,7 @@ async function createAgent() {
         ttsVoiceId: '',
         llmModelId: '',
         langCode: '',
-        language: '',
+        language: ''
       };
       selectedVoice.value = null;
       selectedLLMIndex.value = null;
@@ -607,7 +613,7 @@ async function handleApplyTemplate(template: any) {
 .container {
   padding: 0;
   min-height: calc(100vh - var(--window-top));
-  background: linear-gradient(180deg, #EFF2FF 0%, #FFFFFF 100%);
+  background: linear-gradient(180deg, #eff2ff 0%, #ffffff 100%);
   display: flex;
   flex-direction: column;
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
@@ -627,7 +633,7 @@ async function handleApplyTemplate(template: any) {
   left: 0;
   right: 0;
   z-index: 10;
-  background: #EFF2FF; /* Match page gradient top */
+  background: #eff2ff; /* Match page gradient top */
 }
 
 .agent-create-status-bar {
@@ -839,9 +845,9 @@ async function handleApplyTemplate(template: any) {
 
 .use-template-btn {
   font-size: 26rpx;
-  color: #3E5DEF;
+  color: #3e5def;
   margin-left: 16rpx;
-  background: #F0F3FF;
+  background: #f0f3ff;
   padding: 8rpx 20rpx;
   border-radius: 12rpx;
   font-weight: 500;
@@ -855,7 +861,7 @@ async function handleApplyTemplate(template: any) {
   width: 100%;
   height: 96rpx;
   border-radius: 24rpx;
-  background: #3E5DEF;
+  background: #3e5def;
   color: #ffffff !important;
   font-size: 32rpx;
   font-weight: 600;
@@ -867,14 +873,15 @@ async function handleApplyTemplate(template: any) {
 .create-btn::after {
   border: none;
 }
-.create-btn[disabled], .create-btn[loading] {
-  background: #9EB0FF !important;
+.create-btn[disabled],
+.create-btn[loading] {
+  background: #9eb0ff !important;
   color: rgba(255, 255, 255, 0.8) !important;
   opacity: 1;
 }
 .create-btn:active {
   transform: scale(0.98);
-  background: #3E5DEF;
+  background: #3e5def;
   color: #ffffff !important;
 }
 
@@ -882,8 +889,8 @@ async function handleApplyTemplate(template: any) {
   width: 100%;
   height: 96rpx;
   border-radius: 24rpx;
-  background: #E8ECFF;
-  color: #7A8BFF;
+  background: #e8ecff;
+  color: #7a8bff;
   font-size: 32rpx;
   font-weight: 600;
   border: none;
@@ -895,13 +902,13 @@ async function handleApplyTemplate(template: any) {
   border: none;
 }
 .cancel-btn[disabled] {
-  background: #F5F7FF !important;
-  color: #B2BDFF !important;
+  background: #f5f7ff !important;
+  color: #b2bdff !important;
   opacity: 1;
 }
 .cancel-btn:active {
   transform: scale(0.98);
-  background: #E8ECFF;
-  color: #7A8BFF !important;
+  background: #e8ecff;
+  color: #7a8bff !important;
 }
 </style>

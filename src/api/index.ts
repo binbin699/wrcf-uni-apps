@@ -155,9 +155,9 @@ export const voiceApi = {
     return request.post('/app/voice/detail', { voiceId });
   },
 
-  // 同步音色状态
-  syncVoiceStatus(voiceId) {
-    return request.post('/app/voice/sync', { voiceId });
+  // 同步音色状态（保留接口，myList 已集成自动同步）
+  syncVoiceStatus() {
+    return request.post('/app/voice/sync');
   },
 
   // 删除音色
@@ -218,9 +218,9 @@ export const deviceApi = {
     return request.delete('/app/device/remove', data);
   },
 
-  // 更新设备信息(暂时还没有实现)
-  update(data) {
-    return request.post('/app/device/update', data);
+  // 更新设备名称（App 端调用）
+  updateName(data) {
+    return request.post('/app/device/update-name', data);
   },
 
   /**

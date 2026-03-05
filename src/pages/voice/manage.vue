@@ -129,13 +129,19 @@ const isPlaying = ref(false);
 // 音频播放管理器
 const audioPlayer = ref<AudioPlayerManager | null>(null);
 
+let isFirstShow = true;
+
 onLoad(() => {
   initAudioManager();
   loadMyVoices();
 });
 
 onShow(() => {
-  // 从音色复刻页面返回时刷新列表
+  if (isFirstShow) {
+    isFirstShow = false;
+    return;
+  }
+  // 从其他页面返回时刷新列表
   loadMyVoices();
 });
 
@@ -201,8 +207,10 @@ async function loadMyVoices() {
   loading.value = true;
   try {
     const result = await voiceApi.getMyVoices();
+    console.log('[音色管理] 接口返回数据:', JSON.stringify(result, null, 2));
     if (result.code === 1000) {
       myVoices.value = result.data.voices || [];
+      console.log('[音色管理] 音色列表:', myVoices.value);
     } else {
       console.error('加载音色列表失败:', result.message);
       // 不再显示 toast，因为 request.ts 已经处理
@@ -215,18 +223,9 @@ async function loadMyVoices() {
   }
 }
 
-// 刷新音色列表（不同步状态，避免覆盖用户自定义的音色名称）
+// 刷新音色列表（myList 接口已集成同步逻辑）
 async function syncVoiceStatus() {
-  loading.value = true;
-  try {
-    // 只刷新列表，不调用 sync 接口
-    // sync 接口会用平台返回的名称覆盖用户自定义的名称
-    await loadMyVoices();
-  } catch (error) {
-    console.error('刷新音色列表失败:', error);
-  } finally {
-    loading.value = false;
-  }
+  await loadMyVoices();
 }
 
 // 重新训练音色（保留方法以便后续拓展）
