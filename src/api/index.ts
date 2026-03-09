@@ -259,6 +259,9 @@ export const languageApi = {
   }
 };
 
+// 教程资源接口
+export { tutorialApi } from './tutorial';
+
 // 通用接口
 export const commonApi = common;
 

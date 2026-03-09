@@ -82,17 +82,8 @@ export default function getAppConfig(
   // 是否显示说明与教程（微信小程序不显示）
   const SHOW_INSTRUCTIONS_TUTORIALS = platform !== 'mp-weixin';
 
-  const MANUAL_ZH_URL = 'https://mengdiantansuo.com.cn/files/manual_zh.pdf';
-  const MANUAL_EN_URL = 'https://mengdiantansuo.com.cn/files/manual_en.pdf';
-  const MANUAL_JA_URL = 'https://mengdiantansuo.com.cn/files/manual_ja.pdf';
-  const MANUAL_KO_URL = 'https://mengdiantansuo.com.cn/files/manual_ko.pdf';
-  const MANUAL_RU_URL = 'https://mengdiantansuo.com.cn/files/manual_ru.pdf';
-  const MANUAL_AR_URL = 'https://mengdiantansuo.com.cn/files/manual_ar.pdf';
-  const TUTORIAL_VIDEO_URL = 'https://mengdiantansuo.com.cn/files/tutorial.mp4';
-  const TUTORIAL_VIDEO_EN_URL = 'https://mengdiantansuo.com.cn/files/tutorial_en.mp4';
-
   // Google 授权登录，海外版需要配置 Google Client ID
-  const GOOGLE_OAUTH_CLIENT_ID_WEB =
+  const GOOGLE_OAUTH_CLIENT_ID_WEB = 
     appEdition === 'cn'
       ? ''
       : '668197306109-2glguqobqtbm92rt9upnot9rrt0t7bmf.apps.googleusercontent.com';
@@ -120,14 +111,6 @@ export default function getAppConfig(
     PRIVACY_URL,
     FEEDBACK_EMAIL,
     SHOW_INSTRUCTIONS_TUTORIALS,
-    MANUAL_ZH_URL,
-    MANUAL_EN_URL,
-    MANUAL_JA_URL,
-    MANUAL_KO_URL,
-    MANUAL_RU_URL,
-    MANUAL_AR_URL,
-    TUTORIAL_VIDEO_URL,
-    TUTORIAL_VIDEO_EN_URL,
     GOOGLE_OAUTH_CLIENT_ID_WEB,
     ARMS_PID,
     ARMS_ENDPOINT,

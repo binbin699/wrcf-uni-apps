@@ -18,39 +18,47 @@
 
     <!-- 2. 主内容区域 -->
     <view class="main-content" :style="{ paddingTop: statusBarHeight + navContentHeight + 'px' }">
-      <!-- 说明书部分 -->
-      <view class="section manual-section">
-        <view class="section-title">{{ $t('help.manual_title') }}</view>
+      <!-- 加载中骨架 -->
+      <view v-if="isLoading" class="loading-placeholder">
+        <view class="skeleton-block skeleton-card" />
+        <view class="skeleton-block skeleton-video" />
+      </view>
 
-        <view class="manual-card" @click="openManual">
-          <view class="card-left">
-            <view class="icon-box zh-theme">
-              <image class="pdf-icon" src="/static/icons/setting.svg" mode="aspectFit" />
+      <template v-else>
+        <!-- 说明书部分：后台未配置时隐藏 -->
+        <view v-if="manualUrl" class="section manual-section">
+          <view class="section-title">{{ $t('help.manual_title') }}</view>
+
+          <view class="manual-card" @click="openManual">
+            <view class="card-left">
+              <view class="icon-box zh-theme">
+                <image class="pdf-icon" src="/static/icons/setting.svg" mode="aspectFit" />
+              </view>
+              <view class="card-text">
+                <text class="card-title">{{ $t('help.user_manual') }}</text>
+              </view>
             </view>
-            <view class="card-text">
-              <text class="card-title">{{ $t('help.user_manual') }}</text>
-            </view>
+            <image class="card-arrow" src="/static/icons/right-arrow.svg" mode="aspectFit" />
           </view>
-          <image class="card-arrow" src="/static/icons/right-arrow.svg" mode="aspectFit" />
         </view>
-      </view>
 
-      <!-- 视频部分 -->
-      <view class="section video-section">
-        <view class="section-title">{{ $t('help.video_tutorial_title') }}</view>
-        <view class="video-wrapper">
-          <video
-            id="tutorial-video"
-            :src="videoUrl"
-            controls
-            autoplay
-            loop
-            class="tutorial-video"
-            object-fit="contain"
-            :direction="0"
-            :enable-play-gesture="false" />
+        <!-- 视频部分：后台未配置时隐藏 -->
+        <view v-if="videoUrl" class="section video-section">
+          <view class="section-title">{{ $t('help.video_tutorial_title') }}</view>
+          <view class="video-wrapper">
+            <video
+              id="tutorial-video"
+              :src="videoUrl"
+              controls
+              autoplay
+              loop
+              class="tutorial-video"
+              object-fit="contain"
+              :direction="0"
+              :enable-play-gesture="false" />
+          </view>
         </view>
-      </view>
+      </template>
 
       <view class="bottom-padding"></view>
     </view>
@@ -61,47 +69,53 @@
 import { ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { useI18n } from 'vue-i18n';
+import { tutorialApi } from '@/api/tutorial';
 
 const { t: $t } = useI18n();
 
 const statusBarHeight = ref<number>(44);
 const navContentHeight = ref<number>(44);
 const videoUrl = ref<string>('');
+const manualUrl = ref<string>('');
+const isLoading = ref<boolean>(false);
 
 /**
- * 获取应用界面语言
- * @returns 语言代码：zh（简体中文）、ja（日语）、ko（韩语）、ru（俄语）、ar（阿拉伯语）、en（其他语言）
+ * 将 uni.getLocale() 返回值转换为后端期望的语言码格式（如 zh_CN、en_US）
  */
-function getAppLanguage(): 'zh' | 'en' | 'ja' | 'ko' | 'ru' | 'ar' {
+function getLanguageCode(): string {
   try {
-    const appLocale = (uni.getLocale() || 'en').toLowerCase();
-
-    // 简体中文
-    if (appLocale === 'zh-hans' || appLocale === 'zh') {
-      return 'zh';
+    const locale = (uni.getLocale() || 'en').toLowerCase();
+    if (locale === 'zh-hans' || locale === 'zh') return 'zh_CN';
+    if (locale === 'zh-hant') return 'zh_TW';
+    if (locale.startsWith('ja')) return 'ja_JP';
+    if (locale.startsWith('ko')) return 'ko_KR';
+    if (locale.startsWith('ru')) return 'ru_RU';
+    if (locale.startsWith('ar')) return 'ar_SA';
+    if (locale.startsWith('en')) return 'en_US';
+    const parts = locale.split('-');
+    if (parts.length >= 2) {
+      return `${parts[0]}_${parts[1].toUpperCase()}`;
     }
-    // 日语
-    if (appLocale === 'ja' || appLocale.startsWith('ja-')) {
-      return 'ja';
-    }
-    // 韩语
-    if (appLocale === 'ko' || appLocale.startsWith('ko-')) {
-      return 'ko';
-    }
-    // 俄语
-    if (appLocale === 'ru' || appLocale.startsWith('ru-')) {
-      return 'ru';
-    }
-    // 阿拉伯语
-    if (appLocale === 'ar' || appLocale.startsWith('ar-')) {
-      return 'ar';
-    }
-    // 其他语言统一返回英文
-    return 'en';
+    return locale;
   } catch (error) {
-    console.error('获取应用界面语言失败:', error);
-    // 异常情况默认使用英文
-    return 'en';
+    console.error('[help/getLanguageCode] 获取语言码失败:', error);
+    return 'en_US';
+  }
+}
+
+async function loadTutorialResource() {
+  isLoading.value = true;
+  try {
+    const languageCode = getLanguageCode();
+	console.log('languageCode: ', languageCode)
+    const res = await tutorialApi.getTutorialResource(languageCode);
+    videoUrl.value = res.data.tutorialVideoUrl ?? '';
+    manualUrl.value = res.data.manualUrl ?? '';
+	
+  } catch (error: unknown) {
+    console.error('[help/loadTutorialResource] 获取教程资源失败:', error);
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -111,19 +125,10 @@ onLoad(() => {
 
   // #ifdef MP-WEIXIN
   const capsule = uni.getMenuButtonBoundingClientRect();
-  // 稳健的标题栏高度计算
   navContentHeight.value = (capsule.top - (systemInfo.statusBarHeight || 0)) * 2 + capsule.height;
   // #endif
 
-  // 2. 新的视频选择逻辑
-  const lang = getAppLanguage();
-  if (lang === 'zh') {
-    // 中文界面显示 tutorial_en.mp4（中文视频）
-    videoUrl.value = APP_CONFIG.TUTORIAL_VIDEO_EN_URL;
-  } else {
-    // 其他界面显示 tutorial.mp4（英文视频）
-    videoUrl.value = APP_CONFIG.TUTORIAL_VIDEO_URL;
-  }
+  loadTutorialResource();
 });
 
 function goBack() {
@@ -136,41 +141,26 @@ function goBack() {
 }
 
 /**
- * 打开使用说明书
- * 根据应用界面语言自动选择对应语言的说明书
+ * 打开说明书（下载 PDF 后用系统文档查看器打开）
  */
 function openManual() {
-  const lang = getAppLanguage();
-  const manualUrlMap: Record<string, string> = {
-    zh: APP_CONFIG.MANUAL_ZH_URL,
-    en: APP_CONFIG.MANUAL_EN_URL,
-    ja: APP_CONFIG.MANUAL_JA_URL,
-    ko: APP_CONFIG.MANUAL_KO_URL,
-    ru: APP_CONFIG.MANUAL_RU_URL,
-    ar: APP_CONFIG.MANUAL_AR_URL
-  };
-  const url = manualUrlMap[lang] || APP_CONFIG.MANUAL_EN_URL;
-
-  if (!url) {
-    uni.showToast({ title: 'Config Error', icon: 'none' });
+  if (!manualUrl.value) {
+    uni.showToast({ title: $t('common.error'), icon: 'none' });
     return;
   }
 
   uni.showLoading({ title: $t('common.loading'), mask: true });
 
   uni.downloadFile({
-    url: url,
+    url: manualUrl.value,
     success: (res) => {
       if (res.statusCode === 200) {
         uni.openDocument({
           filePath: res.tempFilePath,
           showMenu: true,
           fail: (err) => {
-            console.error('Open PDF Failed:', err);
-            uni.showToast({
-              title: $t('webview.cannotOpenPage'),
-              icon: 'none'
-            });
+            console.error('[help/openManual] 打开文档失败:', err);
+            uni.showToast({ title: $t('webview.cannotOpenPage'), icon: 'none' });
           }
         });
       } else {
@@ -178,7 +168,7 @@ function openManual() {
       }
     },
     fail: (err) => {
-      console.error('Download PDF Failed:', err);
+      console.error('[help/openManual] 下载失败:', err);
       uni.showToast({ title: 'Download Failed', icon: 'none' });
     },
     complete: () => uni.hideLoading()
@@ -364,5 +354,31 @@ function openManual() {
 
 .bottom-padding {
   height: calc(80rpx + env(safe-area-inset-bottom));
+}
+
+.loading-placeholder {
+  padding: 32rpx;
+}
+
+.skeleton-block {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s infinite;
+  border-radius: 24rpx;
+}
+
+.skeleton-card {
+  height: 128rpx;
+  margin-bottom: 48rpx;
+}
+
+.skeleton-video {
+  width: 100%;
+  aspect-ratio: 9/16;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 </style>
