@@ -479,11 +479,11 @@ export const useUserStore = defineStore(
         }
       }
 
-      // 如果有token但没有用户信息，尝试获取用户信息
-      if (tokenStore.isLoggedIn && !userInfo.value) {
+      // 如果有token但用户信息未能正确恢复（userId <= 0），尝试获取用户信息
+      if (tokenStore.isLoggedIn && userInfo.value.userId <= 0) {
         const fetchSuccess = await fetchUserInfo();
         if (!fetchSuccess) {
-          await delAccount();
+          logout();
           return false;
         }
       }

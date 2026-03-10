@@ -1,6 +1,7 @@
 <template>
   <wd-toast />
   <view class="landing-container">
+  <view v-if="!isChecking" class="landing-container">
     <!-- 欢迎卡片 -->
     <view class="welcome-popup">
       <view class="welcome-content">
@@ -71,6 +72,7 @@ const toast = useToast();
 const userStore = useUserStore();
 
 const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
+const isChecking = ref(true);
 const isNavigating = ref(false);
 const PENDING_BIND_KEY = 'pendingBindAction';
 type PendingBindAction = 'qrcode' | 'bluetooth';
@@ -78,9 +80,19 @@ type PendingBindAction = 'qrcode' | 'bluetooth';
 // 检查是否已登录
 onShow(() => {
   // 如果已登录，直接跳转到首页
+onShow(async () => {
+  isChecking.value = true;
+  // 等待用户状态初始化完成（含 token 恢复 / 静默刷新 / 用户信息拉取）
+  await userStore.initUserState();
+  // 如果已登录，清除可能遗留的 pendingBindAction key，再跳转首页
+  // 避免用户已登录重新进入小程序时被 resumePendingBindAction 触发自动扫码/蓝牙
   if (userStore.isLoggedIn && userStore.userId > 0) {
+    uni.removeStorageSync(PENDING_BIND_KEY);
     redirectToHome();
+    return;
   }
+  // 确认未登录后才展示 landing 内容
+  isChecking.value = false;
 });
 
 // 判断用户是否真正登录
