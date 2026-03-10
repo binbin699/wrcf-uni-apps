@@ -308,7 +308,7 @@ export default {
           }
         } else {
           // 非 iOS 平台：使用合并的预请求弹窗同时请求相机和相册权限
-          const permissionResult = await requestCameraAndAlbumPermission({}, true);
+          const permissionResult = await requestCameraAndAlbumPermission(undefined, true);
           if (!permissionResult.camera.granted) {
             return;
           }
