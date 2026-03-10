@@ -53,6 +53,7 @@
       </view>
     </view>
   </view>
+  </view>
 </template>
 
 <script setup lang="ts">
@@ -78,8 +79,6 @@ const PENDING_BIND_KEY = 'pendingBindAction';
 type PendingBindAction = 'qrcode' | 'bluetooth';
 
 // 检查是否已登录
-onShow(() => {
-  // 如果已登录，直接跳转到首页
 onShow(async () => {
   isChecking.value = true;
   // 等待用户状态初始化完成（含 token 恢复 / 静默刷新 / 用户信息拉取）
