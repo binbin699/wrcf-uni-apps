@@ -160,22 +160,22 @@
           <!-- 智能体卡片容器 -->
           <view class="agent-card-container">
             <!-- 智能体卡片主体 -->
-            <view class="agent-card" @click="handleAgentClick">
-              <view class="agent-avatar">
+            <view class="agent-card">
+              <view class="agent-avatar" @click.stop="handleAgentClick">
                 <view class="avatar-bg">
                   <text class="avatar-text">{{ getAvatarText(boundAgent.agentName) }}</text>
                 </view>
               </view>
               <view class="agent-info">
                 <view class="agent-name-row">
-                  <view class="agent-name-wrapper">
+                  <view class="agent-name-wrapper" @click.stop="handleAgentClick">
                     <text class="agent-name">{{ boundAgent.agentName }}</text>
                     <view class="agent-arrow">
                       <image src="/static/icons/right-arrow.svg" mode="aspectFit"></image>
                     </view>
                   </view>
                 </view>
-                <view class="agent-tags">
+                <view class="agent-tags" @click.stop="handleAgentClick">
                   <text class="agent-tag">
                     {{ boundAgent.config?.language || $t('device_status.default_language') }}
                   </text>
@@ -1389,11 +1389,13 @@ uni.$on('deviceStatusRefresh', () => {
   display: flex;
   flex-direction: row;
   align-items: center;
+  align-self: flex-start;
   padding: 6px 12px;
   background: #e3f6ff;
   border-radius: 6px;
   gap: 8px;
   flex-wrap: wrap;
+  max-width: 100%;
 }
 
 .agent-tag {

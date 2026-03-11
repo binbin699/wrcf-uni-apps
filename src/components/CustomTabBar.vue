@@ -109,7 +109,6 @@ function switchTab(index: number) {
 .custom-tabbar {
   pointer-events: auto;
   background: #ffffff;
-  border-radius: 44rpx 44rpx 0 0;
   box-shadow: 0 -8rpx 48rpx rgba(0, 0, 0, 0.08);
   /* 移除这里的固定 calc，改由 JS 动态计算注入，防止 iOS 过高 */
 }
