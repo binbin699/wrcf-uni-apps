@@ -90,6 +90,7 @@ import { useDeviceScan } from '@/utils/useDeviceScan';
 // @ts-ignore
 import { deviceApi } from '@/api/index';
 import CustomTabBar from '@/components/CustomTabBar.vue';
+import { AppInfo } from '@/const/index';
 
 const toast = useToast();
 const { showNotify, closeNotify } = useNotify();
@@ -164,6 +165,13 @@ interface MenuItem {
   handleClick: () => void;
 }
 
+const showVoicePrint = computed(() => {
+  const locale = (uni.getLocale() || '').toLowerCase();
+  const isChinese = locale.startsWith('zh');
+  const isHarmony = AppInfo.isHarmonyApp() || AppInfo.isHarmonyRom();
+  return isChinese && !isHarmony;
+});
+
 const menuItems = computed(() => {
   const items: (MenuItem | undefined)[] = [
     {
@@ -211,7 +219,7 @@ const menuItems = computed(() => {
           url: PageMap[Pages.BluetoothConfig].url + '?configOnly=1'
         })
     },
-    APP_CONFIG.APP_USE_VOICEPRINT
+    APP_CONFIG.APP_USE_VOICEPRINT && showVoicePrint.value
       ? {
           id: 'voice_manage',
           title: $t('profile.voice_manage'),
@@ -222,7 +230,7 @@ const menuItems = computed(() => {
             })
         }
       : undefined,
-    APP_CONFIG.APP_USE_VOICEPRINT
+    APP_CONFIG.APP_USE_VOICEPRINT && showVoicePrint.value
       ? {
           id: 'voice_clone',
           title: $t('profile.voice_clone'),
