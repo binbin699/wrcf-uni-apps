@@ -47,7 +47,7 @@ export class AudioRecorderManager {
       sampleRate: 16000,
       numberOfChannels: 1,
       encodeBitRate: 96000,
-      format: 'wav',
+      format: 'mp3',
       ...options
     };
     this.events = events;
