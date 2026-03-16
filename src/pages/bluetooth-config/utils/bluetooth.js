@@ -18,16 +18,13 @@ export const bluetoothService = {
 
 /**
  * 设备名称正则表达式
- * 通过 APP_CONFIG.BLE_FILTER_ENABLED 控制是否启用筛选，默认启用
+ * 用于过滤蓝牙扫描结果，只显示匹配的设备
+ * 默认值放行所有设备名称，可通过后端配置下发自定义正则
  *
- * 调试提示：如果扫描不到设备，可以临时将 deviceNameReg 改为 deviceNameRegAll
+ * 调试提示：如果需要在开发阶段只显示特定名称的设备，
+ * 可以临时修改为例如 /^DTXZ/ 仅显示以DTXZ开头的设备
  */
-const deviceNameRegFiltered = /^(DTXZ|BLUFI_DEVICE|ESP_|aichat_)/i;
-const deviceNameRegAll = /.*/; // 匹配所有设备
-
-// 🔧 临时禁用设备过滤，用于调试
-// const deviceNameReg = APP_CONFIG.BLE_FILTER_ENABLED ? deviceNameRegFiltered : deviceNameRegAll;
-const deviceNameReg = deviceNameRegAll; // 暂时显示所有设备
+const DEFAULT_DEVICE_NAME_REG = /.*/;
 
 /**
  * Android 12+ 蓝牙权限请求
@@ -453,19 +450,21 @@ export function dedupeDeviceList(deviceList) {
  * 过滤有效设备
  * @param {Array} devices - 设备列表
  * @param {boolean} isIOS - 是否为iOS设备
+ * @param {RegExp} [nameRegex] - 设备名称匹配正则，不传则放行所有
  * @returns {Array} 过滤后的设备列表
  */
-export function filterValidDevices(devices, isIOS = false) {
+export function filterValidDevices(devices, isIOS = false, nameRegex) {
+  const reg = nameRegex || DEFAULT_DEVICE_NAME_REG;
   if (isIOS) {
     // iOS设备根据localName或name过滤，有一项符合条件即可
     return devices.filter(
       (item) =>
-        (item.localName && deviceNameReg.test(item.localName)) ||
-        (item.name && deviceNameReg.test(item.name))
+        (item.localName && reg.test(item.localName)) ||
+        (item.name && reg.test(item.name))
     );
   } else {
     // Android设备只根据name过滤
-    return devices.filter((item) => item.name && deviceNameReg.test(item.name));
+    return devices.filter((item) => item.name && reg.test(item.name));
   }
 }
 

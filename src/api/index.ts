@@ -248,6 +248,14 @@ export const deviceApi = {
    */
   bindByQrcode(data) {
     return request.post('/app/device/bind-by-qrcode', { qrcode: data });
+  },
+
+  /**
+   * 获取蓝牙配网设备名称过滤正则
+   * @returns {{ regex: string }}
+   */
+  getFilterRegex() {
+    return request.get('/app/device/filter-regex');
   }
 };
 
