@@ -10,9 +10,6 @@
           <text v-if="configAble" class="config-link" @click="handleConfigClick">
             {{ $t('agent_bind_drawer.modify_config') }}
           </text>
-          <text v-if="templateAble" class="config-link" @click="handleTemplateClick">
-            {{ $t('agent_bind_drawer.as_template') }}
-          </text>
         </view>
       </view>
 
@@ -90,7 +87,6 @@
 <script>
 import { PageMap, Pages } from '@/utils/route';
 import { agentApi, deviceApi } from '../api/index';
-import { gotoCreateAgentBy } from '@/pages/agent/create';
 import {
   requestCameraAndAlbumPermission,
   checkPermissionStatus,
@@ -112,10 +108,6 @@ export default {
       default: {}
     },
     configAble: {
-      type: Boolean,
-      default: false
-    },
-    templateAble: {
       type: Boolean,
       default: false
     }
@@ -270,10 +262,6 @@ export default {
       uni.navigateTo({
         url: `${PageMap[Pages.AgentEdit].url}?agentId=${this.agent.agentId}&id=${this.agent.id}`
       });
-    },
-
-    handleTemplateClick() {
-      gotoCreateAgentBy(this.agent);
     },
 
     // 蓝牙添加设备

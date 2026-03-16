@@ -43,7 +43,6 @@
       :visible="showBindDrawer"
       :agent="selectedAgent"
       :configAble="userStore.userId === selectedAgent?.userId"
-      :templateAble="selectedAgent?.isTemplate && !selectedAgent?.isPublic"
       @update:visible="showBindDrawer = $event"
       @success="handleBindSuccess"
       @error="handleBindError"
