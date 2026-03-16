@@ -157,7 +157,7 @@ import { useToast } from '@/uni_modules/wot-design-uni';
 import { onLoad } from '@dcloudio/uni-app';
 import type { LLM, Voice } from '@/pages/agent/types';
 import { relocalizeLLMOptions } from './llm';
-import { getChatLanguageOptions, langCodeToVoiceLanguage, type ChatLanguageOption } from './lang_opts';
+import { getChatLanguageOptions, langCodeToVoiceLanguage, backendLangToLangCode, type ChatLanguageOption } from './lang_opts';
 import AgentPromptPolish from './components/AgentPromptPolish.vue';
 import { useTemplateSelector } from './composables/useTemplateSelector';
 import { applyTemplateLogic } from './composables/useApplyTemplate';
@@ -388,10 +388,11 @@ async function loadAgentData() {
 
         // 设置对话语言
         if (agent.config.langCode) {
-          formData.value.langCode = agent.config.langCode;
+          const normalizedLangCode = backendLangToLangCode(agent.config.langCode);
+          formData.value.langCode = normalizedLangCode;
           formData.value.language = agent.config.language || '中文';
           const langIndex = chatLanguageOptions.value.findIndex(
-            (lang) => lang.langCode === agent.config.langCode
+            (lang) => lang.langCode === normalizedLangCode
           );
           if (langIndex !== -1) {
             selectedChatLanguageIndex.value = langIndex;
