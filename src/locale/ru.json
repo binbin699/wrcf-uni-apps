@@ -133,7 +133,7 @@
   "index.template_hint": "Агентов ещё нет. Нажмите на шаблон для создания",
   "index.get_templates_failed": "Не удалось получить шаблоны агентов",
 
-  "welcome.guide_title": "Добро пожаловать в Linx!\nДобавьте устройство для начала",
+  "welcome.guide_title": "Добро пожаловать в Linx App!\nВыберите способ добавления устройства",
   "welcome.setup_qrcode": "QR-код",
   "welcome.setup_bluetooth": "Bluetooth",
   "welcome.skip_for_now": "Позже",

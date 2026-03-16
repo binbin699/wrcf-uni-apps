@@ -133,7 +133,7 @@
   "index.template_hint": "エージェントがまだありません。テンプレートから作成してみましょう",
   "index.get_templates_failed": "テンプレートエージェントの取得に失敗しました",
 
-  "welcome.guide_title": "Linxへようこそ！\nデバイスを追加して始めましょう",
+  "welcome.guide_title": "Linx Appへようこそ！\nいずれかの方式でデバイスを追加",
   "welcome.setup_qrcode": "QRコード",
   "welcome.setup_bluetooth": "Bluetooth",
   "welcome.skip_for_now": "後で",
