@@ -170,7 +170,7 @@
                 <view class="agent-name-row">
                   <view class="agent-name-wrapper" @click.stop="handleAgentClick">
                     <text class="agent-name">{{ boundAgent.agentName }}</text>
-                    <view class="agent-arrow">
+                    <view class="agent-arrow" v-if="!isPublicAgent">
                       <image src="/static/icons/right-arrow.svg" mode="aspectFit"></image>
                     </view>
                   </view>
@@ -389,6 +389,7 @@ const loading = ref(true);
 const deviceList = ref<any[]>([]);
 const currentDevice = ref<any>(null);
 const boundAgent = ref<any>(null);
+const isPublicAgent = computed(() => boundAgent.value?.isPublic === 1);
 const showDeviceSelector = ref(false);
 const showEditName = ref(false);
 const editDeviceName = ref('');
@@ -711,6 +712,13 @@ const handleSelectDevice = async (device: any) => {
 // 处理点击智能体
 const handleAgentClick = () => {
   if (boundAgent.value && boundAgent.value.agentId) {
+    if (isPublicAgent.value) {
+      uni.showToast({
+        title: $t('device_status.cannot_edit_public_agent'),
+        icon: 'none'
+      });
+      return;
+    }
     uni.navigateTo({
       url: `/pages/agent/edit?agentId=${boundAgent.value.agentId}`
     });

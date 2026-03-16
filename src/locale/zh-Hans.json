@@ -235,6 +235,7 @@
   "device_status.edit_device_name": "编辑设备名称",
   "device_status.enter_device_name": "请输入设备名称",
   "device_status.name_required": "请输入设备名称",
+  "device_status.cannot_edit_public_agent": "无法编辑公开智能体",
 
   "profile.nickname_default": "未设置昵称",
   "profile.no_nickname": "未设置昵称",

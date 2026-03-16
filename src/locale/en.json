@@ -235,6 +235,7 @@
   "device_status.edit_device_name": "Edit Device Name",
   "device_status.enter_device_name": "Enter device name",
   "device_status.name_required": "Please enter device name",
+  "device_status.cannot_edit_public_agent": "Cannot edit public agent",
 
   "profile.nickname_default": "No nickname set",
   "profile.no_nickname": "No nickname set",
