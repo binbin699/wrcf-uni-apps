@@ -424,6 +424,7 @@
   "voice_clone.select_audio_file": "Select Audio File",
   "voice_clone.audio_format_desc": "Supports MP3, WAV, M4A formats, recommended duration 10-60 seconds",
   "voice_clone.record_voice": "Record Voice",
+  "voice_clone.record_voice_popup_title": "Record Voice (10-120s)",
   "voice_clone.record_desc": "Click to start recording, recommended 10-60 seconds of clear voice",
   "voice_clone.stop_recording": "End Recording",
   "voice_clone.start_recording": "Start Recording",

@@ -97,6 +97,14 @@ export class AudioRecorderManager {
   }
 
   /**
+   * 获取已存在的单例实例（不创建新实例）
+   * 用于外部代码在临时接管 recorderManager 后恢复事件监听
+   */
+  public static getInstanceIfExists(): AudioRecorderManager | null {
+    return AudioRecorderManager.instance;
+  }
+
+  /**
    * 重置单例实例（主要用于测试或特殊情况）
    */
   public static resetInstance(): void {
@@ -175,6 +183,17 @@ export class AudioRecorderManager {
         icon: 'none'
       });
     });
+  }
+
+  /**
+   * 重新注册事件监听器
+   *
+   * uni.getRecorderManager() 是全局单例，onStart/onStop/onError 是替换语义。
+   * 当外部代码（如权限请求回退方案）临时接管了 recorderManager 的事件监听后，
+   * 必须调用此方法恢复 AudioRecorderManager 的事件监听。
+   */
+  public reattachEvents(): void {
+    this.setupRecorderEvents();
   }
 
   /**

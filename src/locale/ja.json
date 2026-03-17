@@ -429,6 +429,7 @@
   "voice_clone.select_audio_file": "音声ファイルを選択",
   "voice_clone.audio_format_desc": "MP3、WAV、M4A形式をサポート。10〜60秒推奨",
   "voice_clone.record_voice": "音声を録音",
+  "voice_clone.record_voice_popup_title": "音声を録音（10〜120秒）",
   "voice_clone.record_desc": "クリックして録音を開始。10〜60秒のクリアな音声を推奨",
   "voice_clone.stop_recording": "録音終了",
   "voice_clone.start_recording": "録音開始",

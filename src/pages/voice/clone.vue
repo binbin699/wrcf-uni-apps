@@ -130,7 +130,7 @@
     <view v-if="showRecordPopup" class="record-popup-overlay" @click.self="closeRecordPopup">
       <view class="record-popup">
         <view class="popup-header">
-          <text class="popup-title">{{ $t('voice_clone.record_voice') }}</text>
+          <text class="popup-title">{{ $t('voice_clone.record_voice_popup_title') }}</text>
           <view class="popup-close" @click="closeRecordPopup">
             <wd-icon name="close" size="40rpx" color="#333" />
           </view>
@@ -170,7 +170,7 @@ import { AudioPlayerManager } from '@/utils/audioPlayer';
 import { AudioRecorderManager } from '@/utils/audioRecorder';
 import { onLoad, onUnload } from '@dcloudio/uni-app';
 import { useI18n } from 'vue-i18n';
-import { requestRecordPermission } from '@/utils/permission';
+import { requestRecordPermission, checkPermissionStatus, PermissionType, PermissionStatus } from '@/utils/permission';
 import { useNotify } from '@/uni_modules/wot-design-uni';
 
 // todo
@@ -310,6 +310,12 @@ function initManagers() {
       },
       onStop: (result) => {
         console.log('录音结束', result);
+        // 忽略权限回退方案产生的 0 时长无效录音
+        if (result.duration <= 0 && result.fileSize <= 1024) {
+          console.log('忽略无效录音（权限请求回退方案产生）');
+          isRecording.value = false;
+          return;
+        }
         isRecording.value = false;
         recordedAudio.value = result.tempFilePath;
         audioFileName.value = `录音_${new Date().getTime()}.${result.fileExtension || 'mp3'}`;
@@ -338,20 +344,15 @@ function initManagers() {
 
 // 打开录音弹窗
 async function openRecordPopup() {
-  // 请求权限
-  const permissionResult = await requestRecordPermission({
-    show: showNotify,
-    close: closeNotify
-  });
-  if (!permissionResult.granted) {
-    return;
-  }
   showRecordPopup.value = true;
-  
-  // 弹窗显示后自动开始录制
-  await nextTick();
-  if (audioRecorder.value && !isRecording.value) {
-    audioRecorder.value.toggle();
+
+  // 已授权时自动开始录音，未授权时保持未录音状态等用户手动点击
+  const status = await checkPermissionStatus(PermissionType.RECORD);
+  if (status === PermissionStatus.AUTHORIZED) {
+    await nextTick();
+    if (audioRecorder.value && !isRecording.value) {
+      audioRecorder.value.toggle();
+    }
   }
 }
 

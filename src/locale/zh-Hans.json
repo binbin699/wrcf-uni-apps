@@ -423,6 +423,7 @@
   "voice_clone.select_audio_file": "选择音频文件",
   "voice_clone.audio_format_desc": "支持 MP3、WAV、M4A 等格式，建议时长 10-60 秒",
   "voice_clone.record_voice": "录制语音",
+  "voice_clone.record_voice_popup_title": "录制语音（10-120秒）",
   "voice_clone.record_desc": "点击开始录音，建议录制 10-60 秒清晰语音",
   "voice_clone.stop_recording": "结束录制",
   "voice_clone.start_recording": "开始录制",

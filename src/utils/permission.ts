@@ -45,6 +45,7 @@
 import type { NotifyProps } from '@/uni_modules/wot-design-uni/components/wd-notify/types';
 import i18n from '@/locale';
 import { AppInfo } from '@/const';
+import { AudioRecorderManager } from '@/utils/audioRecorder';
 
 const $t = i18n.global.t;
 
@@ -966,18 +967,16 @@ async function requestIOSPermissionFallback(type: PermissionType): Promise<numbe
         const recorderManager = uni.getRecorderManager() as any;
         let resolved = false;
 
-        // 清理监听器的辅助函数
-        const cleanupListeners = () => {
+        // 恢复 AudioRecorderManager 事件监听
+        // 必须在回退方案产生的 onStop 事件消化之后再恢复，否则 AudioRecorderManager 会收到幽灵 onStop
+        const restoreAudioRecorderManager = () => {
           try {
-            // 尝试移除监听器（如果 API 支持）
-            if (typeof recorderManager.offStart === 'function') {
-              recorderManager.offStart(onRecordStart);
-            }
-            if (typeof recorderManager.offError === 'function') {
-              recorderManager.offError(onRecordError);
+            const instance = AudioRecorderManager.getInstanceIfExists();
+            if (instance) {
+              instance.reattachEvents();
             }
           } catch (e) {
-            // 忽略清理错误
+            // 忽略恢复错误
           }
         };
 
@@ -985,8 +984,12 @@ async function requestIOSPermissionFallback(type: PermissionType): Promise<numbe
           if (!resolved) {
             resolved = true;
             console.log('[权限请求] iOS录音权限回退方案：录音开始，权限已授予');
+            // 先注册临时 onStop 拦截幽灵录音，消化后再恢复 AudioRecorderManager
+            recorderManager.onStop(() => {
+              console.log('[权限请求] iOS录音权限回退方案：幽灵录音已停止，恢复事件监听');
+              restoreAudioRecorderManager();
+            });
             recorderManager.stop();
-            cleanupListeners();
             resolve(1);
           }
         };
@@ -995,7 +998,7 @@ async function requestIOSPermissionFallback(type: PermissionType): Promise<numbe
           if (!resolved) {
             resolved = true;
             console.log('[权限请求] iOS录音权限回退方案：录音失败', err);
-            cleanupListeners();
+            restoreAudioRecorderManager();
             resolve(0);
           }
         };
@@ -1013,8 +1016,10 @@ async function requestIOSPermissionFallback(type: PermissionType): Promise<numbe
         setTimeout(() => {
           if (!resolved) {
             resolved = true;
+            recorderManager.onStop(() => {
+              restoreAudioRecorderManager();
+            });
             recorderManager.stop();
-            cleanupListeners();
             console.log('[权限请求] iOS录音权限回退方案：超时');
             resolve(0);
           }

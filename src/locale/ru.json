@@ -429,6 +429,7 @@
   "voice_clone.select_audio_file": "Выбрать аудиофайл",
   "voice_clone.audio_format_desc": "Поддерживаются форматы MP3, WAV, M4A. Рекомендуемая длительность 10-60 секунд",
   "voice_clone.record_voice": "Записать голос",
+  "voice_clone.record_voice_popup_title": "Записать голос (10-120 сек)",
   "voice_clone.record_desc": "Нажмите для начала записи. Рекомендуется 10-60 секунд чистого голоса",
   "voice_clone.stop_recording": "Завершить запись",
   "voice_clone.start_recording": "Начать запись",
