@@ -12,21 +12,14 @@
 
     <!-- 音色列表 -->
     <view class="voices-section">
-      <!-- 加载状态 -->
-      <view v-if="loading" class="loading-wrapper">
-        <wd-loading size="40px" color="var(--color-primary)">
-          <text class="loading-text">{{ $t('common.loading') }}</text>
-        </wd-loading>
-      </view>
-
       <!-- 空状态 -->
       <wd-status-tip
-        v-else-if="myVoices.length === 0"
+        v-if="!loading && myVoices.length === 0"
         image="search"
         :tip="$t('voice_manage.no_voices')" />
 
       <!-- 音色列表 -->
-      <view v-else class="voices-list">
+      <view v-if="!loading && myVoices.length > 0" class="voices-list">
         <view v-for="voice in myVoices" :key="voice.id" class="voice-card">
           <!-- 删除按钮 -->
           <view class="delete-btn" @click.stop="deleteVoice(voice.voiceId)">
@@ -519,17 +512,6 @@ function showRenameModal(voice: Voice) {
   padding: 20rpx 0;
 }
 
-.loading-wrapper {
-  display: flex;
-  justify-content: center;
-  padding: 80rpx 0;
-}
-
-.loading-text {
-  font-size: 28rpx;
-  color: #717784;
-  margin-top: 20rpx;
-}
 
 .voices-list {
   display: flex;
