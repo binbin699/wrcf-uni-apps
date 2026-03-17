@@ -318,7 +318,7 @@ async function submitSmsLogin() {
   height: 88rpx;
   line-height: 88rpx;
   padding: 0 24rpx;
-  background: #335cff;
+  background: var(--color-primary);
   color: #ffffff;
   font-size: 26rpx;
   font-weight: 500;
@@ -376,7 +376,7 @@ async function submitSmsLogin() {
 }
 
 .confirm-btn.primary {
-  background: #335cff;
+  background: var(--color-primary);
   color: #ffffff;
 }
 

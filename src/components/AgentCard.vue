@@ -256,14 +256,14 @@ export default {
   width: 100%;
   height: 100%;
   border-radius: 78.5714px;
-  background: #DDEFFF;
+  background: var(--color-primary-placeholder-bg);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .avatar-text {
-  color: #91AED1;
+  color: var(--color-primary-placeholder-text);
   font-style: normal;
   font-weight: 500;
   font-size: 16px;

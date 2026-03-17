@@ -417,7 +417,7 @@ function unbindVoiceprint() {
 .device-agent {
   display: block;
   font-size: 28rpx;
-  color: #335cff;
+  color: var(--color-primary);
   margin-bottom: 12rpx;
 }
 

@@ -31,10 +31,10 @@
             "fontSize" : "16px"
         },
         "link" : {
-            "color" : "#3E5DEF"
+            "color" : "#335CFF"
         },
         "buttonAccept" : {
-            "color" : "#3E5DEF",
+            "color" : "#335CFF",
             "fontSize" : "16px"
         },
         "buttonRefuse" : {

@@ -221,7 +221,7 @@ async function handleSubmit() {
   width: 100%;
   height: 96rpx;
   background: #ffffff;
-  border: 2rpx solid #c2d0ff;
+  border: 2rpx solid var(--color-primary-border);
   border-radius: 24rpx;
 }
 
@@ -275,7 +275,7 @@ async function handleSubmit() {
   justify-content: center;
   width: 100%;
   height: 96rpx;
-  background: #3e5def;
+  background: var(--color-primary);
   border-radius: 24rpx;
   font-weight: 500;
   font-size: 32rpx;

@@ -580,7 +580,7 @@ export function getSignalColor(strength) {
     return '#34C759'; // 绿色
   }
   if (percentage > 50) {
-    return '#335CFF'; // 蓝色
+    return '#335CFF'; // theme: brand primary color, should be injected from config
   }
   if (percentage > 25) {
     return '#FF9500'; // 橙色

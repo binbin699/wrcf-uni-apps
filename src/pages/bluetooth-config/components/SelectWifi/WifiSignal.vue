@@ -43,7 +43,7 @@ export default {
   transition: all 0.3s ease;
 
   &.active {
-    background-color: #3b82f6;
+    background-color: var(--color-primary);
   }
 }
 

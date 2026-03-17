@@ -1033,7 +1033,7 @@ function formatDuration(seconds: number) {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    border-top: 8rpx solid #335CFF;
+    border-top: 8rpx solid var(--color-primary);
   }
 
   /* 竖线 */
@@ -1045,7 +1045,7 @@ function formatDuration(seconds: number) {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    border-left: 8rpx solid #335CFF;
+    border-left: 8rpx solid var(--color-primary);
   }
 }
 
@@ -1124,7 +1124,7 @@ function formatDuration(seconds: number) {
 .audio-wave-icon .wave-bar {
   width: 4rpx;
   height: 100%;
-  background: #335CFF;
+  background: var(--color-primary);
   border-radius: 4rpx;
   animation: wave-pulse 0.8s ease-in-out infinite alternate;
 }
@@ -1213,7 +1213,7 @@ function formatDuration(seconds: number) {
   box-sizing: border-box;
 
   &.primary {
-    background: #335CFF;
+    background: var(--color-primary);
     color: #FFFFFF;
   }
 }
@@ -1286,7 +1286,7 @@ function formatDuration(seconds: number) {
   transition: all 0.25s ease;
 
   &.active {
-    background: #335CFF;
+    background: var(--color-primary);
     color: #FFFFFF;
   }
 
@@ -1366,7 +1366,7 @@ function formatDuration(seconds: number) {
   transition: all 0.2s;
 
   &.active {
-    background: linear-gradient(180deg, #335CFF 0%, #6B8CFF 100%);
+    background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
     animation: wave 0.8s ease-in-out infinite alternate;
   }
 }
@@ -1401,7 +1401,7 @@ function formatDuration(seconds: number) {
   gap: 17rpx;
   width: 346rpx;
   height: 88rpx;
-  background: #335CFF;
+  background: var(--color-primary);
   border-radius: 16rpx;
   border: none;
   font-weight: 500;

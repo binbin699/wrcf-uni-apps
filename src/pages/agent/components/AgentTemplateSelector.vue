@@ -113,7 +113,7 @@ const { t: $t } = useI18n();
 
 .category-item.active {
   background: #ffffff;
-  color: #3E5DEF;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -124,7 +124,7 @@ const { t: $t } = useI18n();
   top: 30%;
   height: 40%;
   width: 6rpx;
-  background: #3E5DEF;
+  background: var(--color-primary);
   border-radius: 0 4rpx 4rpx 0;
 }
 

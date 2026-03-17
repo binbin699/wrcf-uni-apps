@@ -164,10 +164,11 @@
 
               <!-- 进度条和时间同行显示 -->
               <view style="display: flex; align-items: center; gap: 12px; margin-top: 12px">
+                <!-- TODO: theme - component prop, inject via JS -->
                 <wd-progress
                   :percentage="progressPercent"
                   hide-text
-                  color="#335CFF"
+                  color="var(--color-primary)"
                   :duration="0"
                   style="flex: 1" />
                 <text style="font-size: 12px; color: #666">{{ currentTime }}/{{ totalTime }}</text>
@@ -1504,10 +1505,10 @@ watch(
 .mini-btn {
   padding: 12rpx 24rpx;
   font-size: 24rpx;
-  color: #335CFF;
-  border: 2rpx solid rgba(0, 122, 255, 0.2);
+  color: var(--color-primary);
+  border: 2rpx solid var(--color-primary-alpha-20);
   border-radius: 999px;
-  background-color: rgba(0, 122, 255, 0.08);
+  background-color: var(--color-primary-shadow-light);
   transition: opacity 0.2s ease;
 }
 
@@ -1556,8 +1557,8 @@ watch(
 .loading-spinner {
   width: 64rpx;
   height: 64rpx;
-  border: 6rpx solid rgba(0, 122, 255, 0.15);
-  border-top-color: #335CFF;
+  border: 6rpx solid var(--color-primary-alpha-15);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -1594,8 +1595,8 @@ watch(
 }
 
 .wifi-list-item.selected {
-  border-color: rgba(0, 122, 255, 0.4);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.08);
+  border-color: rgba(51, 92, 255, 0.4);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-light);
 }
 
 .wifi-list-item-info {
@@ -1641,7 +1642,7 @@ watch(
 }
 
 .signal-bar.active {
-  background-color: #335CFF;
+  background-color: var(--color-primary);
 }
 
 .manual-config {
@@ -1660,7 +1661,7 @@ watch(
 
 .manual-config-clear {
   font-size: 24rpx;
-  color: #335CFF;
+  color: var(--color-primary);
 }
 
 .form-group {
@@ -1689,7 +1690,7 @@ watch(
     }
 
     &:focus {
-      border-color: #335CFF;
+      border-color: var(--color-primary);
       outline: none;
     }
   }
@@ -1901,9 +1902,9 @@ watch(
     margin-top: 8rpx;
     padding: 16rpx 32rpx;
     font-size: 28rpx;
-    color: #335CFF;
+    color: var(--color-primary);
     background-color: #fff;
-    border: 2rpx solid #335CFF;
+    border: 2rpx solid var(--color-primary);
     border-radius: 8rpx;
   }
 }
@@ -1965,7 +1966,7 @@ watch(
           width: 44rpx;
           height: 44rpx;
           border-radius: 50%;
-          background-color: #335CFF;
+          background-color: var(--color-primary);
           color: #fff;
           font-size: 28rpx;
           font-weight: 600;
@@ -2003,7 +2004,7 @@ watch(
       text-align: center;
       font-size: 32rpx;
       font-weight: 600;
-      color: #007AFF;
+      color: var(--color-primary);
       border: none;
       border-radius: 0;
       background: transparent;

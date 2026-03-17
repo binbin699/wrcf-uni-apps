@@ -613,7 +613,7 @@ async function handleApplyTemplate(template: any) {
 .container {
   padding: 0;
   min-height: calc(100vh - var(--window-top));
-  background: linear-gradient(180deg, #eff2ff 0%, #ffffff 100%);
+  background: linear-gradient(180deg, var(--color-primary-bg) 0%, #ffffff 100%);
   display: flex;
   flex-direction: column;
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
@@ -633,7 +633,7 @@ async function handleApplyTemplate(template: any) {
   left: 0;
   right: 0;
   z-index: 10;
-  background: #eff2ff; /* Match page gradient top */
+  background: var(--color-primary-bg); /* Match page gradient top */
 }
 
 .agent-create-status-bar {
@@ -735,7 +735,7 @@ async function handleApplyTemplate(template: any) {
   font-size: 30rpx;
   line-height: 1.5;
   color: #1a1a1a;
-  caret-color: #5b75fb;
+  caret-color: var(--color-primary-caret);
 }
 
 /* 移除对组件内部 wrapper 的强制边框覆盖（如果需要），
@@ -783,7 +783,7 @@ async function handleApplyTemplate(template: any) {
   background: transparent;
   color: #1a1a1a;
   box-sizing: border-box;
-  caret-color: #5b75fb;
+  caret-color: var(--color-primary-caret);
   border: none;
 }
 .input-placeholder {
@@ -845,9 +845,9 @@ async function handleApplyTemplate(template: any) {
 
 .use-template-btn {
   font-size: 26rpx;
-  color: #3e5def;
+  color: var(--color-primary);
   margin-left: 16rpx;
-  background: #f0f3ff;
+  background: var(--color-primary-bg);
   padding: 8rpx 20rpx;
   border-radius: 12rpx;
   font-weight: 500;
@@ -861,7 +861,7 @@ async function handleApplyTemplate(template: any) {
   width: 100%;
   height: 96rpx;
   border-radius: 24rpx;
-  background: #3e5def;
+  background: var(--color-primary);
   color: #ffffff !important;
   font-size: 32rpx;
   font-weight: 600;
@@ -875,13 +875,13 @@ async function handleApplyTemplate(template: any) {
 }
 .create-btn[disabled],
 .create-btn[loading] {
-  background: #9eb0ff !important;
+  background: var(--color-primary-disabled) !important;
   color: rgba(255, 255, 255, 0.8) !important;
   opacity: 1;
 }
 .create-btn:active {
   transform: scale(0.98);
-  background: #3e5def;
+  background: var(--color-primary);
   color: #ffffff !important;
 }
 
@@ -889,8 +889,8 @@ async function handleApplyTemplate(template: any) {
   width: 100%;
   height: 96rpx;
   border-radius: 24rpx;
-  background: #e8ecff;
-  color: #7a8bff;
+  background: var(--color-primary-secondary-bg);
+  color: var(--color-primary-secondary-text);
   font-size: 32rpx;
   font-weight: 600;
   border: none;
@@ -902,13 +902,13 @@ async function handleApplyTemplate(template: any) {
   border: none;
 }
 .cancel-btn[disabled] {
-  background: #f5f7ff !important;
-  color: #b2bdff !important;
+  background: var(--color-primary-disabled-bg) !important;
+  color: var(--color-primary-disabled-text) !important;
   opacity: 1;
 }
 .cancel-btn:active {
   transform: scale(0.98);
-  background: #e8ecff;
-  color: #7a8bff !important;
+  background: var(--color-primary-secondary-bg);
+  color: var(--color-primary-secondary-text) !important;
 }
 </style>

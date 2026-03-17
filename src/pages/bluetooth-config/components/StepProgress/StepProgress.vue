@@ -108,16 +108,16 @@ const currentStepIndex = computed(() => {
 }
 
 .step-item.active .step-dot {
-  background-color: #3b82f6;
+  background-color: var(--color-primary);
 }
 
 .step-item.current .step-dot {
-  background-color: #3b82f6;
-  box-shadow: 0 0 0 6rpx rgba(59, 130, 246, 0.2);
+  background-color: var(--color-primary);
+  box-shadow: 0 0 0 6rpx var(--color-primary-alpha-20);
 }
 
 .step-item.completed .step-dot {
-  background-color: #10b981;
+  background-color: var(--color-success);
 }
 
 .dot-number {
@@ -151,17 +151,17 @@ const currentStepIndex = computed(() => {
 }
 
 .step-item.active .step-title {
-  color: #3b82f6;
+  color: var(--color-primary);
   font-weight: 500;
 }
 
 .step-item.current .step-title {
-  color: #3b82f6;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
 .step-item.completed .step-title {
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .step-line {
@@ -176,7 +176,7 @@ const currentStepIndex = computed(() => {
 }
 
 .step-line.active {
-  background-color: #10b981;
+  background-color: var(--color-success);
 }
 
 /* 响应式设计 */

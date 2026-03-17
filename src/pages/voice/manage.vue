@@ -14,7 +14,7 @@
     <view class="voices-section">
       <!-- 加载状态 -->
       <view v-if="loading" class="loading-wrapper">
-        <wd-loading size="40px">
+        <wd-loading size="40px" color="var(--color-primary)">
           <text class="loading-text">{{ $t('common.loading') }}</text>
         </wd-loading>
       </view>
@@ -483,7 +483,7 @@ function showRenameModal(voice: Voice) {
 }
 
 .add-btn {
-  background: #335CFF;
+  background: var(--color-primary);
 }
 
 .add-icon {
@@ -649,7 +649,7 @@ function showRenameModal(voice: Voice) {
 .wave-bar {
   width: 4rpx;
   height: 100%;
-  background: #335CFF;
+  background: var(--color-primary);
   border-radius: 4rpx;
   animation: wave-pulse 0.8s ease-in-out infinite alternate;
 }
@@ -759,7 +759,7 @@ function showRenameModal(voice: Voice) {
   gap: 20rpx;
   width: 160rpx;
   height: 56rpx;
-  background: #335CFF;
+  background: var(--color-primary);
   border-radius: 8rpx;
   box-sizing: border-box;
 }

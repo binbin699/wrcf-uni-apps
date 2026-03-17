@@ -583,7 +583,7 @@ function goBack() {
 .container {
   padding: 0;
   min-height: calc(100vh - var(--window-top));
-  background: linear-gradient(180deg, #EFF2FF 0%, #FFFFFF 100%);
+  background: linear-gradient(180deg, var(--color-primary-bg) 0%, #FFFFFF 100%);
   display: flex;
   flex-direction: column;
   padding-bottom: calc(104rpx + env(safe-area-inset-bottom));
@@ -603,7 +603,7 @@ function goBack() {
   left: 0;
   right: 0;
   z-index: 10;
-  background: #EFF2FF; /* Match page gradient top */
+  background: var(--color-primary-bg); /* Match page gradient top */
 }
 
 .agent-create-status-bar {
@@ -716,7 +716,7 @@ function goBack() {
   font-size: 30rpx;
   line-height: 1.5;
   color: #1a1a1a;
-  caret-color: #5b75fb;
+  caret-color: var(--color-primary-caret);
 }
 
 .desc-card .agent-prompt-polish .textarea-wrapper {
@@ -762,7 +762,7 @@ function goBack() {
   background: transparent;
   color: #1a1a1a;
   box-sizing: border-box;
-  caret-color: #5b75fb;
+  caret-color: var(--color-primary-caret);
   border: none;
 }
 .input-placeholder {
@@ -822,9 +822,9 @@ function goBack() {
 
 .use-template-btn {
   font-size: 26rpx;
-  color: #3E5DEF;
+  color: var(--color-primary);
   margin-left: 16rpx;
-  background: #F0F3FF;
+  background: var(--color-primary-bg);
   padding: 8rpx 20rpx;
   border-radius: 12rpx;
   font-weight: 500;
@@ -838,8 +838,8 @@ function goBack() {
   width: 100%;
   height: 96rpx;
   border-radius: 24rpx;
-  background: #E8ECFF;
-  color: #7A8BFF;
+  background: var(--color-primary-secondary-bg);
+  color: var(--color-primary-secondary-text);
   font-size: 32rpx;
   font-weight: 600;
   border: none;
@@ -851,21 +851,21 @@ function goBack() {
   border: none;
 }
 .cancel-btn[disabled] {
-  background: #F5F7FF !important;
-  color: #B2BDFF !important;
+  background: var(--color-primary-disabled-bg) !important;
+  color: var(--color-primary-disabled-text) !important;
   opacity: 1;
 }
 .cancel-btn:active {
   transform: scale(0.98);
-  background: #E8ECFF;
-  color: #7A8BFF !important;
+  background: var(--color-primary-secondary-bg);
+  color: var(--color-primary-secondary-text) !important;
 }
 
 .update-btn {
   width: 100%;
   height: 96rpx;
   border-radius: 24rpx;
-  background: #3E5DEF;
+  background: var(--color-primary);
   color: #ffffff !important;
   font-size: 32rpx;
   font-weight: 600;
@@ -878,13 +878,13 @@ function goBack() {
   border: none;
 }
 .update-btn[disabled], .update-btn[loading] {
-  background: #9EB0FF !important;
+  background: var(--color-primary-disabled) !important;
   color: rgba(255, 255, 255, 0.8) !important;
   opacity: 1;
 }
 .update-btn:active {
   transform: scale(0.98);
-  background: #3E5DEF;
+  background: var(--color-primary);
   color: #ffffff !important;
 }
 </style>

@@ -95,7 +95,7 @@ export default {
   width: 60rpx;
   height: 60rpx;
   border: 4rpx solid #e5e5e5;
-  border-top: 4rpx solid #667eea;
+  border-top: 4rpx solid var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 24rpx;
@@ -134,11 +134,11 @@ export default {
 }
 
 .tips {
-  background-color: #f8f9ff;
+  background-color: var(--color-primary-tips-bg);
   border-radius: 16rpx;
   padding: 24rpx;
   margin-bottom: 32rpx;
-  border-left: 6rpx solid #667eea;
+  border-left: 6rpx solid var(--color-primary);
 }
 
 .tip {

@@ -316,7 +316,7 @@ async function cleanupBluetooth() {
   width: 80rpx;
   height: 80rpx;
   border: 6rpx solid #e5e7eb;
-  border-top: 6rpx solid #3b82f6;
+  border-top: 6rpx solid var(--color-primary);
   border-radius: 50%;
   margin: 0 auto 32rpx;
   animation: spin 1s linear infinite;

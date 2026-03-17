@@ -973,7 +973,7 @@ export default {
 }
 
 .filter-item.active {
-  background: #007aff;
+  background: var(--color-primary);
   color: #fff;
 }
 
@@ -1058,7 +1058,7 @@ export default {
 .default-avatar {
   width: 96rpx;
   height: 96rpx;
-  background: #ddefff;
+  background: var(--color-primary-placeholder-bg);
   border-radius: 24rpx;
   overflow: hidden;
   position: relative;
@@ -1070,7 +1070,7 @@ export default {
   position: absolute;
   left: 24rpx;
   top: 24rpx;
-  color: #91aed1;
+  color: var(--color-primary-placeholder-text);
 }
 
 .voice-info {
@@ -1107,7 +1107,7 @@ export default {
   width: 40rpx;
   height: 42rpx;
   flex-shrink: 0;
-  color: #007aff;
+  color: var(--color-primary);
   cursor: pointer;
   transition: all 0.3s ease;
   opacity: 0.8;
@@ -1172,7 +1172,7 @@ export default {
 }
 
 .selected-icon {
-  color: #007aff;
+  color: var(--color-primary);
 }
 
 .plus-icon {

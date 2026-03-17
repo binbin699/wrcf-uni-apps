@@ -511,7 +511,7 @@ onMounted(async () => {
   }
 
   &.selected {
-    background: #335cff;
+    background: var(--color-primary);
     border: 2rpx solid rgba(255, 255, 255, 0.8);
     box-shadow: 0px 4rpx 24rpx rgba(0, 0, 0, 0.1);
 
@@ -648,7 +648,7 @@ onMounted(async () => {
 }
 
 .blue-btn {
-  background: #3e5def;
+  background: var(--color-primary);
 }
 
 .green-btn {
@@ -731,7 +731,7 @@ onMounted(async () => {
   height: 96rpx;
 
   background: #ffffff;
-  border: 2rpx solid #c2d0ff;
+  border: 2rpx solid var(--color-primary-border);
   border-radius: 24rpx;
   /* 确保可以接收点击事件 */
   pointer-events: auto;
@@ -779,7 +779,7 @@ onMounted(async () => {
   min-width: 346rpx;
   height: 88rpx;
   padding: 0 48rpx;
-  background: #3e5def;
+  background: var(--color-primary);
   border-radius: 24rpx;
 
   font-style: normal;

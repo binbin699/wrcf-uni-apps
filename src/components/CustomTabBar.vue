@@ -134,7 +134,7 @@ function switchTab(index: number) {
 
   &.active {
     .tabbar-text {
-      color: #335cff;
+      color: var(--color-primary);
       font-weight: 500;
     }
   }

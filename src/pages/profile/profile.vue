@@ -456,7 +456,7 @@ function goDeleteAccount() {
   flex-direction: column;
   box-sizing: border-box;
   position: relative;
-  background: linear-gradient(180deg, #eff2ff 18.68%, #ffffff 124.53%);
+  background: linear-gradient(180deg, var(--color-primary-bg) 18.68%, #ffffff 124.53%);
   overflow: hidden;
 }
 
@@ -478,7 +478,7 @@ function goDeleteAccount() {
   height: 168px;
   right: -62px;
   top: -72px;
-  background: #edf0ff;
+  background: var(--color-primary-bg);
   border-radius: 50%;
   filter: blur(4px);
   z-index: 0;

@@ -469,7 +469,7 @@ export default {
 
 .config-link {
   font-size: 14px;
-  color: #335cff;
+  color: var(--color-primary);
   margin-left: 8px;
 }
 
@@ -503,14 +503,14 @@ export default {
   transition: all 0.2s ease;
 
   &.selected {
-    border-color: #335cff;
+    border-color: var(--color-primary);
   }
 }
 
 .select-dot {
   width: 10px;
   height: 10px;
-  background: #335cff;
+  background: var(--color-primary);
   border-radius: 50%;
 }
 
@@ -532,7 +532,7 @@ export default {
 
 .device-bind-status {
   font-size: 12px;
-  color: #335cff;
+  color: var(--color-primary);
   margin-top: 2px;
 }
 
@@ -583,12 +583,12 @@ export default {
 }
 
 .confirm-btn {
-  background: #335cff;
+  background: var(--color-primary);
   color: #ffffff;
 }
 
 .confirm-btn:disabled {
-  background: #335cff;
+  background: var(--color-primary);
   opacity: 0.5;
 }
 </style>

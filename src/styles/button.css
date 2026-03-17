@@ -40,7 +40,7 @@ button:after {
 
 /* 主要按钮样式 - 根据Figma设计稿更新 */
 button.primary {
-  background: #335CFF;
+  background: var(--color-primary);
   color: #ffffff;
   box-shadow: 0 8rpx 32rpx rgba(31, 38, 135, 0.2);
   backdrop-filter: blur(20rpx);
@@ -49,7 +49,7 @@ button.primary {
 
 
 button.primary.pressed {
-  background: #2850E0;
+  background: var(--color-primary-dark);
   color: #ffffff;
 }
 

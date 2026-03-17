@@ -673,7 +673,7 @@ export default {
   gap: 12rpx;
   width: 100%;
   height: 96rpx;
-  background: #3e5def;
+  background: var(--color-primary);
   border-radius: 24rpx;
   font-size: 32rpx;
   font-weight: 500;
@@ -686,7 +686,7 @@ export default {
   }
 
   &.loading {
-    background: #5a75f0;
+    background: var(--color-primary-disabled);
   }
 
   &[disabled] {

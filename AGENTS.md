@@ -12,6 +12,7 @@
 | **组件开发**        | `.agents/rules/components.md`    |
 | **平台兼容**        | `.agents/rules/platform.md`      |
 | **加载/错误处理**   | `.agents/rules/loading-error.md` |
+| **主题/颜色**       | `src/styles/theme.css`           |
 
 ---
 
@@ -47,6 +48,14 @@
 
 - 加载状态选择
 - 统一错误处理模式
+
+### 涉及样式/颜色时
+
+**强制参考**: `src/styles/theme.css`
+
+- 品牌色/功能色必须使用 `theme.css` 中的 CSS Variables（如 `var(--color-primary)`），禁止硬编码十六进制色值
+- 新增色值时先在 `theme.css` 定义变量，再引用
+- 中性色（黑/白/灰）不受此限制
 
 ---
 
@@ -134,6 +143,7 @@ if (AppInfo.isWeixin) {
 - ❌ 手动修改 `manifest.json`
 - ❌ 绕过 API 层直接用 request
 - ❌ 新代码使用 `any`
+- ❌ 硬编码品牌色（必须使用 `theme.css` 中的 CSS Variables）
 - ❌ 提交敏感信息
 - ❌ 删除或省略正确的与改动无关的代码注释
 
