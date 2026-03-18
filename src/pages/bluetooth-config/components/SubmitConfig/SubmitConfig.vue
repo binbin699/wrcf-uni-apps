@@ -29,6 +29,9 @@
         </view>
         <text class="status-title success-text">{{ $t('bluetooth.submit.success_title') }}</text>
         <text class="status-desc">{{ $t('bluetooth.submit.success_desc') }}</text>
+        <text v-if="defaultAgentBind && defaultAgentBind.bound" class="status-desc">{{ $t('device.default_agent_bound').replace('{name}', defaultAgentBind.agentName || '') }}</text>
+        <text v-else-if="defaultAgentBind && defaultAgentBind.reason === 'no_match'" class="status-desc">{{ $t('device.default_agent_no_match') }}</text>
+        <text v-else-if="defaultAgentBind && defaultAgentBind.reason === 'error'" class="status-desc">{{ $t('device.default_agent_bind_failed') }}</text>
 
         <!-- 配网信息摘要 -->
         <view class="info-card">
@@ -114,7 +117,8 @@ export default {
       wifiFailureCheckTimer: null,
       wifiConnectionStuck: false,
       waitingTime: 0,
-      waitingTimer: null
+      waitingTimer: null,
+      defaultAgentBind: null
     };
   },
   computed: {
@@ -317,6 +321,8 @@ export default {
 
         if (result && result.code === 1000) {
           console.log('设备绑定成功', result);
+          // 保存默认智能体绑定结果，用于成功页面展示
+          this.defaultAgentBind = result.data?.defaultAgentBind || null;
           uni.showToast({
             title: this.$t('bluetooth.submit.bind_device_success'),
             icon: 'success',

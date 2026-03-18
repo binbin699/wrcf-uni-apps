@@ -950,5 +950,9 @@
   "login.wx_login_failed": "WeChat login failed",
   "login.apple_login_failed": "Apple login failed",
   "login.guest_login_failed": "Guest login failed",
-  "login.register_failed": "Registration failed"
+  "login.register_failed": "Registration failed",
+
+  "device.default_agent_bound": "Bound to default agent {name}",
+  "device.default_agent_no_match": "No default agent found for your system language",
+  "device.default_agent_bind_failed": "Failed to auto-bind default agent"
 }

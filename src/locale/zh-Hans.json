@@ -950,5 +950,9 @@
   "login.wx_login_failed": "微信登录失败",
   "login.apple_login_failed": "Apple登录失败",
   "login.guest_login_failed": "游客登录失败",
-  "login.register_failed": "注册失败"
+  "login.register_failed": "注册失败",
+
+  "device.default_agent_bound": "已绑定至默认智能体 {name}",
+  "device.default_agent_no_match": "未找到匹配您系统语言的默认智能体",
+  "device.default_agent_bind_failed": "自动绑定默认智能体失败"
 }

@@ -967,5 +967,9 @@
   "login.wx_login_failed": "WeChatログイン失敗",
   "login.apple_login_failed": "Appleログイン失敗",
   "login.guest_login_failed": "ゲストログイン失敗",
-  "login.register_failed": "登録失敗"
+  "login.register_failed": "登録失敗",
+
+  "device.default_agent_bound": "デフォルトエージェント {name} にバインドしました",
+  "device.default_agent_no_match": "システム言語に一致するデフォルトエージェントが見つかりません",
+  "device.default_agent_bind_failed": "デフォルトエージェントの自動バインドに失敗しました"
 }

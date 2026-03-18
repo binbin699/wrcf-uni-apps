@@ -967,5 +967,9 @@
   "login.wx_login_failed": "Ошибка входа через WeChat",
   "login.apple_login_failed": "Ошибка входа через Apple",
   "login.guest_login_failed": "Ошибка гостевого входа",
-  "login.register_failed": "Ошибка регистрации"
+  "login.register_failed": "Ошибка регистрации",
+
+  "device.default_agent_bound": "Привязано к агенту по умолчанию {name}",
+  "device.default_agent_no_match": "Не найден агент по умолчанию для вашего системного языка",
+  "device.default_agent_bind_failed": "Не удалось автоматически привязать агент по умолчанию"
 }

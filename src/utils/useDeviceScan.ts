@@ -116,9 +116,21 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
             }
 
             toast.close();
+
+            // 构建成功提示：设备绑定成功，追加默认智能体绑定结果
+            let successMsg = $t('net_config.device_bind_success');
+            const bind = result?.data?.defaultAgentBind;
+            if (bind?.bound && bind.agentName) {
+              successMsg += '\n' + $t('device.default_agent_bound').replace('{name}', bind.agentName);
+            } else if (bind?.reason === 'no_match') {
+              successMsg += '\n' + $t('device.default_agent_no_match');
+            } else if (bind?.reason === 'error') {
+              successMsg += '\n' + $t('device.default_agent_bind_failed');
+            }
+
             toast.success({
-              msg: $t('net_config.device_bind_success'),
-              duration: 2000,
+              msg: successMsg,
+              duration: 2500,
               cover: true
             });
 

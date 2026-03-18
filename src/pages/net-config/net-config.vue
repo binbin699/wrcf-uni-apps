@@ -537,15 +537,26 @@ async function handleScanQrSuccess(res: { result: string }) {
   }
   try {
     // 调用注册设备方法
-    await registerDevice({
+    const result = await registerDevice({
       s: qrcodeData.s,
       m: qrcodeData.m,
       v: qrcodeData.v
     });
 
+    // 构建成功提示：设备绑定成功，追加默认智能体绑定结果
+    let successMsg = $t('net_config.device_bind_success');
+    const bind = result?.data?.defaultAgentBind;
+    if (bind?.bound && bind.agentName) {
+      successMsg += '\n' + $t('device.default_agent_bound').replace('{name}', bind.agentName);
+    } else if (bind?.reason === 'no_match') {
+      successMsg += '\n' + $t('device.default_agent_no_match');
+    } else if (bind?.reason === 'error') {
+      successMsg += '\n' + $t('device.default_agent_bind_failed');
+    }
+
     toast.success({
-      msg: $t('net_config.device_bind_success'),
-      duration: 2000,
+      msg: successMsg,
+      duration: 2500,
       cover: true
     });
 
@@ -586,6 +597,7 @@ async function registerDevice(qrcodeData: { s: string; m: string; v?: string }) 
     const result = await deviceApi.bindByQrcode(qrcodeData);
     if (result && result.code === 1000) {
       console.log('设备绑定成功', result);
+      return result;
     } else {
       throw new Error(result?.message || $t('net_config.device_bind_fail'));
     }
