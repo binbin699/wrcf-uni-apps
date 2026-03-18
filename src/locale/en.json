@@ -131,7 +131,7 @@
   "index.delete_failed": "Delete failed",
   "index.template_hint": "No agents created yet, click the template to create one",
   "index.get_templates_failed": "Failed to get template agents",
-  "welcome.guide_title": "Welcome to Linx App!\nPick a way to add your device",
+  "welcome.guide_title": "Welcome to Linx!\nAdd your device to start",
   "welcome.setup_qrcode": "QR Code",
   "welcome.setup_bluetooth": "Bluetooth",
   "welcome.skip_for_now": "Skip for now",

@@ -21,6 +21,7 @@ declare const APP_CONFIG: {
   SUPPORT_LOGIN_TYPE_SMS: boolean;
   BLE_FILTER_ENABLED: boolean;
   APP_SETUP_MODE: 'qrcode' | 'bluetooth' | 'both';
+  APP_PRIMARY_SETUP_MODE: 'qrcode' | 'bluetooth' | 'none';
   APP_USE_VOICEPRINT: boolean;
   TERMS_URL: string;
   PRIVACY_URL: string;

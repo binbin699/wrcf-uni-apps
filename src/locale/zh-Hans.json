@@ -131,7 +131,7 @@
   "index.template_hint": "还没有智能体，点击以下模板快速创建",
   "index.get_templates_failed": "获取模板智能体失败",
 
-  "welcome.guide_title": "欢迎使用灵矽App！\n选择任一方式添加设备以开始使用",
+  "welcome.guide_title": "欢迎使用灵矽App！\n添加设备以开始使用",
   "welcome.setup_qrcode": "扫码添加",
   "welcome.setup_bluetooth": "蓝牙添加",
   "welcome.skip_for_now": "稍后再说",

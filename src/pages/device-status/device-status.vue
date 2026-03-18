@@ -76,8 +76,8 @@
       <view
         class="welcome-guide"
         v-else-if="!currentDevice"
-        :class="{ 'is-single': setupMode !== 'both' }">
-        <view class="welcome-card" v-if="setupMode === 'both'">
+        :class="{ 'is-single': effectiveSetupMode !== 'both' }">
+        <view class="welcome-card" v-if="effectiveSetupMode === 'both'">
           <view class="welcome-title">{{ $t('welcome.guide_title') }}</view>
           <view class="welcome-actions">
             <view class="welcome-setup-options">
@@ -108,9 +108,9 @@
           </view>
         </view>
         <view class="welcome-card-single" v-else>
-          <view class="welcome-icon-wrapper single" :class="setupMode">
+          <view class="welcome-icon-wrapper single" :class="effectiveSetupMode">
             <image
-              v-if="setupMode === 'qrcode'"
+              v-if="effectiveSetupMode === 'qrcode'"
               class="welcome-setup-icon-large"
               src="/static/icons/scan-qrcode.svg"
               mode="aspectFit" />
@@ -125,10 +125,14 @@
             <view
               class="welcome-primary-btn"
               @click="
-                setupMode === 'qrcode' ? handleAddDeviceQrcode() : handleAddDeviceBluetooth()
+                effectiveSetupMode === 'qrcode'
+                  ? handleAddDeviceQrcode()
+                  : handleAddDeviceBluetooth()
               ">
               {{
-                setupMode === 'qrcode' ? $t('welcome.setup_qrcode') : $t('welcome.setup_bluetooth')
+                effectiveSetupMode === 'qrcode'
+                  ? $t('welcome.setup_qrcode')
+                  : $t('welcome.setup_bluetooth')
               }}
             </view>
             <!-- #ifndef MP-WEIXIN -->
@@ -324,6 +328,14 @@ const { scanAndBind, isNavigating } = useDeviceScan({ toast, showNotify, closeNo
 
 // 配置
 const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
+const primarySetupMode = APP_CONFIG.APP_PRIMARY_SETUP_MODE || 'none';
+const effectiveSetupMode = computed(() => {
+  if (setupMode !== 'both') {
+    return setupMode;
+  }
+
+  return primarySetupMode === 'none' ? 'both' : primarySetupMode;
+});
 
 // 导航栏高度
 const statusBarHeight = ref(20);
