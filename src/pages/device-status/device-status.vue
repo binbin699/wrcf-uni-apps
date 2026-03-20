@@ -297,7 +297,7 @@
     <image class="bottom-illustration" src="/static/bg_removal.png" mode="aspectFill"></image>
 
     <!-- AI 生成提示 -->
-    <view v-if="deviceList.length > 0" class="ai-generated-tip">
+    <view v-if="!loading" class="ai-generated-tip">
       <text class="ai-generated-text">{{ $t('common.ai_generated_disclaimer') }}</text>
     </view>
 

@@ -2,8 +2,8 @@
     "name": "%app.name%",
     "appid": "__UNI__53D46D3",
     "description": "%app.description%",
-    "versionName": "1.1.5",
-    "versionCode": 101052,
+    "versionName": "1.1.7",
+    "versionCode": 101072,
     "transformPx": false,
     "app-plus": {
         "usingComponents": true,
