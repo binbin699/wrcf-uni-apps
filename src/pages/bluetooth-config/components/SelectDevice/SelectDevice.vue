@@ -121,8 +121,8 @@ export default {
     };
   },
   computed: {
-    isIOS() {
-      return bluetoothConfigManager.state.isIOS;
+    useLocalName() {
+      return bluetoothConfigManager.state.useLocalName;
     },
     hasFilteredDevices() {
       return this.deviceList !== null
@@ -145,10 +145,10 @@ export default {
 
     // 检测设备类型
     const systemInfo = uni.getSystemInfoSync();
-    const isIOS = systemInfo.platform === 'ios';
-    bluetoothConfigManager.setIsIOS(isIOS);
+    const useLocalName = systemInfo.platform === 'ios' || AppInfo.isHarmonyApp();
+    bluetoothConfigManager.setUseLocalName(useLocalName);
 
-    console.log('设备类型:', isIOS ? 'iOS' : 'Android');
+    console.log('BLE 名称模式:', useLocalName ? 'localName' : 'name');
 
     // 进入页面后自动开始扫描
     this.startDeviceScan();
@@ -255,8 +255,8 @@ export default {
             return;
           }
 
-          // Android: 蓝牙扫描需要位置权限，单独请求以确保有预请求弹窗
-          if (AppInfo.isAndroidApp()) {
+          // Android / Harmony: 蓝牙扫描需要位置权限，单独请求以确保有预请求弹窗
+          if (AppInfo.isAndroidApp() || AppInfo.isHarmonyApp()) {
             const locationResult = await requestLocationPermission(
               {
                 show: this._showNotify,
@@ -286,18 +286,18 @@ export default {
         console.log('蓝牙-搜索到的原始设备:', devices);
 
         // 先对所有设备做去重和MAC规范化（不做名称过滤）
-        const allValid = filterValidDevices(devices, this.isIOS);
+        const allValid = filterValidDevices(devices, this.useLocalName);
         const allDeduped = dedupeDeviceList(allValid);
-        const [allNormalized] = normalizeDeviceList(allDeduped, this.isIOS);
+        const [allNormalized] = normalizeDeviceList(allDeduped, this.useLocalName);
         allNormalized.sort((a, b) => (b.RSSI || -100) - (a.RSSI || -100));
         this.allScannedDevices = allNormalized;
 
         // 如果有后端下发的正则，再做一轮过滤
         if (this._filterRegex) {
-          const filtered = filterValidDevices(devices, this.isIOS, this._filterRegex);
+          const filtered = filterValidDevices(devices, this.useLocalName, this._filterRegex);
           console.log('蓝牙-正则过滤后的设备:', filtered);
           const deduped = dedupeDeviceList(filtered);
-          const [normalized] = normalizeDeviceList(deduped, this.isIOS);
+          const [normalized] = normalizeDeviceList(deduped, this.useLocalName);
           normalized.sort((a, b) => (b.RSSI || -100) - (a.RSSI || -100));
           this.deviceList = normalized;
         } else {
