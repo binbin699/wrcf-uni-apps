@@ -322,8 +322,8 @@ export default {
               return;
             }
 
-            // 检查 s 和 m 字段是否存在
-            if (!qrcodeData || !qrcodeData.s || !qrcodeData.m) {
+            // 检查 m 字段是否存在
+            if (!qrcodeData || !qrcodeData.m) {
               uni.showToast({
                 title: this.$t('net_config.invalid_qr'),
                 icon: 'none',
@@ -336,7 +336,7 @@ export default {
               uni.showLoading({ title: this.$t('net_config.binding_device') });
 
               // 调用绑定设备接口
-              const result = await deviceApi.bindByQrcode(qrcodeData);
+              const result = await deviceApi.bindByQrcode({ m: qrcodeData.m });
               if (result && result.code === 1000) {
                 console.log('设备绑定成功', result);
               } else {
@@ -344,18 +344,37 @@ export default {
               }
 
               uni.hideLoading();
+
               uni.showToast({
                 title: this.$t('net_config.device_bind_success'),
                 icon: 'success',
                 duration: 1500
               });
 
+              // 追加默认智能体绑定结果提示
+              const bind = result?.data?.defaultAgentBind;
+              if (bind) {
+                let agentMsg = '';
+                if (bind.bound && bind.agentName) {
+                  agentMsg = this.$t('device.default_agent_bound').replace('{name}', bind.agentName);
+                } else if (bind.reason === 'no_match') {
+                  agentMsg = this.$t('device.default_agent_no_match');
+                } else if (bind.reason === 'error') {
+                  agentMsg = this.$t('device.default_agent_bind_failed');
+                }
+                if (agentMsg) {
+                  setTimeout(() => {
+                    uni.showToast({ title: agentMsg, icon: 'none', duration: 2000 });
+                  }, 1500);
+                }
+              }
+
               // 绑定成功，跳转到配网页面
               setTimeout(() => {
                 uni.navigateTo({
                   url: PageMap[Pages.NetConfig].url + '?bound=1'
                 });
-              }, 1500);
+              }, 3000);
             } catch (error) {
               console.error('设备绑定失败:', error);
               uni.hideLoading();

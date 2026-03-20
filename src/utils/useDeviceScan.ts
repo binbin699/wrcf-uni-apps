@@ -93,8 +93,8 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
             return;
           }
 
-          // 检查 s 和 m 字段是否存在
-          if (!qrcodeData || !qrcodeData.s || !qrcodeData.m) {
+          // 检查 m 字段是否存在
+          if (!qrcodeData || !qrcodeData.m) {
             toast.warning({ msg: $t('net_config.invalid_qr'), duration: 2000 });
             isNavigating.value = false;
             return;
@@ -108,7 +108,7 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
             });
 
             // 调用绑定设备接口
-            const result = await deviceApi.bindByQrcode(qrcodeData);
+            const result = await deviceApi.bindByQrcode({ m: qrcodeData.m });
             if (result && result.code === 1000) {
               console.log('设备绑定成功', result);
             } else {
