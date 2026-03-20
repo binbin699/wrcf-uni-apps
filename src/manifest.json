@@ -9,6 +9,9 @@
         "usingComponents": true,
         "nvueStyleCompiler": "uni-app",
         "compilerVersion": 3,
+        "compatible": {
+            "ignoreVersion": true
+        },
         "safearea": {
             "bottom": {
                 "offset": "none"
