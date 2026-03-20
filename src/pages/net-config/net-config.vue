@@ -527,8 +527,8 @@ async function handleScanQrSuccess(res: { result: string }) {
     return;
   }
 
-  // 检查 s 和 m 字段是否存在（v 字段可选）
-  if (!qrcodeData.s || !qrcodeData.m) {
+  // 检查 m 字段是否存在
+  if (!qrcodeData.m) {
     toast.warning({
       msg: $t('net_config.invalid_qr'),
       duration: 2000
@@ -538,9 +538,7 @@ async function handleScanQrSuccess(res: { result: string }) {
   try {
     // 调用注册设备方法
     const result = await registerDevice({
-      s: qrcodeData.s,
-      m: qrcodeData.m,
-      v: qrcodeData.v
+      m: qrcodeData.m
     });
 
     // 构建成功提示：设备绑定成功，追加默认智能体绑定结果
@@ -581,9 +579,9 @@ async function handleScanQrSuccess(res: { result: string }) {
  *
  * 该方法负责设备注册的核心逻辑，包括调用后端接口绑定设备、处理成功和失败情况。
  *
- * @param qrcodeData qrcode数据对象，包含 s（源字符串）、m（MAC地址）、v（版本号，可选）字段
+ * @param qrcodeData qrcode数据对象，包含 m（MAC地址）字段
  */
-async function registerDevice(qrcodeData: { s: string; m: string; v?: string }) {
+async function registerDevice(qrcodeData: { m: string }) {
   console.log('注册设备', qrcodeData);
 
   try {

@@ -243,7 +243,7 @@ export const deviceApi = {
 
   /**
    * 通过二维码绑定设备
-   * @param {s: string, m: string, v?: string} data qrcode数据对象
+   * @param {{ m: string }} data qrcode数据对象，仅需 MAC 地址
    * @returns
    */
   bindByQrcode(data) {
