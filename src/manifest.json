@@ -125,7 +125,8 @@
                     "armeabi-v7a",
                     "arm64-v8a"
                 ],
-                "minSdkVersion": 21
+                "minSdkVersion": 21,
+				"targetSdkVersion": 35
             },
             "ios": {
                 "dSYMs": false,
