@@ -219,7 +219,7 @@ const menuItems = computed(() => {
           url: PageMap[Pages.BluetoothConfig].url + '?configOnly=1'
         })
     },
-    APP_CONFIG.APP_USE_VOICEPRINT && showVoicePrint.value
+    APP_CONFIG.APP_USE_VOICE_CLONE && showVoicePrint.value
       ? {
           id: 'voice_manage',
           title: $t('profile.voice_manage'),
@@ -230,7 +230,7 @@ const menuItems = computed(() => {
             })
         }
       : undefined,
-    APP_CONFIG.APP_USE_VOICEPRINT && showVoicePrint.value
+    APP_CONFIG.APP_USE_VOICE_CLONE && showVoicePrint.value
       ? {
           id: 'voice_clone',
           title: $t('profile.voice_clone'),

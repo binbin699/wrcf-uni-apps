@@ -23,6 +23,7 @@ declare const APP_CONFIG: {
   APP_SETUP_MODE: 'qrcode' | 'bluetooth' | 'both';
   APP_PRIMARY_SETUP_MODE: 'qrcode' | 'bluetooth' | 'none';
   APP_USE_VOICEPRINT: boolean;
+  APP_USE_VOICE_CLONE: boolean;
   TERMS_URL: string;
   PRIVACY_URL: string;
   FEEDBACK_EMAIL: string;

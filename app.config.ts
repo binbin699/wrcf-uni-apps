@@ -62,11 +62,11 @@ export default function getAppConfig(
   // 可选值: qrcode, bluetooth, both (不填默认为 both)
   const APP_SETUP_MODE = 'both';
 
-  // 是否支持声纹（微信小程序不支持）
-  // const APP_USE_VOICEPRINT = platform !== 'mp-weixin';
+  // 是否支持声纹管理（微信小程序不支持）
+  const APP_USE_VOICEPRINT = false;
 
-  // 是否支持声纹（微信小程序不支持）
-  const APP_USE_VOICEPRINT = true;
+  // 是否支持音色复刻
+  const APP_USE_VOICE_CLONE = true;
   // 主要的设置引导方式，优先展示该方式，值为 qrcode、bluetooth 或 none（不展示）
   const APP_PRIMARY_SETUP_MODE = 'none';
   // 用户协议和隐私政策 URL（微信小程序不显示）
@@ -108,6 +108,7 @@ export default function getAppConfig(
     BLE_FILTER_ENABLED,
     APP_SETUP_MODE,
     APP_USE_VOICEPRINT,
+    APP_USE_VOICE_CLONE,
     TERMS_URL,
     PRIVACY_URL,
     FEEDBACK_EMAIL,
