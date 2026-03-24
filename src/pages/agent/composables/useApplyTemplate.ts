@@ -45,15 +45,32 @@ export async function applyTemplateLogic(
           }
         }
         
-        // 语言
-        if (agent.config.langCode) {
-          const idx = chatLanguageOptions.value.findIndex(l => l.langCode === agent.config.langCode);
-          if (idx !== -1) {
-            selectedChatLanguageIndex.value = idx;
-            formData.value.langCode = agent.config.langCode;
-            formData.value.language = chatLanguageOptions.value[idx].language;
-          }
-        }
+         // 语言
+         let langCodeToUse = agent.config.langCode;
+         
+         // 如果 config.langCode 没有数据，则使用外层的 languageCode 作为备选
+         if (!langCodeToUse && agent.languageCode) {
+           langCodeToUse = agent.languageCode;
+         }
+         
+         if (langCodeToUse) {
+           // 兼容处理：langCode 可能是短格式（如"zh"），需要与完整格式（如"zh_CN"）匹配
+           let idx = chatLanguageOptions.value.findIndex(l => l.langCode === langCodeToUse);
+           
+           // 如果没有精确匹配，尝试通过前缀匹配（短格式匹配）
+           if (idx === -1 && langCodeToUse) {
+             const shortCode = langCodeToUse.split('_')[0].toLowerCase();
+             idx = chatLanguageOptions.value.findIndex(l => 
+               l.langCode.split('_')[0].toLowerCase() === shortCode
+             );
+           }
+           
+           if (idx !== -1) {
+             selectedChatLanguageIndex.value = idx;
+             formData.value.langCode = chatLanguageOptions.value[idx].langCode;
+             formData.value.language = chatLanguageOptions.value[idx].language;
+           }
+         }
         
         // 音色
         if (agent.config.ttsVoiceId) {
