@@ -50,42 +50,27 @@
       <view class="card">
         <view class="form-item">
           <text class="label">{{ $t('edit_agent.llm_type') }}</text>
-          <picker
-            @click="handleLLMPickerClick"
-            mode="selector"
-            :range="llmOptions"
-            range-key="displayName"
-            :value="selectedLLMIndex"
-            @change="onLLMChange">
-            <view class="selector-trigger">
-              <text v-if="loadingLLMs">{{ $t('common.loading') }}</text>
-              <text v-else-if="selectedLLM" class="value-text">
-                {{ selectedLLM.displayName || selectedLLM.name }}
-              </text>
-              <text v-else-if="llmOptions.length === 0" class="placeholder-text">
-                {{ $t('edit_agent.llm_load_failed') }}
-              </text>
-              <text v-else class="placeholder-text">{{ $t('edit_agent.select_llm') }}</text>
-              <view class="arrow-icon"></view>
-            </view>
-          </picker>
+          <view class="selector-trigger" @click="openLLMSheet">
+            <text v-if="loadingLLMs">{{ $t('common.loading') }}</text>
+            <text v-else-if="selectedLLM" class="value-text">
+              {{ selectedLLM.displayName || selectedLLM.name }}
+            </text>
+            <text v-else-if="llmOptions.length === 0" class="placeholder-text">
+              {{ $t('edit_agent.llm_load_failed') }}
+            </text>
+            <text v-else class="placeholder-text">{{ $t('edit_agent.select_llm') }}</text>
+            <view class="arrow-icon"></view>
+          </view>
         </view>
 
         <view class="form-item">
           <text class="label">{{ $t('create_agent.chat_language') }}</text>
-          <picker
-            mode="selector"
-            :range="chatLanguageOptions"
-            range-key="language"
-            :value="selectedChatLanguageIndex"
-            @change="onChatLanguageChange">
-            <view class="selector-trigger">
-              <text v-if="loadingLanguages">{{ $t('common.loading') }}</text>
-              <text v-else-if="selectedChatLanguage" class="value-text">{{ selectedChatLanguage.language }}</text>
-              <text v-else class="placeholder-text">{{ $t('create_agent.select_chat_language') }}</text>
-              <view class="arrow-icon"></view>
-            </view>
-          </picker>
+          <view class="selector-trigger" @click="openLanguageSheet">
+            <text v-if="loadingLanguages">{{ $t('common.loading') }}</text>
+            <text v-else-if="selectedChatLanguage" class="value-text">{{ selectedChatLanguage.language }}</text>
+            <text v-else class="placeholder-text">{{ $t('create_agent.select_chat_language') }}</text>
+            <view class="arrow-icon"></view>
+          </view>
         </view>
 
         <view class="form-item last-item">
@@ -144,6 +129,24 @@
       :fixedLanguage="currentVoiceLanguage"
       @close="hideVoiceSelector"
       @confirm="onVoiceSelected" />
+
+    <AgentSelectSheet
+      :visible="llmSheetVisible"
+      :title="$t('edit_agent.select_llm_title')"
+      :options="llmSheetOptions"
+      :selected-index="selectedLLMIndex"
+      :confirm-text="$t('common.confirm')"
+      @update:visible="llmSheetVisible = $event"
+      @confirm="onLLMSheetConfirm" />
+
+    <AgentSelectSheet
+      :visible="languageSheetVisible"
+      :title="$t('edit_agent.select_chat_language_title')"
+      :options="chatLanguageSheetOptions"
+      :selected-index="selectedChatLanguageIndex"
+      :confirm-text="$t('common.confirm')"
+      @update:visible="languageSheetVisible = $event"
+      @confirm="onChatLanguageSheetConfirm" />
   </view>
 </template>
 
@@ -163,6 +166,7 @@ import { useTemplateSelector } from './composables/useTemplateSelector';
 import { applyTemplateLogic } from './composables/useApplyTemplate';
 import AgentTemplateSelector from './components/AgentTemplateSelector.vue';
 import WdIcon from '@/uni_modules/wot-design-uni/components/wd-icon/wd-icon.vue';
+import AgentSelectSheet from './components/AgentSelectSheet.vue';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
@@ -186,6 +190,8 @@ const selectedLLMIndex = ref<number | null>(null);
 const selectedVoice = ref<any | null>(null);
 const voiceOptions = ref<any[]>([]);
 const voiceSelectorVisible = ref(false);
+const llmSheetVisible = ref(false);
+const languageSheetVisible = ref(false);
 const statusBarHeight = ref(44);
 const navBarHeight = ref(44);
 
@@ -198,6 +204,20 @@ const selectedChatLanguage = computed(() =>
   selectedChatLanguageIndex.value !== null 
     ? chatLanguageOptions.value[selectedChatLanguageIndex.value] 
     : null
+);
+
+const llmSheetOptions = computed(() =>
+  llmOptions.value.map((item) => ({
+    label: item.displayName || item.name,
+    value: item.id
+  }))
+);
+
+const chatLanguageSheetOptions = computed(() =>
+  chatLanguageOptions.value.map((item) => ({
+    label: item.language,
+    value: item.langCode
+  }))
 );
 
 // 加载语言选项
@@ -369,9 +389,7 @@ async function loadAgentData() {
             (llm: LLM) => llm.id === agent.config.llmModelId
           );
           if (llmIndex !== -1) {
-            selectedLLMIndex.value = llmIndex;
-            selectedLLM.value = llmOptions.value[llmIndex];
-            formData.value.llmModelId = llmOptions.value[llmIndex].id;
+            setSelectedLLM(llmIndex);
           }
         }
 
@@ -395,7 +413,7 @@ async function loadAgentData() {
             (lang) => lang.langCode === normalizedLangCode
           );
           if (langIndex !== -1) {
-            selectedChatLanguageIndex.value = langIndex;
+            setSelectedChatLanguage(langIndex);
           } else {
             selectedChatLanguageIndex.value = null;
           }
@@ -428,9 +446,7 @@ async function loadLLMOptions() {
       llmOptions.value = relocalizeLLMOptions(result.data.llm, $t);
 
       if (llmOptions.value.length > 0 && selectedLLMIndex.value === null) {
-        selectedLLMIndex.value = 0;
-        selectedLLM.value = llmOptions.value[0];
-        formData.value.llmModelId = llmOptions.value[0].id;
+        setSelectedLLM(0);
       }
     }
   } catch (error) {
@@ -508,11 +524,10 @@ function onVoiceSelected(voice: any) {
   voiceSelectorVisible.value = false;
 }
 
-function onLLMChange(e: { detail: { value: number } }) {
-  console.log('选择的LLM:', e.detail.value);
-  selectedLLMIndex.value = e.detail.value;
-  selectedLLM.value = llmOptions.value[e.detail.value];
-  formData.value.llmModelId = llmOptions.value[e.detail.value].id;
+function setSelectedLLM(index: number) {
+  selectedLLMIndex.value = index;
+  selectedLLM.value = llmOptions.value[index];
+  formData.value.llmModelId = llmOptions.value[index].id;
 }
 
 function handleLLMPickerClick() {
@@ -524,16 +539,36 @@ function handleLLMPickerClick() {
   }
 }
 
-function onChatLanguageChange(e: { detail: { value: number } }) {
-  console.log('选择的对话语言:', e.detail.value);
-  selectedChatLanguageIndex.value = e.detail.value;
-  const selected = chatLanguageOptions.value[e.detail.value];
+function setSelectedChatLanguage(index: number) {
+  selectedChatLanguageIndex.value = index;
+  const selected = chatLanguageOptions.value[index];
   formData.value.langCode = selected.langCode;
   formData.value.language = selected.language;
   
   // 语言改变时，重置当前选择的音色，让用户重新选择对应该语言的音色
   selectedVoice.value = null;
   formData.value.ttsVoiceId = '';
+}
+
+function onLLMSheetConfirm(index: number) {
+  if (!llmOptions.value[index]) return;
+  setSelectedLLM(index);
+}
+
+function onChatLanguageSheetConfirm(index: number) {
+  if (!chatLanguageOptions.value[index]) return;
+  setSelectedChatLanguage(index);
+}
+
+function openLLMSheet() {
+  handleLLMPickerClick();
+  if (loadingLLMs.value || llmOptions.value.length === 0) return;
+  llmSheetVisible.value = true;
+}
+
+function openLanguageSheet() {
+  if (loadingLanguages.value || chatLanguageOptions.value.length === 0) return;
+  languageSheetVisible.value = true;
 }
 
 async function updateAgent() {
@@ -780,6 +815,7 @@ function goBack() {
   background: #f7f8fa;
   font-size: 30rpx;
   box-sizing: border-box;
+  cursor: pointer;
 }
 .selector-trigger:active {
   background: #eff0f4;
