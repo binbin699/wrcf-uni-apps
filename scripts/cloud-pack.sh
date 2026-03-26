@@ -37,6 +37,7 @@ ARG_VERSION_CODE=""
 ARG_ABI=""
 ARG_PACKAGE_NAME=""
 ARG_ANDROID_FORMAT=""
+ARG_TARGET_SDK=""
 ARG_IOS_BUNDLE_ID=""
 ARG_IOS_PROFILE=""
 ARG_IOS_CERT=""
@@ -99,8 +100,10 @@ uni-app 云打包脚本
 
 Android 选项:
   --abi <32|64|both>        架构 (32=armeabi-v7a, 64=arm64-v8a, both=兼容包)
+                            注意: android-cn 固定使用 64 位，此参数对其无效
   --package-name <包名>     覆盖 .pack-config 中的 Android 包名
   --android-format <apk|aab> 打包格式 (apk=APK包, aab=AAB包用于Google Play)
+  --target-sdk <版本号>     Android targetSdkVersion (默认 35)
 
 iOS 选项:
   --ios-bundle-id <ID>      覆盖 .pack-config 中的 iOS Bundle ID
@@ -114,7 +117,7 @@ iOS 选项:
 
   # Android 打包（完整参数）
   $(basename "$0") --config android-cn --version 1.1.5 \\
-    --version-code 101050 --abi 64 -y
+    --version-code 101050 --target-sdk 35 -y
 
   # Android AAB 打包（用于 Google Play）
   $(basename "$0") --config android-intl --version 1.1.5 \\
@@ -165,6 +168,10 @@ parse_args() {
                 ;;
             --android-format)
                 ARG_ANDROID_FORMAT="$2"
+                shift 2
+                ;;
+            --target-sdk)
+                ARG_TARGET_SDK="$2"
                 shift 2
                 ;;
             --ios-bundle-id)
@@ -565,6 +572,13 @@ select_version_code() {
 
 # 用户选择安卓架构 (仅 Android)
 select_android_abi() {
+    # android-cn 固定使用 64 位，不再提供选择
+    if [ "$SELECTED_CONFIG" == "android-cn" ]; then
+        SELECTED_ABI_FILTERS='["arm64-v8a"]'
+        print_info "android-cn: 固定使用 64 位 (arm64-v8a)"
+        return
+    fi
+
     # 如果命令行参数已指定，直接使用
     if [ -n "$ARG_ABI" ]; then
         case $ARG_ABI in
@@ -608,6 +622,13 @@ select_android_abi() {
 
 # 用户选择 Android 打包格式
 select_android_format() {
+    # android-cn 固定使用 APK，不提供选择
+    if [ "$SELECTED_CONFIG" == "android-cn" ]; then
+        SELECTED_ANDROID_FORMAT="apk"
+        print_info "android-cn: 固定使用 APK 格式"
+        return
+    fi
+
     # 如果命令行参数已指定，直接使用
     if [ -n "$ARG_ANDROID_FORMAT" ]; then
         case $ARG_ANDROID_FORMAT in
@@ -633,6 +654,29 @@ select_android_format() {
     esac
 
     print_success "选择打包格式: ${SELECTED_ANDROID_FORMAT}"
+}
+
+# 用户选择 targetSdkVersion (仅 Android)
+select_target_sdk_version() {
+    # 如果命令行参数已指定，直接使用
+    if [ -n "$ARG_TARGET_SDK" ]; then
+        SELECTED_TARGET_SDK="$ARG_TARGET_SDK"
+        print_info "使用命令行参数: targetSdkVersion=${SELECTED_TARGET_SDK}"
+        return
+    fi
+
+    print_step "设置 targetSdkVersion"
+    echo -e "    ${DIM}Android 目标 SDK 版本${NC}"
+    echo ""
+    read -p "  输入 targetSdkVersion (留空使用默认值 35): " sdk_input
+
+    if [ -z "$sdk_input" ]; then
+        SELECTED_TARGET_SDK="35"
+    else
+        SELECTED_TARGET_SDK="$sdk_input"
+    fi
+
+    print_success "targetSdkVersion: ${SELECTED_TARGET_SDK}"
 }
 
 # 配置 iOS 证书
@@ -785,13 +829,18 @@ update_env_file() {
 update_manifest_file() {
     print_info "更新 manifest.json 文件..."
 
-    # 根据平台决定是否更新 abiFilters
+    # 根据平台决定是否更新 abiFilters 和 targetSdkVersion
     local update_abi="false"
     local abi_filters='["armeabi-v7a", "arm64-v8a"]'
+    local update_target_sdk="false"
 
     if [ "$SELECTED_PLATFORM" == "android" ] && [ -n "$SELECTED_ABI_FILTERS" ]; then
         update_abi="true"
         abi_filters="$SELECTED_ABI_FILTERS"
+    fi
+
+    if [ "$SELECTED_PLATFORM" == "android" ] && [ -n "$SELECTED_TARGET_SDK" ]; then
+        update_target_sdk="true"
     fi
 
     # 使用 node 脚本更新 JSON 文件
@@ -809,6 +858,11 @@ if ('${update_abi}' === 'true') {
     manifest['app-plus'].distribute.android.abiFilters = ${abi_filters};
 }
 
+// 更新 targetSdkVersion (仅 Android 平台)
+if ('${update_target_sdk}' === 'true') {
+    manifest['app-plus'].distribute.android.targetSdkVersion = parseInt('${SELECTED_TARGET_SDK}');
+}
+
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4));
 console.log('manifest.json 更新成功');
 EOF
@@ -818,6 +872,7 @@ EOF
     print_info "  - versionCode: ${SELECTED_VERSION_CODE}"
     if [ "$SELECTED_PLATFORM" == "android" ]; then
         print_info "  - abiFilters: ${SELECTED_ABI_FILTERS}"
+        print_info "  - targetSdkVersion: ${SELECTED_TARGET_SDK}"
     fi
 }
 
@@ -835,6 +890,7 @@ show_summary() {
         printf "  ${PURPLE}│${NC}  ${DIM}Package:${NC}     %-40s ${PURPLE}│${NC}\n" "${PACKAGE_NAME}"
         printf "  ${PURPLE}│${NC}  ${DIM}ABI:${NC}         %-40s ${PURPLE}│${NC}\n" "${SELECTED_ABI_FILTERS}"
         printf "  ${PURPLE}│${NC}  ${DIM}Format:${NC}      %-40s ${PURPLE}│${NC}\n" "${SELECTED_ANDROID_FORMAT}"
+        printf "  ${PURPLE}│${NC}  ${DIM}TargetSDK:${NC}   %-40s ${PURPLE}│${NC}\n" "${SELECTED_TARGET_SDK}"
     else
         printf "  ${PURPLE}│${NC}  ${DIM}Bundle ID:${NC}   %-40s ${PURPLE}│${NC}\n" "${IOS_BUNDLE_ID}"
         printf "  ${PURPLE}│${NC}  ${DIM}Profile:${NC}     %-40s ${PURPLE}│${NC}\n" "$(basename "${IOS_PROFILE_FILE}")"
@@ -1120,6 +1176,7 @@ main() {
     if [ "$SELECTED_PLATFORM" == "android" ]; then
         select_android_abi
         select_android_format
+        select_target_sdk_version
     fi
 
     if [ "$SELECTED_PLATFORM" == "ios" ]; then
