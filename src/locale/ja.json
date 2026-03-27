@@ -45,7 +45,7 @@
   "tabbar.device": "デバイス",
   "tabbar.agent": "エージェント",
   "tabbar.create": "作成",
-  "tabbar.square": "マーケットプレイス",
+  "tabbar.square": "プリセット",
   "tabbar.profile": "マイページ",
 
   "login.app_name": "Linx AI",
@@ -161,7 +161,7 @@
   "create_agent.select_voice": "音声を選択してください",
   "create_agent.creating": "作成中...",
   "create_agent.create": "作成",
-  "create_agent.use_template": "テンプレート",
+  "create_agent.use_template": "プリセット",
   "create_agent.select_template": "テンプレートを選択",
   "create_agent.all_languages": "すべて",
   "create_agent.page_title": "エージェント作成",
