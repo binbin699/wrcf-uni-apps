@@ -339,13 +339,7 @@ export default {
       } catch (error) {
         console.error('设备绑定失败:', error);
         uni.hideLoading();
-
-        // 即使绑定失败，配网已成功，给用户提示
-        uni.showToast({
-          title: this.$t('bluetooth.submit.config_success_bind_failed'),
-          icon: 'none',
-          duration: 3000
-        });
+        // 即使绑定失败，配网已成功，错误 toast 由 request.ts 统一处理
       }
     },
 

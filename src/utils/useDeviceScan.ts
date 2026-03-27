@@ -144,12 +144,8 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
               });
             }, 1500);
           } catch (error: any) {
-            console.error('设备绑定失败:', error);
+            console.error('[扫码绑定/bindByQrcode] 失败:', error);
             toast.close();
-            toast.warning({
-              msg: error.message || $t('net_config.device_bind_failed'),
-              duration: 2000
-            });
             isNavigating.value = false;
           }
         },

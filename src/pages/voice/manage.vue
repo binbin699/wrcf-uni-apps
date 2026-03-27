@@ -248,10 +248,7 @@ async function togglePublic(voice: Voice) {
     }
   } catch (error: any) {
     uni.hideLoading();
-    uni.showToast({
-      title: error?.message || $t('voice_manage.set_failed'),
-      icon: 'none'
-    });
+    console.error('[音色管理/togglePublic] 失败:', error);
   }
 }
 
@@ -278,10 +275,7 @@ async function deleteVoice(voiceId: string) {
           }
         } catch (error: any) {
           uni.hideLoading();
-          uni.showToast({
-            title: error?.message || $t('voice_manage.delete_failed'),
-            icon: 'none'
-          });
+          console.error('[音色管理/deleteVoice] 失败:', error);
         }
       }
     }
@@ -420,10 +414,7 @@ function showRenameModal(voice: Voice) {
           }
         } catch (error: any) {
           uni.hideLoading();
-          uni.showToast({
-            title: error.message || $t('voice_manage.rename_failed'),
-            icon: 'none'
-          });
+          console.error('[音色管理/renameVoice] 失败:', error);
         }
       }
     }

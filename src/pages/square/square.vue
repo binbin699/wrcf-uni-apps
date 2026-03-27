@@ -287,6 +287,7 @@ import {
   initLanguageDisplayNameCache,
   type ChatLanguageOption
 } from '../agent/lang_opts';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 
 type SquareAgent = Agent & {
   name: string;
@@ -299,6 +300,7 @@ type SquareAgent = Agent & {
 
 const { t: $t } = useI18n();
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 
 // 响应式数据
 const allAgents = ref<SquareAgent[]>([]); // 所有智能体（从后端获取）
@@ -790,10 +792,7 @@ async function bindAgentToDevice() {
       // loadPublicAgents();
       // loadDevices();
     } else {
-      toast.warning({
-        msg: res.message || $t('square.config_failed'),
-        duration: 2000
-      });
+      console.warn('配置失败:', res.message);
     }
   } catch (error) {
     console.error('配置失败:', error);
@@ -817,9 +816,13 @@ const handleBindSuccess = (data: any) => {
 };
 
 function handleBindError(data: any) {
-  console.log('设备绑定失败', data);
+  console.error('绑定失败:', data);
+  if (data?.handledByRequest) {
+    return;
+  }
+
   toast.warning({
-    msg: data.message || $t('square.operation_failed'),
+    msg: data?.message || $t('square.config_failed'),
     duration: 2000,
     zIndex: 2005
   });

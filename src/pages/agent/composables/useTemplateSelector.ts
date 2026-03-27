@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n';
 import { agentApi } from '@/api/index';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import { getChatLanguageOptions, backendLangToLangCode, getSystemLangCode, type ChatLanguageOption } from '../lang_opts';
+import { isRequestHandledError } from '@/utils/request-feedback';
 
 export function useTemplateSelector(
   formData: Ref<{ langCode: string }>,
@@ -93,10 +94,12 @@ export function useTemplateSelector(
     } catch (e) {
       console.error('Fetch templates failed', e);
       // 网络错误或其他异常
-      toast.error({
-        msg: $t('index.get_templates_failed'),
-        duration: 2000
-      });
+      if (!isRequestHandledError(e)) {
+        toast.error({
+          msg: $t('index.get_templates_failed'),
+          duration: 2000
+        });
+      }
     } finally {
       loadingTemplates.value = false;
     }
@@ -154,4 +157,3 @@ export function useTemplateSelector(
     loadLanguageOptions
   };
 }
-

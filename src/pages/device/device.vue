@@ -105,9 +105,12 @@ import AudioPlayerManager from '@/utils/audioPlayer';
 import { Pages, PageMap } from '@/utils/route';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import type { Device, VoiceprintRecord } from '@/pages/device/types';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
+import { isRequestHandledError } from '@/utils/request-feedback';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 
 const deviceList = ref<Device[]>([]);
 const loading = ref(false);
@@ -214,7 +217,9 @@ function deleteDevice(device: Device) {
           }
         } catch (error) {
           console.error('删除设备失败:', error);
-          toast.warning({ msg: $t('device.delete_failed'), duration: 2000, zIndex: 2005 });
+          if (!isRequestHandledError(error)) {
+            toast.warning({ msg: $t('device.delete_failed'), duration: 2000, zIndex: 2005 });
+          }
         }
       }
     }

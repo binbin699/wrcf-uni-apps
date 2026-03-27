@@ -91,8 +91,10 @@ import { useDeviceScan } from '@/utils/useDeviceScan';
 import { deviceApi } from '@/api/index';
 import CustomTabBar from '@/components/CustomTabBar.vue';
 import { AppInfo } from '@/const/index';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 const { showNotify, closeNotify } = useNotify();
 const { t: $t } = useI18n();
 
@@ -398,11 +400,7 @@ function requestUserProfile() {
           icon: 'success'
         });
       } catch (error) {
-        console.error('更新用户信息失败:', error);
-        uni.showToast({
-          title: $t('profile.update_failed'),
-          icon: 'error'
-        });
+        console.error('[个人中心/updateUserInfo] 失败:', error);
       }
     },
     fail: (err) => {

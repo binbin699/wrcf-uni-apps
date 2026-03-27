@@ -57,6 +57,7 @@ import { useI18n } from 'vue-i18n';
 // @ts-ignore
 import { agentApi } from '@/api/index';
 import { useToast } from '@/uni_modules/wot-design-uni';
+import { isRequestHandledError } from '@/utils/request-feedback';
 
 const props = defineProps<{
   modelValue: string;
@@ -147,7 +148,9 @@ async function handlePolish() {
       throw new Error(result.message || $t('create_agent.polish_failed'));
     }
   } catch (error) {
-    toast.error($t('create_agent.polish_failed'));
+    if (!isRequestHandledError(error)) {
+      toast.error($t('create_agent.polish_failed'));
+    }
     polishState.value = 'idle';
   } finally {
     if (requestingTimer) {
@@ -295,5 +298,3 @@ onUnmounted(() => {
   box-sizing: border-box; /* 确保 padding 包含在 height 内 */
 }
 </style>
-
-

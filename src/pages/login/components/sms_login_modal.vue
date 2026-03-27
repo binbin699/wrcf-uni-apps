@@ -58,6 +58,7 @@ import { ref, computed, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import loginApi from '@/api/login';
+import { isRequestHandledError } from '@/utils/request-feedback';
 
 // Props
 const props = withDefaults(
@@ -177,7 +178,9 @@ async function sendVerificationCode() {
     }, 1000);
   } catch (error: any) {
     console.error('发送验证码失败:', error);
-    toast.warning({ msg: $t('login.code_send_failed'), duration: 3000 });
+    if (!isRequestHandledError(error)) {
+      toast.warning({ msg: $t('login.code_send_failed'), duration: 3000 });
+    }
   }
 }
 

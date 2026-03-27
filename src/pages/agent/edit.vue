@@ -167,9 +167,12 @@ import { applyTemplateLogic } from './composables/useApplyTemplate';
 import AgentTemplateSelector from './components/AgentTemplateSelector.vue';
 import WdIcon from '@/uni_modules/wot-design-uni/components/wd-icon/wd-icon.vue';
 import AgentSelectSheet from './components/AgentSelectSheet.vue';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
+import { isRequestHandledError } from '@/utils/request-feedback';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 
 // 响应式数据
 const formData = ref({
@@ -454,11 +457,12 @@ async function loadLLMOptions() {
     selectedLLMIndex.value = null;
     selectedLLM.value = null;
     formData.value.llmModelId = '';
-
-    toast.error({
-      msg: $t('edit_agent.llm_load_failed_retry'),
-      duration: 2000
-    });
+    if (!isRequestHandledError(error)) {
+      toast.error({
+        msg: $t('edit_agent.llm_load_failed_retry'),
+        duration: 2000
+      });
+    }
   } finally {
     loadingLLMs.value = false;
   }

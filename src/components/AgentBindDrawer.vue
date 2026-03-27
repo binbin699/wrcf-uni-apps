@@ -87,6 +87,7 @@
 <script>
 import { PageMap, Pages } from '@/utils/route';
 import { agentApi, deviceApi } from '../api/index';
+import { isRequestHandledError } from '@/utils/request-feedback';
 import {
   requestCameraAndAlbumPermission,
   checkPermissionStatus,
@@ -195,6 +196,14 @@ export default {
       } catch (error) {
         console.error(this.$t('agent_bind_drawer.bind_device_failed') + ':', error);
 
+        if (isRequestHandledError(error)) {
+          return {
+            success: false,
+            message: error.message,
+            handledByRequest: true
+          };
+        }
+
         // 检查错误消息（兼容多种错误格式）
         const errorMsg =
           error?.message || error?.errMsg || (typeof error === 'string' ? error : '');
@@ -226,7 +235,8 @@ export default {
     async handleConfirm() {
       if (!this.selectedDeviceId) {
         this.$emit('error', {
-          message: this.$t('agent_bind_drawer.please_select_device')
+          message: this.$t('agent_bind_drawer.please_select_device'),
+          handledByRequest: false
         });
         return;
       }
@@ -244,7 +254,8 @@ export default {
         this.loadDeviceList();
       } else {
         this.$emit('error', {
-          message: result.message
+          message: result.message,
+          handledByRequest: Boolean(result.handledByRequest)
         });
       }
     },
@@ -378,11 +389,6 @@ export default {
             } catch (error) {
               console.error('设备绑定失败:', error);
               uni.hideLoading();
-              uni.showToast({
-                title: error.message || this.$t('net_config.device_bind_failed'),
-                icon: 'none',
-                duration: 2000
-              });
             }
           },
           fail: (err) => {

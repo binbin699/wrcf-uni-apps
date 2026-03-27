@@ -163,6 +163,7 @@ import { useToast } from '@/uni_modules/wot-design-uni';
 import { onLoad, onShow, onHide } from '@dcloudio/uni-app';
 import type { LLM, Voice } from '@/pages/agent/types';
 import { PageMap, Pages } from '@/utils/route';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 import { loadOptions } from './create';
 import { relocalizeLLMOptions } from './llm';
 import {
@@ -178,6 +179,7 @@ import AgentSelectSheet from './components/AgentSelectSheet.vue';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 
 // 响应式数据
 const formData = ref({

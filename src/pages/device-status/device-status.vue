@@ -320,9 +320,11 @@ import {
 } from '@/pages/agent/lang_opts';
 import CustomTabBar from '@/components/CustomTabBar.vue';
 import { useUserStore } from '@/store';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 
 const { t: $t } = useI18n();
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 const { showNotify, closeNotify } = useNotify();
 const { scanAndBind, isNavigating } = useDeviceScan({ toast, showNotify, closeNotify });
 
@@ -675,14 +677,7 @@ const handleSaveDeviceName = async () => {
       icon: 'success'
     });
   } catch (error: any) {
-    console.error('更新设备名称失败:', error);
-    const errorMsg = error?.message?.includes('Not Found')
-      ? $t('common.operation_failed')
-      : $t('common.save_failed');
-    uni.showToast({
-      title: errorMsg,
-      icon: 'none'
-    });
+    console.error('[设备状态/saveDeviceName] 失败:', error);
   }
 };
 

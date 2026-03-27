@@ -58,9 +58,11 @@ import { onLoad, onUnload } from '@dcloudio/uni-app';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 import { requestRecordPermission } from '@/utils/permission';
 
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 const { showNotify, closeNotify } = useNotify();
 const { t: $t } = useI18n();
 
@@ -267,10 +269,7 @@ async function bindVoiceprint() {
       }, 2000);
     }
   } catch (error: any) {
-    toast.error({
-      msg: error.message || error.errMsg || $t('bind_voiceprint.bind_failed'),
-      duration: 2000
-    });
+    console.error('[声纹绑定/bindVoiceprint] 失败:', error);
   } finally {
     uploading.value = false;
   }

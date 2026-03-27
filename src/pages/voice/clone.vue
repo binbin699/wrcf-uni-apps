@@ -877,24 +877,14 @@ async function uploadAndCreateVoice() {
   } catch (error: any) {
     console.error(isEditMode.value ? '更新音色失败:' : '创建音色失败:', error);
     uni.hideLoading();
-
-    let errorMessage = isEditMode.value
-      ? $t('voice_clone.update_failed')
-      : $t('voice_clone.create_failed');
-
+    // 仅对本地文件错误（非 API 响应）单独弹提示，API 错误已由 request.ts 统一处理
     if (error.errMsg && error.errMsg.includes('createUploadTask:fail')) {
-      errorMessage = $t('voice_clone.upload_failed_check_network');
-    } else if (error.message && error.message.includes('voice name already exists')) {
-      errorMessage = $t('voice_clone.voice_name_exists');
-    } else if (error.message) {
-      errorMessage = error.message;
+      uni.showToast({
+        title: `❌ ${$t('voice_clone.upload_failed_check_network')}`,
+        icon: 'none',
+        duration: 3000
+      });
     }
-
-    uni.showToast({
-      title: errorMessage,
-      icon: 'none',
-      duration: 3000
-    });
   } finally {
     uploading.value = false;
   }

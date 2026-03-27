@@ -315,8 +315,10 @@ import {
 } from '@/utils/permission';
 import { AppInfo } from '@/const';
 import { useNotify } from '@/uni_modules/wot-design-uni';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 const message = useMessage();
 const { showNotify, closeNotify } = useNotify();
 const { t: $t, locale } = useI18n();
@@ -565,10 +567,6 @@ async function handleScanQrSuccess(res: { result: string }) {
     }, 1500);
   } catch (error) {
     console.error('handleScanQrSuccess error', error);
-    toast.warning({
-      msg: $t('net_config.device_bind_failed'),
-      duration: 2000
-    });
     // 绑定失败，返回上一页
     uni.navigateBack();
   }

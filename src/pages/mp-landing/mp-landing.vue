@@ -63,6 +63,7 @@ import { onShow } from '@dcloudio/uni-app';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import { useUserStore } from '@/store';
 import { PageMap, Pages } from '@/utils/route';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 
 defineOptions({
   name: 'MpLanding'
@@ -70,6 +71,7 @@ defineOptions({
 
 const { t: $t } = useI18n();
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 const userStore = useUserStore();
 
 const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';

@@ -11,6 +11,7 @@ import type {
 import { loginApi } from '@/api/login';
 import { useTokenStore } from './token';
 import i18n from '@/locale';
+import { isRequestHandledError } from '@/utils/request-feedback';
 const $t = i18n.global.t;
 
 // 初始化状态
@@ -90,7 +91,9 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('Google登录失败:', error);
-        loginError.value = error.message || $t('login.google_login_failed');
+        loginError.value = isRequestHandledError(error)
+          ? ''
+          : error.message || $t('login.google_login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -148,7 +151,7 @@ export const useUserStore = defineStore(
         }
 
         console.error('微信登录失败原因:', errMsg || '未知错误');
-        loginError.value = errMsg || $t('login.wx_login_failed');
+        loginError.value = isRequestHandledError(error) ? '' : errMsg || $t('login.wx_login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -178,7 +181,9 @@ export const useUserStore = defineStore(
           return false;
         }
 
-        loginError.value = errMsg || $t('login.apple_login_failed');
+        loginError.value = isRequestHandledError(error)
+          ? ''
+          : errMsg || $t('login.apple_login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -203,7 +208,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('账号密码登录失败:', error);
-        loginError.value = error.message || $t('login.login_failed');
+        loginError.value = isRequestHandledError(error) ? '' : error.message || $t('login.login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -228,7 +233,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('邮箱密码登录失败:', error);
-        loginError.value = error.message || $t('login.login_failed');
+        loginError.value = isRequestHandledError(error) ? '' : error.message || $t('login.login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -253,7 +258,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('小程序手机号登录失败:', error);
-        loginError.value = error.message || $t('login.login_failed');
+        loginError.value = isRequestHandledError(error) ? '' : error.message || $t('login.login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -278,7 +283,9 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('注册失败:', error);
-        loginError.value = error.message || $t('login.register_failed');
+        loginError.value = isRequestHandledError(error)
+          ? ''
+          : error.message || $t('login.register_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -300,7 +307,7 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('短信登录失败:', error);
-        loginError.value = error.message || $t('login.login_failed');
+        loginError.value = isRequestHandledError(error) ? '' : error.message || $t('login.login_failed');
         return false;
       } finally {
         isLoading.value = false;
@@ -325,7 +332,9 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('游客登录失败:', error);
-        loginError.value = error.message || $t('login.guest_login_failed');
+        loginError.value = isRequestHandledError(error)
+          ? ''
+          : error.message || $t('login.guest_login_failed');
         return false;
       } finally {
         isLoading.value = false;

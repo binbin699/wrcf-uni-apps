@@ -4,6 +4,7 @@ import type { BaseResponse, UploadOptions, UploadResponse } from '@/types/reques
 import { PageMap, Pages } from './route';
 import { getLocale } from '@/locale/index';
 import i18n from '@/locale';
+import { createRequestHandledError, emitGlobalRequestError } from './request-feedback';
 
 const $t = i18n.global.t;
 
@@ -22,7 +23,7 @@ interface RequestOptions {
 /**
  * 请求响应接口
  */
-interface RequestResponse<T = any> extends BaseResponse<T> {}
+interface RequestResponse<T = any> extends BaseResponse<T> { }
 
 /**
  * 网络请求封装类
@@ -51,6 +52,48 @@ class Request {
     }
   }
 
+  private rejectWithGlobalError(options: {
+    message: string;
+    requestId?: string;
+    code?: number;
+    statusCode?: number;
+    response?: unknown;
+    reject: (reason?: unknown) => void;
+  }): void {
+    emitGlobalRequestError({
+      message: options.message,
+      requestId: options.requestId
+    });
+
+    options.reject(
+      createRequestHandledError({
+        message: options.message,
+        requestId: options.requestId,
+        code: options.code,
+        statusCode: options.statusCode,
+        response: options.response
+      })
+    );
+  }
+
+  private resolveRequestId(headers: unknown): string | undefined {
+    if (!headers || typeof headers !== 'object') {
+      return undefined;
+    }
+
+    for (const [key, value] of Object.entries(headers as Record<string, unknown>)) {
+      if (key.toLowerCase() !== 'x-request-id') {
+        continue;
+      }
+
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+
+    return undefined;
+  }
+
   private async getHeader(
     header?: Record<string, string>,
     skipToken: boolean = false
@@ -60,7 +103,7 @@ class Request {
     // System-Language: 设备系统语言（用于匹配用户母语相关的业务逻辑，如绑定默认 Agent）
     const headers: Record<string, string> = {
       'Accept-Language': getLocale(),
-      'System-Language': uni.getSystemInfoSync().language,
+      'System-Language': uni.getSystemInfoSync().language || '',
       ...header
     };
 
@@ -232,34 +275,38 @@ class Request {
               this.handleAuthError();
               reject(response);
             } else {
-              const reqId = res.header['x-request-id'] || 'error';
-              uni.showToast({
-                title: `[${reqId}] ${response.message || $t('common.request_failed')}`,
-                icon: 'none',
-                duration: 2000
+              const reqId = this.resolveRequestId(res.header);
+              const msg = response.message || $t('common.request_failed');
+              this.rejectWithGlobalError({
+                message: msg,
+                requestId: reqId,
+                code: response.code,
+                statusCode: res.statusCode,
+                response,
+                reject
               });
-              reject(response);
             }
           } else {
-            const reqId = res.header['x-request-id'] || 'error';
-            uni.showToast({
-              title: `[${reqId}] ${response.message || $t('common.network_error')}`,
-              icon: 'none',
-              duration: 2000
+            const reqId = this.resolveRequestId(res.header);
+            const msg = response.message || $t('common.network_error');
+            this.rejectWithGlobalError({
+              message: msg,
+              requestId: reqId,
+              statusCode: res.statusCode,
+              response: res,
+              reject
             });
-            reject(res);
           }
         },
         fail: (err) => {
           if (options.showLoading !== false) {
             uni.hideLoading();
           }
-          uni.showToast({
-            title: $t('common.network_error'),
-            icon: 'none',
-            duration: 2000
+          this.rejectWithGlobalError({
+            message: $t('common.network_error'),
+            response: err,
+            reject
           });
-          reject(err);
         }
       });
     });
@@ -392,44 +439,44 @@ class Request {
                     });
                 }
               } else {
-                uni.showToast({
-                  title: $t('common.upload_failed'),
-                  icon: 'none'
+                this.rejectWithGlobalError({
+                  message: $t('common.upload_failed'),
+                  code: response.code,
+                  statusCode: res.statusCode,
+                  response,
+                  reject
                 });
-
-                reject(response);
               }
             } catch (e) {
-              uni.showToast({
-                title: $t('common.upload_failed'),
-                icon: 'none',
-                duration: 2000
-              });
               console.error('上传解析响应失败:', e);
-              reject(new Error($t('common.upload_failed')));
+              this.rejectWithGlobalError({
+                message: $t('common.upload_failed'),
+                statusCode: res.statusCode,
+                response: e,
+                reject
+              });
             }
           } else {
             if (options.showLoading !== false) {
               uni.hideLoading();
             }
-            uni.showToast({
-              title: $t('common.upload_failed'),
-              icon: 'none',
-              duration: 2000
+            this.rejectWithGlobalError({
+              message: $t('common.upload_failed'),
+              statusCode: res.statusCode,
+              response: res,
+              reject
             });
-            reject(new Error($t('common.upload_failed')));
           }
         },
         fail: (err) => {
           if (options.showLoading !== false) {
             uni.hideLoading();
           }
-          uni.showToast({
-            title: $t('common.upload_failed'),
-            icon: 'none',
-            duration: 2000
+          this.rejectWithGlobalError({
+            message: $t('common.upload_failed'),
+            response: err,
+            reject
           });
-          reject(err);
         }
       });
 

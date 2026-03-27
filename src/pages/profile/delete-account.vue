@@ -60,9 +60,12 @@ import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@/store/user';
 import { PageMap, Pages } from '@/utils/route';
 import { useToast } from '@/uni_modules/wot-design-uni/components/wd-toast';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
+import { isRequestHandledError } from '@/utils/request-feedback';
 
 const { t: $t } = useI18n();
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 const userStore = useUserStore();
 const isSubmitting = ref(false);
 const isAgreed = ref(false);
@@ -109,6 +112,10 @@ function handleSubmit() {
       } catch (error: any) {
         console.error('delAccount failed:', error);
         toast.close();
+
+        if (isRequestHandledError(error)) {
+          return;
+        }
 
         // 提取后端返回的错误信息
         let errorMessage = $t('profile.delete_account_failed');

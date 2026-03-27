@@ -91,9 +91,12 @@ import { useI18n } from 'vue-i18n';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import { useUserStore } from '@/store/user';
 import type { IPasswordRegisterForm } from '@/api/types/login';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
+import { isRequestHandledError } from '@/utils/request-feedback';
 
 const { t: $t } = useI18n();
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 const userStore = useUserStore();
 
 // 响应式数据
@@ -190,18 +193,20 @@ async function handleRegister() {
       setTimeout(() => {
         redirectToMain();
       }, 1500);
-    } else {
+    } else if (userStore.loginError) {
       toast.warning({
-        msg: userStore.loginError || $t('register.register_failed'),
+        msg: userStore.loginError,
         duration: 3000
       });
     }
   } catch (error: any) {
     console.error('注册失败:', error);
-    toast.warning({
-      msg: error.message || $t('register.register_failed'),
-      duration: 3000
-    });
+    if (!isRequestHandledError(error)) {
+      toast.warning({
+        msg: error.message || $t('register.register_failed'),
+        duration: 3000
+      });
+    }
   }
 }
 

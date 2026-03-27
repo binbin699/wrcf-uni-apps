@@ -77,6 +77,8 @@ import { useDeviceScan } from '@/utils/useDeviceScan';
 import AgentCard from '@/components/AgentCard.vue';
 import AgentBindDrawer from '@/components/AgentBindDrawer.vue';
 import CustomTabBar from '@/components/CustomTabBar.vue';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
+import { isRequestHandledError } from '@/utils/request-feedback';
 
 defineOptions({
   name: 'Home'
@@ -84,6 +86,7 @@ defineOptions({
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 const { showNotify, closeNotify } = useNotify();
 
 // 使用用户store
@@ -211,8 +214,12 @@ function handleBindSuccess(data: any) {
 
 function handleBindError(data: any) {
   console.error('绑定失败:', data);
-  toast.error({
-    msg: data.message || $t('index.operation_failed'),
+  if (data?.handledByRequest) {
+    return;
+  }
+
+  toast.warning({
+    msg: data?.message || $t('index.operation_failed'),
     duration: 2000,
     zIndex: 2005
   });
@@ -247,10 +254,12 @@ function handleAgentDelete(agent: Agent) {
     })
     .catch((err: any) => {
       console.error('删除失败:', err);
-      toast.error({
-        msg: `${$t('common.delete_failed_with_message')}: ${err.message || err.errMsg}`,
-        duration: 2000
-      });
+      if (!isRequestHandledError(err)) {
+        toast.error({
+          msg: `${$t('common.delete_failed_with_message')}: ${err.message || err.errMsg}`,
+          duration: 2000
+        });
+      }
     });
 }
 

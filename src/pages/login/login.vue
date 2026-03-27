@@ -261,6 +261,7 @@ import { PageMap, Pages } from '@/utils/route';
 import type { IPasswordLoginForm } from '@/api/types/login';
 import storage from '@/utils/storage';
 import { isWechatExist } from '@/utils/isWechatExist';
+import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 import SmsLoginModal from './components/sms_login_modal.vue';
 // #ifdef APP-HARMONY
 import PrivacyAgreementDialog from '@/components/PrivacyAgreementDialog.vue';
@@ -271,6 +272,7 @@ import { requestBluetoothPermissionsForAndroid12 } from '@/utils/bluetoothPermis
 
 const { t: $t } = useI18n();
 const toast = useToast();
+useGlobalRequestErrorToast(toast);
 const userStore = useUserStore();
 const STORAGE_LOGIN_Unionid_KEY = 'page-options-login-unionid';
 const STORAGE_LOGIN_EMAIL_KEY = 'page-options-login-email';
@@ -348,8 +350,12 @@ function handleLoginSuccess() {
 
 function handleLoginError(error: any) {
   console.error('登录失败:', error);
+  const message = typeof error === 'string' ? error : error?.message;
+  if (!message) {
+    return;
+  }
   toast.warning({
-    msg: error.message || $t('login.login_failed'),
+    msg: message,
     duration: 3000
   });
 }
@@ -366,7 +372,7 @@ async function handleGoogleLogin() {
     // 失败
     if (userStore.loginError.includes($t('login.auth_cancel'))) {
       // 取消登录
-    } else {
+    } else if (userStore.loginError) {
       handleLoginError(userStore.loginError);
     }
   }
@@ -382,7 +388,7 @@ async function handleAppleLogin() {
   } else {
     if (userStore.loginError.includes('cancel') || userStore.loginError.includes('取消')) {
       // 取消登录
-    } else {
+    } else if (userStore.loginError) {
       handleLoginError({ message: userStore.loginError });
     }
   }
@@ -398,7 +404,7 @@ async function handleWxAppLogin() {
   } else {
     if (userStore.loginError?.includes('cancel') || userStore.loginError?.includes('取消')) {
       // 取消登录
-    } else {
+    } else if (userStore.loginError) {
       handleLoginError(userStore.loginError || $t('login.login_failed'));
     }
   }
@@ -427,7 +433,7 @@ async function handlePhoneLogin(e: any) {
     const isSuccess = await userStore.miniPhoneLogin(loginData);
     if (isSuccess) {
       handleLoginSuccess();
-    } else {
+    } else if (userStore.loginError) {
       handleLoginError({ message: userStore.loginError || $t('login.login_failed') });
     }
   } catch (error: any) {
@@ -440,7 +446,7 @@ async function handleGuestLogin() {
     const isSuccess = await userStore.guestLogin();
     if (isSuccess) {
       handleLoginSuccess();
-    } else {
+    } else if (userStore.loginError) {
       handleLoginError({ message: userStore.loginError || $t('login.login_failed') });
     }
   } catch (error: any) {
@@ -510,7 +516,9 @@ async function submitPasswordLogin() {
   try {
     const res = await userStore.passwordLogin(passwordForm.value);
     if (!res) {
-      toast.warning({ msg: userStore.loginError || $t('login.login_failed'), duration: 3000 });
+      if (userStore.loginError) {
+        toast.warning({ msg: userStore.loginError, duration: 3000 });
+      }
       return;
     }
 
@@ -565,7 +573,9 @@ async function submitEmailLogin() {
     });
 
     if (!success) {
-      toast.warning({ msg: userStore.loginError || $t('login.login_failed'), duration: 3000 });
+      if (userStore.loginError) {
+        toast.warning({ msg: userStore.loginError, duration: 3000 });
+      }
       return;
     }
 
@@ -602,7 +612,9 @@ async function handleSmsLoginSubmit(data: { phone: string; ticket: string; code:
     
     // 实际登录逻辑
     if (!success) {
-      toast.warning({ msg: userStore.loginError || $t('login.login_failed'), duration: 3000 });
+      if (userStore.loginError) {
+        toast.warning({ msg: userStore.loginError, duration: 3000 });
+      }
       return;
     }
     handleLoginSuccess();
