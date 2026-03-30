@@ -117,7 +117,8 @@ export default {
       _devices: [],
       _showNotify: null,
       _closeNotify: null,
-      _filterRegex: null
+      _filterRegex: null,
+      _isUnmounted: false
     };
   },
   computed: {
@@ -152,6 +153,9 @@ export default {
 
     // 进入页面后自动开始扫描
     this.startDeviceScan();
+  },
+  beforeUnmount() {
+    this._isUnmounted = true;
   },
   methods: {
     /**
@@ -232,6 +236,8 @@ export default {
     },
 
     async startDeviceScan() {
+      if (this._isUnmounted) return;
+
       // 重置连接状态
       this.deviceList = null;
       this.allScannedDevices = [];
@@ -304,6 +310,8 @@ export default {
           this.deviceList = allNormalized;
         }
 
+        if (this._isUnmounted) return;
+
         if (this.deviceList.length === 0 && this.allScannedDevices.length === 0) {
           uni.showToast({
             title: this.$t('bluetooth.select_device.no_devices'),
@@ -313,13 +321,18 @@ export default {
         }
       } catch (error) {
         console.error('扫描设备失败:', error);
+        if (this._isUnmounted) return;
+
         if (`${error}`.includes('请开启手机蓝牙后重试')) {
           uni.showToast({
             title: this.$t('bluetooth.select_device.bluetooth_disabled'),
             icon: 'none',
             duration: 2000
           });
-        } else {
+        } else if (
+          bluetoothConfigManager.getState().currentStep === CONFIG_STEPS.SELECT_DEVICE &&
+          !bluetoothConfigManager.getState().configCompleted
+        ) {
           uni.showToast({
             title: this.$t('bluetooth.select_device.list_failed'),
             icon: 'none',
@@ -328,6 +341,7 @@ export default {
         }
         this.deviceList = [];
       } finally {
+        if (this._isUnmounted) return;
         this.isLoadingDevices = false;
       }
     },

@@ -282,14 +282,6 @@ export async function searchBluetoothDevices() {
     return devices;
   } catch (error) {
     console.error('搜索蓝牙设备失败:', error);
-
-    // 显示扫描失败提示
-    uni.showToast({
-      title: $t('bluetooth.scan_failed'),
-      icon: 'none',
-      duration: 2000
-    });
-
     throw error;
   }
 }
