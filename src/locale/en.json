@@ -218,6 +218,10 @@
   "device.confirm_delete_device": "Confirm delete device",
   "device.delete_success": "Delete successful",
   "device.delete_failed": "Delete failed",
+  "device.bound": "Bound",
+  "device.delete_device": "Delete",
+  "device.delete_confirm_msg": "Are you sure you want to delete device {name}? This cannot be undone.",
+  "device.no_agent": "None",
 
   "device_status.no_device": "No Device",
   "device_status.no_device_desc": "Add a device to get started",

@@ -223,6 +223,10 @@
   "device.confirm_delete_device": "デバイスを削除しますか",
   "device.delete_success": "削除成功",
   "device.delete_failed": "削除失敗",
+  "device.bound": "バインド済み",
+  "device.delete_device": "削除",
+  "device.delete_confirm_msg": "デバイス {name} を削除しますか？この操作は元に戻せません。",
+  "device.no_agent": "なし",
 
   "device_status.no_device": "デバイスがありません",
   "device_status.no_device_desc": "デバイスを追加して開始",

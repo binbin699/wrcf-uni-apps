@@ -5,6 +5,41 @@
     <view class="custom-navbar">
       <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="nav-content" :style="{ height: navBarHeight + 'px' }">
+        <view class="language-selector-container" v-if="availableLanguages.length > 0">
+          <view
+            class="language-selector"
+            :class="{ expanded: showLanguagePicker }"
+            @click="showLanguagePicker = !showLanguagePicker">
+            <view class="language-selector-inner">
+              <text class="language-label">{{ selectedLanguageLabel }}</text>
+            </view>
+            <view class="language-arrow-wrapper" :class="{ rotated: showLanguagePicker }">
+              <image class="language-arrow" src="/static/icons/arrow-down.svg" mode="aspectFit" />
+            </view>
+          </view>
+
+          <!-- 语言下拉列表 -->
+          <view class="language-dropdown" :class="{ show: showLanguagePicker }">
+            <view class="language-dropdown-inner">
+              <view
+                v-for="(lang, index) in availableLanguages"
+                :key="lang.langCode"
+                class="language-option"
+                :class="{ active: selectedLanguage === lang.langCode }"
+                :style="{ animationDelay: showLanguagePicker ? `${index * 30}ms` : '0ms' }"
+                @click.stop="selectLanguage(lang.langCode)">
+                <view class="language-option-content">
+                  <text class="language-option-text">{{ lang.language }}</text>
+                </view>
+                <view v-if="selectedLanguage === lang.langCode" class="language-check-wrapper">
+                  <view class="language-check-circle">
+                    <image class="language-check" src="/static/icons/check.svg" mode="aspectFit" />
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
         <text class="nav-title">{{ $t('square.title') }}</text>
       </view>
     </view>
@@ -18,44 +53,6 @@
           placeholder-style="color: #374151;"
           v-model="searchKeyword"
           @input="onSearchInput" />
-      </view>
-    </view>
-
-    <!-- 语言选择下拉框 - 移到 scroll-view 外部避免被裁剪 -->
-    <view class="language-selector-container" v-if="availableLanguages.length > 0">
-      <view
-        class="language-selector"
-        :class="{ expanded: showLanguagePicker }"
-        @click="showLanguagePicker = !showLanguagePicker">
-        <view class="language-selector-inner">
-          <text class="language-icon">🌐</text>
-          <text class="language-label">{{ selectedLanguageLabel }}</text>
-        </view>
-        <view class="language-arrow-wrapper" :class="{ rotated: showLanguagePicker }">
-          <image class="language-arrow" src="/static/icons/arrow-down.svg" mode="aspectFit" />
-        </view>
-      </view>
-
-      <!-- 语言下拉列表 -->
-      <view class="language-dropdown" :class="{ show: showLanguagePicker }">
-        <view class="language-dropdown-inner">
-          <view
-            v-for="(lang, index) in availableLanguages"
-            :key="lang.langCode"
-            class="language-option"
-            :class="{ active: selectedLanguage === lang.langCode }"
-            :style="{ animationDelay: showLanguagePicker ? `${index * 30}ms` : '0ms' }"
-            @click.stop="selectLanguage(lang.langCode)">
-            <view class="language-option-content">
-              <text class="language-option-text">{{ lang.language }}</text>
-            </view>
-            <view v-if="selectedLanguage === lang.langCode" class="language-check-wrapper">
-              <view class="language-check-circle">
-                <image class="language-check" src="/static/icons/check.svg" mode="aspectFit" />
-              </view>
-            </view>
-          </view>
-        </view>
       </view>
     </view>
 
@@ -335,7 +332,7 @@ const showLanguagePicker = ref<boolean>(false); // 是否显示语言选择器
 const availableLanguages = ref<{ language: string; langCode: string }[]>([]); // 智能体中存在的语言选项
 
 const modelTags = computed(() => {
-  let tags: { id: string; name: string }[] = [];
+  const tags: { id: string; name: string }[] = [];
 
   // 定义所有可能的模型标签
   const allModelTags = [
@@ -862,7 +859,7 @@ function handleBindCancel() {
 
 .nav-content {
   min-height: 88rpx;
-  padding: 16rpx 0;
+  padding: 16rpx 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -942,24 +939,23 @@ function handleBindCancel() {
 
 /* 语言选择器样式 - 与搜索框风格统一 */
 .language-selector-container {
-  padding: 0 40rpx;
-  margin-bottom: 24rpx;
-  position: relative;
+  position: absolute;
+  left: 40rpx;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 200;
 }
 
 .language-selector {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 96rpx;
-  padding: 0 40rpx 0 42rpx;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 40rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 16rpx 64rpx rgba(100, 100, 255, 0.1);
-  backdrop-filter: blur(20rpx);
-  -webkit-backdrop-filter: blur(20rpx);
+  justify-content: flex-start;
+  gap: 8rpx;
+  height: 52rpx;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
 }
@@ -969,30 +965,24 @@ function handleBindCancel() {
 }
 
 .language-selector.expanded {
-  border-color: rgba(100, 100, 255, 0.3);
-  box-shadow: 0 16rpx 64rpx rgba(100, 100, 255, 0.15);
+  opacity: 0.85;
 }
 
 .language-selector-inner {
   display: flex;
   align-items: center;
-  gap: 30rpx;
-}
-
-.language-icon {
-  font-size: 32rpx;
-  opacity: 0.7;
+  gap: 8rpx;
 }
 
 .language-label {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 400;
-  color: #374151;
+  color: #212730;
 }
 
 .language-arrow-wrapper {
-  width: 32rpx;
-  height: 32rpx;
+  width: 24rpx;
+  height: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1004,16 +994,16 @@ function handleBindCancel() {
 }
 
 .language-arrow {
-  width: 24rpx;
-  height: 24rpx;
+  width: 20rpx;
+  height: 20rpx;
   opacity: 0.5;
 }
 
 .language-dropdown {
   position: absolute;
-  top: calc(100% + 12rpx);
-  left: 40rpx;
-  right: 40rpx;
+  top: calc(100% + 16rpx);
+  left: 0;
+  width: 260rpx;
   background: rgba(255, 255, 255, 0.85);
   border-radius: 32rpx;
   border: 2rpx solid rgba(255, 255, 255, 0.8);

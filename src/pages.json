@@ -192,6 +192,7 @@
           "path": "device",
           "style": {
             "navigationBarTitleText": "%pages.device%",
+            "navigationStyle": "custom",
             "app-plus": {
               "bounce": "none"
             }

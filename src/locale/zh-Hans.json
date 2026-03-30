@@ -218,6 +218,10 @@
   "device.confirm_delete_device": "确认删除设备",
   "device.delete_success": "删除成功",
   "device.delete_failed": "删除失败",
+  "device.bound": "已绑定",
+  "device.delete_device": "删除设备",
+  "device.delete_confirm_msg": "确认删除设备 {name}？删除后不可恢复。",
+  "device.no_agent": "无",
 
   "device_status.no_device": "暂无设备",
   "device_status.no_device_desc": "添加设备开始使用",

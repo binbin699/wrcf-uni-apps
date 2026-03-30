@@ -223,6 +223,10 @@
   "device.confirm_delete_device": "Удалить устройство?",
   "device.delete_success": "Удалено успешно",
   "device.delete_failed": "Ошибка удаления",
+  "device.bound": "Привязано",
+  "device.delete_device": "Удалить",
+  "device.delete_confirm_msg": "Вы уверены, что хотите удалить устройство {name}? Это действие необратимо.",
+  "device.no_agent": "Нет",
 
   "device_status.no_device": "Нет устройства",
   "device_status.no_device_desc": "Добавьте устройство, чтобы начать",

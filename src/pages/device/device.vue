@@ -1,6 +1,19 @@
 <template>
   <wd-toast />
+  <wd-message-box />
   <view class="container">
+    <view class="custom-navbar">
+      <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+      <view class="nav-content" :style="{ height: navContentHeight + 'px' }">
+        <view class="nav-side" @click="goBack">
+          <wd-icon name="arrow-left" size="20px" color="#212730"></wd-icon>
+        </view>
+        <text class="nav-title">{{ $t('pages.device') }}</text>
+        <view class="nav-side"></view>
+      </view>
+    </view>
+
+    <view class="page-content" :style="{ paddingTop: statusBarHeight + navContentHeight + 'px' }">
     <!-- 加载态 -->
     <view class="loading-state" v-if="loading">
       <text class="loading-text">{{ $t('device.loading') }}</text>
@@ -8,35 +21,38 @@
 
     <!-- 设备列表 -->
     <view class="device-list" v-else-if="deviceList.length > 0">
-      <view class="device-item" v-for="device in deviceList" :key="device.id" @click.stop="handleSelectDevice(device)">
-        <view class="device-info">
-          <view class="device-header">
-            <text class="device-name">{{ device.deviceName }}</text>
-            <view class="header-actions" @click.stop>
-              <wd-button type="icon" icon="delete" @click="deleteDevice(device)"></wd-button>
+      <template v-for="(device, index) in deviceList" :key="device.id">
+        <view class="device-item" @click.stop="handleSelectDevice(device)">
+          <!-- 左侧：设备信息 -->
+          <view class="device-info">
+            <!-- 设备名 + 绑定标签 -->
+            <view class="device-name-row">
+              <text class="device-name">{{ device.deviceName }}</text>
+              <view class="device-tag" :class="device.agentName ? 'bound' : 'unbound'">
+                <text class="device-tag-text">{{ device.agentName ? $t('device.bound') : $t('device.unbound') }}</text>
+              </view>
+            </view>
+            <!-- 详情信息 -->
+            <view class="device-details">
+              <text class="device-mac">MAC:{{ device.macAddress }}</text>
+              <text class="device-detail">{{ $t('device.bound_agent') }}：{{ device.agentName || $t('device.no_agent') }}</text>
             </view>
           </view>
-          <text class="device-mac">MAC: {{ device.macAddress }}</text>
-          <text class="device-agent" v-if="device.agentName">
-            {{ $t('device.bound_agent') }}: {{ device.agentName }}
-          </text>
-          <text class="device-agent unbound" v-else>
-            {{ $t('device.bound_agent') }}: {{ $t('device.unbound') }}
-          </text>
-          <!-- TODO: 绑定时间和方法显示功能待修复，暂时隐藏
-          <text class="device-remark" v-if="device.remark">
-            {{ $t('device.remark') }}: {{ getLocalizedRemark(device.remark) }}
-          </text>
-          -->
+          <!-- 右侧：删除按钮 -->
+          <view class="delete-btn" @click.stop="deleteDevice(device)">
+            <text class="delete-btn-text">{{ $t('device.delete_device') }}</text>
+          </view>
         </view>
-      </view>
+        <!-- 分割线（非最后一项） -->
+        <view class="device-divider" v-if="index < deviceList.length - 1"></view>
+      </template>
     </view>
 
     <!-- 空态 -->
     <view class="empty-state" v-else>
-      <image class="empty-icon" src="/static/icons/box.svg" mode="aspectFit"></image>
+      <image class="empty-icon" src="/static/icons/no-device.svg" mode="aspectFit"></image>
       <text class="empty-text">{{ $t('device.no_devices') }}</text>
-      <text class="empty-desc">{{ $t('device.no_devices_desc') }}</text>
+    </view>
     </view>
   </view>
 
@@ -103,19 +119,19 @@ import { deviceApi } from '@/api/index';
 import { ref, computed, watch } from 'vue';
 import AudioPlayerManager from '@/utils/audioPlayer';
 import { Pages, PageMap } from '@/utils/route';
-import { useToast } from '@/uni_modules/wot-design-uni';
+import { useToast, useMessage } from '@/uni_modules/wot-design-uni';
 import type { Device, VoiceprintRecord } from '@/pages/device/types';
-import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
-import { isRequestHandledError } from '@/utils/request-feedback';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
-useGlobalRequestErrorToast(toast);
+const message = useMessage();
 
 const deviceList = ref<Device[]>([]);
 const loading = ref(false);
 const selectDevice = ref<Device | null>(null);
 const showVoiceprintPopup = ref(false);
+const statusBarHeight = ref(44);
+const navContentHeight = ref(44);
 // 音频播放管理器
 const audioPlayer = ref<AudioPlayerManager | null>(null);
 const isPlaying = ref(false);
@@ -124,7 +140,27 @@ function updateNavigationTitle() {
   uni.setNavigationBarTitle({ title: $t('pages.device') });
 }
 
+function initNavigationMetrics() {
+  const systemInfo = uni.getSystemInfoSync();
+  statusBarHeight.value = systemInfo.statusBarHeight || 44;
+
+  // #ifdef MP-WEIXIN
+  const capsule = uni.getMenuButtonBoundingClientRect();
+  navContentHeight.value = (capsule.top - statusBarHeight.value) * 2 + capsule.height;
+  // #endif
+}
+
+function goBack() {
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack();
+  } else {
+    uni.switchTab({ url: PageMap[Pages.Profile].url });
+  }
+}
+
 onLoad(() => {
+  initNavigationMetrics();
   initAudioManager();
   loadDeviceList();
   updateNavigationTitle();
@@ -191,39 +227,41 @@ async function loadDeviceList() {
 }
 
 function deleteDevice(device: Device) {
-  uni.showModal({
-    title: $t('device.confirm_delete'),
-    content: `${$t('device.confirm_delete_device')} ${device.deviceName}?`,
-    cancelText: $t('common.cancel'),
-    confirmText: $t('common.confirm'),
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          // 使用deviceApi删除设备
-          const result = await deviceApi.remove({ id: device.id });
-          if (result.code === 1000) {
-            toast.success({ msg: $t('device.delete_success'), duration: 2000, zIndex: 2005 });
-            showVoiceprintPopup.value = false;
-            selectDevice.value = null;
-            // 重新加载列表
-            loadDeviceList();
-          } else {
-            console.log('删除设备失败:', result);
-            toast.warning({
-              msg: result.message || $t('device.delete_failed'),
-              duration: 2000,
-              zIndex: 2005
-            });
-          }
-        } catch (error) {
-          console.error('删除设备失败:', error);
-          if (!isRequestHandledError(error)) {
-            toast.warning({ msg: $t('device.delete_failed'), duration: 2000, zIndex: 2005 });
-          }
+  const deleteConfirmMsg = $t('device.delete_confirm_msg').replace('{name}', device.deviceName);
+
+  message
+    .confirm({
+      title: $t('device.confirm_delete'),
+      msg: deleteConfirmMsg,
+      confirmButtonText: $t('common.confirm'),
+      cancelButtonText: $t('common.cancel')
+    })
+    .then(async () => {
+      try {
+        // 使用deviceApi删除设备
+        const result = await deviceApi.remove({ id: device.id });
+        if (result.code === 1000) {
+          toast.success({ msg: $t('device.delete_success'), duration: 2000, zIndex: 2005 });
+          showVoiceprintPopup.value = false;
+          selectDevice.value = null;
+          // 重新加载列表
+          loadDeviceList();
+        } else {
+          console.log('删除设备失败:', result);
+          toast.warning({
+            msg: result.message || $t('device.delete_failed'),
+            duration: 2000,
+            zIndex: 2005
+          });
         }
+      } catch (error) {
+        console.error('删除设备失败:', error);
+        toast.warning({ msg: $t('device.delete_failed'), duration: 2000, zIndex: 2005 });
       }
-    }
-  });
+    })
+    .catch(() => {
+      // 用户取消删除
+    });
 }
 
 function handleSelectDevice(device: Device) {
@@ -240,55 +278,6 @@ function handleClose() {
 const hasVoiceprint = computed(() => {
   return selectDevice.value?.voiceprintRecords && selectDevice.value.voiceprintRecords.length > 0;
 });
-
-/**
- * 绑定方式标识符映射
- * 从中文绑定方式 → 语义标识符（用于 i18n key）
- */
-const methodIdentifiers: Record<string, string> = {
-  'Wi-Fi': 'wifi',
-  'Wi-Fi 绑定': 'wifi',
-  '蓝牙': 'bluetooth',
-  '蓝牙 绑定': 'bluetooth',
-  '二维码': 'qrcode',
-  '二维码 绑定': 'qrcode',
-  'QrCode绑定': 'qrcode',
-  'QrCode': 'qrcode'
-};
-
-function getLocalizedRemark(remark?: string): string {
-  if (!remark) return '';
-
-  // 1. 如果已经是 i18n key，直接翻译
-  if (remark.startsWith('device.')) {
-    return $t(remark);
-  }
-
-  // 2. 匹配 "已通过 XXX 绑定" 格式
-  const simpleMatch = remark.match(/^已通过\s+(.+?)\s+绑定$/);
-  if (simpleMatch) {
-    const method = simpleMatch[1];
-    const methodId = methodIdentifiers[method] || methodIdentifiers[`${method} 绑定`];
-    if (methodId) {
-      return $t(`device.remark_bound_via_${methodId}`);
-    }
-  }
-
-  // 3. 匹配 "绑定时间: xxx, 绑定方式: yyy" 格式
-  const fullMatch = remark.match(/^绑定时间:\s*(.+?),\s*绑定方式:\s*(.+)$/);
-  if (fullMatch) {
-    const [, time, method] = fullMatch;
-    const methodId = methodIdentifiers[method] || 'unknown';
-    // 使用 i18n 格式化
-    return $t('device.remark_bound_full', {
-      time,
-      method: $t(`device.remark_method_${methodId}`)
-    });
-  }
-
-  // 4. 未知格式，原样返回
-  return remark;
-}
 
 // 格式化日期
 function formatDate(date: Date | string) {
@@ -367,34 +356,73 @@ function unbindVoiceprint() {
 <style>
 .container {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #f4f5f9;
   display: flex;
   flex-direction: column;
 }
 
+.custom-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 20;
+  background: #fff;
+}
+
+.status-bar {
+  width: 100%;
+}
+
+.nav-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24rpx;
+}
+
+.nav-side {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #212730;
+}
+
+.page-content {
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== 设备列表 ===== */
 .device-list {
-  margin-top: 30rpx;
-  margin-bottom: 30rpx;
+  background: #fff;
+  padding: 40rpx;
 }
 
 .device-item {
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-left: 30rpx;
-  margin-right: 30rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-}
-
-.device-header {
-  margin-bottom: 15rpx;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
 }
 
-.header-actions {
+.device-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.device-name-row {
   display: flex;
   align-items: center;
   gap: 16rpx;
@@ -402,40 +430,88 @@ function unbindVoiceprint() {
 
 .device-name {
   font-size: 36rpx;
-  font-weight: 600;
-  color: #222530;
+  font-weight: 500;
+  color: #212730;
+  line-height: 52rpx;
 }
 
-.delete-btn {
-  width: 40rpx;
-  height: 40rpx;
-  padding: 8rpx;
+/* 绑定状态标签 */
+.device-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}
+
+.device-tag.bound {
+  background: var(--color-primary-alpha-10, rgba(51, 92, 255, 0.05));
+}
+
+.device-tag.unbound {
+  background: #f3f4f7;
+}
+
+.device-tag-text {
+  font-size: 24rpx;
+  line-height: 36rpx;
+}
+
+.device-tag.bound .device-tag-text {
+  color: var(--color-primary);
+}
+
+.device-tag.unbound .device-tag-text {
+  color: #60718b;
+}
+
+/* 设备详情文字 */
+.device-details {
+  display: flex;
+  flex-direction: column;
 }
 
 .device-mac {
-  display: block;
-  font-size: 28rpx;
-  color: #717784;
-  margin-bottom: 12rpx;
+  font-size: 26rpx;
+  color: #60718b;
+  line-height: 40rpx;
 }
 
-.device-agent {
-  display: block;
+.device-detail {
   font-size: 28rpx;
+  color: #60718b;
+  line-height: 44rpx;
+}
+
+/* 删除按钮（胶囊描边） */
+.delete-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56rpx;
+  padding: 0 16rpx;
+  border: 1.6rpx solid var(--color-primary);
+  border-radius: 96rpx;
+  margin-left: 20rpx;
+}
+
+.delete-btn-text {
+  font-size: 26rpx;
   color: var(--color-primary);
-  margin-bottom: 12rpx;
+  line-height: 40rpx;
+  white-space: nowrap;
 }
 
-.device-agent.unbound {
-  color: #8b8e9a;
+/* 列表分割线 */
+.device-divider {
+  height: 1rpx;
+  background: #e8e8e8;
+  margin: 40rpx 0;
 }
 
-.device-remark {
-  display: block;
-  font-size: 28rpx;
-  color: #8b8e9a;
-}
-
+/* ===== 加载态 ===== */
 .loading-state {
   position: absolute;
   top: 50%;
@@ -447,12 +523,14 @@ function unbindVoiceprint() {
 }
 
 .loading-text {
-  font-size: 32rpx;
-  color: #717784;
+  font-size: 28rpx;
+  color: #60718b;
 }
 
+/* ===== 空态 ===== */
 .empty-state {
   flex: 1;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -461,71 +539,23 @@ function unbindVoiceprint() {
 }
 
 .empty-icon {
-  width: 160rpx;
-  height: 160rpx;
-  margin-bottom: 32rpx;
-  opacity: 0.6;
+  width: 320rpx;
+  height: 320rpx;
+  margin-bottom: 16rpx;
 }
 
 .empty-text {
-  display: block;
-  font-size: 32rpx;
-  color: #717784;
-  margin-bottom: 15rpx;
+  font-size: 28rpx;
+  color: #60718b;
+  line-height: 44rpx;
 }
 
-.empty-desc {
-  display: block;
-  font-size: 32rpx;
-  color: #717784;
-}
-
-.bluetooth-config-section {
-  margin-top: 30rpx;
-}
-
-.config-card {
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-}
-
-.config-card.disabled {
-  opacity: 0.6;
-}
-
-.config-icon {
-  font-size: 60rpx;
-  margin-right: 30rpx;
-}
-
-.config-info {
-  flex: 1;
-}
-
-.config-title {
-  display: block;
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10rpx;
-}
-
-.config-desc {
-  display: block;
-  font-size: 24rpx;
-  color: #666;
-}
-
+/* ===== 声纹管理面板 ===== */
 .voiceprint-popup {
   max-height: 80vh;
   min-height: 800rpx;
 }
 
-/* 声纹管理面板样式 */
 .voiceprint-header {
   text-align: center;
   padding: 40rpx 30rpx 30rpx;
@@ -536,14 +566,14 @@ function unbindVoiceprint() {
   display: block;
   font-size: 36rpx;
   font-weight: 600;
-  color: #222530;
+  color: #212730;
   margin-bottom: 16rpx;
 }
 
 .voiceprint-device-name {
   display: block;
   font-size: 28rpx;
-  color: #717784;
+  color: #60718b;
 }
 
 .voiceprint-content {
@@ -575,7 +605,7 @@ function unbindVoiceprint() {
 .voiceprint-name {
   font-size: 32rpx;
   font-weight: 600;
-  color: #222530;
+  color: #212730;
 }
 
 .voiceprint-details {
@@ -586,7 +616,7 @@ function unbindVoiceprint() {
 
 .voiceprint-detail {
   font-size: 26rpx;
-  color: #717784;
+  color: #60718b;
 }
 
 .voiceprint-empty {
@@ -607,13 +637,13 @@ function unbindVoiceprint() {
 
 .voiceprint-empty .empty-text {
   font-size: 30rpx;
-  color: #717784;
+  color: #60718b;
   margin-bottom: 12rpx;
 }
 
 .voiceprint-empty .empty-desc {
   font-size: 26rpx;
-  color: #8b8e9a;
+  color: #60718b;
 }
 
 .voiceprint-actions {
