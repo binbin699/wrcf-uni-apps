@@ -66,8 +66,9 @@ export default function getAppConfig(
   // const APP_USE_VOICEPRINT = platform !== 'mp-weixin';
 
   // 是否支持声纹（微信小程序不支持）
-  const APP_USE_VOICEPRINT = platform !== 'mp-weixin';
-
+  const APP_USE_VOICEPRINT = true;
+  // 主要的设置引导方式，优先展示该方式，值为 qrcode、bluetooth 或 none（不展示）
+  const APP_PRIMARY_SETUP_MODE = 'none';
   // 用户协议和隐私政策 URL（微信小程序不显示）
   const TERMS_URL =
     platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/user-agreement';
@@ -131,6 +132,7 @@ export default function getAppConfig(
     GOOGLE_OAUTH_CLIENT_ID_WEB,
     ARMS_PID,
     ARMS_ENDPOINT,
-    ARMS_ENV
+    ARMS_ENV,
+    APP_PRIMARY_SETUP_MODE,
   };
 }

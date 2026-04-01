@@ -1,6 +1,6 @@
 {
   "privacy.title": "Условия использования и Политика конфиденциальности",
-  "privacy.message": "Добро пожаловать в Linx AI!<br/><br/>Перед использованием наших услуг, пожалуйста, ознакомьтесь и согласитесь со следующими соглашениями: <a href=\"{termsUrl}\">《Пользовательское соглашение》</a> и <a href=\"{privacyUrl}\">《Политика конфиденциальности》</a><br/><br/>Нажимая <font color=\"#3E5DEF\">«Согласен»</font>, вы подтверждаете, что прочитали и согласны с вышеуказанными соглашениями. Если вы не согласны, мы не сможем предоставить вам услуги.",
+  "privacy.message": "Добро пожаловать в Linx AI!<br/><br/>Перед использованием наших услуг, пожалуйста, ознакомьтесь и согласитесь со следующими соглашениями: <a href=\"https://www.qiniu.com/agreements/user-agreement\">《Пользовательское соглашение》</a> и <a href=\"https://www.qiniu.com/agreements/privacy-right\">《Политика конфиденциальности》</a><br/><br/>Нажимая <font color=\"#335CFF\">«Согласен»</font>, вы подтверждаете, что прочитали и согласны с вышеуказанными соглашениями. Если вы не согласны, мы не сможем предоставить вам услуги.",
   "privacy.messageIntro": "Добро пожаловать в Linx AI!\n\nПеред использованием наших услуг, пожалуйста, ознакомьтесь и согласитесь со следующими соглашениями:",
   "privacy.termsLink": "《Пользовательское соглашение》",
   "privacy.and": " и ",
@@ -12,7 +12,7 @@
   "privacy.buttonAccept": "Согласен",
   "privacy.buttonRefuse": "Не согласен",
   "privacy.second.title": "Уведомление",
-  "privacy.second.message": "Для продолжения использования Linx AI вам необходимо согласиться с <a href=\"{termsUrl}\">《Пользовательским соглашением》</a> и <a href=\"{privacyUrl}\">《Политикой конфиденциальности》</a>, в противном случае приложение будет закрыто.",
+  "privacy.second.message": "Для продолжения использования Linx AI вам необходимо согласиться с <a href=\"https://www.qiniu.com/agreements/user-agreement\">《Пользовательским соглашением》</a> и <a href=\"https://www.qiniu.com/agreements/privacy-right\">《Политикой конфиденциальности》</a>, в противном случае приложение будет закрыто.",
   "privacy.second.messageIntro": "Для продолжения использования Linx AI вам необходимо согласиться с ",
   "privacy.second.messageFooter": ", в противном случае приложение будет закрыто.",
   "privacy.second.buttonAccept": "Согласен и продолжить",
@@ -429,6 +429,7 @@
   "voice_clone.select_audio_file": "Выбрать аудиофайл",
   "voice_clone.audio_format_desc": "Поддерживаются форматы MP3, WAV, M4A. Рекомендуемая длительность 10-60 секунд",
   "voice_clone.record_voice": "Записать голос",
+  "voice_clone.record_voice_popup_title": "Записать голос (10-120 сек)",
   "voice_clone.record_desc": "Нажмите для начала записи. Рекомендуется 10-60 секунд чистого голоса",
   "voice_clone.stop_recording": "Завершить запись",
   "voice_clone.start_recording": "Начать запись",
@@ -565,10 +566,10 @@
   "guide.square_highlight_tip": "Нажмите для привязки",
   "guide.square_highlight_skip": "Понятно",
   "guide.overlay_title": "Добро пожаловать на Площадь агентов",
-  "guide.overlay_desc": "Нажмите кнопку <span style=\"color: #0166FF;\">«Привязать»</span> на карточке, чтобы привязать агента к вашему устройству",
+  "guide.overlay_desc": "Нажмите кнопку <span class=\"text-primary\">«Привязать»</span> на карточке, чтобы привязать агента к вашему устройству",
   "guide.overlay_action": "Понятно",
   "guide.second_overlay_text": "Нажмите здесь, чтобы привязать агента к устройству",
-  "guide.info_bar_text": "У вас есть устройства без привязанного агента. Нажмите кнопку <span style=\"color: #3E5DEF;\">«Привязать»</span>, чтобы привязать агента к устройству.",
+  "guide.info_bar_text": "У вас есть устройства без привязанного агента. Нажмите кнопку <span class=\"text-primary\">«Привязать»</span>, чтобы привязать агента к устройству.",
   "guide.info_bar_action": "Понятно",
 
   "bluetooth.config_title": "Добавить устройство (Bluetooth)",
@@ -600,6 +601,9 @@
   "bluetooth.select_device.connecting": "Подключение...",
   "bluetooth.select_device.connection_success": "Подключено",
   "bluetooth.select_device.connection_failed": "Ошибка подключения",
+  "bluetooth.select_device.no_target_devices": "Целевые устройства не найдены",
+  "bluetooth.select_device.no_target_hint": "Убедитесь, что устройство включено, или попробуйте показать все Bluetooth-устройства",
+  "bluetooth.select_device.show_all_devices": "Показать все Bluetooth-устройства",
   "bluetooth.select_device.signal_strength": "Сигнал",
   "bluetooth.device_list.signal_strength": "Сигнал",
   "bluetooth.device_list.loading": "Загрузка...",
@@ -963,5 +967,9 @@
   "login.wx_login_failed": "Ошибка входа через WeChat",
   "login.apple_login_failed": "Ошибка входа через Apple",
   "login.guest_login_failed": "Ошибка гостевого входа",
-  "login.register_failed": "Ошибка регистрации"
+  "login.register_failed": "Ошибка регистрации",
+
+  "device.default_agent_bound": "Привязано к агенту по умолчанию {name}",
+  "device.default_agent_no_match": "Не найден агент по умолчанию для вашего системного языка",
+  "device.default_agent_bind_failed": "Не удалось автоматически привязать агент по умолчанию"
 }

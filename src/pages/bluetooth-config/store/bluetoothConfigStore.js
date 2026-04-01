@@ -23,7 +23,7 @@ const initialState = {
     password: '',
     isVisible: false
   },
-  isIOS: false,
+  useLocalName: false,
   sequenceControl: { current: 0 },
   // 序列号管理
   sequenceNumber: 0,
@@ -248,11 +248,11 @@ class BluetoothConfigManager {
   }
 
   /**
-   * 设置设备类型
-   * @param {boolean} isIOS - 是否为iOS设备
+   * 设置 BLE 名称读取模式
+   * @param {boolean} useLocalName - 是否使用 localName 兼容模式
    */
-  setIsIOS(isIOS) {
-    this.updateState({ isIOS });
+  setUseLocalName(useLocalName) {
+    this.updateState({ useLocalName });
   }
 
   /**

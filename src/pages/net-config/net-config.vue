@@ -164,10 +164,11 @@
 
               <!-- 进度条和时间同行显示 -->
               <view style="display: flex; align-items: center; gap: 12px; margin-top: 12px">
+                <!-- TODO: theme - component prop, inject via JS -->
                 <wd-progress
                   :percentage="progressPercent"
                   hide-text
-                  color="#335CFF"
+                  color="var(--color-primary)"
                   :duration="0"
                   style="flex: 1" />
                 <text style="font-size: 12px; color: #666">{{ currentTime }}/{{ totalTime }}</text>
@@ -526,8 +527,8 @@ async function handleScanQrSuccess(res: { result: string }) {
     return;
   }
 
-  // 检查 s 和 m 字段是否存在（v 字段可选）
-  if (!qrcodeData.s || !qrcodeData.m) {
+  // 检查 m 字段是否存在
+  if (!qrcodeData.m) {
     toast.warning({
       msg: $t('net_config.invalid_qr'),
       duration: 2000
@@ -536,15 +537,24 @@ async function handleScanQrSuccess(res: { result: string }) {
   }
   try {
     // 调用注册设备方法
-    await registerDevice({
-      s: qrcodeData.s,
-      m: qrcodeData.m,
-      v: qrcodeData.v
+    const result = await registerDevice({
+      m: qrcodeData.m
     });
 
+    // 构建成功提示：设备绑定成功，追加默认智能体绑定结果
+    let successMsg = $t('net_config.device_bind_success');
+    const bind = result?.data?.defaultAgentBind;
+    if (bind?.bound && bind.agentName) {
+      successMsg += '\n' + $t('device.default_agent_bound').replace('{name}', bind.agentName);
+    } else if (bind?.reason === 'no_match') {
+      successMsg += '\n' + $t('device.default_agent_no_match');
+    } else if (bind?.reason === 'error') {
+      successMsg += '\n' + $t('device.default_agent_bind_failed');
+    }
+
     toast.success({
-      msg: $t('net_config.device_bind_success'),
-      duration: 2000,
+      msg: successMsg,
+      duration: 2500,
       cover: true
     });
 
@@ -569,9 +579,9 @@ async function handleScanQrSuccess(res: { result: string }) {
  *
  * 该方法负责设备注册的核心逻辑，包括调用后端接口绑定设备、处理成功和失败情况。
  *
- * @param qrcodeData qrcode数据对象，包含 s（源字符串）、m（MAC地址）、v（版本号，可选）字段
+ * @param qrcodeData qrcode数据对象，包含 m（MAC地址）字段
  */
-async function registerDevice(qrcodeData: { s: string; m: string; v?: string }) {
+async function registerDevice(qrcodeData: { m: string }) {
   console.log('注册设备', qrcodeData);
 
   try {
@@ -585,6 +595,7 @@ async function registerDevice(qrcodeData: { s: string; m: string; v?: string }) 
     const result = await deviceApi.bindByQrcode(qrcodeData);
     if (result && result.code === 1000) {
       console.log('设备绑定成功', result);
+      return result;
     } else {
       throw new Error(result?.message || $t('net_config.device_bind_fail'));
     }
@@ -1504,10 +1515,10 @@ watch(
 .mini-btn {
   padding: 12rpx 24rpx;
   font-size: 24rpx;
-  color: #335CFF;
-  border: 2rpx solid rgba(0, 122, 255, 0.2);
+  color: var(--color-primary);
+  border: 2rpx solid var(--color-primary-alpha-20);
   border-radius: 999px;
-  background-color: rgba(0, 122, 255, 0.08);
+  background-color: var(--color-primary-shadow-light);
   transition: opacity 0.2s ease;
 }
 
@@ -1556,8 +1567,8 @@ watch(
 .loading-spinner {
   width: 64rpx;
   height: 64rpx;
-  border: 6rpx solid rgba(0, 122, 255, 0.15);
-  border-top-color: #335CFF;
+  border: 6rpx solid var(--color-primary-alpha-15);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -1594,8 +1605,8 @@ watch(
 }
 
 .wifi-list-item.selected {
-  border-color: rgba(0, 122, 255, 0.4);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.08);
+  border-color: rgba(51, 92, 255, 0.4);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-light);
 }
 
 .wifi-list-item-info {
@@ -1641,7 +1652,7 @@ watch(
 }
 
 .signal-bar.active {
-  background-color: #335CFF;
+  background-color: var(--color-primary);
 }
 
 .manual-config {
@@ -1660,7 +1671,7 @@ watch(
 
 .manual-config-clear {
   font-size: 24rpx;
-  color: #335CFF;
+  color: var(--color-primary);
 }
 
 .form-group {
@@ -1689,7 +1700,7 @@ watch(
     }
 
     &:focus {
-      border-color: #335CFF;
+      border-color: var(--color-primary);
       outline: none;
     }
   }
@@ -1901,9 +1912,9 @@ watch(
     margin-top: 8rpx;
     padding: 16rpx 32rpx;
     font-size: 28rpx;
-    color: #335CFF;
+    color: var(--color-primary);
     background-color: #fff;
-    border: 2rpx solid #335CFF;
+    border: 2rpx solid var(--color-primary);
     border-radius: 8rpx;
   }
 }
@@ -1965,7 +1976,7 @@ watch(
           width: 44rpx;
           height: 44rpx;
           border-radius: 50%;
-          background-color: #335CFF;
+          background-color: var(--color-primary);
           color: #fff;
           font-size: 28rpx;
           font-weight: 600;
@@ -2003,7 +2014,7 @@ watch(
       text-align: center;
       font-size: 32rpx;
       font-weight: 600;
-      color: #007AFF;
+      color: var(--color-primary);
       border: none;
       border-radius: 0;
       background: transparent;

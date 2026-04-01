@@ -45,6 +45,7 @@
 import type { NotifyProps } from '@/uni_modules/wot-design-uni/components/wd-notify/types';
 import i18n from '@/locale';
 import { AppInfo } from '@/const';
+import { AudioRecorderManager } from '@/utils/audioRecorder';
 
 const $t = i18n.global.t;
 
@@ -90,12 +91,29 @@ export enum PermissionStatus {
 }
 
 /**
+ * 鸿蒙平台扫码结果临时存储
+ * 用于在权限请求时复用扫码结果，避免用户需要扫两次码
+ */
+let _lastHarmonyScanResult: string | null = null;
+
+/**
+ * 获取并清除上次鸿蒙扫码结果
+ * @returns 扫码结果，如果没有则返回 null
+ */
+export function getLastHarmonyScanResult(): string | null {
+  const result = _lastHarmonyScanResult;
+  _lastHarmonyScanResult = null;
+  return result;
+}
+
+/**
  * 权限请求结果
  */
 export interface PermissionResult {
   granted: boolean; // 是否已授权
   status: PermissionStatus; // 权限状态
   message?: string; // 错误信息
+  scanResult?: string; // 扫码结果（鸿蒙平台相机权限请求时可能返回）
 }
 
 /**
@@ -742,6 +760,29 @@ async function checkBluetoothPermissionStatus(): Promise<PermissionStatus> {
       }
     }
 
+    // HarmonyOS NEXT 特殊处理：先检查权限授权状态，不依赖蓝牙开关
+    // 鸿蒙在未授权时 uni.getSystemSetting().bluetoothEnabled 可能返回 false，
+    // 不能据此判断 UNAVAILABLE，否则权限弹窗永远不会出现。
+    if (AppInfo.isHarmonyApp()) {
+      const authSetting = uni.getAppAuthorizeSetting();
+      console.log('[权限检查] HarmonyOS 蓝牙授权状态:', authSetting.bluetoothAuthorized);
+      if (authSetting.bluetoothAuthorized === 'authorized') {
+        try {
+          const sysSetting = uni.getSystemSetting();
+          return sysSetting.bluetoothEnabled
+            ? PermissionStatus.AUTHORIZED
+            : PermissionStatus.UNAVAILABLE;
+        } catch (e) {
+          console.warn('[权限检查] HarmonyOS 检查蓝牙开关状态失败:', e);
+          return PermissionStatus.AUTHORIZED;
+        }
+      } else if (authSetting.bluetoothAuthorized === 'denied') {
+        return PermissionStatus.DENIED;
+      } else {
+        return PermissionStatus.NOT_DETERMINED;
+      }
+    }
+
     // Android 11 及以下：可以安全调用 uni.getSystemSetting()
     const systemSetting = uni.getSystemSetting();
 
@@ -966,18 +1007,16 @@ async function requestIOSPermissionFallback(type: PermissionType): Promise<numbe
         const recorderManager = uni.getRecorderManager() as any;
         let resolved = false;
 
-        // 清理监听器的辅助函数
-        const cleanupListeners = () => {
+        // 恢复 AudioRecorderManager 事件监听
+        // 必须在回退方案产生的 onStop 事件消化之后再恢复，否则 AudioRecorderManager 会收到幽灵 onStop
+        const restoreAudioRecorderManager = () => {
           try {
-            // 尝试移除监听器（如果 API 支持）
-            if (typeof recorderManager.offStart === 'function') {
-              recorderManager.offStart(onRecordStart);
-            }
-            if (typeof recorderManager.offError === 'function') {
-              recorderManager.offError(onRecordError);
+            const instance = AudioRecorderManager.getInstanceIfExists();
+            if (instance) {
+              instance.reattachEvents();
             }
           } catch (e) {
-            // 忽略清理错误
+            // 忽略恢复错误
           }
         };
 
@@ -985,8 +1024,12 @@ async function requestIOSPermissionFallback(type: PermissionType): Promise<numbe
           if (!resolved) {
             resolved = true;
             console.log('[权限请求] iOS录音权限回退方案：录音开始，权限已授予');
+            // 先注册临时 onStop 拦截幽灵录音，消化后再恢复 AudioRecorderManager
+            recorderManager.onStop(() => {
+              console.log('[权限请求] iOS录音权限回退方案：幽灵录音已停止，恢复事件监听');
+              restoreAudioRecorderManager();
+            });
             recorderManager.stop();
-            cleanupListeners();
             resolve(1);
           }
         };
@@ -995,7 +1038,7 @@ async function requestIOSPermissionFallback(type: PermissionType): Promise<numbe
           if (!resolved) {
             resolved = true;
             console.log('[权限请求] iOS录音权限回退方案：录音失败', err);
-            cleanupListeners();
+            restoreAudioRecorderManager();
             resolve(0);
           }
         };
@@ -1013,8 +1056,10 @@ async function requestIOSPermissionFallback(type: PermissionType): Promise<numbe
         setTimeout(() => {
           if (!resolved) {
             resolved = true;
+            recorderManager.onStop(() => {
+              restoreAudioRecorderManager();
+            });
             recorderManager.stop();
-            cleanupListeners();
             console.log('[权限请求] iOS录音权限回退方案：超时');
             resolve(0);
           }
@@ -1177,6 +1222,187 @@ async function requestIOSPermission(type: PermissionType): Promise<number> {
     } else {
       console.log('[权限请求] 非iOS平台');
       resolve(0);
+    }
+  });
+}
+
+/**
+ * 鸿蒙平台权限请求
+ * 通过调用需要权限的 API 来触发系统权限请求弹窗
+ * @param type 权限类型
+ * @returns 1: 授权成功, 0: 拒绝, 2: 用户取消
+ */
+async function requestHarmonyPermission(type: PermissionType): Promise<number> {
+  console.log('[权限请求] 鸿蒙平台开始请求权限，类型:', type);
+
+  return new Promise((resolve) => {
+    switch (type) {
+      case PermissionType.CAMERA:
+        console.log('[权限请求] 鸿蒙请求相机权限：使用 scanCode 触发');
+        uni.scanCode({
+          onlyFromCamera: true,
+          success: (res: any) => {
+            console.log('[权限请求] 鸿蒙相机权限：扫码成功，权限已授予');
+            if (res && res.result) {
+              _lastHarmonyScanResult = res.result;
+              console.log('[权限请求] 鸿蒙相机权限：已保存扫码结果');
+            }
+            resolve(1);
+          },
+          fail: (err: any) => {
+            console.log('[权限请求] 鸿蒙相机权限：扫码失败', err);
+            _lastHarmonyScanResult = null;
+            if (err.errMsg && err.errMsg.includes('cancel')) {
+              console.log('[权限请求] 鸿蒙相机权限：用户取消扫码');
+              setTimeout(() => {
+                checkPermissionStatus(PermissionType.CAMERA).then((status) => {
+                  console.log('[权限请求] 鸿蒙相机权限：取消后权限状态', status);
+                  if (status === PermissionStatus.AUTHORIZED) {
+                    resolve(1);
+                  } else {
+                    resolve(2);
+                  }
+                });
+              }, 500);
+            } else if (
+              err.errMsg &&
+              (err.errMsg.includes('auth') ||
+                err.errMsg.includes('permission') ||
+                err.errMsg.includes('deny'))
+            ) {
+              console.log('[权限请求] 鸿蒙相机权限：权限被拒绝');
+              resolve(0);
+            } else {
+              checkPermissionStatus(PermissionType.CAMERA).then((status) => {
+                resolve(status === PermissionStatus.AUTHORIZED ? 1 : 0);
+              });
+            }
+          }
+        });
+        break;
+
+      case PermissionType.LOCATION:
+        console.log('[权限请求] 鸿蒙请求位置权限：使用 getLocation 触发');
+        uni.getLocation({
+          type: 'wgs84',
+          success: () => {
+            console.log('[权限请求] 鸿蒙位置权限：获取位置成功，权限已授予');
+            resolve(1);
+          },
+          fail: (err: any) => {
+            console.log('[权限请求] 鸿蒙位置权限：获取位置失败', err);
+            if (
+              err.errMsg &&
+              (err.errMsg.includes('auth') ||
+                err.errMsg.includes('permission') ||
+                err.errMsg.includes('deny'))
+            ) {
+              resolve(0);
+            } else {
+              checkPermissionStatus(PermissionType.LOCATION).then((status) => {
+                resolve(status === PermissionStatus.AUTHORIZED ? 1 : 0);
+              });
+            }
+          }
+        });
+        break;
+
+      case PermissionType.RECORD: {
+        console.log('[权限请求] 鸿蒙请求录音权限：使用 RecorderManager 触发');
+        const recorderManager = uni.getRecorderManager();
+        let resolved = false;
+
+        const handleResult = (granted: boolean) => {
+          if (resolved) return;
+          resolved = true;
+          try {
+            recorderManager.stop();
+          } catch (e) {
+            // ignore
+          }
+          resolve(granted ? 1 : 0);
+        };
+
+        recorderManager.onStart(() => {
+          console.log('[权限请求] 鸿蒙录音权限：录音开始，权限已授予');
+          handleResult(true);
+        });
+
+        recorderManager.onError((err: any) => {
+          console.log('[权限请求] 鸿蒙录音权限：录音失败', err);
+          checkPermissionStatus(PermissionType.RECORD).then((status) => {
+            handleResult(status === PermissionStatus.AUTHORIZED);
+          });
+        });
+
+        recorderManager.start({ duration: 1000 });
+
+        setTimeout(() => {
+          if (!resolved) {
+            checkPermissionStatus(PermissionType.RECORD).then((status) => {
+              handleResult(status === PermissionStatus.AUTHORIZED);
+            });
+          }
+        }, 5000);
+        break;
+      }
+
+      case PermissionType.BLUETOOTH: {
+        console.log('[权限请求] 鸿蒙请求蓝牙权限：使用 openBluetoothAdapter 触发');
+        const authSetting = uni.getAppAuthorizeSetting();
+        if (authSetting.bluetoothAuthorized === 'authorized') {
+          console.log('[权限请求] 鸿蒙蓝牙权限已授权');
+          resolve(1);
+        } else {
+          console.log(
+            '[权限请求] 鸿蒙蓝牙权限状态:',
+            authSetting.bluetoothAuthorized,
+            '，尝试 openBluetoothAdapter 触发系统权限弹窗'
+          );
+          uni.openBluetoothAdapter({
+            success: () => {
+              console.log('[权限请求] 鸿蒙蓝牙适配器初始化成功，权限已授权');
+              resolve(1);
+            },
+            fail: (err: any) => {
+              console.log('[权限请求] 鸿蒙蓝牙适配器初始化失败:', err);
+              if (err.errCode === 10001) {
+                console.log('[权限请求] 鸿蒙蓝牙未开启');
+              }
+              const newAuthSetting = uni.getAppAuthorizeSetting();
+              console.log('[权限请求] 鸿蒙蓝牙权限重新检查:', newAuthSetting.bluetoothAuthorized);
+              resolve(newAuthSetting.bluetoothAuthorized === 'authorized' ? 1 : 0);
+            }
+          });
+        }
+        break;
+      }
+
+      case PermissionType.ALBUM:
+        console.log('[权限请求] 鸿蒙请求相册权限：使用 chooseImage 触发');
+        uni.chooseImage({
+          count: 1,
+          sourceType: ['album'],
+          success: () => {
+            console.log('[权限请求] 鸿蒙相册权限：选择图片成功，权限已授予');
+            resolve(1);
+          },
+          fail: (err: any) => {
+            console.log('[权限请求] 鸿蒙相册权限：选择图片失败', err);
+            if (err.errMsg && err.errMsg.includes('cancel')) {
+              checkPermissionStatus(PermissionType.ALBUM).then((status) => {
+                resolve(status === PermissionStatus.AUTHORIZED ? 1 : 0);
+              });
+            } else {
+              resolve(0);
+            }
+          }
+        });
+        break;
+
+      default:
+        console.log('[权限请求] 鸿蒙不支持的权限类型:', type);
+        resolve(0);
     }
   });
 }
@@ -1441,19 +1667,50 @@ export async function requestPermission(
             };
           }
         } else if (AppInfo.isHarmonyApp()) {
-          // TODO: 鸿蒙平台权限请求适配（当前无鸿蒙用户，优先级低）
-          // 参考: https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V5/
-          // 鸿蒙 App 需要使用 UTSHarmony.requestSystemPermission()
-          console.warn(`[权限请求] 鸿蒙平台${config.title}请求暂未实现`);
+          const result = await Promise.race([requestHarmonyPermission(type), timeoutPromise]);
+
           clearTimeoutIfNeeded();
-          if (notify) {
-            notify.close();
+
+          console.log(`[权限请求] 鸿蒙 ${config.title}请求结果:`, result);
+
+          if (result === 1) {
+            if (notify) {
+              notify.close();
+              notify.show(generateNotifyMessage(type, NotifyMessageType.SUCCESS));
+            }
+            return {
+              granted: true,
+              status: PermissionStatus.AUTHORIZED
+            };
+          } else if (result === 2) {
+            console.log('[权限请求] 鸿蒙：用户取消操作，不跳转设置');
+            if (notify) {
+              notify.close();
+            }
+            return {
+              granted: false,
+              status: PermissionStatus.NOT_DETERMINED,
+              message: '用户取消'
+            };
+          } else {
+            if (notify) {
+              notify.close();
+              const messageType = autoNavigateToSetting
+                ? NotifyMessageType.DENIED_NAVIGATE
+                : NotifyMessageType.DENIED;
+              notify.show(generateNotifyMessage(type, messageType));
+            }
+            if (autoNavigateToSetting) {
+              setTimeout(() => {
+                openPermissionSetting();
+              }, 1500);
+            }
+            return {
+              granted: false,
+              status: PermissionStatus.DENIED,
+              message: $t('permission.denied_setting')
+            };
           }
-          return {
-            granted: false,
-            status: PermissionStatus.NOT_DETERMINED,
-            message: 'TODO: 鸿蒙平台权限请求待适配'
-          };
         } else {
           // 其他 App 平台
           console.error(`[权限请求] 不支持的App平台`);
@@ -1697,10 +1954,10 @@ async function requestBluetoothPermission(
     // ===== Android 12+ 特殊处理结束 =====
 
     // 1. 检查蓝牙是否开启（仅对非 Android 12+ 有效）
-    // iOS 平台：bluetoothEnabled 在权限未授权时可能返回 false，需要先请求权限
+    // iOS / HarmonyOS 平台：bluetoothEnabled 在权限未授权时可能返回 false，需要先请求权限
     if (!isAndroid12Plus) {
       const systemSetting = uni.getSystemSetting();
-      if (!AppInfo.isIOSApp() && !systemSetting.bluetoothEnabled) {
+      if (!AppInfo.isIOSApp() && !AppInfo.isHarmonyApp() && !systemSetting.bluetoothEnabled) {
         console.log('[权限请求] 蓝牙未开启，尝试直接开启');
         if (notify) {
           notify.close();
@@ -1882,17 +2139,45 @@ async function requestBluetoothPermission(
             };
           }
         } else if (AppInfo.isHarmonyApp()) {
-          // TODO: 鸿蒙平台蓝牙权限请求适配
-          console.warn('[权限请求] 鸿蒙平台蓝牙权限请求暂未实现');
+          const result = await Promise.race([
+            requestHarmonyPermission(PermissionType.BLUETOOTH),
+            timeoutPromise
+          ]);
+
           clearTimeoutIfNeeded();
-          if (notify) {
-            notify.close();
+
+          console.log('[权限请求] 鸿蒙蓝牙权限请求结果:', result);
+
+          if (result === 1) {
+            if (notify) {
+              notify.close();
+              notify.show(
+                generateNotifyMessage(PermissionType.BLUETOOTH, NotifyMessageType.SUCCESS)
+              );
+            }
+            return {
+              granted: true,
+              status: PermissionStatus.AUTHORIZED
+            };
+          } else {
+            if (notify) {
+              notify.close();
+              const messageType = autoNavigateToSetting
+                ? NotifyMessageType.DENIED_NAVIGATE
+                : NotifyMessageType.DENIED;
+              notify.show(generateNotifyMessage(PermissionType.BLUETOOTH, messageType));
+            }
+            if (autoNavigateToSetting) {
+              setTimeout(() => {
+                openPermissionSetting();
+              }, 1500);
+            }
+            return {
+              granted: false,
+              status: PermissionStatus.DENIED,
+              message: $t('permission.bluetooth_denied_setting')
+            };
           }
-          return {
-            granted: false,
-            status: PermissionStatus.NOT_DETERMINED,
-            message: 'TODO: 鸿蒙平台蓝牙权限请求待适配'
-          };
         } else {
           // 其他 App 平台
           console.error('[权限请求] 不支持的App平台');
@@ -2396,6 +2681,33 @@ async function requestPermissionWithoutPreRequest(
         return { granted: true, status: PermissionStatus.AUTHORIZED };
       } else {
         if (notify) notify.close();
+        return {
+          granted: false,
+          status: PermissionStatus.DENIED,
+          message: $t('permission.denied')
+        };
+      }
+    } else if (AppInfo.isHarmonyApp()) {
+      const result = await Promise.race([requestHarmonyPermission(type), timeoutPromise]);
+      clearTimeoutIfNeeded();
+
+      console.log(`[权限请求] 鸿蒙 ${config.title}（无预请求）请求结果:`, result);
+
+      if (result === 1) {
+        if (notify) notify.close();
+        return { granted: true, status: PermissionStatus.AUTHORIZED };
+      } else if (result === 2) {
+        if (notify) notify.close();
+        return {
+          granted: false,
+          status: PermissionStatus.NOT_DETERMINED,
+          message: '用户取消'
+        };
+      } else {
+        if (notify) notify.close();
+        if (autoNavigateToSetting) {
+          setTimeout(() => openPermissionSetting(), 1500);
+        }
         return {
           granted: false,
           status: PermissionStatus.DENIED,

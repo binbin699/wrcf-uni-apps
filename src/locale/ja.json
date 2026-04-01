@@ -1,6 +1,6 @@
 {
   "privacy.title": "利用規約とプライバシーポリシー",
-  "privacy.message": "Linx AIへようこそ！<br/><br/>サービスをご利用になる前に、以下の規約をお読みいただき、同意してください：<a href=\"{termsUrl}\">《利用規約》</a>と<a href=\"{privacyUrl}\">《プライバシーポリシー》</a><br/><br/><font color=\"#3E5DEF\">「同意する」</font>をクリックすると、上記の規約を読み、同意したことになります。同意されない場合、サービスを提供することができません。",
+  "privacy.message": "Linx AIへようこそ！<br/><br/>サービスをご利用になる前に、以下の規約をお読みいただき、同意してください：<a href=\"https://www.qiniu.com/agreements/user-agreement\">《利用規約》</a>と<a href=\"https://www.qiniu.com/agreements/privacy-right\">《プライバシーポリシー》</a><br/><br/><font color=\"#335CFF\">「同意する」</font>をクリックすると、上記の規約を読み、同意したことになります。同意されない場合、サービスを提供することができません。",
   "privacy.messageIntro": "Linx AIへようこそ！\n\nサービスをご利用になる前に、以下の規約をお読みいただき、同意してください：",
   "privacy.termsLink": "《利用規約》",
   "privacy.and": "と",
@@ -12,7 +12,7 @@
   "privacy.buttonAccept": "同意する",
   "privacy.buttonRefuse": "同意しない",
   "privacy.second.title": "ご確認ください",
-  "privacy.second.message": "Linx AIを続けてご利用いただくには、<a href=\"{termsUrl}\">《利用規約》</a>と<a href=\"{privacyUrl}\">《プライバシーポリシー》</a>に同意する必要があります。同意されない場合、アプリを終了します。",
+  "privacy.second.message": "Linx AIを続けてご利用いただくには、<a href=\"https://www.qiniu.com/agreements/user-agreement\">《利用規約》</a>と<a href=\"https://www.qiniu.com/agreements/privacy-right\">《プライバシーポリシー》</a>に同意する必要があります。同意されない場合、アプリを終了します。",
   "privacy.second.messageIntro": "Linx AIを続けてご利用いただくには、",
   "privacy.second.messageFooter": "に同意する必要があります。同意されない場合、アプリを終了します。",
   "privacy.second.buttonAccept": "同意して続ける",
@@ -429,6 +429,7 @@
   "voice_clone.select_audio_file": "音声ファイルを選択",
   "voice_clone.audio_format_desc": "MP3、WAV、M4A形式をサポート。10〜60秒推奨",
   "voice_clone.record_voice": "音声を録音",
+  "voice_clone.record_voice_popup_title": "音声を録音（10〜120秒）",
   "voice_clone.record_desc": "クリックして録音を開始。10〜60秒のクリアな音声を推奨",
   "voice_clone.stop_recording": "録音終了",
   "voice_clone.start_recording": "録音開始",
@@ -565,10 +566,10 @@
   "guide.square_highlight_tip": "ここをタップしてバインド",
   "guide.square_highlight_skip": "わかりました",
   "guide.overlay_title": "エージェントマーケットプレイスへようこそ",
-  "guide.overlay_desc": "カードの<span style=\"color: #0166FF;\">「これにする」</span>ボタンをタップして、エージェントをデバイスにバインドしてください",
+  "guide.overlay_desc": "カードの<span class=\"text-primary\">「これにする」</span>ボタンをタップして、エージェントをデバイスにバインドしてください",
   "guide.overlay_action": "わかりました",
   "guide.second_overlay_text": "ここをタップしてエージェントをデバイスにバインド",
-  "guide.info_bar_text": "エージェントがバインドされていないデバイスがあります。<span style=\"color: #3E5DEF;\">「これにする」</span>ボタンをタップして、エージェントをデバイスにバインドしてください。",
+  "guide.info_bar_text": "エージェントがバインドされていないデバイスがあります。<span class=\"text-primary\">「これにする」</span>ボタンをタップして、エージェントをデバイスにバインドしてください。",
   "guide.info_bar_action": "わかりました",
 
   "bluetooth.config_title": "デバイス追加（Bluetooth）",
@@ -600,6 +601,9 @@
   "bluetooth.select_device.connecting": "接続中...",
   "bluetooth.select_device.connection_success": "接続されました",
   "bluetooth.select_device.connection_failed": "接続失敗",
+  "bluetooth.select_device.no_target_devices": "対象デバイスが見つかりません",
+  "bluetooth.select_device.no_target_hint": "デバイスの電源が入っているか確認するか、すべてのBluetoothデバイスを表示してみてください",
+  "bluetooth.select_device.show_all_devices": "すべてのBluetoothデバイスを表示",
   "bluetooth.select_device.signal_strength": "信号",
   "bluetooth.device_list.signal_strength": "信号",
   "bluetooth.device_list.loading": "読み込み中...",
@@ -963,5 +967,9 @@
   "login.wx_login_failed": "WeChatログイン失敗",
   "login.apple_login_failed": "Appleログイン失敗",
   "login.guest_login_failed": "ゲストログイン失敗",
-  "login.register_failed": "登録失敗"
+  "login.register_failed": "登録失敗",
+
+  "device.default_agent_bound": "デフォルトエージェント {name} にバインドしました",
+  "device.default_agent_no_match": "システム言語に一致するデフォルトエージェントが見つかりません",
+  "device.default_agent_bind_failed": "デフォルトエージェントの自動バインドに失敗しました"
 }

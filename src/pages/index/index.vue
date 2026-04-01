@@ -43,7 +43,6 @@
       :visible="showBindDrawer"
       :agent="selectedAgent"
       :configAble="userStore.userId === selectedAgent?.userId"
-      :templateAble="selectedAgent?.isTemplate"
       @update:visible="showBindDrawer = $event"
       @success="handleBindSuccess"
       @error="handleBindError"
@@ -401,8 +400,8 @@ function handleBluetoothSetup() {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #3e5cee;
-  box-shadow: 0 4px 12px rgba(62, 92, 238, 0.3);
+  background: var(--color-primary);
+  box-shadow: 0 4px 12px var(--color-primary-alpha-25);
   box-sizing: border-box;
   transition: all 0.2s ease;
   flex: none;
@@ -449,11 +448,11 @@ function handleBluetoothSetup() {
   justify-content: center;
   gap: 8px;
   padding: 16px 19px;
-  background: #3e5cee;
+  background: var(--color-primary);
   border-radius: 12px;
   box-sizing: border-box;
   z-index: 998;
-  box-shadow: 0 4px 12px rgba(62, 92, 238, 0.3);
+  box-shadow: 0 4px 12px var(--color-primary-alpha-25);
   transition:
     all 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     transform 0.15s ease;

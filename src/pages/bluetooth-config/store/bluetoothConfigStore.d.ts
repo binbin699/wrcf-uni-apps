@@ -26,7 +26,7 @@ export interface BluetoothConfigState {
   selectedDevice: { deviceId: string; name?: string; [key: string]: unknown } | null;
   selectedWifi: { SSID: string; secure: boolean; signalStrength: number } | null;
   passwordState: PasswordState;
-  isIOS: boolean;
+  useLocalName: boolean;
   sequenceControl: SequenceControl;
   sequenceNumber: number;
   isRestarting: boolean;
@@ -40,6 +40,7 @@ export type StateListener = (state: BluetoothConfigState) => void;
 
 /** 蓝牙配网状态管理器 */
 export declare class BluetoothConfigManager {
+  state: BluetoothConfigState;
   getState(): BluetoothConfigState;
   updateState(updates: Partial<BluetoothConfigState>): void;
   resetState(): void;
@@ -58,7 +59,7 @@ export declare class BluetoothConfigManager {
   setSelectedDevice(device: BluetoothConfigState['selectedDevice']): void;
   setSelectedWifi(wifi: BluetoothConfigState['selectedWifi']): void;
   setPasswordState(passwordState: Partial<PasswordState>): void;
-  setIsIOS(isIOS: boolean): void;
+  setUseLocalName(useLocalName: boolean): void;
   setConfigOnly(configOnly: boolean): void;
   setConfigCompleted(completed: boolean): void;
   isConfigCompleted(): boolean;

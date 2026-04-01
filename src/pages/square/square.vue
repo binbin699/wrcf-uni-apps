@@ -839,7 +839,7 @@ function handleBindCancel() {
   flex-direction: column;
   padding-bottom: calc(max(160rpx, 104rpx + env(safe-area-inset-bottom)));
   box-sizing: border-box;
-  background: linear-gradient(180deg, #eff2ff 0%, #ffffff 124.53%);
+  background: linear-gradient(180deg, var(--color-primary-bg) 0%, #ffffff 124.53%);
 }
 
 /* 自定义导航栏样式 */
@@ -1073,7 +1073,7 @@ function handleBindCancel() {
 }
 
 .language-option.active .language-option-text {
-  color: #2563eb;
+  color: var(--color-primary-dark);
   font-weight: 500;
 }
 
@@ -1089,7 +1089,7 @@ function handleBindCancel() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #2563eb;
+  background: var(--color-primary-dark);
   border-radius: 50%;
 }
 
@@ -1141,10 +1141,10 @@ function handleBindCancel() {
 }
 
 .tag-item.active {
-  background: rgba(37, 99, 235, 0.9);
+  background: rgba(51, 92, 255, 0.9);
   color: white;
   box-shadow: 0 10rpx 30rpx rgba(147, 112, 219, 0.3);
-  border: 2rpx solid rgba(37, 99, 235, 0.8);
+  border: 2rpx solid rgba(51, 92, 255, 0.8);
   backdrop-filter: blur(10rpx);
   -webkit-backdrop-filter: blur(10rpx);
 }
@@ -1260,7 +1260,7 @@ function handleBindCancel() {
   min-width: 128rpx;
   width: auto;
   height: 64rpx;
-  background: #3e5def;
+  background: var(--color-primary);
   border-radius: 16rpx;
   border: none;
   flex-shrink: 0;
@@ -1286,7 +1286,7 @@ function handleBindCancel() {
 
 .config-btn:active {
   transform: translateY(2rpx);
-  box-shadow: 0 5rpx 15rpx rgba(67, 105, 254, 0.2);
+  box-shadow: 0 5rpx 15rpx var(--color-primary-alpha-20);
 }
 
 .loading {
@@ -1324,8 +1324,8 @@ function handleBindCancel() {
 .guide-highlight {
   position: relative !important;
   box-shadow:
-    0 12rpx 32rpx rgba(37, 99, 235, 0.3),
-    0 0 0 4rpx rgba(37, 99, 235, 0.2) !important;
+    0 12rpx 32rpx var(--color-primary-alpha-25),
+    0 0 0 4rpx var(--color-primary-alpha-20) !important;
 }
 
 .guide-pulse {
@@ -1341,7 +1341,7 @@ function handleBindCancel() {
   background: rgba(255, 255, 255, 0.98);
   border-radius: 32rpx;
   padding: 28rpx 32rpx;
-  box-shadow: 0 28rpx 72rpx rgba(37, 99, 235, 0.22);
+  box-shadow: 0 28rpx 72rpx var(--color-primary-alpha-25);
   display: flex;
   flex-direction: column;
   gap: 18rpx;
@@ -1362,7 +1362,7 @@ function handleBindCancel() {
 
 .square-guide-tooltip-skip {
   font-size: 24rpx;
-  color: #335cff;
+  color: var(--color-primary);
 }
 
 .square-guide-tooltip::after {
@@ -1373,7 +1373,7 @@ function handleBindCancel() {
   border-width: 12rpx 12rpx 0 12rpx;
   border-style: solid;
   border-color: rgba(255, 255, 255, 0.96) transparent transparent transparent;
-  filter: drop-shadow(0 8rpx 12rpx rgba(37, 99, 235, 0.15));
+  filter: drop-shadow(0 8rpx 12rpx var(--color-primary-alpha-15));
 }
 
 .square-guide-popup {
@@ -1391,7 +1391,7 @@ function handleBindCancel() {
   background: rgba(255, 255, 255, 0.96);
   border-radius: 36rpx;
   padding: 36rpx 40rpx;
-  box-shadow: 0 28rpx 72rpx rgba(37, 99, 235, 0.22);
+  box-shadow: 0 28rpx 72rpx var(--color-primary-alpha-25);
   display: flex;
   flex-direction: column;
   gap: 24rpx;
@@ -1416,13 +1416,13 @@ function handleBindCancel() {
 }
 
 .square-guide-action {
-  background: #335cff;
+  background: var(--color-primary);
   color: #ffffff;
   padding: 18rpx 44rpx;
   border-radius: 999rpx;
   font-size: 26rpx;
   font-weight: 500;
-  box-shadow: 0 18rpx 40rpx rgba(37, 99, 235, 0.32);
+  box-shadow: 0 18rpx 40rpx var(--color-primary-alpha-35);
 }
 
 .square-guide-skip {
@@ -1432,13 +1432,13 @@ function handleBindCancel() {
 
 @keyframes guidePulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.45);
+    box-shadow: 0 0 0 0 rgba(51, 92, 255, 0.45);
   }
   70% {
-    box-shadow: 0 0 0 20rpx rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 20rpx rgba(51, 92, 255, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 0 rgba(51, 92, 255, 0);
   }
 }
 
@@ -1664,7 +1664,7 @@ function handleBindCancel() {
   padding: 0 24rpx;
   width: 240rpx;
   height: 56rpx;
-  background: #0166ff;
+  background: var(--color-primary);
   border-radius: 132rpx;
 }
 
@@ -1814,7 +1814,7 @@ function handleBindCancel() {
   padding: 0 24rpx;
   width: 240rpx;
   height: 56rpx;
-  background: #0166ff;
+  background: var(--color-primary);
   border-radius: 132rpx;
 }
 
@@ -1866,6 +1866,6 @@ function handleBindCancel() {
   font-weight: 400;
   font-size: 26rpx;
   line-height: 40rpx;
-  color: #3e5def;
+  color: var(--color-primary);
 }
 </style>

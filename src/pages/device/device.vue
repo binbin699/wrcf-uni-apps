@@ -99,7 +99,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app';
 import { useI18n } from 'vue-i18n';
 // todo
 // @ts-ignore
-import { deviceApi, agentApi } from '@/api/index';
+import { deviceApi } from '@/api/index';
 import { ref, computed, watch } from 'vue';
 import AudioPlayerManager from '@/utils/audioPlayer';
 import { Pages, PageMap } from '@/utils/route';
@@ -172,28 +172,13 @@ async function loadDeviceList() {
   try {
     loading.value = true;
     // 使用deviceApi获取设备列表
+    // 注意：服务端返回的 agentName 已经过 join 处理，直接使用即可。
+    // 不在客户端调用 agentApi.getInfo 做二次校验，原因：
+    //   该接口仅对用户自己创建的智能体有权限，对公开/他人智能体会返回非 1000，
+    //   导致绑定了公开智能体的设备被错误地显示为"未绑定"。
     const result = await deviceApi.getList();
     if (result.code === 1000) {
-      const devices = Array.isArray(result.data) ? result.data : [];
-      
-      // 验证每个设备绑定的智能体是否存在
-      for (const device of devices) {
-        if (device.agentId) {
-          try {
-            const agentRes = await agentApi.getInfo(device.agentId);
-            // 如果智能体不存在或获取失败，清除 agentName
-            if (!agentRes || agentRes.code !== 1000 || !agentRes.data) {
-              device.agentName = null;
-            }
-          } catch (e) {
-            // 智能体不存在，清除 agentName
-            device.agentName = null;
-            console.log('[设备管理] 智能体不存在，已清除 agentName, agentId:', device.agentId);
-          }
-        }
-      }
-      
-      deviceList.value = devices;
+      deviceList.value = Array.isArray(result.data) ? result.data : [];
     }
   } catch (error) {
     console.error('获取设备列表失败:', error);
@@ -432,7 +417,7 @@ function unbindVoiceprint() {
 .device-agent {
   display: block;
   font-size: 28rpx;
-  color: #335cff;
+  color: var(--color-primary);
   margin-bottom: 12rpx;
 }
 

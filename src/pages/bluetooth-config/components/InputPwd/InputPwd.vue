@@ -299,10 +299,10 @@ export default {
 
 .password-tips {
   margin-top: 24rpx;
-  background-color: #f8f9ff;
+  background-color: var(--color-primary-tips-bg);
   border-radius: 16rpx;
   padding: 24rpx;
-  border-left: 6rpx solid #667eea;
+  border-left: 6rpx solid var(--color-primary);
 }
 
 .tip {
@@ -356,12 +356,12 @@ export default {
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: #fff;
-  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8rpx 24rpx var(--color-primary-alpha-25);
 
   &:active {
-    box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4rpx 12rpx var(--color-primary-alpha-25);
   }
 }
 

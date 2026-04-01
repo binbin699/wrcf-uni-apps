@@ -56,8 +56,11 @@ class Request {
     skipToken: boolean = false
   ): Promise<Record<string, string>> {
     // 构建基础请求头
+    // Accept-Language: UI 界面语言（用于展示类接口的 i18n）
+    // System-Language: 设备系统语言（用于匹配用户母语相关的业务逻辑，如绑定默认 Agent）
     const headers: Record<string, string> = {
       'Accept-Language': getLocale(),
+      'System-Language': uni.getSystemInfoSync().language || getLocale(),
       ...header
     };
 

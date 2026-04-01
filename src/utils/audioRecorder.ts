@@ -47,7 +47,7 @@ export class AudioRecorderManager {
       sampleRate: 16000,
       numberOfChannels: 1,
       encodeBitRate: 96000,
-      format: 'wav',
+      format: 'mp3',
       ...options
     };
     this.events = events;
@@ -93,6 +93,14 @@ export class AudioRecorderManager {
         AudioRecorderManager.instance.updateEvents(events);
       }
     }
+    return AudioRecorderManager.instance;
+  }
+
+  /**
+   * 获取已存在的单例实例（不创建新实例）
+   * 用于外部代码在临时接管 recorderManager 后恢复事件监听
+   */
+  public static getInstanceIfExists(): AudioRecorderManager | null {
     return AudioRecorderManager.instance;
   }
 
@@ -175,6 +183,17 @@ export class AudioRecorderManager {
         icon: 'none'
       });
     });
+  }
+
+  /**
+   * 重新注册事件监听器
+   *
+   * uni.getRecorderManager() 是全局单例，onStart/onStop/onError 是替换语义。
+   * 当外部代码（如权限请求回退方案）临时接管了 recorderManager 的事件监听后，
+   * 必须调用此方法恢复 AudioRecorderManager 的事件监听。
+   */
+  public reattachEvents(): void {
+    this.setupRecorderEvents();
   }
 
   /**

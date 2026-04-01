@@ -18,16 +18,13 @@ export const bluetoothService = {
 
 /**
  * 设备名称正则表达式
- * 通过 APP_CONFIG.BLE_FILTER_ENABLED 控制是否启用筛选，默认启用
+ * 用于过滤蓝牙扫描结果，只显示匹配的设备
+ * 默认值放行所有设备名称，可通过后端配置下发自定义正则
  *
- * 调试提示：如果扫描不到设备，可以临时将 deviceNameReg 改为 deviceNameRegAll
+ * 调试提示：如果需要在开发阶段只显示特定名称的设备，
+ * 可以临时修改为例如 /^DTXZ/ 仅显示以DTXZ开头的设备
  */
-const deviceNameRegFiltered = /^(DTXZ|BLUFI_DEVICE|ESP_|aichat_)/i;
-const deviceNameRegAll = /.*/; // 匹配所有设备
-
-// 🔧 临时禁用设备过滤，用于调试
-// const deviceNameReg = APP_CONFIG.BLE_FILTER_ENABLED ? deviceNameRegFiltered : deviceNameRegAll;
-const deviceNameReg = deviceNameRegAll; // 暂时显示所有设备
+const DEFAULT_DEVICE_NAME_REG = /.*/;
 
 /**
  * Android 12+ 蓝牙权限请求
@@ -111,7 +108,14 @@ export async function initBluetooth() {
       throw new Error('蓝牙权限未授予，请授予权限后重试');
     }
 
-    await uni.openBluetoothAdapter();
+    if (typeof uni.openBluetoothAdapter === 'function') {
+      await uni.openBluetoothAdapter();
+    } else {
+      console.warn(
+        '[bluetooth.js] uni.openBluetoothAdapter 不存在，已跳过',
+      );
+    }
+
     console.log('[蓝牙] 蓝牙模块初始化成功');
   } catch (error) {
     console.error('[蓝牙] 蓝牙模块初始化失败:', error);
@@ -452,20 +456,22 @@ export function dedupeDeviceList(deviceList) {
 /**
  * 过滤有效设备
  * @param {Array} devices - 设备列表
- * @param {boolean} isIOS - 是否为iOS设备
+ * @param {boolean} useLocalName - 是否使用 localName 兼容模式（iOS / Harmony 等平台）
+ * @param {RegExp} [nameRegex] - 设备名称匹配正则，不传则放行所有
  * @returns {Array} 过滤后的设备列表
  */
-export function filterValidDevices(devices, isIOS = false) {
-  if (isIOS) {
-    // iOS设备根据localName或name过滤，有一项符合条件即可
+export function filterValidDevices(devices, useLocalName = false, nameRegex) {
+  const reg = nameRegex || DEFAULT_DEVICE_NAME_REG;
+  if (useLocalName) {
+    // localName 兼容模式下同时检查 localName 和 name
     return devices.filter(
       (item) =>
-        (item.localName && deviceNameReg.test(item.localName)) ||
-        (item.name && deviceNameReg.test(item.name))
+        (item.localName && reg.test(item.localName)) ||
+        (item.name && reg.test(item.name))
     );
   } else {
-    // Android设备只根据name过滤
-    return devices.filter((item) => item.name && deviceNameReg.test(item.name));
+    // 非 localName 模式仅根据 name 过滤
+    return devices.filter((item) => item.name && reg.test(item.name));
   }
 }
 
@@ -478,10 +484,10 @@ export function filterValidDevices(devices, isIOS = false) {
  * - 在 iOS 上，保留原始 deviceId（UUID 格式，用于连接），将 MAC 地址存储在 macAddress 字段
  *
  * @param {Array} deviceList - 设备列表
- * @param {boolean} isIOS - 是否为 iOS 平台
+ * @param {boolean} useLocalName - 是否使用 localName 兼容模式
  * @returns {[Array, Array]} 规范化后的设备列表与无法规范化的设备列表
  */
-export function normalizeDeviceList(deviceList, isIOS = false) {
+export function normalizeDeviceList(deviceList, useLocalName = false) {
   // AA:BB:CC:DD:EE:FF格式 或 AA-BB-CC-DD-EE-FF格式 或 AABBCCDDEEFF格式
   const macPattern1 = /[0-9A-Fa-f]{2}([-:]?)[0-9A-Fa-f]{2}(?:\1[0-9A-Fa-f]{2}){4}$/;
 
@@ -581,7 +587,7 @@ export function getSignalColor(strength) {
     return '#34C759'; // 绿色
   }
   if (percentage > 50) {
-    return '#335CFF'; // 蓝色
+    return '#335CFF'; // theme: brand primary color, should be injected from config
   }
   if (percentage > 25) {
     return '#FF9500'; // 橙色

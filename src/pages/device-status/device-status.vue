@@ -76,8 +76,8 @@
       <view
         class="welcome-guide"
         v-else-if="!currentDevice"
-        :class="{ 'is-single': setupMode !== 'both' }">
-        <view class="welcome-card" v-if="setupMode === 'both'">
+        :class="{ 'is-single': effectiveSetupMode !== 'both' }">
+        <view class="welcome-card" v-if="effectiveSetupMode === 'both'">
           <view class="welcome-title">{{ $t('welcome.guide_title') }}</view>
           <view class="welcome-actions">
             <view class="welcome-setup-options">
@@ -108,9 +108,9 @@
           </view>
         </view>
         <view class="welcome-card-single" v-else>
-          <view class="welcome-icon-wrapper single" :class="setupMode">
+          <view class="welcome-icon-wrapper single" :class="effectiveSetupMode">
             <image
-              v-if="setupMode === 'qrcode'"
+              v-if="effectiveSetupMode === 'qrcode'"
               class="welcome-setup-icon-large"
               src="/static/icons/scan-qrcode.svg"
               mode="aspectFit" />
@@ -125,10 +125,14 @@
             <view
               class="welcome-primary-btn"
               @click="
-                setupMode === 'qrcode' ? handleAddDeviceQrcode() : handleAddDeviceBluetooth()
+                effectiveSetupMode === 'qrcode'
+                  ? handleAddDeviceQrcode()
+                  : handleAddDeviceBluetooth()
               ">
               {{
-                setupMode === 'qrcode' ? $t('welcome.setup_qrcode') : $t('welcome.setup_bluetooth')
+                effectiveSetupMode === 'qrcode'
+                  ? $t('welcome.setup_qrcode')
+                  : $t('welcome.setup_bluetooth')
               }}
             </view>
             <!-- #ifndef MP-WEIXIN -->
@@ -160,22 +164,22 @@
           <!-- 智能体卡片容器 -->
           <view class="agent-card-container">
             <!-- 智能体卡片主体 -->
-            <view class="agent-card" @click="handleAgentClick">
-              <view class="agent-avatar">
+            <view class="agent-card">
+              <view class="agent-avatar" @click.stop="handleAgentClick">
                 <view class="avatar-bg">
                   <text class="avatar-text">{{ getAvatarText(boundAgent.agentName) }}</text>
                 </view>
               </view>
               <view class="agent-info">
                 <view class="agent-name-row">
-                  <view class="agent-name-wrapper">
+                  <view class="agent-name-wrapper" @click.stop="handleAgentClick">
                     <text class="agent-name">{{ boundAgent.agentName }}</text>
-                    <view class="agent-arrow">
+                    <view class="agent-arrow" v-if="!isPublicAgent">
                       <image src="/static/icons/right-arrow.svg" mode="aspectFit"></image>
                     </view>
                   </view>
                 </view>
-                <view class="agent-tags">
+                <view class="agent-tags" @click.stop="handleAgentClick">
                   <text class="agent-tag">
                     {{ boundAgent.config?.language || $t('device_status.default_language') }}
                   </text>
@@ -293,7 +297,7 @@
     <image class="bottom-illustration" src="/static/bg_removal.png" mode="aspectFill"></image>
 
     <!-- AI 生成提示 -->
-    <view v-if="deviceList.length > 0" class="ai-generated-tip">
+    <view v-if="!loading" class="ai-generated-tip">
       <text class="ai-generated-text">{{ $t('common.ai_generated_disclaimer') }}</text>
     </view>
 
@@ -324,6 +328,14 @@ const { scanAndBind, isNavigating } = useDeviceScan({ toast, showNotify, closeNo
 
 // 配置
 const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
+const primarySetupMode = APP_CONFIG.APP_PRIMARY_SETUP_MODE || 'none';
+const effectiveSetupMode = computed(() => {
+  if (setupMode !== 'both') {
+    return setupMode;
+  }
+
+  return primarySetupMode === 'none' ? 'both' : primarySetupMode;
+});
 
 // 导航栏高度
 const statusBarHeight = ref(20);
@@ -389,6 +401,7 @@ const loading = ref(true);
 const deviceList = ref<any[]>([]);
 const currentDevice = ref<any>(null);
 const boundAgent = ref<any>(null);
+const isPublicAgent = computed(() => boundAgent.value?.isPublic === 1);
 const showDeviceSelector = ref(false);
 const showEditName = ref(false);
 const editDeviceName = ref('');
@@ -590,7 +603,8 @@ const loadBoundAgent = async (version?: number) => {
 
 // 获取头像背景色
 const getAvatarBgColor = (name: string) => {
-  const colors = ['#E3F6FF', '#FFE8E8', '#E8FFE8', '#FFF3E8', '#F3E8FF'];
+  // theme: these colors should ideally come from CSS variables; kept as hex for JS array usage
+  const colors = ['#E3F6FF', '#FFE8E8', '#E8FFE8', '#FFF3E8', '#F3E8FF']; // theme: injected via CSS variable
   const index = name ? name.charCodeAt(0) % colors.length : 0;
   return colors[index];
 };
@@ -711,6 +725,13 @@ const handleSelectDevice = async (device: any) => {
 // 处理点击智能体
 const handleAgentClick = () => {
   if (boundAgent.value && boundAgent.value.agentId) {
+    if (isPublicAgent.value) {
+      uni.showToast({
+        title: $t('device_status.cannot_edit_public_agent'),
+        icon: 'none'
+      });
+      return;
+    }
     uni.navigateTo({
       url: `/pages/agent/edit?agentId=${boundAgent.value.agentId}`
     });
@@ -782,7 +803,7 @@ uni.$on('deviceStatusRefresh', () => {
   height: 100%;
   left: 0;
   top: 0;
-  background: linear-gradient(180deg, #9cbdff 0%, #d2dbff 22.97%, #fcfdff 100%);
+  background: linear-gradient(180deg, var(--color-primary-gradient-start) 0%, var(--color-primary-gradient-mid) 22.97%, #fcfdff 100%);
   z-index: 0;
 }
 
@@ -912,7 +933,7 @@ uni.$on('deviceStatusRefresh', () => {
   white-space: nowrap;
 
   &.active {
-    color: #3e5def;
+    color: var(--color-primary);
   }
 }
 
@@ -973,7 +994,7 @@ uni.$on('deviceStatusRefresh', () => {
   height: 209px;
   left: -57px;
   bottom: 150px;
-  background: #ebefff;
+  background: var(--color-primary-bg);
   opacity: 0.6;
   filter: blur(26px);
 }
@@ -983,7 +1004,7 @@ uni.$on('deviceStatusRefresh', () => {
   height: 181px;
   right: -77px;
   bottom: 120px;
-  background: #eaeeff;
+  background: var(--color-primary-bg);
   opacity: 0.5;
   filter: blur(20px);
 }
@@ -1101,11 +1122,11 @@ uni.$on('deviceStatusRefresh', () => {
   box-shadow: 0 8rpx 16rpx rgba(0, 0, 0, 0.1);
 
   &.qr {
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
   }
 
   &.bluetooth {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   }
 }
 
@@ -1127,7 +1148,7 @@ uni.$on('deviceStatusRefresh', () => {
   gap: 12rpx;
   padding: 16rpx 40rpx 8rpx;
   margin-top: 16rpx;
-  color: #3b82f6;
+  color: var(--color-primary);
   font-size: 28rpx;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -1149,7 +1170,7 @@ uni.$on('deviceStatusRefresh', () => {
   background: #ffffff;
   border-radius: 48rpx;
   padding: 80rpx 48rpx 60rpx;
-  box-shadow: 0 32rpx 80rpx rgba(37, 99, 235, 0.18);
+  box-shadow: 0 32rpx 80rpx var(--color-primary-alpha-25);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1166,13 +1187,13 @@ uni.$on('deviceStatusRefresh', () => {
   box-shadow: 0 16rpx 32rpx rgba(0, 0, 0, 0.1);
 
   &.qrcode {
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
     box-shadow: 0 16rpx 32rpx rgba(16, 185, 129, 0.25);
   }
 
   &.bluetooth {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    box-shadow: 0 16rpx 32rpx rgba(59, 130, 246, 0.25);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    box-shadow: 0 16rpx 32rpx var(--color-primary-shadow);
   }
 }
 
@@ -1201,7 +1222,7 @@ uni.$on('deviceStatusRefresh', () => {
 .welcome-primary-btn {
   width: 100%;
   height: 100rpx;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
   color: #ffffff;
   border-radius: 50rpx;
   display: flex;
@@ -1209,7 +1230,7 @@ uni.$on('deviceStatusRefresh', () => {
   justify-content: center;
   font-size: 32rpx;
   font-weight: 600;
-  box-shadow: 0 12rpx 24rpx rgba(37, 99, 235, 0.25);
+  box-shadow: 0 12rpx 24rpx var(--color-primary-shadow);
   margin-bottom: 32rpx;
   transition: all 0.2s ease;
 
@@ -1230,7 +1251,7 @@ uni.$on('deviceStatusRefresh', () => {
 .device-card {
   width: 100%;
   height: 72px;
-  background: linear-gradient(274.82deg, #637df2 0%, #3e5eef 100%);
+  background: linear-gradient(274.82deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
   box-shadow: 0px 0px 12px rgba(91, 118, 248, 0.06);
   border-radius: 16px;
   position: relative;
@@ -1333,7 +1354,7 @@ uni.$on('deviceStatusRefresh', () => {
 .avatar-bg {
   width: 44px;
   height: 44px;
-  background: #e3f6ff;
+  background: var(--color-info-bg);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -1343,7 +1364,7 @@ uni.$on('deviceStatusRefresh', () => {
 .avatar-text {
   font-size: 18px;
   font-weight: 500;
-  color: #3e5def;
+  color: var(--color-primary);
   line-height: 24px;
   text-align: center;
 }
@@ -1389,11 +1410,13 @@ uni.$on('deviceStatusRefresh', () => {
   display: flex;
   flex-direction: row;
   align-items: center;
+  align-self: flex-start;
   padding: 6px 12px;
-  background: #e3f6ff;
+  background: var(--color-info-bg);
   border-radius: 6px;
   gap: 8px;
   flex-wrap: wrap;
+  max-width: 100%;
 }
 
 .agent-tag {
@@ -1441,7 +1464,7 @@ uni.$on('deviceStatusRefresh', () => {
   background: linear-gradient(180deg, #f5f9ff 0%, #ecf4ff 46.48%, #f5f9ff 100%);
   border-radius: 16px;
   box-shadow: 0px 0px 12px 0px rgba(91, 118, 248, 0.06);
-  border: 0.5px solid #eaeefc;
+  border: 0.5px solid var(--color-primary-bg);
   min-height: 112px;
   overflow: hidden;
 }
@@ -1477,7 +1500,7 @@ uni.$on('deviceStatusRefresh', () => {
   justify-content: center;
   min-height: 32px;
   padding: 4px 20px;
-  background: #3d77fc;
+  background: var(--color-primary);
   border-radius: 9999px;
   align-self: flex-start;
 
@@ -1602,7 +1625,7 @@ uni.$on('deviceStatusRefresh', () => {
   width: 100%;
   height: 48px;
   background: #f3f4f7;
-  border: 1.5px solid #3d77fc;
+  border: 1.5px solid var(--color-primary);
   border-radius: 12px;
   display: flex;
   flex-direction: row;
@@ -1656,7 +1679,7 @@ uni.$on('deviceStatusRefresh', () => {
   }
 
   &.confirm {
-    background: #3e5def;
+    background: var(--color-primary);
     color: #ffffff;
   }
 }
@@ -1706,8 +1729,8 @@ uni.$on('deviceStatusRefresh', () => {
   background: #f3f4f7;
 
   &.active {
-    background: #e3f6ff;
-    border: 1px solid #3e5def;
+    background: var(--color-info-bg);
+    border: 1px solid var(--color-primary);
   }
 }
 

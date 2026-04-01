@@ -1,6 +1,7 @@
 <template>
   <wd-toast />
   <view class="landing-container">
+  <view v-if="!isChecking" class="landing-container">
     <!-- 欢迎卡片 -->
     <view class="welcome-popup">
       <view class="welcome-content">
@@ -52,6 +53,7 @@
       </view>
     </view>
   </view>
+  </view>
 </template>
 
 <script setup lang="ts">
@@ -71,16 +73,25 @@ const toast = useToast();
 const userStore = useUserStore();
 
 const setupMode = APP_CONFIG.APP_SETUP_MODE || 'both';
+const isChecking = ref(true);
 const isNavigating = ref(false);
 const PENDING_BIND_KEY = 'pendingBindAction';
 type PendingBindAction = 'qrcode' | 'bluetooth';
 
 // 检查是否已登录
-onShow(() => {
-  // 如果已登录，直接跳转到首页
+onShow(async () => {
+  isChecking.value = true;
+  // 等待用户状态初始化完成（含 token 恢复 / 静默刷新 / 用户信息拉取）
+  await userStore.initUserState();
+  // 如果已登录，清除可能遗留的 pendingBindAction key，再跳转首页
+  // 避免用户已登录重新进入小程序时被 resumePendingBindAction 触发自动扫码/蓝牙
   if (userStore.isLoggedIn && userStore.userId > 0) {
+    uni.removeStorageSync(PENDING_BIND_KEY);
     redirectToHome();
+    return;
   }
+  // 确认未登录后才展示 landing 内容
+  isChecking.value = false;
 });
 
 // 判断用户是否真正登录
@@ -178,7 +189,7 @@ async function handleSkipSetup() {
   background: rgba(255, 255, 255, 0.98);
   border-radius: 36rpx;
   padding: 48rpx 40rpx;
-  box-shadow: 0 28rpx 72rpx rgba(37, 99, 235, 0.22);
+  box-shadow: 0 28rpx 72rpx var(--color-primary-alpha-25);
   display: flex;
   flex-direction: column;
   gap: 32rpx;
@@ -237,11 +248,11 @@ async function handleSkipSetup() {
 }
 
 .welcome-setup-icon-wrapper.qr {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
 }
 
 .welcome-setup-icon-wrapper.bluetooth {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
 }
 
 .welcome-setup-icon {
@@ -275,13 +286,13 @@ async function handleSkipSetup() {
 }
 
 .welcome-icon-wrapper.single.qrcode {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
   box-shadow: 0 16rpx 32rpx rgba(16, 185, 129, 0.25);
 }
 
 .welcome-icon-wrapper.single.bluetooth {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  box-shadow: 0 16rpx 32rpx rgba(59, 130, 246, 0.25);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  box-shadow: 0 16rpx 32rpx var(--color-primary-shadow);
 }
 
 .welcome-setup-icon-large {
@@ -295,18 +306,18 @@ async function handleSkipSetup() {
   justify-content: center;
   width: 100%;
   height: 96rpx;
-  background: linear-gradient(135deg, #335CFF, #2563eb);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   border-radius: 48rpx;
   color: #ffffff;
   font-size: 32rpx;
   font-weight: 600;
-  box-shadow: 0 12rpx 32rpx rgba(51, 92, 255, 0.35);
+  box-shadow: 0 12rpx 32rpx var(--color-primary-alpha-35);
   transition: all 0.2s ease;
 }
 
 .welcome-primary-btn:active {
   transform: scale(0.98);
-  box-shadow: 0 8rpx 24rpx rgba(51, 92, 255, 0.25);
+  box-shadow: 0 8rpx 24rpx var(--color-primary-shadow);
 }
 
 /* 跳过按钮 */

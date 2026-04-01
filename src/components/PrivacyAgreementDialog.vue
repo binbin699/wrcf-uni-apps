@@ -158,7 +158,7 @@ function handleRefuse() {
 }
 
 .privacy-link {
-  color: #3e5def;
+  color: var(--color-primary);
   text-decoration: underline;
 }
 
@@ -188,7 +188,7 @@ function handleRefuse() {
 }
 
 .privacy-btn.accept {
-  background: #3e5def;
+  background: var(--color-primary);
   color: #fff;
 }
 </style>

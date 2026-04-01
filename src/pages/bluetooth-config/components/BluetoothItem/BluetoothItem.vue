@@ -79,7 +79,7 @@ export default {
   &:active {
     transform: translateY(2rpx);
     box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-    border-color: #667eea;
+    border-color: var(--color-primary);
   }
 }
 
@@ -127,7 +127,7 @@ export default {
 
 .select-icon {
   font-size: 28rpx;
-  color: #667eea;
+  color: var(--color-primary);
   font-weight: 600;
   margin-left: 16rpx;
   flex-shrink: 0;

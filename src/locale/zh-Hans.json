@@ -1,6 +1,6 @@
 {
   "privacy.title": "服务协议和隐私政策",
-  "privacy.message": "欢迎使用灵矽AI！<br/><br/>在您使用我们的服务前，请仔细阅读并同意以下协议：<a href=\"{termsUrl}\">《用户协议》</a>与<a href=\"{privacyUrl}\">《隐私政策》</a><br/><br/>点击<font color=\"#3E5DEF\">「同意」</font>即表示您已阅读并同意上述协议。如您不同意，我们将无法为您提供服务。",
+  "privacy.message": "欢迎使用灵矽AI！<br/><br/>在您使用我们的服务前，请仔细阅读并同意以下协议：<a href=\"https://www.qiniu.com/agreements/user-agreement\">《用户协议》</a>与<a href=\"https://www.qiniu.com/agreements/privacy-right\">《隐私政策》</a><br/><br/>点击<font color=\"#335CFF\">「同意」</font>即表示您已阅读并同意上述协议。如您不同意，我们将无法为您提供服务。",
   "privacy.messageIntro": "欢迎使用灵矽AI！\n\n在您使用我们的服务前，请仔细阅读并同意以下协议：",
   "privacy.termsLink": "《用户协议》",
   "privacy.and": "与",
@@ -12,7 +12,7 @@
   "privacy.buttonAccept": "同意",
   "privacy.buttonRefuse": "不同意",
   "privacy.second.title": "温馨提示",
-  "privacy.second.message": "您需要同意<a href=\"{termsUrl}\">《用户协议》</a>与<a href=\"{privacyUrl}\">《隐私政策》</a>才能继续使用灵矽AI，否则将退出应用。",
+  "privacy.second.message": "您需要同意<a href=\"https://www.qiniu.com/agreements/user-agreement\">《用户协议》</a>与<a href=\"https://www.qiniu.com/agreements/privacy-right\">《隐私政策》</a>才能继续使用灵矽AI，否则将退出应用。",
   "privacy.second.messageIntro": "您需要同意",
   "privacy.second.messageFooter": "才能继续使用灵矽AI，否则将退出应用。",
   "privacy.second.buttonAccept": "同意并继续",
@@ -235,6 +235,7 @@
   "device_status.edit_device_name": "编辑设备名称",
   "device_status.enter_device_name": "请输入设备名称",
   "device_status.name_required": "请输入设备名称",
+  "device_status.cannot_edit_public_agent": "无法编辑公开智能体",
 
   "profile.nickname_default": "未设置昵称",
   "profile.no_nickname": "未设置昵称",
@@ -422,6 +423,7 @@
   "voice_clone.select_audio_file": "选择音频文件",
   "voice_clone.audio_format_desc": "支持 MP3、WAV、M4A 等格式，建议时长 10-60 秒",
   "voice_clone.record_voice": "录制语音",
+  "voice_clone.record_voice_popup_title": "录制语音（10-120秒）",
   "voice_clone.record_desc": "点击开始录音，建议录制 10-60 秒清晰语音",
   "voice_clone.stop_recording": "结束录制",
   "voice_clone.start_recording": "开始录制",
@@ -554,10 +556,10 @@
   "guide.square_highlight_tip": "点击这里将智能体绑定到您的设备",
   "guide.square_highlight_skip": "我知道了",
   "guide.overlay_title": "这里是智能体广场",
-  "guide.overlay_desc": "点击卡片上的<span style=\"color: #0166FF;\">「绑定」</span>按钮，即可将智能体绑定到你的设备",
+  "guide.overlay_desc": "点击卡片上的<span class=\"text-primary\">「绑定」</span>按钮，即可将智能体绑定到你的设备",
   "guide.overlay_action": "知道了",
   "guide.second_overlay_text": "点击此即可将智能体绑定到你的设备",
-  "guide.info_bar_text": "你有设备尚未绑定智能体。点击<span style=\"color: #3E5DEF;\">「绑定」</span>按钮，即可将智能体绑定到你的设备。",
+  "guide.info_bar_text": "你有设备尚未绑定智能体。点击<span class=\"text-primary\">「绑定」</span>按钮，即可将智能体绑定到你的设备。",
   "guide.info_bar_action": "知道了",
   "bluetooth.config_title": "添加设备（蓝牙）",
   "bluetooth.restarting": "正在重新开始",
@@ -588,6 +590,9 @@
   "bluetooth.select_device.connecting": "正在连接...",
   "bluetooth.select_device.connection_success": "连接成功",
   "bluetooth.select_device.connection_failed": "连接失败",
+  "bluetooth.select_device.no_target_devices": "未扫描到目标设备",
+  "bluetooth.select_device.no_target_hint": "请确认设备已开机，或尝试查看所有蓝牙设备",
+  "bluetooth.select_device.show_all_devices": "显示所有蓝牙设备",
   "bluetooth.select_device.signal_strength": "信号强度",
   "bluetooth.device_list.signal_strength": "信号强度",
   "bluetooth.device_list.loading": "正在加载...",
@@ -945,5 +950,9 @@
   "login.wx_login_failed": "微信登录失败",
   "login.apple_login_failed": "Apple登录失败",
   "login.guest_login_failed": "游客登录失败",
-  "login.register_failed": "注册失败"
+  "login.register_failed": "注册失败",
+
+  "device.default_agent_bound": "已绑定至默认智能体 {name}",
+  "device.default_agent_no_match": "未找到匹配您系统语言的默认智能体",
+  "device.default_agent_bind_failed": "自动绑定默认智能体失败"
 }

@@ -174,7 +174,7 @@ function initManagers() {
       sampleRate: 16000,
       numberOfChannels: 1,
       encodeBitRate: 96000,
-      format: 'wav'
+      format: 'mp3'
     },
     {
       onStart: () => {
@@ -187,7 +187,7 @@ function initManagers() {
         console.log('录音结束', result);
         isRecording.value = false;
         recordFile.value = result.tempFilePath;
-        recordFileName.value = `${new Date().getTime()}.${result.fileExtension || 'wav'}`;
+        recordFileName.value = `${new Date().getTime()}.${result.fileExtension || 'mp3'}`;
         recordFileSize.value = AudioRecorderManager.formatFileSize(result.fileSize);
       },
       onError: (error) => {

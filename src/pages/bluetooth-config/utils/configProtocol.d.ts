@@ -34,6 +34,7 @@ export interface WifiListItem {
 /** 配网协议类 */
 export declare class ConfigProtocol {
   init(deviceId: string): Promise<void>;
+  reset(): void;
   getWifiList(deviceId: string): Promise<WifiListItem[]>;
   checkBLEConnection(deviceId: string): Promise<boolean>;
   reconnectBLEDevice(deviceId: string): Promise<void>;

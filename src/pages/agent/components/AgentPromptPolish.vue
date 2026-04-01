@@ -195,7 +195,7 @@ onUnmounted(() => {
 }
 
 .agent-prompt-polish .textarea-wrapper:focus-within {
-  border-color: #335CFF;
+  border-color: var(--color-primary);
 }
 
 .agent-prompt-polish .textarea::placeholder {
@@ -230,8 +230,8 @@ onUnmounted(() => {
 }
 
 .agent-prompt-polish .polish-container .polish-btn.active {
-  color: #335CFF;
-  background: rgba(51, 92, 255, 0.1);
+  color: var(--color-primary);
+  background: var(--color-primary-alpha-10);
 }
 
 .agent-prompt-polish .polish-container .polish-btn.disabled {
@@ -240,8 +240,8 @@ onUnmounted(() => {
 }
 
 .agent-prompt-polish .polish-container .polish-btn.requesting {
-  color: #335CFF;
-  background: rgba(51, 92, 255, 0.1);
+  color: var(--color-primary);
+  background: var(--color-primary-alpha-10);
 }
 
 .agent-prompt-polish .polish-container .polish-btn-group {
@@ -260,12 +260,12 @@ onUnmounted(() => {
 }
 
 .agent-prompt-polish .polish-container .polish-btn-group .small-btn.retry-btn {
-  color: #335CFF;
-  background: rgba(51, 92, 255, 0.1);
+  color: var(--color-primary);
+  background: var(--color-primary-alpha-10);
 }
 
 .agent-prompt-polish .polish-container .polish-btn-group .small-btn.retry-btn:active {
-  background: rgba(51, 92, 255, 0.2);
+  background: var(--color-primary-alpha-20);
 }
 
 .agent-prompt-polish .polish-icon.rotate {

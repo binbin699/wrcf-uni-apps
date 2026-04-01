@@ -792,7 +792,7 @@ page {
 
 /* 手机号快捷登录按钮 - 根据Figma设计稿 */
 .login-btn.primary {
-  background: #335CFF;
+  background: var(--color-primary);
   color: #ffffff;
   box-shadow: 0 8rpx 32rpx rgba(31, 38, 135, 0.2);
   backdrop-filter: blur(20rpx);

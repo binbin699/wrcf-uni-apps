@@ -64,6 +64,7 @@ import WifiConfig from './components/WifiConfig/WifiConfig.vue';
 import ManualConfig from './components/ManualConfig/ManualConfig.vue';
 import SubmitConfig from './components/SubmitConfig/SubmitConfig.vue';
 import { PageMap, Pages } from '@/utils/route';
+import { AppInfo } from '@/const';
 
 const { t: $t } = useI18n();
 
@@ -103,7 +104,8 @@ onLoad((options) => {
 
   // 检测设备类型
   const systemInfo = uni.getSystemInfoSync();
-  bluetoothConfigManager.setIsIOS(systemInfo.platform === 'ios');
+  const useLocalName = systemInfo.platform === 'ios' || AppInfo.isHarmonyApp();
+  bluetoothConfigManager.setUseLocalName(useLocalName);
 
   // 设置状态栏高度
   setStatusBarHeight();
@@ -129,7 +131,7 @@ onLoad((options) => {
     currentStep: state.value.currentStep,
     selectedDevice: state.value.selectedDevice,
     selectedWifi: state.value.selectedWifi,
-    isIOS: state.value.isIOS
+    useLocalName: state.value.useLocalName
   });
 });
 
@@ -316,7 +318,7 @@ async function cleanupBluetooth() {
   width: 80rpx;
   height: 80rpx;
   border: 6rpx solid #e5e7eb;
-  border-top: 6rpx solid #3b82f6;
+  border-top: 6rpx solid var(--color-primary);
   border-radius: 50%;
   margin: 0 auto 32rpx;
   animation: spin 1s linear infinite;

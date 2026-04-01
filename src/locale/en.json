@@ -1,6 +1,6 @@
 {
   "privacy.title": "Terms of Service & Privacy Policy",
-  "privacy.message": "Welcome to Linx AI!<br/><br/>Before using our services, please read and agree to the following agreements: <a href=\"{termsUrl}\">User Agreement</a> and <a href=\"{privacyUrl}\">Privacy Policy</a><br/><br/>By clicking <font color=\"#3E5DEF\">\"Agree\"</font>, you confirm that you have read and agree to the above agreements. If you do not agree, we will not be able to provide services to you.",
+  "privacy.message": "Welcome to Linx AI!<br/><br/>Before using our services, please read and agree to the following agreements: <a href=\"https://www.qiniu.com/agreements/user-agreement\">User Agreement</a> and <a href=\"https://www.qiniu.com/agreements/privacy-right\">Privacy Policy</a><br/><br/>By clicking <font color=\"#335CFF\">\"Agree\"</font>, you confirm that you have read and agree to the above agreements. If you do not agree, we will not be able to provide services to you.",
   "privacy.messageIntro": "Welcome to Linx AI!\n\nBefore using our services, please read and agree to the following agreements:",
   "privacy.termsLink": "User Agreement",
   "privacy.and": " and ",
@@ -12,7 +12,7 @@
   "privacy.buttonAccept": "Agree",
   "privacy.buttonRefuse": "Disagree",
   "privacy.second.title": "Notice",
-  "privacy.second.message": "You need to agree to the <a href=\"{termsUrl}\">User Agreement</a> and <a href=\"{privacyUrl}\">Privacy Policy</a> to continue using Linx AI, otherwise the app will exit.",
+  "privacy.second.message": "You need to agree to the <a href=\"https://www.qiniu.com/agreements/user-agreement\">User Agreement</a> and <a href=\"https://www.qiniu.com/agreements/privacy-right\">Privacy Policy</a> to continue using Linx AI, otherwise the app will exit.",
   "privacy.second.messageIntro": "You need to agree to the ",
   "privacy.second.messageFooter": " to continue using Linx AI, otherwise the app will exit.",
   "privacy.second.buttonAccept": "Agree & Continue",
@@ -235,6 +235,7 @@
   "device_status.edit_device_name": "Edit Device Name",
   "device_status.enter_device_name": "Enter device name",
   "device_status.name_required": "Please enter device name",
+  "device_status.cannot_edit_public_agent": "Cannot edit public agent",
 
   "profile.nickname_default": "No nickname set",
   "profile.no_nickname": "No nickname set",
@@ -423,6 +424,7 @@
   "voice_clone.select_audio_file": "Select Audio File",
   "voice_clone.audio_format_desc": "Supports MP3, WAV, M4A formats, recommended duration 10-60 seconds",
   "voice_clone.record_voice": "Record Voice",
+  "voice_clone.record_voice_popup_title": "Record Voice (10-120s)",
   "voice_clone.record_desc": "Click to start recording, recommended 10-60 seconds of clear voice",
   "voice_clone.stop_recording": "End Recording",
   "voice_clone.start_recording": "Start Recording",
@@ -555,10 +557,10 @@
   "guide.square_highlight_tip": "Tap here to bind this agent to your device",
   "guide.square_highlight_skip": "Got it",
   "guide.overlay_title": "Welcome to Agent Square",
-  "guide.overlay_desc": "Tap the <span style=\"color: #0166FF;\">'Bind'</span> button on any card to bind an agent to your device",
+  "guide.overlay_desc": "Tap the <span class=\"text-primary\">'Bind'</span> button on any card to bind an agent to your device",
   "guide.overlay_action": "Got it",
   "guide.second_overlay_text": "Tap here to bind an agent to your device",
-  "guide.info_bar_text": "You have devices not bound to an agent. Tap the <span style=\"color: #3E5DEF;\">'Bind'</span> button to bind an agent to your device.",
+  "guide.info_bar_text": "You have devices not bound to an agent. Tap the <span class=\"text-primary\">'Bind'</span> button to bind an agent to your device.",
   "guide.info_bar_action": "Got it",
   "bluetooth.config_title": "Add Device (Bluetooth)",
   "bluetooth.restarting": "Restarting",
@@ -589,6 +591,9 @@
   "bluetooth.select_device.connecting": "Connecting...",
   "bluetooth.select_device.connection_success": "Connected",
   "bluetooth.select_device.connection_failed": "Connection failed",
+  "bluetooth.select_device.no_target_devices": "No target devices found",
+  "bluetooth.select_device.no_target_hint": "Make sure the device is powered on, or try viewing all Bluetooth devices",
+  "bluetooth.select_device.show_all_devices": "Show All Bluetooth Devices",
   "bluetooth.select_device.signal_strength": "Signal",
   "bluetooth.device_list.signal_strength": "Signal",
   "bluetooth.device_list.loading": "Loading...",
@@ -945,5 +950,9 @@
   "login.wx_login_failed": "WeChat login failed",
   "login.apple_login_failed": "Apple login failed",
   "login.guest_login_failed": "Guest login failed",
-  "login.register_failed": "Registration failed"
+  "login.register_failed": "Registration failed",
+
+  "device.default_agent_bound": "Bound to default agent {name}",
+  "device.default_agent_no_match": "No default agent found for your system language",
+  "device.default_agent_bind_failed": "Failed to auto-bind default agent"
 }

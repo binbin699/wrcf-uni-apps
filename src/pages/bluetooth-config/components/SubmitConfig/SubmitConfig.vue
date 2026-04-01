@@ -7,7 +7,7 @@
           <view class="pulse-ring"></view>
           <view class="pulse-ring delay-1"></view>
           <view class="pulse-ring delay-2"></view>
-          <wd-icon name="wifi" size="80rpx" color="#3b82f6" />
+          <wd-icon name="wifi" size="80rpx" color="var(--color-primary)" />
         </view>
         <text class="status-title">{{ $t('bluetooth.submit.title') }}</text>
         <text class="status-desc">{{ $t('bluetooth.submit.waiting') }}</text>
@@ -29,6 +29,9 @@
         </view>
         <text class="status-title success-text">{{ $t('bluetooth.submit.success_title') }}</text>
         <text class="status-desc">{{ $t('bluetooth.submit.success_desc') }}</text>
+        <text v-if="defaultAgentBind && defaultAgentBind.bound" class="status-desc">{{ $t('device.default_agent_bound').replace('{name}', defaultAgentBind.agentName || '') }}</text>
+        <text v-else-if="defaultAgentBind && defaultAgentBind.reason === 'no_match'" class="status-desc">{{ $t('device.default_agent_no_match') }}</text>
+        <text v-else-if="defaultAgentBind && defaultAgentBind.reason === 'error'" class="status-desc">{{ $t('device.default_agent_bind_failed') }}</text>
 
         <!-- 配网信息摘要 -->
         <view class="info-card">
@@ -114,7 +117,8 @@ export default {
       wifiFailureCheckTimer: null,
       wifiConnectionStuck: false,
       waitingTime: 0,
-      waitingTimer: null
+      waitingTimer: null,
+      defaultAgentBind: null
     };
   },
   computed: {
@@ -317,6 +321,8 @@ export default {
 
         if (result && result.code === 1000) {
           console.log('设备绑定成功', result);
+          // 保存默认智能体绑定结果，用于成功页面展示
+          this.defaultAgentBind = result.data?.defaultAgentBind || null;
           uni.showToast({
             title: this.$t('bluetooth.submit.bind_device_success'),
             icon: 'success',
@@ -394,7 +400,7 @@ export default {
 }
 
 .status-title.success-text {
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .status-title.error-text {
@@ -423,7 +429,7 @@ export default {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 4rpx solid #3b82f6;
+  border: 4rpx solid var(--color-primary);
   animation: pulse 2s ease-out infinite;
   opacity: 0;
 }
@@ -450,7 +456,7 @@ export default {
 .waiting-time {
   font-size: 56rpx;
   font-weight: 600;
-  color: #3b82f6;
+  color: var(--color-primary);
   margin-top: 24rpx;
   font-variant-numeric: tabular-nums;
 }
@@ -463,7 +469,7 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
   box-shadow: 0 16rpx 48rpx rgba(16, 185, 129, 0.3);
   margin-bottom: 40rpx;
 }
@@ -552,13 +558,13 @@ export default {
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #335cff 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary) 100%);
   color: #fff;
-  box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8rpx 24rpx var(--color-primary-alpha-25);
 }
 
 .action-btn.success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
   color: #fff;
   box-shadow: 0 8rpx 24rpx rgba(16, 185, 129, 0.3);
 }

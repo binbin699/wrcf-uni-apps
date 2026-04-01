@@ -257,7 +257,7 @@ export default {
   width: 60rpx;
   height: 60rpx;
   border: 4rpx solid #e5e5e5;
-  border-top: 4rpx solid #667eea;
+  border-top: 4rpx solid var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 24rpx;
@@ -305,11 +305,11 @@ export default {
 }
 
 .tips {
-  background-color: #f8f9ff;
+  background-color: var(--color-primary-tips-bg);
   border-radius: 16rpx;
   padding: 24rpx;
   margin-bottom: 32rpx;
-  border-left: 6rpx solid #667eea;
+  border-left: 6rpx solid var(--color-primary);
 }
 
 .tip {
@@ -356,8 +356,8 @@ export default {
   }
 
   &.selected {
-    border-color: #667eea;
-    background-color: #f8f9ff;
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-tips-bg);
   }
 }
 
@@ -416,12 +416,12 @@ export default {
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: #fff;
-  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8rpx 24rpx var(--color-primary-alpha-25);
 
   &:active {
-    box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4rpx 12rpx var(--color-primary-alpha-25);
   }
 }
 

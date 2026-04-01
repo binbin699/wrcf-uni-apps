@@ -10,9 +10,6 @@
           <text v-if="configAble" class="config-link" @click="handleConfigClick">
             {{ $t('agent_bind_drawer.modify_config') }}
           </text>
-          <text v-if="templateAble" class="config-link" @click="handleTemplateClick">
-            {{ $t('agent_bind_drawer.as_template') }}
-          </text>
         </view>
       </view>
 
@@ -90,7 +87,6 @@
 <script>
 import { PageMap, Pages } from '@/utils/route';
 import { agentApi, deviceApi } from '../api/index';
-import { gotoCreateAgentBy } from '@/pages/agent/create';
 import {
   requestCameraAndAlbumPermission,
   checkPermissionStatus,
@@ -112,10 +108,6 @@ export default {
       default: {}
     },
     configAble: {
-      type: Boolean,
-      default: false
-    },
-    templateAble: {
       type: Boolean,
       default: false
     }
@@ -272,10 +264,6 @@ export default {
       });
     },
 
-    handleTemplateClick() {
-      gotoCreateAgentBy(this.agent);
-    },
-
     // 蓝牙添加设备
     handleBluetoothAdd() {
       uni.navigateTo({
@@ -308,7 +296,7 @@ export default {
           }
         } else {
           // 非 iOS 平台：使用合并的预请求弹窗同时请求相机和相册权限
-          const permissionResult = await requestCameraAndAlbumPermission({}, true);
+          const permissionResult = await requestCameraAndAlbumPermission(undefined, true);
           if (!permissionResult.camera.granted) {
             return;
           }
@@ -334,8 +322,8 @@ export default {
               return;
             }
 
-            // 检查 s 和 m 字段是否存在
-            if (!qrcodeData || !qrcodeData.s || !qrcodeData.m) {
+            // 检查 m 字段是否存在
+            if (!qrcodeData || !qrcodeData.m) {
               uni.showToast({
                 title: this.$t('net_config.invalid_qr'),
                 icon: 'none',
@@ -348,7 +336,7 @@ export default {
               uni.showLoading({ title: this.$t('net_config.binding_device') });
 
               // 调用绑定设备接口
-              const result = await deviceApi.bindByQrcode(qrcodeData);
+              const result = await deviceApi.bindByQrcode({ m: qrcodeData.m });
               if (result && result.code === 1000) {
                 console.log('设备绑定成功', result);
               } else {
@@ -356,18 +344,37 @@ export default {
               }
 
               uni.hideLoading();
+
               uni.showToast({
                 title: this.$t('net_config.device_bind_success'),
                 icon: 'success',
                 duration: 1500
               });
 
+              // 追加默认智能体绑定结果提示
+              const bind = result?.data?.defaultAgentBind;
+              if (bind) {
+                let agentMsg = '';
+                if (bind.bound && bind.agentName) {
+                  agentMsg = this.$t('device.default_agent_bound').replace('{name}', bind.agentName);
+                } else if (bind.reason === 'no_match') {
+                  agentMsg = this.$t('device.default_agent_no_match');
+                } else if (bind.reason === 'error') {
+                  agentMsg = this.$t('device.default_agent_bind_failed');
+                }
+                if (agentMsg) {
+                  setTimeout(() => {
+                    uni.showToast({ title: agentMsg, icon: 'none', duration: 2000 });
+                  }, 1500);
+                }
+              }
+
               // 绑定成功，跳转到配网页面
               setTimeout(() => {
                 uni.navigateTo({
                   url: PageMap[Pages.NetConfig].url + '?bound=1'
                 });
-              }, 1500);
+              }, 3000);
             } catch (error) {
               console.error('设备绑定失败:', error);
               uni.hideLoading();
@@ -481,7 +488,7 @@ export default {
 
 .config-link {
   font-size: 14px;
-  color: #335cff;
+  color: var(--color-primary);
   margin-left: 8px;
 }
 
@@ -515,14 +522,14 @@ export default {
   transition: all 0.2s ease;
 
   &.selected {
-    border-color: #335cff;
+    border-color: var(--color-primary);
   }
 }
 
 .select-dot {
   width: 10px;
   height: 10px;
-  background: #335cff;
+  background: var(--color-primary);
   border-radius: 50%;
 }
 
@@ -544,7 +551,7 @@ export default {
 
 .device-bind-status {
   font-size: 12px;
-  color: #335cff;
+  color: var(--color-primary);
   margin-top: 2px;
 }
 
@@ -595,12 +602,12 @@ export default {
 }
 
 .confirm-btn {
-  background: #335cff;
+  background: var(--color-primary);
   color: #ffffff;
 }
 
 .confirm-btn:disabled {
-  background: #335cff;
+  background: var(--color-primary);
   opacity: 0.5;
 }
 </style>

@@ -243,11 +243,19 @@ export const deviceApi = {
 
   /**
    * 通过二维码绑定设备
-   * @param {s: string, m: string, v?: string} data qrcode数据对象
+   * @param {{ m: string }} data qrcode数据对象，仅需 MAC 地址
    * @returns
    */
   bindByQrcode(data) {
     return request.post('/app/device/bind-by-qrcode', { qrcode: data });
+  },
+
+  /**
+   * 获取蓝牙配网设备名称过滤正则
+   * @returns {{ regex: string }}
+   */
+  getFilterRegex() {
+    return request.get('/app/device/filter-regex');
   }
 };
 
@@ -258,6 +266,9 @@ export const languageApi = {
     return request.get('/app/language/list');
   }
 };
+
+// 教程资源接口
+export { tutorialApi } from './tutorial';
 
 // 通用接口
 export const commonApi = common;

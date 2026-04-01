@@ -93,8 +93,8 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
             return;
           }
 
-          // 检查 s 和 m 字段是否存在
-          if (!qrcodeData || !qrcodeData.s || !qrcodeData.m) {
+          // 检查 m 字段是否存在
+          if (!qrcodeData || !qrcodeData.m) {
             toast.warning({ msg: $t('net_config.invalid_qr'), duration: 2000 });
             isNavigating.value = false;
             return;
@@ -108,7 +108,7 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
             });
 
             // 调用绑定设备接口
-            const result = await deviceApi.bindByQrcode(qrcodeData);
+            const result = await deviceApi.bindByQrcode({ m: qrcodeData.m });
             if (result && result.code === 1000) {
               console.log('设备绑定成功', result);
             } else {
@@ -116,9 +116,21 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
             }
 
             toast.close();
+
+            // 构建成功提示：设备绑定成功，追加默认智能体绑定结果
+            let successMsg = $t('net_config.device_bind_success');
+            const bind = result?.data?.defaultAgentBind;
+            if (bind?.bound && bind.agentName) {
+              successMsg += '\n' + $t('device.default_agent_bound').replace('{name}', bind.agentName);
+            } else if (bind?.reason === 'no_match') {
+              successMsg += '\n' + $t('device.default_agent_no_match');
+            } else if (bind?.reason === 'error') {
+              successMsg += '\n' + $t('device.default_agent_bind_failed');
+            }
+
             toast.success({
-              msg: $t('net_config.device_bind_success'),
-              duration: 2000,
+              msg: successMsg,
+              duration: 2500,
               cover: true
             });
 

@@ -21,8 +21,16 @@
         <text
           v-if="!isLoadingDevices && deviceList !== null && deviceList.length === 0"
           class="empty-hint">
-          {{ $t('bluetooth.device_list.check_power') }}
+          {{ hasFilteredDevices
+            ? $t('bluetooth.select_device.no_target_hint')
+            : $t('bluetooth.device_list.check_power') }}
         </text>
+        <button
+          v-if="!isLoadingDevices && hasFilteredDevices"
+          class="show-all-btn"
+          @click="handleShowAllDevices">
+          {{ $t('bluetooth.select_device.show_all_devices') }}
+        </button>
       </view>
     </view>
 
@@ -101,18 +109,25 @@ export default {
   data() {
     return {
       deviceList: null,
+      allScannedDevices: [],
       isLoadingDevices: false,
       isFirstScan: true,
       permissionsGranted: false, // 权限是否已获取（避免重复弹预请求弹窗）
       errorMessage: null,
       _devices: [],
       _showNotify: null,
-      _closeNotify: null
+      _closeNotify: null,
+      _filterRegex: null
     };
   },
   computed: {
-    isIOS() {
-      return bluetoothConfigManager.state.isIOS;
+    useLocalName() {
+      return bluetoothConfigManager.state.useLocalName;
+    },
+    hasFilteredDevices() {
+      return this.deviceList !== null
+        && this.deviceList.length === 0
+        && this.allScannedDevices.length > 0;
     }
   },
   mounted() {
@@ -130,10 +145,10 @@ export default {
 
     // 检测设备类型
     const systemInfo = uni.getSystemInfoSync();
-    const isIOS = systemInfo.platform === 'ios';
-    bluetoothConfigManager.setIsIOS(isIOS);
+    const useLocalName = systemInfo.platform === 'ios' || AppInfo.isHarmonyApp();
+    bluetoothConfigManager.setUseLocalName(useLocalName);
 
-    console.log('设备类型:', isIOS ? 'iOS' : 'Android');
+    console.log('BLE 名称模式:', useLocalName ? 'localName' : 'name');
 
     // 进入页面后自动开始扫描
     this.startDeviceScan();
@@ -148,6 +163,9 @@ export default {
       }
       if (this.deviceList === null) {
         return this.$t('bluetooth.select_device.empty_placeholder');
+      }
+      if (this.hasFilteredDevices) {
+        return this.$t('bluetooth.select_device.no_target_devices');
       }
       return this.$t('bluetooth.select_device.no_devices');
     },
@@ -182,10 +200,42 @@ export default {
     /**
      * 开始设备扫描
      */
+    parseRegexString(raw) {
+      const literal = raw.match(/^\/(.+)\/([gimsuy]*)$/);
+      if (literal) {
+        return new RegExp(literal[1], literal[2] || 'i');
+      }
+      return new RegExp(raw, 'i');
+    },
+
+    async fetchFilterRegex() {
+      try {
+        const res = await Promise.race([
+          deviceApi.getFilterRegex(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        ]);
+        const pattern = res?.data?.regex;
+        if (pattern && pattern !== '.*') {
+          this._filterRegex = this.parseRegexString(pattern);
+          console.log('[蓝牙] 设备过滤正则:', this._filterRegex);
+        } else {
+          this._filterRegex = null;
+        }
+      } catch (e) {
+        console.warn('[蓝牙] 获取设备过滤正则失败或超时，放行所有设备:', e?.message || e);
+        this._filterRegex = null;
+      }
+    },
+
+    handleShowAllDevices() {
+      this.deviceList = this.allScannedDevices;
+    },
+
     async startDeviceScan() {
-      this.deviceList = null;
-      this.isLoadingDevices = true;
       // 重置连接状态
+      this.deviceList = null;
+      this.allScannedDevices = [];
+      this.isLoadingDevices = true;
       this.isConnecting = false;
       this.isConnected = false;
       this.connectionError = null;
@@ -200,13 +250,13 @@ export default {
             close: this._closeNotify
           });
           if (!permissionResult.granted) {
-            this.isLoadingDevices = false;
             // 权限请求工具已经显示了相应的提示
+            this.isLoadingDevices = false;
             return;
           }
 
-          // Android: 蓝牙扫描需要位置权限，单独请求以确保有预请求弹窗
-          if (AppInfo.isAndroidApp()) {
+          // Android / Harmony: 蓝牙扫描需要位置权限，单独请求以确保有预请求弹窗
+          if (AppInfo.isAndroidApp() || AppInfo.isHarmonyApp()) {
             const locationResult = await requestLocationPermission(
               {
                 show: this._showNotify,
@@ -215,8 +265,8 @@ export default {
               true
             );
             if (!locationResult.granted) {
-              this.isLoadingDevices = false;
               // 权限请求工具已经显示了相应的提示
+              this.isLoadingDevices = false;
               return;
             }
           }
@@ -225,37 +275,36 @@ export default {
           this.permissionsGranted = true;
         }
 
-        if (this.isFirstScan) {
-          // 首次扫描只需初始化
-          await initBluetooth();
-          this.isFirstScan = false;
-        } else {
-          // 后续扫描需要重置蓝牙模块
-          await resetBluetooth();
-        }
+        // 在蓝牙初始化的同时并行获取过滤正则
+        const initPromise = this.isFirstScan
+          ? initBluetooth().then(() => { this.isFirstScan = false; })
+          : resetBluetooth();
+        await Promise.all([initPromise, this.fetchFilterRegex()]);
 
         // 搜索设备
         const devices = await searchBluetoothDevices();
         console.log('蓝牙-搜索到的原始设备:', devices);
 
-        // 过滤有效设备
-        const validDevices = filterValidDevices(devices, this.isIOS);
-        console.log('蓝牙-过滤后的有效设备:', validDevices);
+        // 先对所有设备做去重和MAC规范化（不做名称过滤）
+        const allValid = filterValidDevices(devices, this.useLocalName);
+        const allDeduped = dedupeDeviceList(allValid);
+        const [allNormalized] = normalizeDeviceList(allDeduped, this.useLocalName);
+        allNormalized.sort((a, b) => (b.RSSI || -100) - (a.RSSI || -100));
+        this.allScannedDevices = allNormalized;
 
-        // 去重处理
-        const dedupeDevices = dedupeDeviceList(validDevices);
-        console.log('蓝牙-去重后的设备:', dedupeDevices);
+        // 如果有后端下发的正则，再做一轮过滤
+        if (this._filterRegex) {
+          const filtered = filterValidDevices(devices, this.useLocalName, this._filterRegex);
+          console.log('蓝牙-正则过滤后的设备:', filtered);
+          const deduped = dedupeDeviceList(filtered);
+          const [normalized] = normalizeDeviceList(deduped, this.useLocalName);
+          normalized.sort((a, b) => (b.RSSI || -100) - (a.RSSI || -100));
+          this.deviceList = normalized;
+        } else {
+          this.deviceList = allNormalized;
+        }
 
-        // 对设备列表规范化MAC地址（传入 isIOS 参数）
-        const [normalizedDevices, invalidDevices] = normalizeDeviceList(dedupeDevices, this.isIOS);
-        console.log('蓝牙-规范化后的设备:', normalizedDevices);
-        console.log('蓝牙-无法规范化的设备:', invalidDevices);
-
-        // 按 RSSI 降序排序（信号越强越靠前）
-        normalizedDevices.sort((a, b) => (b.RSSI || -100) - (a.RSSI || -100));
-        this.deviceList = normalizedDevices;
-
-        if (normalizedDevices.length === 0) {
+        if (this.deviceList.length === 0 && this.allScannedDevices.length === 0) {
           uni.showToast({
             title: this.$t('bluetooth.select_device.no_devices'),
             icon: 'none',
@@ -462,6 +511,20 @@ export default {
   line-height: 1.5;
 }
 
+.show-all-btn {
+  margin-top: 32rpx;
+  padding: 16rpx 40rpx;
+  font-size: 28rpx;
+  color: #3e5def;
+  background: transparent;
+  border: 2rpx solid #3e5def;
+  border-radius: 40rpx;
+
+  &:active {
+    background: rgba(62, 93, 239, 0.08);
+  }
+}
+
 /* 设备列表 */
 .device-list-container {
   padding: 0;
@@ -610,7 +673,7 @@ export default {
   gap: 12rpx;
   width: 100%;
   height: 96rpx;
-  background: #3e5def;
+  background: var(--color-primary);
   border-radius: 24rpx;
   font-size: 32rpx;
   font-weight: 500;
@@ -623,7 +686,7 @@ export default {
   }
 
   &.loading {
-    background: #5a75f0;
+    background: var(--color-primary-disabled);
   }
 
   &[disabled] {
