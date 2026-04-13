@@ -19,6 +19,7 @@ const initialState = {
   currentStep: CONFIG_STEPS.SELECT_DEVICE,
   selectedDevice: null,
   selectedWifi: null,
+  defaultAgentBind: null,
   passwordState: {
     password: '',
     isVisible: false
@@ -232,6 +233,14 @@ class BluetoothConfigManager {
    */
   setSelectedWifi(wifi) {
     this.updateState({ selectedWifi: wifi });
+  }
+
+  /**
+   * 设置默认智能体绑定结果
+   * @param {Object|null} defaultAgentBind - 默认智能体绑定结果
+   */
+  setDefaultAgentBind(defaultAgentBind) {
+    this.updateState({ defaultAgentBind });
   }
 
   /**

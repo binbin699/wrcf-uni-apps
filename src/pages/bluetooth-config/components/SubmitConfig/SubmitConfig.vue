@@ -105,7 +105,6 @@
 <script>
 import { bluetoothConfigManager, CONFIG_STEPS } from '../../store/bluetoothConfigStore';
 import { configProtocol } from '../../utils/configProtocol';
-import { deviceApi } from '@/api/index';
 
 export default {
   name: 'SubmitConfig',
@@ -131,6 +130,9 @@ export default {
     passwordState() {
       return bluetoothConfigManager.getState().passwordState;
     },
+    defaultAgentBindState() {
+      return bluetoothConfigManager.getState().defaultAgentBind;
+    },
     deviceDisplayName() {
       if (!this.selectedDevice) return this.$t('bluetooth.submit.unknown_device');
       return (
@@ -140,13 +142,14 @@ export default {
       );
     },
     isWifiPasswordError() {
-      return this.configError && this.configError.includes('WiFi密码');
+      return this.configError && this.configError.includes('WiFi');
     },
     showStuckWarning() {
       return this.wifiConnectionStuck && this.isSubmitting;
     }
   },
   mounted() {
+    this.defaultAgentBind = this.defaultAgentBindState;
     console.log('SubmitConfig 组件加载');
     console.log('配网信息:', {
       device: this.selectedDevice,
@@ -225,16 +228,8 @@ export default {
         if (configResult.success) {
           console.log('配网成功', configResult);
           this.isConfigSuccess = true;
-
           // 标记配网已完成，这样返回时可以直接退出页面
           bluetoothConfigManager.setConfigCompleted(true);
-
-          // 仅在非 configOnly 模式下绑定设备
-          if (!state.configOnly) {
-            await this.registerDevice();
-          } else {
-            console.log('仅配网模式，跳过设备绑定');
-          }
 
           uni.showToast({
             title: this.$t('bluetooth.submit.config_success'),
@@ -250,7 +245,7 @@ export default {
         // 根据错误类型提供更具体的提示
         let errorMessage = this.$t('bluetooth.submit.device_timeout');
 
-        if (error.message && error.message.includes('超时')) {
+        if (error.message && (error.message.includes('timeout') || error.message.includes('超时'))) {
           // 检查是否可能是WiFi密码错误
           if (this.wifiConnectionStuck) {
             errorMessage = this.$t('bluetooth.wifi_timeout_check_password');
@@ -290,57 +285,6 @@ export default {
           url: '/pages/square/square'
         });
       }, 500);
-    },
-
-    /**
-     * 注册设备到用户账号
-     */
-    async registerDevice() {
-      console.log('注册设备', this.selectedDevice);
-
-      try {
-        // 绑定设备到用户账号
-        // 优先使用 macAddress 字段（iOS 上 deviceId 是 UUID 格式）
-        const macAddr = this.selectedDevice.macAddress || this.selectedDevice.deviceId;
-        const deviceData = {
-          deviceName: this.selectedDevice.name || macAddr,
-          macAddress: macAddr,
-          // 直接存储 i18n key，前端显示时通过 $t() 翻译
-          remark: 'device.remark_bound_via_wifi'
-        };
-        console.log('正在绑定设备到用户账号...', deviceData);
-
-        uni.showLoading({
-          title: this.$t('bluetooth.submit.binding_loading'),
-          mask: true
-        });
-
-        const result = await deviceApi.add(deviceData);
-
-        uni.hideLoading();
-
-        if (result && result.code === 1000) {
-          console.log('设备绑定成功', result);
-          // 保存默认智能体绑定结果，用于成功页面展示
-          this.defaultAgentBind = result.data?.defaultAgentBind || null;
-          uni.showToast({
-            title: this.$t('bluetooth.submit.bind_device_success'),
-            icon: 'success',
-            duration: 2000
-          });
-        } else {
-          console.warn('设备绑定响应异常', result);
-          uni.showToast({
-            title: this.$t('bluetooth.submit.config_ok_no_bind'),
-            icon: 'success',
-            duration: 2000
-          });
-        }
-      } catch (error) {
-        console.error('设备绑定失败:', error);
-        uni.hideLoading();
-        // 即使绑定失败，配网已成功，错误 toast 由 request.ts 统一处理
-      }
     },
 
     /**

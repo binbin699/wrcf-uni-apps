@@ -105,7 +105,7 @@ import { AppInfo } from '@/const';
 
 export default {
   name: 'SelectDevice',
-  inject: ['notify'],
+  inject: ['notify', 'toast'],
   data() {
     return {
       deviceList: null,
@@ -201,9 +201,6 @@ export default {
       return '33%';
     },
 
-    /**
-     * 开始设备扫描
-     */
     parseRegexString(raw) {
       const literal = raw.match(/^\/(.+)\/([gimsuy]*)$/);
       if (literal) {
@@ -235,6 +232,9 @@ export default {
       this.deviceList = this.allScannedDevices;
     },
 
+    /**
+     * 开始设备扫描
+     */
     async startDeviceScan() {
       if (this._isUnmounted) return;
 
@@ -283,7 +283,9 @@ export default {
 
         // 在蓝牙初始化的同时并行获取过滤正则
         const initPromise = this.isFirstScan
-          ? initBluetooth().then(() => { this.isFirstScan = false; })
+          ? initBluetooth().then(() => {
+            this.isFirstScan = false;
+          })
           : resetBluetooth();
         await Promise.all([initPromise, this.fetchFilterRegex()]);
 
@@ -323,7 +325,7 @@ export default {
         console.error('扫描设备失败:', error);
         if (this._isUnmounted) return;
 
-        if (`${error}`.includes('请开启手机蓝牙后重试')) {
+        if (String(error).includes('bluetooth')) {
           uni.showToast({
             title: this.$t('bluetooth.select_device.bluetooth_disabled'),
             icon: 'none',
@@ -355,30 +357,26 @@ export default {
 
       // 获取当前状态
       const state = bluetoothConfigManager.getState();
+      const selectedMac = (device.macAddress || device.deviceId || '').toLowerCase();
 
       // 检查当前设备是否已绑定（仅在非 configOnly 模式下检查）
-      if (!state.configOnly) {
-        const selectedDevice = device;
-        if (selectedDevice && selectedDevice.deviceId) {
-          const isDeviceBound = this._devices.some(
-            (_device) =>
-              _device.macAddress &&
-              _device.macAddress.toLowerCase() === selectedDevice.deviceId.toLowerCase()
-          );
+      if (!state.configOnly && selectedMac) {
+        const isDeviceBound = this._devices.some(
+          (_device) => (_device.macAddress || '').toLowerCase() === selectedMac
+        );
 
-          if (isDeviceBound) {
-            uni.showToast({
-              title: this.$t('bluetooth.select_device.device_bound'),
-              icon: 'none',
-              duration: 2000
-            });
-            return;
-          }
+        if (isDeviceBound) {
+          uni.showToast({
+            title: this.$t('bluetooth.select_device.device_bound'),
+            icon: 'none',
+            duration: 2000
+          });
+          return;
         }
       }
+
       // 保存选中的设备
       bluetoothConfigManager.setSelectedDevice(device);
-
       // 直接开始连接设备
       this.startConnection(device);
     },
@@ -412,54 +410,110 @@ export default {
 
       try {
         console.log('开始连接设备:', device.deviceId);
-
         // 连接蓝牙设备
         await connectBluetoothDevice(device.deviceId);
-
         console.log('设备连接成功');
-
         // 更新设备连接状态
-        bluetoothConfigManager.setSelectedDevice({
+        const connectedDevice = {
           ...device,
           connected: true
-        });
-
-        // 隐藏加载提示
-        uni.hideLoading();
-
+        };
+        bluetoothConfigManager.setSelectedDevice(connectedDevice);
+        // 根据连接结果构建提示信息
+        let successMsg = this.$t('bluetooth.select_device.connection_success');
+        if (!bluetoothConfigManager.getState().configOnly) {
+          const result = await this.registerDevice(connectedDevice);
+          successMsg = this.buildBindSuccessMessage(result);
+        }
         // 显示连接成功提示
-        uni.showToast({
-          title: this.$t('bluetooth.select_device.connection_success'),
-          icon: 'success',
-          duration: 1000
-        });
-
-        bluetoothConfigManager.setCurrentStep(CONFIG_STEPS.SELECT_WIFI);
-      } catch (error) {
-        // 隐藏加载提示
         uni.hideLoading();
-
-        if (error.errMsg.includes('already connect')) {
+        if (!bluetoothConfigManager.getState().configOnly && this.toast?.success) {
+          this.toast.success({
+            msg: successMsg,
+            duration: 2500,
+            cover: true
+          });
+        } else {
           uni.showToast({
-            title: this.$t('bluetooth.select_device.connection_success'),
+            title: successMsg,
             icon: 'success',
             duration: 1000
           });
+        }
+        bluetoothConfigManager.setCurrentStep(CONFIG_STEPS.SELECT_WIFI);
+      } catch (error) {
+        uni.hideLoading();
+        // 处理已连接但未正确断开导致的 "already connect" 错误
+        if (error?.errMsg?.includes('already connect')) {
+          const connectedDevice = {
+            ...device,
+            connected: true
+          };
+          bluetoothConfigManager.setSelectedDevice(connectedDevice);
+          // 根据连接结果构建提示信息
+          let successMsg = this.$t('bluetooth.select_device.connection_success');
+          if (!bluetoothConfigManager.getState().configOnly) {
+            const result = await this.registerDevice(connectedDevice);
+            successMsg = this.buildBindSuccessMessage(result);
+          }
+          // 显示连接成功提示
+          if (!bluetoothConfigManager.getState().configOnly && this.toast?.success) {
+            this.toast.success({
+              msg: successMsg,
+              duration: 2500,
+              cover: true
+            });
+          } else {
+            uni.showToast({
+              title: successMsg,
+              icon: 'success',
+              duration: 1000
+            });
+          }
           bluetoothConfigManager.setCurrentStep(CONFIG_STEPS.SELECT_WIFI);
-
           return;
         }
 
         console.error('连接设备失败:', error);
-
-        // 显示错误提示（始终使用翻译后的友好信息）
         uni.showToast({
-          title: this.$t('bluetooth.select_device.connection_failed'),
+          title: error?.message || this.$t('bluetooth.select_device.connection_failed'),
           icon: 'none',
           duration: 2000
         });
       }
     },
+
+    buildBindSuccessMessage(result) {
+      let successMsg = this.$t('net_config.device_bind_success');
+      const bind = result?.data?.defaultAgentBind;
+      if (bind?.bound && bind.agentName) {
+        successMsg += '\n' + this.$t('device.default_agent_bound').replace('{name}', bind.agentName);
+      } else if (bind?.reason === 'no_match') {
+        successMsg += '\n' + this.$t('device.default_agent_no_match');
+      } else if (bind?.reason === 'error') {
+        successMsg += '\n' + this.$t('device.default_agent_bind_failed');
+      }
+      return successMsg;
+    },
+
+    async registerDevice(device) {
+      const macAddr = device.macAddress || device.deviceId;
+      const result = await deviceApi.bindByQrcode({ m: macAddr });
+      if (!result || result.code !== 1000) {
+        throw new Error(result?.message || this.$t('net_config.device_bind_fail'));
+      }
+
+      bluetoothConfigManager.setDefaultAgentBind(result.data?.defaultAgentBind || null);
+      if (!this._devices.some((item) => (item.macAddress || '').toLowerCase() === macAddr.toLowerCase())) {
+        this._devices.push({
+          ...(result.data || {}),
+          macAddress: macAddr,
+          deviceName: device.name || macAddr
+        });
+      }
+      return result;
+    },
+
     /**
      * 获取用户设备列表
      */

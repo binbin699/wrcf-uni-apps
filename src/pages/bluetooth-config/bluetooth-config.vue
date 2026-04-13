@@ -1,4 +1,5 @@
 <template>
+  <wd-toast />
   <wd-notify />
   <view class="bluetooth-config">
     <!-- 重新开始提示遮罩 -->
@@ -54,7 +55,7 @@
 import { ref, watch, provide } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onLoad, onUnload } from '@dcloudio/uni-app';
-import { useNotify } from '@/uni_modules/wot-design-uni';
+import { useNotify, useToast } from '@/uni_modules/wot-design-uni';
 // @ts-ignore
 import bluetoothConfigManager, { CONFIG_STEPS } from './store/bluetoothConfigStore';
 // @ts-ignore
@@ -70,7 +71,9 @@ const { t: $t } = useI18n();
 
 // 获取 notify 函数并通过 provide 传递给子组件
 const { showNotify, closeNotify } = useNotify();
+const toast = useToast();
 provide('notify', { show: showNotify, close: closeNotify });
+provide('toast', toast);
 
 // 响应式数据
 const manager = bluetoothConfigManager;
