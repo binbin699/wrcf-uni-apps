@@ -248,6 +248,7 @@
   "device_status.edit_device_name": "Изменить название устройства",
   "device_status.enter_device_name": "Введите название устройства",
   "device_status.name_required": "Введите название устройства",
+  "device_status.cannot_edit_public_agent": "Нельзя редактировать публичного агента",
 
   "profile.nickname_default": "Никнейм не установлен",
   "profile.no_nickname": "Никнейм не установлен",

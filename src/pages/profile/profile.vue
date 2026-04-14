@@ -338,7 +338,7 @@ const { scanAndBind } = useDeviceScan();
 
 // 扫码绑定设备
 async function handleScanAndBindDevice() {
-  await scanAndBind();
+  await scanAndBind({ fromAddDevice: true });
 }
 
 const hidePhone = (phone: string) => {

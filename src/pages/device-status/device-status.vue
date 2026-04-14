@@ -383,10 +383,10 @@ function resumePendingBindAction() {
     if (isUserAuthenticated()) {
       uni.removeStorageSync(PENDING_BIND_KEY);
       if (pending === 'qrcode') {
-        scanAndBind({});
+        scanAndBind({ fromAddDevice: true });
       } else if (pending === 'bluetooth') {
         uni.navigateTo({
-          url: PageMap[Pages.BluetoothConfig].url
+          url: PageMap[Pages.BluetoothConfig].url + '?fromAddDevice=1'
         });
       }
       return;
@@ -625,6 +625,7 @@ const toggleDescExpand = () => {
 const handleAddDeviceQrcode = () => {
   pendingSetupRedirect.value = true;
   scanAndBind({
+    fromAddDevice: true,
     onScanSuccess: () => {
       // 扫码成功后刷新设备列表
       loadDevices();
@@ -636,7 +637,7 @@ const handleAddDeviceQrcode = () => {
 const handleAddDeviceBluetooth = () => {
   pendingSetupRedirect.value = true;
   uni.navigateTo({
-    url: PageMap[Pages.BluetoothConfig].url
+    url: PageMap[Pages.BluetoothConfig].url + '?fromAddDevice=1'
   });
 };
 

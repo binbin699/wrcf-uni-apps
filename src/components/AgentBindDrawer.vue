@@ -278,7 +278,7 @@ export default {
     // 蓝牙添加设备
     handleBluetoothAdd() {
       uni.navigateTo({
-        url: PageMap[Pages.BluetoothConfig].url
+        url: PageMap[Pages.BluetoothConfig].url + '?fromAddDevice=1'
       });
       this.$emit('update:visible', false);
     },
@@ -383,7 +383,7 @@ export default {
               // 绑定成功，跳转到配网页面
               setTimeout(() => {
                 uni.navigateTo({
-                  url: PageMap[Pages.NetConfig].url + '?bound=1'
+                  url: PageMap[Pages.NetConfig].url + '?bound=1&fromAddDevice=1'
                 });
               }, 3000);
             } catch (error) {

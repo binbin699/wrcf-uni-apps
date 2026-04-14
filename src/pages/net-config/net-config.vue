@@ -9,10 +9,12 @@
         <view class="section-header">
           <view>
             <view class="section-title">
-              {{ isIOS ? $t('net_config.manual_config_ios') : $t('net_config.wifi_list_title') }}
+              {{
+                isManualOnlyPlatform ? $t('net_config.manual_config_ios') : $t('net_config.wifi_list_title')
+              }}
             </view>
           </view>
-          <view class="rescan-wrapper" v-if="!isIOS">
+          <view class="rescan-wrapper" v-if="!isManualOnlyPlatform">
             <view class="mini-btn" :class="{ disabled: isScanningWifi }" @click="handleRescanClick">
               {{
                 isScanningWifi ? $t('net_config.wifi_scanning') : $t('net_config.wifi_scan_retry')
@@ -22,7 +24,7 @@
         </view>
 
         <!-- WiFi 扫描错误提示 -->
-        <view v-if="!isIOS && wifiScanErrorInfo" class="wifi-scan-error">
+        <view v-if="!isManualOnlyPlatform && wifiScanErrorInfo" class="wifi-scan-error">
           <view class="error-icon">⚠️</view>
           <view class="error-content">
             <text class="error-title">{{ wifiScanErrorInfo.title }}</text>
@@ -36,7 +38,10 @@
           </button>
         </view>
 
-        <view v-if="!isIOS" class="wifi-list-container" :class="{ 'ios-compact': isIOS }">
+        <view
+          v-if="!isManualOnlyPlatform"
+          class="wifi-list-container"
+          :class="{ 'ios-compact': isManualOnlyPlatform }">
           <view v-if="isScanningWifi" class="wifi-scan-state">
             <view class="loading-spinner"></view>
             <text class="wifi-scan-text">{{ $t('net_config.wifi_scanning') }}</text>
@@ -118,22 +123,35 @@
             </view>
           </view>
 
-          <view class="manual-config-footer mt-20">
-            <button class="footer-text-btn" @click="handleSkipConfig">
-              {{ $t('common.skip_config') }}
-            </button>
-            <button class="footer-text-btn next" @click="handleGenQr">
-              {{ $t('common.next_step') }}
-            </button>
-          </view>
+          <button
+            v-if="showSkipConfigInManualConfig"
+            class="action-btn skip-action-btn mt-20"
+            @click="handleSkipConfig">
+            {{ $t('common.skip_config') }}
+          </button>
+          <button
+            v-if="!isManualOnlyPlatform"
+            class="action-btn primary mt-20"
+            @click="handleGenQr">
+            {{ $t('common.next_step') }}
+          </button>
         </view>
         <button
-          v-if="!showManualConfig"
+          v-if="showNextOutsideManualCard"
+          class="action-btn primary mt-20"
+          @click="handleGenQr">
+          {{ $t('common.next_step') }}
+        </button>
+        <button
+          v-if="showSkipConfigInScanList"
           class="action-btn skip-action-btn mt-20"
           @click="handleSkipConfig">
           {{ $t('common.skip_config') }}
         </button>
-        <button v-if="!isIOS" class="action-btn secondary mt-20" @click="toggleManualConfig">
+        <button
+          v-if="!isManualOnlyPlatform"
+          class="action-btn secondary mt-20"
+          @click="toggleManualConfig">
           {{
             showManualConfig ? $t('net_config.hide_manual_config') : $t('net_config.manual_config')
           }}
@@ -354,6 +372,7 @@ const wifiScanErrorInfo = ref<{
 } | null>(null);
 const showManualConfig = ref(false);
 const isIOS = ref(false); // iOS 平台标识
+const isHarmony = ref(false);
 const selectedWifiKey = ref('');
 const signalLevelMarks = [1, 2, 3, 4];
 let wifiScanTimer: ReturnType<typeof setTimeout> | null = null;
@@ -380,8 +399,20 @@ const QR_CONFIG_STEP = {
 
 const curStep = ref(QR_CONFIG_STEP.config_wifi);
 const deviceBound = ref(false); // 设备是否绑定成功，初始为 false，扫码成功后才显示页面
+const fromAddDevice = ref(false);
 const securityIndex = ref(0);
 const showPassword = ref(false);
+const showSkipConfig = computed(() => deviceBound.value && fromAddDevice.value);
+const isManualOnlyPlatform = computed(() => isIOS.value || isHarmony.value);
+const showSkipConfigInManualConfig = computed(
+  () => showSkipConfig.value && showManualConfig.value && isManualOnlyPlatform.value
+);
+const showSkipConfigInScanList = computed(
+  () => showSkipConfig.value && !showManualConfig.value && !isManualOnlyPlatform.value
+);
+const showNextOutsideManualCard = computed(
+  () => showManualConfig.value && isManualOnlyPlatform.value
+);
 
 // 音频播放器实例
 const audioPlayer = ref<AudioPlayerManager | null>(null);
@@ -906,7 +937,7 @@ watch(
   () => curStep.value,
   (step, previousStep) => {
     if (step === QR_CONFIG_STEP.config_wifi) {
-      if (!isIOS.value) {
+      if (!isManualOnlyPlatform.value) {
         startWifiScan();
       }
     } else if (step === QR_CONFIG_STEP.device_config_wifi) {
@@ -1369,13 +1400,15 @@ onLoad((options) => {
   updateNavigationTitle();
   callOnLoad();
   initAudioManager();
+  fromAddDevice.value = options?.fromAddDevice === '1';
   
   // 检测是否是 iOS 平台
   const systemInfo = uni.getSystemInfoSync();
   isIOS.value = systemInfo.platform === 'ios';
+  isHarmony.value = AppInfo.isHarmonyApp() || AppInfo.isHarmonyRom();
   
-  // iOS 设备自动展开手动配置并尝试获取当前连接的 WiFi
-  if (isIOS.value) {
+  // iOS / 鸿蒙设备自动展开手动配置并尝试获取当前连接的 WiFi
+  if (isManualOnlyPlatform.value) {
     showManualConfig.value = true;
     startWifiSafe().then((success) => {
       if (success) {
@@ -1403,7 +1436,7 @@ onLoad((options) => {
   if (options?.bound === '1') {
     deviceBound.value = true;
     // 自动开始 WiFi 扫描
-    if (!isIOS.value) {
+    if (!isManualOnlyPlatform.value) {
       startWifiScan();
     }
     return;
@@ -1786,48 +1819,13 @@ watch(
 }
 
 .skip-action-btn {
-  color: #fa8c16;
-  background: #f5f5f5;
+  color: #6b7280;
+  background: #f3f4f6;
   border: none;
 
   &::after {
     border: none;
   }
-}
-
-.manual-config-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24rpx;
-  min-height: 96rpx;
-  padding: 0 32rpx;
-  background: #f5f5f5;
-  border-radius: 24rpx;
-}
-
-.footer-text-btn {
-  flex: 1;
-  height: 96rpx;
-  line-height: 96rpx;
-  padding: 0;
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #fa8c16;
-  background: transparent;
-  border: none;
-
-  &::after {
-    border: none;
-  }
-
-  &:active {
-    opacity: 0.75;
-  }
-}
-
-.footer-text-btn.next {
-  color: #111827;
 }
 
 .footer-actions {

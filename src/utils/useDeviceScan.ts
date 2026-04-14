@@ -27,6 +27,7 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
    */
   const scanAndBind = async (callbacks?: {
     onScanSuccess?: () => void; // 扫码成功后立即调用（例如隐藏引导页）
+    fromAddDevice?: boolean; // 是否从添加设备入口进入
   }) => {
     if (isNavigating.value) return;
     isNavigating.value = true;
@@ -137,7 +138,9 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
             // 绑定成功，跳转到配网页面
             setTimeout(() => {
               uni.navigateTo({
-                url: PageMap[Pages.NetConfig].url + '?bound=1',
+                url:
+                  PageMap[Pages.NetConfig].url +
+                  `?bound=1${callbacks?.fromAddDevice ? '&fromAddDevice=1' : ''}`,
                 complete: () => {
                   isNavigating.value = false;
                 }

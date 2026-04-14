@@ -76,9 +76,6 @@
     <!-- 底部按钮 -->
     <view class="bottom-action">
       <view class="gradient-fade"></view>
-      <button class="skip-btn" @click="handleSkipConfig">
-        <text>{{ $t('common.skip_config') }}</text>
-      </button>
       <button
         class="scan-btn"
         :class="{ loading: isLoadingDevices }"
@@ -105,7 +102,6 @@ import {
 } from '../../utils/bluetooth';
 import { requestBluetoothPermissionWrapper, requestLocationPermission } from '@/utils/permission';
 import { AppInfo } from '@/const';
-import { PageMap, Pages } from '@/utils/route';
 
 export default {
   name: 'SelectDevice',
@@ -234,12 +230,6 @@ export default {
 
     handleShowAllDevices() {
       this.deviceList = this.allScannedDevices;
-    },
-
-    handleSkipConfig() {
-      uni.switchTab({
-        url: PageMap[Pages.Square].url
-      });
     },
 
     /**
@@ -783,26 +773,6 @@ export default {
 
   &[disabled] {
     opacity: 0.7;
-  }
-}
-
-.skip-btn {
-  width: 100%;
-  height: 96rpx;
-  margin-bottom: 24rpx;
-  background: #f5f5f5;
-  border-radius: 24rpx;
-  border: none;
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #fa8c16;
-
-  &::after {
-    border: none;
-  }
-
-  &:active {
-    opacity: 0.8;
   }
 }
 </style>

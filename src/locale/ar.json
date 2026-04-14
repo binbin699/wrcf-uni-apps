@@ -761,6 +761,7 @@
   "common.upload_failed": "فشل الرفع",
   "common.uploading": "جارٍ الرفع...",
   "common.prev_step": "الخطوة السابقة",
+  "common.skip_config": "تخطي إعداد الشبكة",
   "common.next_step": "الخطوة التالية",
   "common.request_timeout": "انتهت مهلة الطلب",
   "common.request_failed": "فشل الطلب",

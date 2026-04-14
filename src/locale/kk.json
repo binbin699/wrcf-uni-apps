@@ -761,6 +761,7 @@
   "common.upload_failed": "Жүктеу сәтсіз аяқталды",
   "common.uploading": "Жүктелуде...",
   "common.prev_step": "Алдыңғы қадам",
+  "common.skip_config": "Желіге қосуды өткізіп жіберу",
   "common.next_step": "Келесі қадам",
   "common.request_timeout": "Сұрау күту уақыты аяқталды",
   "common.request_failed": "Сұрау сәтсіз аяқталды",

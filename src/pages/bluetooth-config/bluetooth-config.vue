@@ -24,6 +24,9 @@
           {{ state.configOnly ? $t('bluetooth.wifi_config_title') : $t('bluetooth.title') }}
         </text>
         <view class="nav-right">
+          <button v-if="showSkipConfig" class="nav-skip-btn" @click="handleSkipConfig">
+            {{ $t('common.skip_config') }}
+          </button>
           <!-- #ifndef MP-WEIXIN -->
           <!-- 非小程序平台显示刷新按钮，避免与小程序原生按钮重叠 -->
           <view class="nav-restart" @click="handleRestart">
@@ -52,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, provide } from 'vue';
+import { computed, ref, watch, provide } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onLoad, onUnload } from '@dcloudio/uni-app';
 import { useNotify, useToast } from '@/uni_modules/wot-design-uni';
@@ -81,6 +84,13 @@ const isRestarting = ref(false);
 const isRestartReasonTimer = ref<NodeJS.Timeout | null>(null);
 const state = ref(bluetoothConfigManager.state);
 const statusBarHeight = ref(44);
+const fromAddDevice = ref(false);
+const showSkipConfig = computed(
+  () =>
+    fromAddDevice.value &&
+    state.value.currentStep !== CONFIG_STEPS.SELECT_DEVICE &&
+    !state.value.configCompleted
+);
 
 // 监听器
 watch(
@@ -104,6 +114,7 @@ watch(
 // 生命周期钩子
 onLoad((options) => {
   console.log('BluetoothConfig 页面加载', options);
+  fromAddDevice.value = options?.fromAddDevice === '1';
 
   // 检测设备类型
   const systemInfo = uni.getSystemInfoSync();
@@ -232,6 +243,12 @@ function handleBack() {
     // 其他步骤，返回上一步
     bluetoothConfigManager.prevStep();
   }
+}
+
+function handleSkipConfig() {
+  uni.switchTab({
+    url: PageMap[Pages.Square].url
+  });
 }
 
 /**
@@ -371,13 +388,30 @@ async function cleanupBluetooth() {
 
 .nav-left,
 .nav-right {
-  width: 80rpx;
+  min-width: 80rpx;
   display: flex;
   align-items: center;
 }
 
 .nav-right {
   justify-content: flex-end;
+  gap: 12rpx;
+}
+
+.nav-skip-btn {
+  height: 56rpx;
+  padding: 0 20rpx;
+  line-height: 56rpx;
+  border: none;
+  border-radius: 999rpx;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 24rpx;
+  font-weight: 500;
+
+  &::after {
+    border: none;
+  }
 }
 
 .nav-back,

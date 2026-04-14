@@ -288,7 +288,7 @@ async function handleStartSetup() {
   if (!requireLoginForBind('qrcode')) {
     return;
   }
-  await scanAndBind({});
+  await scanAndBind({ fromAddDevice: true });
 }
 
 function handleBluetoothSetup() {
@@ -296,7 +296,7 @@ function handleBluetoothSetup() {
     return;
   }
   uni.navigateTo({
-    url: PageMap[Pages.BluetoothConfig].url
+    url: PageMap[Pages.BluetoothConfig].url + '?fromAddDevice=1'
   });
 }
 </script>

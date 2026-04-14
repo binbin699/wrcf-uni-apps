@@ -761,6 +761,7 @@
   "common.upload_failed": "업로드 실패",
   "common.uploading": "업로드 중...",
   "common.prev_step": "이전 단계",
+  "common.skip_config": "네트워크 설정 건너뛰기",
   "common.next_step": "다음 단계",
   "common.request_timeout": "요청 시간 초과",
   "common.request_failed": "요청 실패",

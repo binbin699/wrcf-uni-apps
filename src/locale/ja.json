@@ -248,6 +248,7 @@
   "device_status.edit_device_name": "デバイス名を編集",
   "device_status.enter_device_name": "デバイス名を入力",
   "device_status.name_required": "デバイス名を入力してください",
+  "device_status.cannot_edit_public_agent": "公開エージェントは編集できません",
 
   "profile.nickname_default": "ニックネーム未設定",
   "profile.no_nickname": "ニックネーム未設定",
