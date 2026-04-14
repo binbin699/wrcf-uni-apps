@@ -88,6 +88,7 @@ function getLanguageCode(): string {
     if (locale === 'zh-hans' || locale === 'zh') return 'zh_CN';
     if (locale === 'zh-hant') return 'zh_TW';
     if (locale.startsWith('ja')) return 'ja_JP';
+    if (locale.startsWith('kk')) return 'kk_KZ';
     if (locale.startsWith('ko')) return 'ko_KR';
     if (locale.startsWith('ru')) return 'ru_RU';
     if (locale.startsWith('ar')) return 'ar_SA';

@@ -97,6 +97,8 @@ export function getSystemLangCode(): string {
     return 'en_US';
   } else if (systemLang.includes('ja')) {
     return 'ja_JP';
+  } else if (systemLang.includes('kk')) {
+    return 'kk_KZ';
   } else if (systemLang.includes('ko')) {
     return 'ko_KR';
   } else if (systemLang.includes('es')) {
