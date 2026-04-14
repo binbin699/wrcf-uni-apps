@@ -118,10 +118,21 @@
             </view>
           </view>
 
-          <button class="action-btn mt-20" :class="{ primary: canGenerate }" @click="handleGenQr">
-            {{ $t('common.next_step') }}
-          </button>
+          <view class="manual-config-footer mt-20">
+            <button class="footer-text-btn" @click="handleSkipConfig">
+              {{ $t('common.skip_config') }}
+            </button>
+            <button class="footer-text-btn next" @click="handleGenQr">
+              {{ $t('common.next_step') }}
+            </button>
+          </view>
         </view>
+        <button
+          v-if="!showManualConfig"
+          class="action-btn skip-action-btn mt-20"
+          @click="handleSkipConfig">
+          {{ $t('common.skip_config') }}
+        </button>
         <button v-if="!isIOS" class="action-btn secondary mt-20" @click="toggleManualConfig">
           {{
             showManualConfig ? $t('net_config.hide_manual_config') : $t('net_config.manual_config')
@@ -416,6 +427,11 @@ function goDeviceManage() {
   uni.switchTab({
     url: PageMap[Pages.Square].url
   });
+}
+
+function handleSkipConfig() {
+  stopPlay();
+  goDeviceManage();
 }
 
 function confirmFinishWifiConfig() {
@@ -1767,6 +1783,51 @@ watch(
   width: 100%;
   height: 48px;
   border-radius: 12px;
+}
+
+.skip-action-btn {
+  color: #fa8c16;
+  background: #f5f5f5;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+}
+
+.manual-config-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  min-height: 96rpx;
+  padding: 0 32rpx;
+  background: #f5f5f5;
+  border-radius: 24rpx;
+}
+
+.footer-text-btn {
+  flex: 1;
+  height: 96rpx;
+  line-height: 96rpx;
+  padding: 0;
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #fa8c16;
+  background: transparent;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+
+  &:active {
+    opacity: 0.75;
+  }
+}
+
+.footer-text-btn.next {
+  color: #111827;
 }
 
 .footer-actions {

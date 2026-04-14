@@ -776,6 +776,7 @@
   "common.upload_failed": "アップロード失敗",
   "common.uploading": "アップロード中...",
   "common.prev_step": "前のステップ",
+  "common.skip_config": "設定をスキップ",
   "common.next_step": "次のステップ",
   "common.request_timeout": "リクエストタイムアウト",
   "common.request_failed": "リクエスト失敗",

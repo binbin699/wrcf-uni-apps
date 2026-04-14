@@ -776,6 +776,7 @@
   "common.upload_failed": "Ошибка загрузки",
   "common.uploading": "Загрузка...",
   "common.prev_step": "Предыдущий шаг",
+  "common.skip_config": "Пропустить настройку",
   "common.next_step": "Следующий шаг",
   "common.request_timeout": "Тайм-аут запроса",
   "common.request_failed": "Ошибка запроса",

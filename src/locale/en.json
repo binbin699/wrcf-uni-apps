@@ -761,6 +761,7 @@
   "common.upload_failed": "Upload failed",
   "common.uploading": "Uploading...",
   "common.prev_step": "Previous Step",
+  "common.skip_config": "Skip Setup",
   "common.next_step": "Next Step",
   "common.request_timeout": "Request timeout",
   "common.request_failed": "Request failed",

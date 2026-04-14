@@ -760,6 +760,7 @@
   "common.upload_failed": "上传失败",
   "common.uploading": "上传中...",
   "common.prev_step": "上一步",
+  "common.skip_config": "跳过配网",
   "common.next_step": "下一步",
   "common.request_timeout": "请求超时",
   "common.request_failed": "请求失败",
