@@ -1,0 +1,1388 @@
+
+import {bleResult,MyApiResult,BleScanResult, BleServices, ScanRssiBR, Device, Characteristics, CharacteristicsProperties,WNuuid, ScanPara, ScanRecord, WriteData, NotityData} from '../interface.uts';
+import ble from '@ohos.bluetooth.ble';
+import { util, buffer } from '@kit.ArkTS';
+import { access } from '@kit.ConnectivityKit';
+
+import bluetooth from '@ohos.bluetooth';
+import common from '@ohos.app.ability.common';
+import abilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl';
+import { BusinessError } from '@ohos.base';
+
+var hmscanMap=new Map<String,ble.ScanResult>();
+
+export class BleLib {
+	
+	gattClient: ble.GattClientDevice | null = null;
+	sThis:BleLib=this;	
+	scanTimer:number=-1;
+	connectInternal:number=0;
+	connectCallback : (sth:MyApiResult) => void = (res) => { };
+	scanResultMap:Map<String,BleScanResult>=new Map<String,BleScanResult>();
+	scanCharacteristics:Map<String,ble.BLECharacteristic>=new Map<String,ble.BLECharacteristic>();
+	scanDataListenerCallback : ((sth:MyApiResult) => void)|null = null;
+	scanListenerMac:string|null=null;
+	 beginToConnectMac:string|null=null
+	  tarServiceUUID:string="";
+	wUUID:string|null=null;
+	nUUID:string|null=null;
+	connect_time_out:number=5*1000;
+	connectState:boolean=false;
+	connectMac:string|null=null;
+	btOpenStateCallback : (sth:MyApiResult) => void = (res) => { };
+	haveSetMtu:boolean=false;
+	
+	readrssiCallback : (sth:MyApiResult) => void = (res) => { };
+	wNList:string[]=[] as string[];
+	notityCharacteristicsCallback : (sth:MyApiResult) => void = (res) => { };
+	scanBleFunction:Callback<Array<ble.ScanResult>>|null=null;
+	
+	connectStateFunction: Callback<ble.BLEConnectionChangeState>|null=null;
+	characteristicChangeFunction: Callback<ble.BLECharacteristic>|null=null;
+	btStateChangeFunction: ((data: access.BluetoothState)=>void)|null=null;
+	btStateListenerRegistered:boolean=false;
+	// 检查权限（同步方式）
+	// 检查权限（同步方式）
+	isConnecting:boolean=false;	
+	debug:boolean=false;
+	public setDebugMode(debug:boolean){
+		this.debug=debug;
+	}
+	
+	public setBtConnectTimeout(time:number){
+			 this.connect_time_out=time;
+	}
+	 auto_connect_time:number=12*1000;
+	 public setBtAutoConnectTime(time:number){
+	 	this.auto_connect_time=time;
+	 }
+	 
+	threadName:string="main";
+	public  setThreadTypeName(name:string){
+		this.threadName=name;
+	}
+	
+	 reqBtPer(callback:(b:boolean)=>void){
+		 const permissions :Array<Permissions>= [
+		   'ohos.permission.USE_BLUETOOTH',
+		   'ohos.permission.ACCESS_BLUETOOTH',
+		   'ohos.permission.DISCOVER_BLUETOOTH',
+		   'ohos.permission.MANAGE_BLUETOOTH',
+		   'ohos.permission.LOCATION'
+		 ];
+		 let permissionName: Permissions = 'ohos.permission.ACCESS_BLUETOOTH';
+		 let tokenID: number = 10; 
+		let atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
+		 var have=	atManager.checkAccessTokenSync(tokenID,permissionName);
+		 if(have == abilityAccessCtrl.GrantStatus.PERMISSION_DENIED){
+			 const permissions: Array<Permissions> = ['ohos.permission.ACCESS_BLUETOOTH'];
+			 atManager.requestPermissionsFromUser(UTSHarmony.getUIAbilityContext(), permissions).then((data) => {
+			   let grantStatus: Array<number> = data.authResults;
+			   let length: number = grantStatus.length;
+			   // console.log(grantStatus);
+			   if(grantStatus.length==1){
+			 		   if(grantStatus[0]==0){
+			 			   callback(true);
+			 		   }else{
+			 			   callback(false);
+			 		   }
+			   }
+			 }).catch((err: BusinessError) => {
+			   // console.error(`Failed to request permissions from user. Code is ${err.code}, message is ${err.message}`);
+			 		callback(false);
+			 })
+			 
+		 }else{
+			 callback(true);
+		 }
+		
+	}
+	
+	
+	
+	
+	
+	
+	public onBtOpenStateListener(callback: (sth:MyApiResult) => void ){
+		this.btOpenStateCallback=callback;
+		this.ensureBtStateListener();
+		callback(bleResult(0,"",this.isEnabled()))
+	}
+	open_timer_id:number=-1;
+	constructor(){
+		try {
+			this.createBtStateListener();
+		} catch (err) {
+			console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+		}
+	}
+
+	createBtStateListener(){
+		if(this.btStateChangeFunction!=null){
+			return;
+		}
+		var that=this;
+		this.btStateChangeFunction=(data: access.BluetoothState) => {
+			clearTimeout(that.open_timer_id);
+			that.open_timer_id= setTimeout(function(){
+				if(data==0){
+					hmscanMap.clear();
+					that.btOpenStateCallback(bleResult(0,"蓝牙关闭",false))
+				}else if(data==2){
+					that.btOpenStateCallback(bleResult(0,"蓝牙开启",true))
+				}
+			},1000)
+			
+		};
+	}
+
+	ensureBtStateListener(){
+		this.createBtStateListener();
+		if(this.btStateListenerRegistered){
+			return;
+		}
+		access.on('stateChange', this.btStateChangeFunction!);
+		this.btStateListenerRegistered=true;
+	}
+	
+	public btListener(){
+		
+	
+	}
+
+	public disposePassive():void{
+		try {
+			if(this.connectInternal!=0){
+				clearInterval(this.connectInternal);
+				this.connectInternal=0;
+			}
+			clearTimeout(this.connect_timeoutId);
+			clearTimeout(this.scanTimeout);
+			clearTimeout(this.open_timer_id);
+			if(this.scanBleFunction!=null){
+				ble.off("BLEDeviceFind",this.scanBleFunction!);
+				this.scanBleFunction=null;
+			}
+			if(this.connectStateFunction!=null){
+				try{
+					this.gattClient?.off('BLEConnectionStateChange',this.connectStateFunction!);
+				}catch(err){
+					console.log(err);
+				}
+				this.connectStateFunction=null;
+			}
+			if(this.characteristicChangeFunction!=null){
+				try{
+					this.gattClient?.off('BLECharacteristicChange', this.characteristicChangeFunction!);
+				}catch(err){
+					console.log(err);
+				}
+				this.characteristicChangeFunction=null;
+			}
+			if(this.btStateChangeFunction!=null && this.btStateListenerRegistered){
+				try{
+					access.off('stateChange', this.btStateChangeFunction!);
+				}catch(err){
+					console.log(err);
+				}
+				this.btStateListenerRegistered=false;
+			}
+			this.btStateChangeFunction=null;
+		} catch (err) {
+			console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+		}
+	}
+	
+	
+	openBtBluetooth(callback:(b:MyApiResult)=>void){
+		try {
+		  bluetooth.enableBluetooth();
+		  callback(bleResult(0,"",""))
+		  return true;
+		} catch (err) {
+			callback(bleResult(-1,"",""))
+		  console.error(`enableBluetooth error: ${JSON.stringify(err)}`);
+		  return false;
+		}
+	}
+	
+	
+	readRssi(callback:(b:MyApiResult)=>void){
+		try {
+			console.log("readRssi")
+		   this. gattClient?.getRssiValue().then((data: number) => {
+		           callback(bleResult(0,"",data))
+		       })
+		} catch (err) {
+		    console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+		}
+		
+	}
+	
+	openBluetooth(on:boolean):void{
+		try {
+		  bluetooth.enableBluetooth();
+		} catch (err) {
+		  console.error(`enableBluetooth error: ${JSON.stringify(err)}`);
+		}
+	}
+	public  openBluetoothSettings():void {
+	}
+	
+	
+	public getSericUUID():string{
+		var s=this.tarServiceUUID
+		return  s;
+	}
+	
+	
+	public getServiceUUID():string{
+		var s=this.tarServiceUUID
+		return  s;
+	}
+	public getNotityUUID():string{
+		var s=this.nUUID!
+	
+		
+		return s;
+	}
+	
+	public getWriteUUID():string{
+		var s=	this.wUUID!
+		return s
+	}
+	public getwriteUUID():string{
+		var s=	this.wUUID!
+		return s
+	}
+	
+	
+	public onScanDataListener(callback:(res:MyApiResult)=>void){
+		// this.scanListenerMac=mac;
+		this.scanDataListenerCallback=callback;
+		
+	}
+	
+	
+	public  isEnabled():boolean{
+		try {
+		  return access.getState()==2;
+		} catch (err) {
+		  console.error(`checkBluetoothState error: ${JSON.stringify(err)}`);
+		  return false;
+		}
+		 return false;
+	 }
+	 
+	 
+	 	public  onStartScanBle(para:ScanPara){
+			if(!this.isEnabled()){
+				if(para.onScanResult!=null){
+					para.onScanResult!(bleResult(10002,"蓝牙未开启",""))
+				}
+				return
+			}
+			var that=this;
+			that.reqBtPer(function(b:boolean){
+				if(b){
+					that.onScanBle(para);
+				}else{
+					if(para.onScanResult!=null){
+						para.onScanResult!(bleResult(10001,"",""));
+					}
+					
+				}
+			})
+		}
+	 
+	 
+	public onScanBle(para:ScanPara ){
+		this.scanResultMap.clear();
+		if(this.scanBleFunction!=null){
+			ble.off("BLEDeviceFind",this.scanBleFunction!)
+			this.scanBleFunction=null;
+		}
+		if(para.showEmptyName==null){
+			para.showEmptyName=0;
+		}
+		
+		if(para.btNameFilter==null){
+			para.btNameFilter="";
+		}
+		if(para.fliterNames==null){
+			para.fliterNames=[] as string[];
+		}
+		
+		if(this.scanBleFunction==null){
+			this.scanBleFunction=(devices:Array<ble.ScanResult>) => {
+				// console.log(devices)
+			  if (devices && devices.length > 0) {
+			    devices.forEach(device => {
+					// hmscanMap.set(device.deviceId,device);
+					
+					if(para.showEmptyName==0){
+						
+						if(device.deviceName==""){
+							return;
+						}
+						
+						if(para.btNameFilter!=""){
+							if(!device.deviceName.includes(para.btNameFilter!)){
+								return
+							}
+						}
+						
+						if(para.fliterNames!.length > 0 ){
+							var exist=false;
+							for(var i=0;i<para.fliterNames!.length;i++){
+								if(device.deviceName.includes(para.fliterNames![i])){
+									exist=true;
+								}	
+							}
+							if(!exist){
+								return;
+							}
+						}
+						
+						
+					}
+				
+					
+					
+						let per:string|null=null;
+						const getPer = (): string => {
+							if(per==null){
+								per=that.arrayBufferToHexStringWithSpaces(device.data);
+							}
+							return per!;
+						};
+						if(!that.scanResultMap.has(device.deviceId)){
+							//console.log(device)
+							var d:BleScanResult={
+							rssi: device.rssi,
+							device: {
+								name: device.deviceName,
+								address: device.deviceId,
+								iosLocalName:null,
+							} as Device,
+							isLegacy: null,
+							connectType:null,
+							advertisingSid: null,
+							dataStatus: null,
+							isConnectable: null,
+							periodicAdvertisingInterval: null,
+							primaryPhy: null,
+							secondaryPhy: null,
+							timestampNanos: null,
+								scanRecord: {
+									deviceName: null,
+									txPowerLevel: null,
+									bytes: getPer(),
+									serviceData: null,
+									serviceUuids: null,
+									advertiseFlags: null,
+								manufacturerSpecificData: null,
+								serviceSolicitationUuids: null
+							} as ScanRecord
+						} as BleScanResult
+						that.scanResultMap.set(device.deviceId,d);
+						if(para.onScanResult!=null){
+							para.onScanResult(bleResult(0,"",d))
+						}
+						
+						}
+						// console.log(device.deviceName+"  "+that.arrayBufferToHexStringWithSpaces(device.data))
+						if(that.scanDataListenerCallback!=null){
+							var g={
+								mac:device.deviceId,
+								rssi:device.rssi,
+								data:getPer(),
+								name:device.deviceName,
+								iosLocalName:null,
+								manufacturerData:"",
+							} as ScanRssiBR;
+						that.scanDataListenerCallback!(bleResult(0,"",g))
+						}
+				
+			    });
+			
+		}
+		}
+		}
+		ble.on('BLEDeviceFind',this.scanBleFunction!);
+		
+		let scanFilter: ble.ScanFilter = { 
+		};
+		
+		// 构造扫描配置参数
+		let scanOptions: ble.ScanOptions = {
+		  interval: 0,
+		
+		  dutyMode: ble.ScanDuty.SCAN_MODE_LOW_LATENCY,
+		  matchMode: ble.MatchMode.MATCH_MODE_STICKY
+		}
+		var that=this;
+		// this.scanResultMap.clear()
+		ble.startBLEScan([scanFilter],scanOptions);
+		clearTimeout(this.scanTimeout);
+		if(para.scantime==null){
+			para.scantime=10*1000;
+		}
+		
+		if(para.scantime!=-1){
+			this.scanTimeout=	setTimeout(function(){
+					that.stopScanBle();
+					if(para.scanComplate!=null){
+						para.scanComplate!();
+					}
+					
+			},para.scantime)
+			
+		}
+		
+		
+	}
+	
+	
+	public  setPhy2MMode(){
+			
+	}
+	
+	
+	public   startScanBleDevice(time:number,callback: (sth:MyApiResult) => void):void{
+		if(!this.isEnabled()){
+		
+			callback(bleResult(10002,"蓝牙未开启",""))
+			return
+		}
+		var that=this;
+		that.reqBtPer(function(b:boolean){
+			if(b){
+				that.scanBle(time,callback);
+			}else{
+				callback(bleResult(10001,"",""));
+			}
+		})
+	
+	}
+	public 	stopScanBle():void{
+		clearTimeout(this.scanTimeout);
+		const hasActiveScanListener=this.scanBleFunction!=null;
+		if(this.scanBleFunction!=null){
+			try{
+				ble.off("BLEDeviceFind",this.scanBleFunction!);
+			}catch(err){
+				console.log(err);
+			}
+			this.scanBleFunction=null;
+		}
+		if(!hasActiveScanListener){
+			return;
+		}
+		try{
+			ble.stopBLEScan();
+		}catch(err){
+			console.log(err)
+		}
+		
+	};
+	scanTimeout:number=0;
+	public scanBle(time:number,callback: (sth:MyApiResult) => void ){
+		this.scanResultMap.clear();
+		if(this.scanBleFunction!=null){
+			ble.off("BLEDeviceFind",this.scanBleFunction!)
+			this.scanBleFunction=null;
+		}
+		if(this.scanBleFunction==null){
+			this.scanBleFunction=(devices:Array<ble.ScanResult>) => {
+				// console.log(devices)
+			  if (devices && devices.length > 0) {
+			    devices.forEach(device => {
+					// hmscanMap.set(device.deviceId,device);
+						let per:string|null=null;
+						const getPer = (): string => {
+							if(per==null){
+								per=that.arrayBufferToHexStringWithSpaces(device.data);
+							}
+							return per!;
+						};
+						if(!that.scanResultMap.has(device.deviceId)){
+							//console.log(device)
+							var d:BleScanResult={
+							rssi: device.rssi,
+							device: {
+								name: device.deviceName,
+								address: device.deviceId,
+							} as Device,
+							connectType:null,
+							isLegacy: null,
+							advertisingSid: null,
+							dataStatus: null,
+							isConnectable: null,
+							periodicAdvertisingInterval: null,
+							primaryPhy: null,
+							secondaryPhy: null,
+							timestampNanos: null,
+								scanRecord: {
+									deviceName: null,
+									txPowerLevel: null,
+									bytes: getPer(),
+									serviceData: null,
+									serviceUuids: null,
+									advertiseFlags: null,
+								manufacturerSpecificData: null,
+								serviceSolicitationUuids: null
+							} as ScanRecord
+						}
+						that.scanResultMap.set(device.deviceId,d);
+						callback(bleResult(0,"",d))
+						}
+						// console.log(device.deviceName+"  "+that.arrayBufferToHexStringWithSpaces(device.data))
+						if(that.scanDataListenerCallback!=null){
+							var g={
+								mac:device.deviceId,
+								rssi:device.rssi,
+								data:getPer(),
+								manufacturerData:"",
+							} as ScanRssiBR;
+						that.scanDataListenerCallback!(bleResult(0,"",g))
+						}
+				
+			    });
+			
+		}
+		}
+		}
+		ble.on('BLEDeviceFind',this.scanBleFunction!);
+		
+		let scanFilter: ble.ScanFilter = { 
+		};
+		
+		// 构造扫描配置参数
+		let scanOptions: ble.ScanOptions = {
+		  interval: 0,
+		
+		  dutyMode: ble.ScanDuty.SCAN_MODE_LOW_LATENCY,
+		  matchMode: ble.MatchMode.MATCH_MODE_STICKY
+		}
+		var that=this;
+		// this.scanResultMap.clear()
+		ble.startBLEScan([scanFilter],scanOptions);
+		clearTimeout(this.scanTimeout);
+		if(time!=-1){
+			this.scanTimeout=	setTimeout(function(){
+					that.stopScanBle();
+			},time)
+			
+		}
+		
+	}
+	 
+	
+	public connect(mac:string,auto:boolean,callback: (sth:MyApiResult) => void):void{
+		var that=this;
+		
+		if(!this.isEnabled()){
+			callback( bleResult(10002,"蓝牙未开启",that.isEnabled()));
+			return;
+		}
+		
+		// try {
+		//     // access.addPersistentDeviceId(mac);
+		// 	console.log("-- addPersistentDeviceId ",access.getPersistentDeviceIds())
+		// } catch (err) {
+		//     console.error('errCode: ' + err.code + ', errMessage: ' + err.message);
+		// }
+		// // console.log("------,"+access.isValidRandomDeviceId("41:42:60:43:99:37"))
+		that.reqBtPer(function(b:boolean){
+			if(b){
+				if(access.isValidRandomDeviceId(mac)){
+					that.connectDevices(mac,auto,callback);
+				}else{
+					callback( bleResult(10005,"蓝牙地址无效",that.isEnabled()));
+				}
+				
+			}else{
+				callback( bleResult(10003,"无蓝牙权限",that.isEnabled()));
+			}
+			
+		})
+		
+		
+	
+	}
+	
+	
+	connect_timeoutId:number=-1;
+	public connectDevices(mac:string,auto:boolean,callback: (sth:MyApiResult) => void):void{
+		// console.log("----------1-------")
+		
+		
+		
+		if(this.isConnected()){
+			callback(bleResult(10004,"bluetooth is connected",""));
+			return;
+		}
+		
+		var that=this;
+		try {
+			that.beginToConnectMac=mac;
+				if(this.connectInternal!=0){
+					clearInterval(this.connectInternal);
+				}
+					that.connectMac=mac;
+
+				  that.gattClient = ble.createGattClientDevice(mac);
+				  if(that.connectStateFunction!=null){
+					  that.gattClient?.off('BLEConnectionStateChange',that.connectStateFunction! );
+					  that.connectStateFunction=null;
+				}
+				  if(that.connectStateFunction==null){
+					  that.connectStateFunction=(stateInfo: ble.BLEConnectionChangeState) => {
+						 // console.log(stateInfo.state)
+						
+						
+						let state = '';
+						// console.log("----------2-------",stateInfo)
+						switch (stateInfo.state) {
+						  case 0:
+						  clearTimeout(that.connect_timeoutId)
+							state = 'DISCONNECTED';
+							that.isConnecting=false;
+							that.connectState=false;
+							that.connectCallback(bleResult(10001,"连接断开",1));
+							break;
+						  case 1:
+							state = 'CONNECTING';
+							break;
+						  case 2:
+						  clearTimeout(that.connect_timeoutId)
+							if(that.connectState==false){
+								state = 'CONNECTED';
+								that.connectState=true;
+								that.isConnecting=false;
+								// console.log("---------6-------")
+								that.connectCallback(bleResult(0,"连接成功",0));
+							}
+							
+							break;
+						  case 3:
+							state = 'DISCONNECTING';
+							break;
+						  default:
+							state = 'undefined';
+							break;
+						}
+					}
+				  }
+				that.gattClient?.on('BLEConnectionStateChange',that.connectStateFunction! );
+				clearTimeout(this.connect_timeoutId)
+				// console.log("---------5-------")
+			this.connect_timeoutId=	setTimeout(() => {
+				  // console.info('do after 1s delay.');
+				  that.isConnecting=false;
+				  that.gattClient?.off('BLEConnectionStateChange',that.connectStateFunction! );
+				  callback({
+				  	type:10000,
+				  	message:"连接超时",
+				  	data:""
+				  } as MyApiResult)
+				}, that.connect_time_out);
+					that.isConnecting=true;
+				  that.gattClient?.connect();
+				  that.connectCallback=callback
+				} catch (err) {
+					that.isConnecting=false;
+					// console.log(err)
+					clearTimeout(this.connect_timeoutId)
+					callback(bleResult(10000,"",""))
+				 // console.error(`connectDevice error: ${JSON.stringify(err)}`);
+				  // return false;
+				}
+		if(auto){
+			that.startAutoConnectBt(that.auto_connect_time,callback)
+		}
+	}
+	
+	
+	public startAutoConnectBt(time:number,callback: (sth:MyApiResult) => void){
+		var that=this;
+		if(this.connectInternal!=0){
+			clearInterval(this.connectInternal);
+		}
+		
+		this.connectInternal=setInterval(function(){
+			if(that.isConnecting){
+				return;
+			}
+			if(!that.isConnected()){
+				// console.log("----------3-------")
+				
+				
+				that.connect(that.beginToConnectMac!,false,function(res:MyApiResult){
+					// console.log("---------4-------")
+					if(res.type==0){
+						callback(bleResult(0,"connect success1",1))
+					}else if(res.type==10001){
+						callback(bleResult(10001,"disconnect",1))
+					}
+				})
+			}
+		},time)
+	}
+	public cancelAutoConnectBt(){
+		if(this.connectInternal!=0){
+			clearInterval(this.connectInternal);
+			this.connectInternal=0;
+		}
+	}  
+	public scanServices(callback:(sth:MyApiResult) => void  ):void{
+		try {
+			var that=this;
+		  // 此处是伪代码，需要连接上后，才可以调用
+		  this.gattClient?.getServices().then((result: Array<ble.GattService>) => {
+		    // console.info('getServices successfully:' + JSON.stringify(result));
+			var bleServices:BleServices[]=[] as BleServices[];
+			this.wNList=[] as string[];
+			that.scanCharacteristics.clear()
+			for(var i=0;i<result.length;i++){
+				var ser=result[i];
+				var chars:Characteristics[] =[] as Characteristics[];
+				var haveW=false;
+				var haveN=false;
+				var wuuid="";
+				var nuuid="";
+				for(var j=0;j<ser.characteristics.length;j++){
+					var g:ble.GattProperties=ser.characteristics[j].properties!;
+					var p:CharacteristicsProperties ={
+						WRITE:false,
+						READ:false,
+						NOTIFY:false,
+						INDICATE:false
+					} as CharacteristicsProperties;
+					if(g.write){
+						p.WRITE=true;
+						haveW=true;
+					}
+					if(g.notify){
+						p.NOTIFY=true;
+						haveN=true;
+					}
+					if(g.read){
+						p.READ=true;
+					}
+					if(g.writeNoResponse){
+						haveW=true;
+						p.WRITE=true;
+					}
+					if(g.indicate){
+						p.INDICATE=true;
+					}
+					
+					
+					var c={
+						uuid:ser.characteristics[j].characteristicUuid,
+						properties:p,
+						propertiesType:0,
+					} as Characteristics;
+					if(p.NOTIFY){
+						nuuid=c.uuid;
+					}
+					if(p.WRITE){
+						wuuid=c.uuid;
+					}
+					
+					chars.push(c)
+					this.scanCharacteristics.set(c.uuid,ser.characteristics[j]);
+				}
+				
+				if(haveN&&haveW){
+					this.wNList.push(ser.serviceUuid+"_"+nuuid+"_"+wuuid);
+				}
+				
+				
+				bleServices.push({
+					uuid:ser.serviceUuid,
+					characteristics:chars,
+					type:0,
+				} as BleServices)
+			}
+			if(this.wNList.length>0){
+					var size=that.wNList.length;
+					//console.log(size)
+					that.setSelectUUID(size-1);
+			}
+			callback(bleResult(0,"",bleServices));
+		  });
+		} catch (err) {
+		  // console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+		}
+		
+	} 
+	
+	
+	 public listenerBleMessage(callback:(sth:MyApiResult) => void  ):void{
+		 
+		 
+	 }
+	 
+	 public disListenerBleMessage():void{
+		 
+		 
+	 }
+	 
+	 
+		public   isConnected():boolean{
+			return this.connectState;
+		}
+	 
+	 
+	     public getConnectMac():string{
+			if(this.isConnected()){
+				return this.connectMac!;
+			}
+			 return "";
+			
+	     }
+		
+		public  byte2HexString(data:number[]):string {
+			var str="";
+			for(var i=0;i<data.length;i++){
+				str=str+data[i].toString(16).padStart(2,"0")+" ";
+			}
+			if(str.endsWith(" ")){
+				str=str.substring(0,str.length-1);
+			}
+			return str;
+		
+		}
+		
+		// public byte2HexString(bytes : number[]):String{
+		// 	console.log(bytes)
+		// 		// var datas=new ByteArray(bytes.length.toInt());
+		// 		// for(var i =0;i<bytes.length.toInt();i++){
+		// 		// 	datas[i.toInt()]=datas[i.toInt()].toByte();
+		// 		// }
+		// 		// return ByteUtil.byte2HexString(datas);
+											
+		// }
+		
+		
+		
+		public  writeDataToBle(service:string,chars:string,data:number[],callback:(sth:MyApiResult) => void){
+			this.writeStringDataToBle(service,chars,this.byte2HexString(data),callback);
+		}
+		
+		
+		public  writeDataToBleWithType(service:string,chars:string,data:number[],writeType:number,callback:(sth:MyApiResult) => void){
+			this.writeStringDataToBle(service,chars,this.byte2HexString(data),callback);
+		}
+		
+		public  writeStringDataToBleWithType(service:string,chars:string,data:string,writeType:number,callback:(sth:MyApiResult) => void){
+				 this.writeStringDataToBle(service,chars,(data),callback);
+		}
+		
+		
+	 public  writeStringDataToBle(service:string,chars:string,data:string,callback:(sth:MyApiResult) => void){
+		 var sendCharacteristics=	this.scanCharacteristics.get(chars)!;
+		 
+			var buffer=this.hexStringWithSpacesToArrayBuffer(data);
+			if(this.haveSetMtu){
+				sendCharacteristics.characteristicValue=buffer;
+				try{
+								var type=ble.GattWriteType.WRITE
+								if(sendCharacteristics.properties?.write){
+									type=ble.GattWriteType.WRITE
+								}else{
+									type=ble.GattWriteType.WRITE_NO_RESPONSE
+								}
+							this.  gattClient?.writeCharacteristicValue(sendCharacteristics, type, (err) => {
+				    if (err) {
+				      // console.error( 'errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+							   callback(bleResult(10001,"",""));
+				      return;
+				    }
+				    // console.info( 'writeCharacteristicValue success');
+							 callback(bleResult(0,"",""));
+				  });
+				} catch (err) {
+				    console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+				}
+			}else{
+				var d:ArrayBuffer[]=	this.splitArrayBuffer(buffer)
+				for(var i=0;i<d.length;i++){
+					sendCharacteristics.characteristicValue=d[i];
+					try{
+									var type=ble.GattWriteType.WRITE
+									if(sendCharacteristics.properties?.write){
+										type=ble.GattWriteType.WRITE
+									}else{
+										type=ble.GattWriteType.WRITE_NO_RESPONSE
+									}
+								this.  gattClient?.writeCharacteristicValue(sendCharacteristics, type, (err) => {
+					    if (err) {
+					      // console.error( 'errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+								   callback(bleResult(10001,"",""));
+					      return;
+					    }
+					    // console.info( 'writeCharacteristicValue success');
+								 callback(bleResult(0,"",""));
+					  });
+					} catch (err) {
+					    console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+					}
+				}
+				
+				
+			}
+			
+			
+			
+			
+	 			
+	 }
+	 
+	 public async sendData(data:WriteData,callback:(b:MyApiResult)=>void){
+		 var sendCharacteristics:ble.BLECharacteristic =	this.scanCharacteristics.get(data.characteristicId)!;
+		var buffer:  ArrayBuffer|null=null;
+		 if(data.data!=null){
+			buffer=	this.hexStringWithSpacesToArrayBuffer(this.byte2HexString(data.data!))
+		 }
+		 
+		 if(data.hexStrData!=null){
+			  buffer=this.hexStringWithSpacesToArrayBuffer(data.hexStrData!);
+		 }
+		 if(!data.fenbao){
+				sendCharacteristics.characteristicValue=buffer!;
+		 	try{			
+							if(data.writeType==null){
+								var type=ble.GattWriteType.WRITE
+									if(sendCharacteristics.properties?.write){
+										type=ble.GattWriteType.WRITE
+									}else{
+										type=ble.GattWriteType.WRITE_NO_RESPONSE
+									}
+									this.  gattClient?.writeCharacteristicValue(sendCharacteristics, type, (err) => {
+									if (err) {
+									   callback(bleResult(10001,"",""));
+									return;
+									}
+								
+										callback(bleResult(0,"",""));
+									});
+							}else{
+								var type=ble.GattWriteType.WRITE
+									if(data.writeType==0){
+										type=ble.GattWriteType.WRITE
+									}else{
+										type=ble.GattWriteType.WRITE_NO_RESPONSE
+									}
+								this.  gattClient?.writeCharacteristicValue(sendCharacteristics, type, (err) => {
+																	if (err) {
+																	   callback(bleResult(10001,"",""));
+																	return;
+																	}
+																
+																		callback!(bleResult(0,"",""));
+																	});
+							}
+		 					
+		 	} catch (err) {
+		 	    console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+		 	}
+		 }else{
+		 	var d:ArrayBuffer[]=	this.splitArrayBuffer(buffer!)
+			var haveErr=false;
+		 	for(var i=0;i<d.length;i++){
+		 		sendCharacteristics.characteristicValue=d[i];
+		 		try{
+		 						var type=ble.GattWriteType.WRITE
+								if(data.writeType==null){
+									if(sendCharacteristics.properties?.write){
+										type=ble.GattWriteType.WRITE
+									}else{
+										type=ble.GattWriteType.WRITE_NO_RESPONSE
+									}
+								}else{
+									if(data.writeType==0){
+										type=ble.GattWriteType.WRITE
+									}else{
+										type=ble.GattWriteType.WRITE_NO_RESPONSE
+									}
+								}
+								
+							await	this.writeData(sendCharacteristics,type,(b:boolean)=>{
+								if(!b){
+									haveErr=true;
+								}
+								
+							})
+		 		} catch (err) {
+		 		    console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+		 		}
+		 	}
+			if(haveErr){
+				callback(bleResult(10001,"",""));
+				
+			}else{
+				callback(bleResult(0,"",""));
+			}
+		 	
+		 	
+		 }
+		 
+	 }
+	 
+	 async writeData(sendCharacteristics:ble.BLECharacteristic ,type:ble.GattWriteType,callback:(b:boolean)=>void){
+		return	new Promise<void>((resolve, reject) => {
+			this.  gattClient?.writeCharacteristicValue(sendCharacteristics, type, (err) => {
+													if (err) {
+			    console.error( 'errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+					 					  callback(false);
+											resolve();
+											return
+			  }
+			  console.info( 'writeCharacteristicValue success');
+					 					 callback(true);
+										 resolve();
+			});					
+		 })
+		 
+	 }
+	 
+	  // 8. 定义特征值变化回调函数
+	   // onCharacteristicChange  (char: ble.BLECharacteristic)  {
+		  //  this.notityCharacteristicsCallback(bleResult(0,"",this.arrayBufferToHexStringWithSpaces(char.characteristicValue)));
+	   // }
+	 
+	 public onNotityReadBleData(service:string,chars:string,state:boolean,callback:(sth:MyApiResult) => void){
+		 // this.gattClient.
+		try {
+		      if(this.characteristicChangeFunction!=null){
+		      	try{
+		      		this.gattClient?.off('BLECharacteristicChange', this.characteristicChangeFunction!);
+		      	}catch(err){
+		      		console.log(err);
+		      	}
+		      	this.characteristicChangeFunction=null;
+		      }
+			   let descriptors: Array<ble.BLEDescriptor> = [];
+			   let arrayBuffer = new ArrayBuffer(2);
+			   let descV = new Uint8Array(arrayBuffer);
+			   descV[0] = 0; // 以Client Characteristic Configuration描述符为例，表示bit0、bit1均为0，notification和indication均不开启
+			   let descriptor: ble.BLEDescriptor = {
+				   serviceUuid:service,
+			      characteristicUuid: chars,
+			      descriptorUuid: '00002902-0000-1000-8000-00805F9B34FB', descriptorValue: arrayBuffer};
+				  descriptors[0] = descriptor;
+			   let arrayBufferC = new ArrayBuffer(8);
+			   let characteristic: ble.BLECharacteristic = {serviceUuid: service,
+			     characteristicUuid: chars, characteristicValue: arrayBufferC, descriptors:descriptors};
+			   if(state){
+			   	  // 订阅特征值变化
+			   	this.characteristicChangeFunction=(char: ble.BLECharacteristic)=>  {
+			   		   callback(bleResult(0,"data ",this.arrayBufferToHexNumber(char.characteristicValue)));
+			   	   };
+			   	this.gattClient?.on('BLECharacteristicChange',this.characteristicChangeFunction!);
+			   }
+			   
+		      // 设置特征值变化通知能力，enable: true表示启用，false表示禁用
+		      this.gattClient?.setCharacteristicChangeNotification(characteristic, state,(err: BusinessError) => {
+				if (err) {
+					// console.error('notifyCharacteristicChanged callback failed');
+					callback(bleResult(1001,"订阅失败",[] as number[]));
+				} else {
+					// console.info('notifyCharacteristicChanged callback successful');
+					callback(bleResult(1000,"订阅成功",[] as number[]));
+					
+				}
+			});
+		    } catch (err) {
+		      console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+		    }
+			
+			this.notityCharacteristicsCallback=callback;
+	 }
+	 
+	 public onNotityBleData(service:string,chars:string,state:boolean,callback:(sth:MyApiResult) => void){
+	 		 // this.gattClient.
+	 		var that=this;
+			try {
+		      if(this.characteristicChangeFunction!=null){
+		      	try{
+		      		this.gattClient?.off('BLECharacteristicChange', this.characteristicChangeFunction!);
+		      	}catch(err){
+		      		console.log(err);
+		      	}
+		      	this.characteristicChangeFunction=null;
+		      }
+	 			   let descriptors: Array<ble.BLEDescriptor> = [];
+	 			   let arrayBuffer = new ArrayBuffer(2);
+	 			   let descV = new Uint8Array(arrayBuffer);
+	 			   descV[0] = 0; // 以Client Characteristic Configuration描述符为例，表示bit0、bit1均为0，notification和indication均不开启
+	 			   let descriptor: ble.BLEDescriptor = {
+	 				   serviceUuid:service,
+	 			      characteristicUuid: chars,
+	 			      descriptorUuid: '00002902-0000-1000-8000-00805F9B34FB', descriptorValue: arrayBuffer};
+	 				  descriptors[0] = descriptor;
+	 			   let arrayBufferC = new ArrayBuffer(8);
+	 			   let characteristic: ble.BLECharacteristic = {serviceUuid: service,
+	 			     characteristicUuid: chars, characteristicValue: arrayBufferC, descriptors:descriptors};
+	 			   if(state){
+	 			   	  // 订阅特征值变化
+	 			   	this.characteristicChangeFunction=(char: ble.BLECharacteristic)=>  {
+	 			   		   callback(bleResult(0,"data ",{
+	 						   data:this.arrayBufferToHexNumber(char.characteristicValue),
+	 						   serviceId:char.serviceUuid,
+	 						   characteristicsId:char.characteristicUuid,
+	 							mac: that.getConnectMac(),
+	 						   
+	 					   } as NotityData));
+	 			   	   };
+	 			   	this.gattClient?.on('BLECharacteristicChange',this.characteristicChangeFunction!);
+	 			   }
+	 			   
+	 		      // 设置特征值变化通知能力，enable: true表示启用，false表示禁用
+	 		      this.gattClient?.setCharacteristicChangeNotification(characteristic, state,(err: BusinessError) => {
+	 				if (err) {
+	 					// console.error('notifyCharacteristicChanged callback failed');
+	 					callback(bleResult(1001,"订阅失败",[] as number[]));
+	 				} else {
+	 					// console.info('notifyCharacteristicChanged callback successful');
+	 					callback(bleResult(1000,"订阅成功",[] as number[]));
+	 					
+	 				}
+	 			});
+	 		    } catch (err) {
+	 		      console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+	 		    }
+	 			
+	 			this.notityCharacteristicsCallback=callback;
+	 }
+	 
+	 
+		 
+	 public close():void {
+		  try {
+			  this.cancelAutoConnectBt();
+			  this.disposePassive();
+			  // console.log("close")
+			  clearTimeout(this.connect_timeoutId);
+		      this.gattClient?.disconnect(); // 11.1 断开连接
+		      this.gattClient?.close() // 11.4 如果应用不再使用此gattClient，则需要close
+			this.gattClient=null;
+			this.connectState=false;
+			this.connectMac=null;
+			this.beginToConnectMac=null;
+			} catch (err) {
+		      console.error( 'errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+		    }
+		 
+	 }
+	 
+	public setMtu(num:number,callback:(sth:MyApiResult) => void):void{
+		var that=this;
+		if(this.isConnected()){
+			
+			try {
+			    this.gattClient?.setBLEMtuSize(num);
+			     this.gattClient?.on('BLEMtuChange', (mtu: number) => {
+			          console.info('BLEMtuChange, mtu: ' + mtu);
+			    	  callback(bleResult(0,"",mtu))
+					  that.haveSetMtu=true;
+			    });
+			} catch (err) {
+				callback(bleResult(1,"",0))
+			    console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
+			}
+			
+		
+		}
+		 
+		 
+	 }
+	 
+	  stringToHexUTF8WithSpaces(input: string,en:string): string {
+	     // 将字符串编码为UTF-8
+	     const textEncoder = util.TextEncoder.create(en);;
+		var utf8Array= textEncoder.encodeInto(input)
+	     // 将每个字节转换为两位的十六进制表示，并添加空格
+	     let hexString = '';
+	     for (let i = 0; i < utf8Array.length; i++) {
+	         hexString += utf8Array[i].toString(16).padStart(2, '0') + '';
+	     }
+	     // 去除最后一个多余的空格
+	     return hexString.trim().toUpperCase();
+	 }
+	 
+	 
+	 // function stringToHexGBKWithSpaces(input: string): string {
+	 //     // 使用iconv-lite将字符串编码为GBK
+	 //     const gbkArray = new Iconv('utf-8', 'gbk').convert(input);
+	 //     // 将每个字节转换为两位的十六进制表示，并添加空格
+	 //     let hexString = '';
+	 //     for (let i = 0; i < gbkArray.length; i++) {
+	 //         hexString += gbkArray[i].toString(16).padStart(2, '0') + ' ';
+	 //     }
+	 //     // 去除最后一个多余的空格
+	 //     return hexString.trim();
+	 // }
+	 public string2ByteStrWithCharset(data:string,code:string):string{
+		 return this.stringToHexUTF8WithSpaces(data,code);
+	 }
+	 
+	 
+	  hexStringWithSpacesToText(hexString: string,en:string): string {
+	     // 去除可能存在的空格
+	     hexString = hexString.replace(/\s/g, '');
+	     // 检查字符串长度是否为偶数
+	     if (hexString.length % 2 !== 0) {
+	         throw new Error('Invalid hex string');
+	     }
+	     // 创建一个Uint8Array来存储字节
+	     const buffers = new Uint8Array(hexString.length / 2);
+	     for (let i = 0; i < hexString.length; i += 2) {
+	         buffers[i / 2] = parseInt(hexString.substring(i, i + 2), 16);
+	     }
+	     // 使用TextDecoder将字节数组解码为文本
+	       let decoder = util.TextDecoder.create(en);
+	       let stringData = decoder.decodeToString(buffers);
+	     return stringData;
+	 }
+	 public byte2StringWithCharset(data:string,code:string):string{
+		return this.hexStringWithSpacesToText(data,code).replace(/\s/g, '');
+	 }
+	 
+	 
+	 
+	  hexStringWithSpacesToArrayBuffer(hexString: string): ArrayBuffer {
+	     // 去除可能存在的空格
+	     hexString = hexString.replace(/\s/g, '');
+	     // 检查字符串长度是否为偶数
+	     if (hexString.length % 2 !== 0) {
+	         throw new Error('Invalid hex string');
+	     }
+	     // 创建一个Uint8Array来存储字节
+	     const buffer = new Uint8Array(hexString.length / 2);
+	     for (let i = 0; i < hexString.length; i += 2) {
+	         buffer[i / 2] = parseInt(hexString.substring(i, i + 2), 16);
+	     }
+	     return buffer.buffer;
+	 }
+	 
+	 
+	 /**
+	  * 将 ArrayBuffer 按指定大小分包
+	  * @param {ArrayBuffer} arrayBuffer - 要分割的 ArrayBuffer
+	  * @param {number} chunkSize - 每包大小，默认 20 字节
+	  * @returns {ArrayBuffer[]} 分包后的 ArrayBuffer 数组
+	  */
+	  splitArrayBuffer(arrayBuffer:ArrayBuffer, chunkSize:number = 20) {
+	     const totalLength = arrayBuffer.byteLength
+	     const result:ArrayBuffer[] = [] as ArrayBuffer[]
+	     
+	     for (let offset = 0; offset < totalLength; offset += chunkSize) {
+	         const end = Math.min(offset + chunkSize, totalLength)
+	         const chunkLength = end - offset
+	         
+	         // 创建新的 ArrayBuffer
+	         const chunkBuffer = new ArrayBuffer(chunkLength)
+	         const sourceView = new DataView(arrayBuffer)
+	         const targetView = new DataView(chunkBuffer)
+	         
+	         // 复制数据
+	         for (let i = 0; i < chunkLength; i++) {
+	             const value = sourceView.getUint8(offset + i)
+	             targetView.setUint8(i, value)
+	         }
+	         
+	         result.push(chunkBuffer)
+	     }
+	     
+	     return result
+	 }
+	 
+	
+	 
+	  arrayBufferToHexNumber(buffer: ArrayBuffer): number[] {
+		  var b:number[]=[] as number[]
+		  const uint8Array = new Uint8Array(buffer);
+		  for (let i = 0; i < uint8Array.length; i++) {
+		      // 将每个字节转换为两位的十六进制表示，并添加空格
+		      b.push(uint8Array[i]);
+		  }
+		  
+		  return b;
+	  }
+	 
+	 
+	 arrayBufferToHexStringWithSpaces(buffer: ArrayBuffer): string{
+	     const uint8Array = new Uint8Array(buffer);
+		 
+	     let hexString = '';
+	     for (let i = 0; i < uint8Array.length; i++) {
+	         // 将每个字节转换为两位的十六进制表示，并添加空格
+	         hexString += uint8Array[i].toString(16).padStart(2, '0') + ' ';
+	     }
+	     // 去除最后一个多余的空格
+	     return hexString.trim();
+	 }
+	 
+	 
+	 
+	 public getUUIDs():WNuuid[]{
+	 	var ids=[] as WNuuid[];
+	 	for(var i=0;i<this.wNList.length;i++){
+	 		var b=this.wNList[i].split("_");
+	 		ids.push({
+	 			serviceId:b[0],
+	 			nuuid:b[1],
+	 			wuuid:b[2]
+	 		} as WNuuid)
+	 	}
+	 	return ids;
+	 }
+	 
+	 public setSelectUUID(id:number){
+	 	if(id<this.wNList.length){
+	 		var b=this.wNList[id].split("_");
+	 		this.tarServiceUUID=b[0];
+	 		this.nUUID=b[1];
+	 		this.wUUID=b[2];
+			
+	 	}
+	 		
+	 }
+	 
+	 public isValidRandomDeviceId(mac:string):boolean{
+		return access.isValidRandomDeviceId(mac);
+	 }
+	 
+	 public getPersistentDeviceIds():string[]{
+	 		return access.getPersistentDeviceIds();
+	 }
+	 
+	 public addPersistentDeviceId(mac:string):boolean{
+	 		try {
+	 		    access.addPersistentDeviceId(mac);
+				return true;
+	 		} catch (err) {
+	 		    console.error('errCode: ' + err.code + ', errMessage: ' + err.message);
+				return false;
+	 		}
+	 } 
+	 
+	 
+	 public deletePersistentDeviceId(mac:string):boolean{
+	 		try {
+	 		    access.deletePersistentDeviceId(mac);
+	 				return true;
+	 		} catch (err) {
+	 		    console.error('errCode: ' + err.code + ', errMessage: ' + err.message);
+	 				return false;
+	 		}
+	 } 
+	 
+	 
+	 
+}

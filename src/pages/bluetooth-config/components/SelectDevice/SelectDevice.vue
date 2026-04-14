@@ -265,14 +265,15 @@ export default {
             show: this._showNotify,
             close: this._closeNotify
           });
+          if (this._isUnmounted) return;
           if (!permissionResult.granted) {
             // 权限请求工具已经显示了相应的提示
             this.isLoadingDevices = false;
             return;
           }
 
-          // Android / Harmony: 蓝牙扫描需要位置权限，单独请求以确保有预请求弹窗
-          if (AppInfo.isAndroidApp() || AppInfo.isHarmonyApp()) {
+          // Android: 蓝牙扫描需要位置权限；鸿蒙插件流程不依赖该权限
+          if (AppInfo.isAndroidApp()) {
             const locationResult = await requestLocationPermission(
               {
                 show: this._showNotify,
@@ -280,6 +281,7 @@ export default {
               },
               true
             );
+            if (this._isUnmounted) return;
             if (!locationResult.granted) {
               // 权限请求工具已经显示了相应的提示
               this.isLoadingDevices = false;
@@ -296,8 +298,9 @@ export default {
           ? initBluetooth().then(() => {
             this.isFirstScan = false;
           })
-          : resetBluetooth();
+          : (AppInfo.isHarmonyApp() ? initBluetooth() : resetBluetooth());
         await Promise.all([initPromise, this.fetchFilterRegex()]);
+        if (this._isUnmounted) return;
 
         // 搜索设备
         const devices = await searchBluetoothDevices();
@@ -353,8 +356,9 @@ export default {
         }
         this.deviceList = [];
       } finally {
-        if (this._isUnmounted) return;
-        this.isLoadingDevices = false;
+        if (!this._isUnmounted) {
+          this.isLoadingDevices = false;
+        }
       }
     },
 
@@ -422,6 +426,12 @@ export default {
         console.log('开始连接设备:', device.deviceId);
         // 连接蓝牙设备
         await connectBluetoothDevice(device.deviceId);
+
+        // 鸿蒙: 回调可能晚于页面卸载，跳过 UI 操作
+        if (this._isUnmounted) {
+          uni.hideLoading();
+          return;
+        }
         console.log('设备连接成功');
         // 更新设备连接状态
         const connectedDevice = {
@@ -453,6 +463,10 @@ export default {
         bluetoothConfigManager.setCurrentStep(CONFIG_STEPS.SELECT_WIFI);
       } catch (error) {
         uni.hideLoading();
+
+        // 鸿蒙: 回调可能晚于页面卸载，跳过 UI 操作
+        if (this._isUnmounted) return;
+
         // 处理已连接但未正确断开导致的 "already connect" 错误
         if (error?.errMsg?.includes('already connect')) {
           const connectedDevice = {

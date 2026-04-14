@@ -4,6 +4,7 @@ import { onLaunch, onShow, onHide, onError } from '@dcloudio/uni-app';
 import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@/store';
 import { requestBluetoothPermissionsForAndroid12 } from '@/utils/bluetoothPermission';
+import { handleBleAppHide } from '@/services/ble';
 
 // 引入 ARMS SDK（H5 和 App 平台）
 // #ifndef MP
@@ -85,6 +86,7 @@ onShow(() => {
 
 onHide(() => {
   console.log('App Hide');
+  void handleBleAppHide();
 });
 
 watch(

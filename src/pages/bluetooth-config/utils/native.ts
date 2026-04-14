@@ -3,6 +3,8 @@
  * 统一使用 Result 模式替代 try/catch，扁平化调用流程
  */
 
+import { bleService } from '@/services/ble';
+
 // ===================== 蓝牙错误码 =====================
 
 /** 蓝牙 API 标准错误码 */
@@ -70,19 +72,17 @@ export async function safeAsync<T>(fn: () => Promise<T>): Promise<NativeResult<T
 
 /** 开启蓝牙适配器 */
 export function openBluetoothAdapter(): Promise<NativeResult> {
-  return new Promise((resolve) => {
-    uni.openBluetoothAdapter({
-      success: () => resolve({ ok: true }),
-      fail: (err) => {
-        console.error('[native] 蓝牙适配器开启失败:', err);
-        resolve({
-          ok: false,
-          errCode: getBLEErrorCode(err),
-          errMsg: err.errMsg
-        });
-      }
+  return bleService
+    .openAdapter()
+    .then(() => ({ ok: true }))
+    .catch((err) => {
+      console.error('[native] 蓝牙适配器开启失败:', err);
+      return {
+        ok: false,
+        errCode: getBLEErrorCode(err),
+        errMsg: err.errMsg
+      };
     });
-  });
 }
 
 // ===================== UI 工具 =====================

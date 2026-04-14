@@ -276,6 +276,8 @@ export default {
      * 完成配网
      */
     async finishConfig() {
+      await configProtocol.close();
+
       // 重置状态
       bluetoothConfigManager.resetState();
 

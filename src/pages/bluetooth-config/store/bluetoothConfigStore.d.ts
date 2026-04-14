@@ -40,6 +40,7 @@ export type StateListener = (state: BluetoothConfigState) => void;
 
 /** 蓝牙配网状态管理器 */
 export declare class BluetoothConfigManager {
+  state: BluetoothConfigState;
   getState(): BluetoothConfigState;
   updateState(updates: Partial<BluetoothConfigState>): void;
   resetState(): void;

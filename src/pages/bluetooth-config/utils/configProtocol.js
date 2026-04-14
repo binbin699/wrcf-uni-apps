@@ -5,6 +5,8 @@
 
 import { bluetoothService } from './bluetooth.js';
 import { bluetoothConfigManager } from '../store/bluetoothConfigStore.js';
+import { bleService } from '@/services/ble';
+import { AppInfo } from '@/const';
 
 // 配网状态码
 export const CONFIG_STATUS = {
@@ -158,14 +160,19 @@ export class ConfigProtocol {
     this.deviceInfo = null;
     this.configResult = null;
     this.listeners = new Map();
+    this.isClosing = false;
+    this.configResultPromise = null;
 
     // WiFi扫描相关
     this.wifiScanPromise = null;
     this.wifiScanTimeoutId = null;
+    this.wifiFlushTimeoutId = null;
     this.receivedData = [];
     this.isListenerSetup = false;
     this.deviceId = null;
     this._dataListenerRegistered = false;
+    this._connectionListener = null;
+    this._dataListener = null;
   }
 
   /**
@@ -174,6 +181,7 @@ export class ConfigProtocol {
    */
   async init(deviceId) {
     console.log('初始化蓝牙配网协议');
+    this.isClosing = false;
 
     // 如果设备ID变化了，需要重新设置监听器
     if (this.deviceId !== deviceId) {
@@ -187,6 +195,7 @@ export class ConfigProtocol {
     console.log('序列号已重置为0');
 
     // 清理之前的数据
+    this.clearWifiFlushTimer();
     this.receivedData = [];
     if (this.wifiScanTimeoutId) {
       clearTimeout(this.wifiScanTimeoutId);
@@ -204,17 +213,56 @@ export class ConfigProtocol {
    */
   reset() {
     console.log('重置配网协议状态');
+    this.isClosing = false;
     this.currentStep = null;
     this.deviceInfo = null;
     this.configResult = null;
     this.wifiScanPromise = null;
+    this.configResultPromise = null;
     if (this.wifiScanTimeoutId) {
       clearTimeout(this.wifiScanTimeoutId);
       this.wifiScanTimeoutId = null;
     }
+    if (this.wifiFlushTimeoutId) {
+      clearTimeout(this.wifiFlushTimeoutId);
+      this.wifiFlushTimeoutId = null;
+    }
     this.receivedData = [];
     this.isListenerSetup = false;
     this.deviceId = null;
+    this._dataListenerRegistered = false;
+    this._connectionListener = null;
+    this._dataListener = null;
+  }
+
+  clearWifiFlushTimer() {
+    if (this.wifiFlushTimeoutId) {
+      clearTimeout(this.wifiFlushTimeoutId);
+      this.wifiFlushTimeoutId = null;
+    }
+  }
+
+  scheduleWifiListFlush(delay = 600) {
+    this.clearWifiFlushTimer();
+    this.wifiFlushTimeoutId = setTimeout(() => {
+      this.wifiFlushTimeoutId = null;
+      this.flushWifiListData();
+    }, delay);
+  }
+
+  flushWifiListData() {
+    if (!this.receivedData.length) {
+      return;
+    }
+
+    const sortedData = this.receivedData
+      .sort((a, b) => a.sequence - b.sequence)
+      .flatMap((item) => item.data);
+
+    console.log('准备统一解析WiFi列表分片，分片数:', this.receivedData.length, '总字节数:', sortedData.length);
+    const localWifiList = parseWifiList(new Uint8Array(sortedData));
+    this.handleWifiListData(localWifiList);
+    this.receivedData = [];
   }
 
   /**
@@ -223,7 +271,14 @@ export class ConfigProtocol {
    */
   setupBLEConnectionListener(deviceId) {
     // 监听蓝牙连接状态变化
-    uni.onBLEConnectionStateChange((res) => {
+    if (this._connectionListener) {
+      bleService.offConnectionChange(this._connectionListener);
+    }
+
+    this._connectionListener = (res) => {
+      if (this.isClosing) {
+        return;
+      }
       if (res.deviceId === deviceId) {
         if (!res.connected) {
           console.log('蓝牙连接断开，设备ID:', deviceId);
@@ -245,7 +300,7 @@ export class ConfigProtocol {
           } else {
             this.emit('connectionLost', {
               reason: '蓝牙连接断开',
-              message: `蓝牙连接已断开，请重新开始配网`
+              message: '蓝牙连接已断开，请重新开始配网'
             });
           }
         } else {
@@ -253,7 +308,9 @@ export class ConfigProtocol {
           this.emit('connection_restored', { deviceId });
         }
       }
-    });
+    };
+
+    bleService.onConnectionChange(this._connectionListener);
   }
 
   /**
@@ -271,28 +328,60 @@ export class ConfigProtocol {
 
       console.log('开始设置蓝牙数据监听器，设备ID:', deviceId);
 
-      // 先注册特征值变化通知
-      uni.notifyBLECharacteristicValueChange({
-        deviceId,
-        serviceId: bluetoothService.PRIMARY_SERVICE_UUID,
-        characteristicId: bluetoothService.RECEIVE_CHARACTERISTIC_UUID,
-        state: true,
-        success: () => {
-          console.log('蓝牙特征值变化通知注册成功');
-          this.isListenerSetup = true;
-          resolve();
-        },
-        fail: (error) => {
-          console.error('蓝牙特征值变化通知注册失败:', error);
-          this.isListenerSetup = false;
-          reject(error);
+      let settled = false;
+      const resolveListenerSetup = () => {
+        if (settled) {
+          return;
         }
-      });
+        settled = true;
+        console.log('蓝牙特征值变化通知注册成功');
+        this.isListenerSetup = true;
+        resolve();
+      };
+      const rejectListenerSetup = (error) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        console.error('蓝牙特征值变化通知注册失败:', error);
+        this.isListenerSetup = false;
+        reject(error);
+      };
+
+      // 先注册特征值变化通知
+      bleService
+        .enableNotify({
+          deviceId,
+          serviceId: bluetoothService.PRIMARY_SERVICE_UUID,
+          characteristicId: bluetoothService.RECEIVE_CHARACTERISTIC_UUID,
+          state: true
+        })
+        .then(() => {
+          resolveListenerSetup();
+        })
+        .catch((error) => {
+          rejectListenerSetup(error);
+        });
+
+      if (AppInfo.isHarmonyApp()) {
+        setTimeout(() => {
+          if (this.isClosing) {
+            return;
+          }
+          if (!settled) {
+            console.log('鸿蒙蓝牙通知注册进入兜底放行');
+            resolveListenerSetup();
+          }
+        }, 300);
+      }
 
       // 只注册一次数据监听器（这个监听器是全局的，不需要每次都注册）
       if (!this._dataListenerRegistered) {
         this._dataListenerRegistered = true;
-        const dataListener = (res) => {
+        this._dataListener = (res) => {
+          if (this.isClosing) {
+            return;
+          }
           // 检查是否是当前设备的数据
           if (res.deviceId !== this.deviceId) {
             return;
@@ -446,32 +535,28 @@ export class ConfigProtocol {
 
             // WiFi列表数据包 (0x45 = 数据帧类型1 + 子类型17)
             if (mainType === 0x01 && subType === 0x11) {
-              // WiFi列表数据包
-              // 如果是分片帧
               const data =
                 frameCtrl & 0x10 ? value.slice(6, 6 + curDataLen) : value.slice(4, 4 + curDataLen);
+
+              console.log(
+                '收到WiFi列表分片:',
+                JSON.stringify({
+                  sequence,
+                  frameCtrl: '0x' + frameCtrl.toString(16),
+                  curDataLen,
+                  payloadLength: data.length,
+                  fragmented: !!(frameCtrl & 0x10)
+                })
+              );
+
               this.receivedData.push({
                 sequence,
                 data: Array.from(data)
               });
 
-              // 检查是否是最后一个包
-              // FrameCtrl bit4 (0x10) 是分片标志：1=有后续分片，0=完整帧/最后一片
-              // bit2 (0x04) 是方向标志（设备→客户端），不能用来判断分片结束
-              if (!(frameCtrl & 0x10)) {
-                // 按序列号排序并合并数据
-                const sortedData = this.receivedData
-                  .sort((a, b) => a.sequence - b.sequence)
-                  .flatMap((item) => item.data);
-                // 解析WiFi列表
-                const localWifiList = parseWifiList(new Uint8Array(sortedData));
-
-                // 处理WiFi扫描结果
-                this.handleWifiListData(localWifiList);
-
-                // 重置接收缓冲区
-                this.receivedData = [];
-              }
+              // 鸿蒙插件下设备可能会连续推送多组 0x11 数据帧；
+              // 这里改成按“短时间无新分片”再统一解析，避免过早只拿到一部分 WiFi。
+              this.scheduleWifiListFlush(frameCtrl & 0x10 ? 800 : 1200);
             }
           } catch (error) {
             console.error('数据解析错误:', error);
@@ -481,11 +566,12 @@ export class ConfigProtocol {
               this.wifiScanPromise = null;
             }
             // 重置接收缓冲区
-            this.receivedData = [];
+            this.clearWifiFlushTimer();
+        this.receivedData = [];
           }
         };
 
-        uni.onBLECharacteristicValueChange(dataListener);
+        bleService.onCharacteristicValueChange(this._dataListener);
       }
     });
   }
@@ -504,6 +590,7 @@ export class ConfigProtocol {
         clearTimeout(this.wifiScanTimeoutId);
         this.wifiScanTimeoutId = null;
       }
+      this.clearWifiFlushTimer();
 
       // 如果有等待中的Promise，resolve它
       if (this.wifiScanPromise) {
@@ -518,6 +605,7 @@ export class ConfigProtocol {
         clearTimeout(this.wifiScanTimeoutId);
         this.wifiScanTimeoutId = null;
       }
+      this.clearWifiFlushTimer();
 
       // 如果有等待中的Promise，reject它
       if (this.wifiScanPromise) {
@@ -556,6 +644,7 @@ export class ConfigProtocol {
           this.wifiScanPromise = null;
           this.wifiScanTimeoutId = null;
           // 重置接收缓冲区
+          this.clearWifiFlushTimer();
           this.receivedData = [];
         }
       }, 15000); // 15秒超时
@@ -586,15 +675,20 @@ export class ConfigProtocol {
       console.log('使用序列号:', sequence);
 
       const sendCmd = () => {
-        uni.writeBLECharacteristicValue({
-          deviceId,
-          serviceId: bluetoothService.PRIMARY_SERVICE_UUID,
-          characteristicId: bluetoothService.SEND_CHARACTERISTIC_UUID,
-          value: cmd.buffer,
-          success: () => {
+        if (this.isClosing) {
+          return;
+        }
+        bleService
+          .write({
+            deviceId,
+            serviceId: bluetoothService.PRIMARY_SERVICE_UUID,
+            characteristicId: bluetoothService.SEND_CHARACTERISTIC_UUID,
+            value: cmd.buffer
+          })
+          .then(() => {
             console.log('WiFi扫描命令发送成功');
-          },
-          fail: (err) => {
+          })
+          .catch((err) => {
             console.log('WiFi扫描命令发送失败:', err);
 
             // 检测蓝牙连接断开错误
@@ -616,12 +710,15 @@ export class ConfigProtocol {
               this.wifiScanPromise.reject(err);
               this.wifiScanPromise = null;
             }
-          }
-        });
+            this.clearWifiFlushTimer();
+          });
       };
 
       // 延迟一会再写入特征值，否则可能报10007错误
       setTimeout(() => {
+        if (this.isClosing) {
+          return;
+        }
         sendCmd();
       }, 1000);
     });
@@ -662,15 +759,14 @@ export class ConfigProtocol {
    */
   async checkBLEConnection(deviceId) {
     return new Promise((resolve) => {
-      uni.getBLEDeviceServices({
-        deviceId,
-        success: () => {
+      bleService
+        .getServices(deviceId)
+        .then(() => {
           resolve(true);
-        },
-        fail: () => {
+        })
+        .catch(() => {
           resolve(false);
-        }
-      });
+        });
     });
   }
 
@@ -681,23 +777,25 @@ export class ConfigProtocol {
    */
   async reconnectBLEDevice(deviceId) {
     console.log('尝试重新连接蓝牙设备:', deviceId);
+    if (this.isClosing) {
+      throw new Error('协议关闭中');
+    }
 
     return new Promise((resolve, reject) => {
-      uni.createBLEConnection({
-        deviceId,
-        success: () => {
+      bleService
+        .connect(deviceId)
+        .then(() => {
           console.log('蓝牙设备重连成功');
           // 重新设置数据监听
           setTimeout(() => {
             this.setupBLEDataListener(deviceId);
             resolve();
           }, 1000);
-        },
-        fail: (err) => {
+        })
+        .catch((err) => {
           console.log('蓝牙设备重连失败:', err);
           reject(err);
-        }
-      });
+        });
     });
   }
 
@@ -709,6 +807,9 @@ export class ConfigProtocol {
    * @returns {Promise} 发送结果
    */
   async sendBluFiFrame(deviceId, frame, retries = 3) {
+    if (this.isClosing) {
+      throw new Error('协议关闭中');
+    }
     // 检查连接状态
     const isConnected = await this.checkBLEConnection(deviceId);
     if (!isConnected) {
@@ -725,20 +826,21 @@ export class ConfigProtocol {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         await new Promise((resolve, reject) => {
-          uni.writeBLECharacteristicValue({
-            deviceId,
-            serviceId: bluetoothService.PRIMARY_SERVICE_UUID,
-            characteristicId: bluetoothService.SEND_CHARACTERISTIC_UUID,
-            value: frame,
-            success: () => {
+          bleService
+            .write({
+              deviceId,
+              serviceId: bluetoothService.PRIMARY_SERVICE_UUID,
+              characteristicId: bluetoothService.SEND_CHARACTERISTIC_UUID,
+              value: frame
+            })
+            .then(() => {
               console.log('BluFi帧发送成功');
               resolve();
-            },
-            fail: (err) => {
+            })
+            .catch((err) => {
               console.log('BluFi帧发送失败:', err);
               reject(err);
-            }
-          });
+            });
         });
         // 发送成功，直接返回
         return;
@@ -925,9 +1027,14 @@ export class ConfigProtocol {
    */
   async waitForConfigResult(deviceId, timeout = 30000) {
     return new Promise((resolve, reject) => {
+      if (this.isClosing) {
+        reject(new Error('协议关闭中'));
+        return;
+      }
       let timeoutId = null;
-      let progressTimer = null;
+      const progressTimer = null;
       let backupTimeoutId = null; // 备用超时计时器ID
+      this.configResultPromise = { reject };
 
       // 设置超时
       timeoutId = setTimeout(() => {
@@ -937,6 +1044,7 @@ export class ConfigProtocol {
         if (backupTimeoutId) {
           clearTimeout(backupTimeoutId);
         }
+        this.configResultPromise = null;
         reject(new Error('等待配网结果超时'));
       }, timeout);
 
@@ -951,6 +1059,7 @@ export class ConfigProtocol {
         if (backupTimeoutId) {
           clearTimeout(backupTimeoutId);
         }
+        this.configResultPromise = null;
 
         // 移除监听器
         this.off('config-result', resultListener);
@@ -969,6 +1078,9 @@ export class ConfigProtocol {
       // 配网状态监听已在 setupCharacteristicListener 的 dataListener 中处理
       // 这里只需要设置备用超时机制（如果设备长时间无响应）
       backupTimeoutId = setTimeout(() => {
+        if (this.isClosing) {
+          return;
+        }
         if (!this.configResult) {
           console.log('设备长时间无响应，返回超时结果');
           const timeoutResult = {
@@ -997,6 +1109,10 @@ export class ConfigProtocol {
         this.wifiScanPromise.reject(new Error('连接已断开'));
         this.wifiScanPromise = null;
       }
+      if (this.configResultPromise) {
+        this.configResultPromise.reject(new Error('连接已断开'));
+        this.configResultPromise = null;
+      }
 
       console.log('蓝牙配网协议断开连接');
     } catch (error) {
@@ -1008,6 +1124,7 @@ export class ConfigProtocol {
    * 关闭协议
    */
   async close() {
+    this.isClosing = true;
     await this.disconnect();
 
     // 清理监听器状态
@@ -1016,22 +1133,34 @@ export class ConfigProtocol {
     // 关闭蓝牙特征值变化通知
     if (this.deviceId) {
       try {
-        uni.notifyBLECharacteristicValueChange({
+        bleService.enableNotify({
           deviceId: this.deviceId,
           serviceId: bluetoothService.PRIMARY_SERVICE_UUID,
           characteristicId: bluetoothService.RECEIVE_CHARACTERISTIC_UUID,
           state: false
         });
         // 移除数据监听器
-        uni.offBLECharacteristicValueChange();
+        if (this._dataListener) {
+          bleService.offCharacteristicValueChange(this._dataListener);
+        } else {
+          bleService.offCharacteristicValueChange();
+        }
         // 移除连接状态监听器
-        uni.offBLEConnectionStateChange();
+        if (this._connectionListener) {
+          bleService.offConnectionChange(this._connectionListener);
+        } else {
+          bleService.offConnectionChange();
+        }
       } catch (error) {
         console.error('关闭蓝牙通知失败:', error);
       }
     }
 
     this.listeners.clear();
+    this._dataListenerRegistered = false;
+    this._connectionListener = null;
+    this._dataListener = null;
+    this.configResultPromise = null;
     this.deviceId = null;
     console.log('蓝牙配网协议已关闭');
   }

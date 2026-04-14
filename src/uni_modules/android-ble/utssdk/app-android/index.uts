@@ -1,0 +1,1233 @@
+
+import {  bleResult,MyApiResult,BleScanResult, BleServices, ScanRssiBR, WNuuid, ScanPara, WriteData, NotityData} from '../interface.uts';
+import BluetoothAdapter from 'android.bluetooth.BluetoothAdapter';
+import Intent from 'android.content.Intent';
+import IntentFilter from 'android.content.IntentFilter';
+import BluetoothDevice from 'android.bluetooth.BluetoothDevice';
+import BluetoothGatt from 'android.bluetooth.BluetoothGatt';
+import BroadcastReceiver from 'android.content.BroadcastReceiver';
+import Context from 'android.content.Context';
+import ScanResult from  'android.bluetooth.le.ScanResult'
+import ScanCallback  from  'android.bluetooth.le.ScanCallback'
+import  BleHelper from "com.clj.fastble.BleHelper";
+import JSONObject from 'org.json.JSONObject';
+import JSONArray from 'org.json.JSONArray';
+import HashMap from 'java.util.HashMap';
+import ByteUtil from 'com.clj.fastble.ByteUtil';
+import Settings from 'android.provider.Settings';
+import BluetoothManager from 'android.bluetooth.BluetoothManager';
+import TextUtils from 'android.text.TextUtils';
+import ArrayList from 'java.util.ArrayList';
+import Build from "android.os.Build";
+import ScanSettings from "android.bluetooth.le.ScanSettings";
+import ScanFilter from "android.bluetooth.le.ScanFilter";
+import Exception from 'java.lang.Exception';
+import Activity from 'android.app.Activity';
+import Long from "java.lang.Long"
+import Lists from "java.util.List";
+
+export class BleLib extends BroadcastReceiver{
+		
+		
+		
+	bleHelper:BleHelper|null=null;
+	
+	
+	adapter :BluetoothAdapter;
+	// systemCallback: OnBleMessageListener|null=null;
+	onBleScanListener :OnBleScanListener|null=null;
+	onBleConnectListener: OnBleConnectListener|null=null
+	onBleScanServicesListener:OnBleScanServicesListener|null=null
+	onBleWriteDataListener:OnBleWriteDataListener|null=null
+	onBleNotityListener:OnBleNotityListener|null=null
+	onMtuSetListener: OnMtuSetListener|null=null
+	sThis:BleLib=this;	
+	scanTimer:number=-1;
+	connectInternal:number=0;
+	connectCallback : (sth:MyApiResult) => void = (res) => { };
+	scanDataListenerCallback : (sth:MyApiResult) => void = (res) => { };
+	scanListenerMac:string|null=null;
+	scanResultMap:HashMap<String,BleScanResult>=new HashMap<String,BleScanResult>();
+	 beginToConnectMac:string|null=null
+	  tarServiceUUID:string="";
+	wUUID:string|null=null;
+	nUUID:string|null=null;
+	
+	readDataCallback : (sth:MyApiResult) => void = (res) => { };
+	indicateDataCallback : (sth:MyApiResult) => void = (res) => { };
+	
+	btOpenStateCallback : (sth:MyApiResult) => void = (res) => { };
+	haveSetMtu:boolean=false;
+	readrssiCallback : (sth:MyApiResult) => void = (res) => { };
+	wNList:string[]=[] as string[];
+	 debug:boolean=false;
+	threadName:string="main";
+	 isConnecting:boolean=false;	
+	 connect_time_out:number=15*1000;
+	public setBtConnectTimeout(time:number){
+			 this.connect_time_out=time;
+	}
+	 auto_connect_time:number=12*1000;
+	 public setBtAutoConnectTime(time:number){
+	 	this.auto_connect_time=time;
+	 }
+	 
+	
+	public setDebugMode(debug:boolean){
+		this.debug=debug;
+	}
+	
+	public  setThreadTypeName(name:string){
+		this.threadName=name;
+	}
+	
+	public onBtOpenStateListener(callback: (sth:MyApiResult) => void ){
+		this.btOpenStateCallback=callback;
+		callback(bleResult(0,"",this.isEnabled()))
+	}
+	
+	constructor(){
+		super();
+		 this.adapter=(UTSAndroid.getAppContext()!.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).getAdapter();
+		 this.btListener();
+		
+	}
+	
+	@UTSJS.keepAlive
+	public btListener(){
+		class MyOnBleCallback implements BleHelper.OnBleCallback{
+				lib:BleLib;
+				connnetTimerid:number=0;
+			constructor(lib:BleLib){
+				this.lib=lib;
+			}
+			override onScanResult(result: ScanResult,json:JSONObject):void{
+				var that=this;
+				UTSAndroid.getDispatcher(this.lib.threadName).async(function(_){
+					try{
+						var scan= JSON.parse<BleScanResult>(json.toString());
+						if(scan==null){
+							return;
+						}
+						// console.log(scan.device.name,
+						// scan.scanRecord.bytes
+						// )
+						
+						if(that.lib.debug){
+							console.log("scan= ",scan)
+						}
+						try{
+							that.lib.scanDataListenerCallback(bleResult(0,"",{
+								rssi:scan.rssi!,
+								mac:result.device.address,
+								data:scan.scanRecord!.bytes!,
+								manufacturerData:""
+							} as ScanRssiBR))
+						}catch(e:Exception){
+						
+						}
+						
+						if(that.lib.scanResultMap.get(scan.device.address)==null){
+							if(that.lib.onBleScanListener!=null){
+								if(scan!=null){
+									that.lib.onBleScanListener!.onScanCall(bleResult(0,"",scan))
+								}
+							}
+						}
+							// scan.device.name=this.scanNameResultMap.get(scan.device.address)
+						that.lib.scanResultMap.put(scan.device.address,scan)
+					}catch(e:Exception){
+						
+					}
+					
+				},null)
+				
+				
+				
+			 }
+			 
+			 
+			 
+			override   onConnectResult( code: Int, msg: String){
+				clearTimeout(this.connnetTimerid);
+				var that=this;
+				this.connnetTimerid=setTimeout(function(){
+					if(that.lib.onBleConnectListener!=null){
+						that.lib.onBleConnectListener!.onConnect(bleResult(code,msg,0))
+					}
+				},600);
+				
+			}
+			 
+			 override onBtConnectStateChange(on:boolean){
+				 this.lib.btOpenStateCallback(bleResult(0,"",this.lib.isEnabled()))
+				 
+				 
+			 }
+			override onServicesDiscovered(gatt: BluetoothGatt, status: Int, json: JSONArray){
+				var  bleServices=	JSON.parse<BleServices[]>(json.toString());
+				if(bleServices==null){
+					bleServices=[];
+				}
+				 if(this.lib.onBleScanServicesListener!=null){
+					 this.lib.onBleScanServicesListener!.onScanService(bleResult(0,"成功扫描到服务",bleServices))
+				 }
+			}
+			 
+			override onGattDisconnect(state: Int){
+				if(this.lib.onBleConnectListener!=null){
+					this.lib.onBleConnectListener!.onConnect(bleResult(1001,"蓝牙异常断开",""))
+				}
+				
+			}
+			override onMtuCallBack(status: Int, s: String){
+				if(this.lib.onMtuSetListener!=null){
+					this.lib.onMtuSetListener!.onMtu(bleResult(parseInt(status+""),s.toString(),""))
+				}
+			}
+			 
+			override onWriteState(status: Int, s: String){
+				if(this.lib.onBleWriteDataListener!=null){
+					this.lib.onBleWriteDataListener!.onWriteData(bleResult(parseInt(status+""),s.toString(),""))
+				}
+			}
+			 
+			 
+			override onDataRead(value: ByteArray){
+				if(this.lib.onBleNotityListener!=null){
+						var num:number[]=[];
+						 var  d=(value.size).valueOf();	
+						 for(var i=0;i<d;i++){
+							var data=(value[i.toInt()]).valueOf();
+							num.push(data&0xff);
+							 
+						 }
+						this.lib.onBleNotityListener!.onNotityData(bleResult(0,"",num))
+				}
+			}
+			override onDataReads(value: ByteArray,s:String,c:String){
+				if(this.lib.onBleNotityListener!=null){
+						var num:number[]=[];
+						 var  d=(value.size).valueOf();	
+						 for(var i=0;i<d;i++){
+							var data=(value[i.toInt()]).valueOf();
+							num.push(data&0xff);
+							 
+						 }
+						this.lib.onBleNotityListener!.onNotityDatas(bleResult(0,"",{
+							 data:num,
+							 characteristicsId:c,
+							 serviceId:s
+						} as NotityData))
+				}
+			}
+			
+			override onReadData(state: boolean, value: ByteArray|null){
+				if(state){
+					if(value!=null){
+						var num:number[]=[];
+						 var  d=(value.size).valueOf();	
+						 for(var i=0;i<d;i++){
+							var data=(value[i.toInt()]).valueOf();
+							num.push(data&0xff);
+						 }
+						 this.lib.readDataCallback(bleResult(0,"读取到数据",num))
+					}
+				}else{
+					var num:number[]=[];
+					 this.lib.readDataCallback(bleResult(10000,"读取到数据",num))
+				}
+			}
+			
+			override onIndicateCallback(state:Int,value: ByteArray|null){
+				if(state==0){
+					if(value!=null){
+						var num:number[]=[];
+						var  d=(value.size).valueOf();
+						for(var i=0;i<d;i++){
+													var data=(value[i.toInt()]).valueOf();
+													num.push(data&0xff);
+						}
+						this.lib.indicateDataCallback(bleResult(Number.from(state),"",num))
+					}
+					
+					
+					
+				}else{
+					var num:number[]=[];
+					this.lib.indicateDataCallback(bleResult(Number.from(state),"",num))
+					
+				}
+				
+			}
+			
+			override onReadRssi(int: Int){
+				// console.log("onReadRssi ",int)
+				this.lib.readrssiCallback(bleResult(0,"rssi",Number.from(int)))
+				
+			}
+			override  onNotityStateCallback(state:Int,msg:String){
+				this.lib.onBleNotityListener!.onNotityData(bleResult(Number.from(state),msg,[] as number[]))
+				
+			}
+		}
+		 this.bleHelper=new BleHelper(UTSAndroid.getAppContext()!,this.adapter,new MyOnBleCallback(this));
+		
+	}
+	
+	
+	openBtBluetooth(callback:(b:MyApiResult)=>void){
+		
+		var that=this;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			
+			if(this.isHavePermision("android.permission.BLUETOOTH_SCAN")||this.isHavePermision("android.permission.BLUETOOTH_CONNECT")){
+				that.openBt(callback)
+			}else{
+				this.requesMoretPermison(["android.permission.BLUETOOTH_SCAN","android.permission.BLUETOOTH_CONNECT"],function(st:boolean){
+					if(st){
+						that.openBt(callback)
+					}else{
+						
+							callback!( bleResult(10001,"无蓝牙权限",""))
+						
+					}
+				})
+			}
+		}else{
+				if(this.isHavePermision("android.permission.ACCESS_FINE_LOCATION")){
+					that.openBt(callback)
+				}else{
+					this.requestPermison("android.permission.ACCESS_FINE_LOCATION",function(res:boolean){
+						if(res){
+							that.openBt(callback)
+						}else{
+								callback!( bleResult(10001,"无蓝牙权限",""))
+						}
+					})
+				}
+		}
+			
+		
+		
+		
+		
+		
+	}
+	
+	openBt(callback:(b:MyApiResult)=>void){
+		if (!this.isEnabled()) {
+		    var enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			UTSAndroid.getUniActivity()!. startActivityForResult(enableBtIntent, 0); 
+			UTSAndroid.onAppActivityResult((requestCode: Int, resultCode: Int, data?: Intent) => {
+				if(requestCode == 0){
+					// 我们发起的请求
+					if(resultCode==Activity.RESULT_OK){
+						callback(bleResult(0,"",""))
+					}else{
+						callback(bleResult(1,"",""))
+					}
+				
+				}else{
+					// 别的代码发起的请求，不要处理
+				}
+				UTSAndroid.offAppActivityResult();
+			});
+		}
+	}
+	
+	
+	readRssi(callback:(b:MyApiResult)=>void){
+		this.readrssiCallback=callback;
+		this.bleHelper!.readRssi();
+	}
+	
+	openBluetooth(on:boolean):void{
+		// if(on){
+		// 	this.adapter.enable();
+		// }else{
+		// 	this.adapter.disable();
+		// }
+		this.bleHelper!.openBle(this.adapter,on);
+		
+	}
+	public override		onReceive(context:Context,data:Intent):void{
+	    var action = data.getAction();
+			switch (action) {
+		            case BluetoothAdapter.ACTION_STATE_CHANGED:
+						// if(this.systemCallback!=null){
+						// 	// this.systemCallback!.onMessage( bleResult(0,"蓝牙开关状态",this.isEnabled()));
+							
+						// }
+						// this.btOpenStateCallback(bleResult(0,"",this.isEnabled()))
+						// if(this.onBleConnectListener!=null){
+						// 	if(!this.isEnabled()){
+						// 		this.onBleConnectListener!.onConnect(bleResult(10003,"蓝牙异常关闭",""))
+						// 	}else{
+						// 		this.onBleConnectListener!.onConnect(bleResult(10009,"蓝牙被开启",""))
+						// 	}
+						// }
+						
+		                break;
+		    //         case BluetoothAdapter.ACTION_DISCOVERY_STARTED:
+						// if(this.systemCallback!=null){
+						// 	this.systemCallback!.onMessage( bleResult(1,"开始搜索蓝牙",0));
+						// }
+		    //             break;
+		    //         case BluetoothAdapter.ACTION_DISCOVERY_FINISHED:
+						// if(this.systemCallback!=null){
+						// 	this.systemCallback!.onMessage( bleResult(1,"搜索蓝牙完成",1));
+						// }
+		    //             break;
+		}
+	}
+	
+	// 调用此方法打开蓝牙设置页面
+	public  openBluetoothSettings():void {
+	    var intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+	    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+	    UTSAndroid.getAppContext()!.startActivity(intent);
+	}
+	
+	
+	public getSericUUID():string{
+		var s=this.tarServiceUUID
+		return  s;
+	}
+		public getServiceUUID():string{
+			var s=this.tarServiceUUID
+			return  s;
+		}
+	
+	public getNotityUUID():string{
+		var s=this.nUUID!
+		return s;
+	}
+	
+	public getWriteUUID():string{
+		var s=	this.wUUID!
+		return s
+	}
+	
+	public getwriteUUID():string{
+		var s=	this.wUUID!
+		return s
+	}
+	
+	
+	@UTSJS.keepAlive
+	public onScanDataListener( callback:(res:MyApiResult)=>void){
+		// this.scanListenerMac=mac;
+		this.scanDataListenerCallback=callback;
+		
+	}
+	
+		
+	public isHavePermision(pername:string): boolean {
+		return	UTSAndroid.checkSystemPermissionGranted(UTSAndroid.getUniActivity()!, [pername])
+	 }
+	 
+	 
+	
+	 public requestPermison(pername:string, callback: (sth:boolean) => void ) {
+		 if(this.isHavePermision(pername)){
+			 callback(true);
+			 return
+		 }
+		  UTSAndroid.requestSystemPermission(UTSAndroid.getUniActivity()!, [pername], (_ : boolean, p : string[]) => {
+				  callback(true)
+		        }, (_ : boolean, p : string[]) => {
+		         callback(false)
+		        })
+		 
+		 
+		 
+	 }
+	 
+	 public requesMoretPermison(pername:string[], callback: (sth:boolean) => void ) {
+			  // 请求拍照权限
+				UTSAndroid.requestSystemPermission(UTSAndroid.getUniActivity()!, pername, function (allRight : boolean, _ : string[]) {
+					if (allRight) {
+						// 权限请求成功
+						callback(true);
+					} else {
+						//用户拒绝了部分权限
+						callback(false);
+					}
+				}, function (_ : boolean, _ : string[]) {
+					//用户拒绝了部分权限
+					callback(false);
+				})
+	 		 
+	 		 
+	 		 
+	 }
+	public  isEnabled():boolean{
+		 return this.adapter.isEnabled();
+	 }
+	 
+	 
+	 
+	@UTSJS.keepAlive
+	public  onStartScanBle(para:ScanPara){
+		if(para.scantime==null){
+			para.scantime=10*1000;
+		}
+		var that=this;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			if(this.isHavePermision("android.permission.BLUETOOTH_SCAN")||this.isHavePermision("android.permission.BLUETOOTH_CONNECT")){
+				this.onScanBle(para)
+			}else{
+				this.requesMoretPermison(["android.permission.BLUETOOTH_SCAN","android.permission.BLUETOOTH_CONNECT"],function(st:boolean){
+					if(st){
+						that.onScanBle(para)
+					}else{
+						if(para.onScanResult!=null){
+							para.onScanResult!( bleResult(10001,"无蓝牙权限",""))
+						}
+					}
+				})
+			}
+		}else{
+				if(this.isHavePermision("android.permission.ACCESS_FINE_LOCATION")){
+					this.onScanBle(para)
+				}else{
+					this.requestPermison("android.permission.ACCESS_FINE_LOCATION",function(res:boolean){
+						if(res){
+							that.onScanBle(para)
+						}else{
+							if(para.onScanResult!=null){
+								para.onScanResult!( bleResult(10001,"无蓝牙权限",""))
+							}
+							
+						}
+					})
+				}
+		}
+			
+			
+		
+	}
+	
+	
+	@UTSJS.keepAlive
+	public onScanBle(para:ScanPara ){
+		if(!this.isEnabled()){
+			if(para.onScanResult!=null){
+				para.onScanResult!(bleResult(10002,"蓝牙未开启",""))
+			}
+			return
+		}
+		if(para.showEmptyName==null){
+			para.showEmptyName=0;
+		}
+		
+		this.stopScanBle();
+		class MyOnBleScanListener implements OnBleScanListener{
+		 
+				override onScanCall(scan:MyApiResult){
+					try{
+						if(para.onScanResult!=null){
+							para.onScanResult!(scan)
+						}
+						
+					}catch(e:Exception){
+					}
+				}
+		};
+		this.onBleScanListener=new MyOnBleScanListener();
+	
+		if(this.scanTimer!=-1){
+			clearTimeout(this.scanTimer)
+		}
+		this.scanResultMap.clear();
+		this.bleHelper!.clearNameMap();
+		var that=this;
+		
+		var settings = new ScanSettings.Builder()
+		    .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
+		    .build();
+		var filters = new ArrayList<ScanFilter>(); 
+			this.bleHelper!.setEmptyName(para.showEmptyName==0?true:false)
+			if(para.btNameFilter==null){
+				para.btNameFilter="";
+			}
+			this.bleHelper!.setBtFilterName(para.btNameFilter!)
+			if(para.fliterNames==null){
+				para.fliterNames=[] as string[];
+			}
+			
+			
+			if(para.fliterNames!=null){
+				var ll:ArrayList<String>=new ArrayList();
+				for(var i=0;i<para.fliterNames!.length;i++){
+					ll.add(para.fliterNames![i])
+				}
+				this.bleHelper!.setFilterNameList(ll)
+			}
+		
+			UTSAndroid.getDispatcher("io").async(function(_){
+				that.adapter.getBluetoothLeScanner().startScan(filters, settings, that.bleHelper!.leScanCallback);		
+			},null)
+		
+		if(para.scantime!=-1){
+			this.scanTimer=	setTimeout(function(){
+				
+				that.stopScanBle();
+				if(para.scanComplate!=null){
+					para.scanComplate!();
+				}
+				
+			},para.scantime!)
+		}
+		
+	}
+	
+	public  setPhy2MMode(){
+		if(this.isConnected()){
+			this.bleHelper!.setPhy2MMode();
+		}
+		
+	}
+	
+	
+		
+	
+	
+	@UTSJS.keepAlive
+	public   startScanBleDevice(time:number,callback: (sth:MyApiResult) => void):void{
+		if(time==-1){
+			time=Integer.MAX_VALUE;
+		}
+		var that=this;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+		
+			if(this.isHavePermision("android.permission.BLUETOOTH_SCAN")||this.isHavePermision("android.permission.BLUETOOTH_CONNECT")){
+				this.scanBle(time,callback)
+			}else{
+				this.requesMoretPermison(["android.permission.BLUETOOTH_SCAN","android.permission.BLUETOOTH_CONNECT"],function(st:boolean){
+					if(st){
+						that.scanBle(time,callback)
+					}else{
+					}
+				})
+			}
+		}else{
+				if(this.isHavePermision("android.permission.ACCESS_FINE_LOCATION")){
+					this.scanBle(time,callback)
+				}else{
+					this.requestPermison("android.permission.ACCESS_FINE_LOCATION",function(res:boolean){
+						if(res){
+							that.scanBle(time,callback)
+						}else{
+							callback( bleResult(10001,"无蓝牙权限",""))
+						}
+					})
+				}
+		}
+	
+	
+	}
+	public 	stopScanBle():void{
+		this.onBleScanListener=null;
+		if(this.scanTimer!=-1){
+			clearTimeout(this.scanTimer)
+		}
+		var that=this;
+		if(this.adapter.getBluetoothLeScanner()!=null){
+			UTSAndroid.getDispatcher("io").async(function(_){
+				that.adapter.getBluetoothLeScanner().stopScan((that.bleHelper!.leScanCallback))
+			},null)
+		
+		}
+		
+		
+	};
+	@UTSJS.keepAlive
+	public scanBle(time:number,callback: (sth:MyApiResult) => void ){
+		
+		if(!this.isEnabled()){
+			callback(bleResult(10002,"蓝牙未开启",""))
+			return
+		}
+		this.stopScanBle();
+		class MyOnBleScanListener implements OnBleScanListener{
+		 
+				override onScanCall(scan:MyApiResult){
+					try{
+						callback(scan);
+					}catch(e:Exception){
+					}
+				}
+		};
+		this.onBleScanListener=new MyOnBleScanListener();
+	
+		if(this.scanTimer!=-1){
+			clearTimeout(this.scanTimer)
+		}
+		this.scanResultMap.clear();
+		this.bleHelper!.clearNameMap();
+		var that=this;
+		
+		var settings = new ScanSettings.Builder()
+		    .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
+		    .build();
+		var filters = new ArrayList<ScanFilter>(); // 可以添加过滤器
+		
+			UTSAndroid.getDispatcher("io").async(function(_){
+				that.adapter.getBluetoothLeScanner().startScan(filters, settings, that.bleHelper!.leScanCallback);		
+			},null)
+		
+		
+		// this.adapter.getBluetoothLeScanner().startScan(this.bleHelper!.leScanCallback)
+		// this.bleHelper!.startScan();
+		this.scanTimer=	setTimeout(function(){
+			that.stopScanBle();
+		},time)
+	}
+	
+	@UTSJS.keepAlive
+	public connect(mac:string,auto:boolean,callback: (sth:MyApiResult) => void):void{
+		var that=this;
+		if(!this.isEnabled()){
+			callback(bleResult(10002,"蓝牙未开启",""));
+			return;
+		}
+		this.beginToConnectMac=mac;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			if(this.isHavePermision("android.permission.ACCESS_FINE_LOCATION")&&this.isHavePermision("android.permission.BLUETOOTH_SCAN")||this.isHavePermision("android.permission.BLUETOOTH_CONNECT")){
+				that.connectDevices(mac,auto,callback);
+			}else{
+				this.requesMoretPermison(["android.permission.ACCESS_FINE_LOCATION","android.permission.BLUETOOTH_SCAN","android.permission.BLUETOOTH_CONNECT"],function(st:boolean){
+					if(st){
+						that.connectDevices(mac,auto,callback);
+					}else{
+						callback( bleResult(10003,"无蓝牙权限",that.isEnabled()));
+					}
+				})
+			}
+		}else{
+				if(this.isHavePermision("android.permission.ACCESS_FINE_LOCATION")){
+						
+					that.connectDevices(mac,auto,callback);
+				}else{
+					this.requestPermison("android.permission.ACCESS_FINE_LOCATION",function(res:boolean){
+						if(res){
+							that.connectDevices(mac,auto,callback);
+						}else{
+							callback( bleResult(10003,"无蓝牙权限",that.isEnabled()));						}
+					})
+				}
+		}
+		
+		
+		
+		
+	
+	}
+	
+	connect_timeoutId:number=-1;
+	
+	
+	@UTSJS.keepAlive
+	public connectDevices(mac:string,auto:boolean,callback: (sth:MyApiResult) => void):void{
+		
+		
+		
+		if(this.isConnected()){
+			callback(bleResult(10004,"bluetooth is connected",""));
+			return;
+		}
+		
+		var that=this;
+		class MyOnBleConnectListener implements OnBleConnectListener{
+		 
+				override onConnect(res:MyApiResult){
+					clearTimeout(that.connect_timeoutId);
+					that.isConnecting=false;
+					callback(res)
+				}
+		};
+		
+		this.onBleConnectListener=new MyOnBleConnectListener();
+		this.connectCallback=callback;
+		
+		if(this.connect_timeoutId!=-1){
+			clearTimeout(this.connect_timeoutId);
+		}
+		
+		this.connect_timeoutId=setTimeout(function(){
+			that.isConnecting=false;
+			that.bleHelper!.removeConnectCallback(mac);
+			callback({
+				type:10000,
+				message:"connect timeout",
+				data:""
+			} as MyApiResult)
+		},this.connect_time_out.toInt());
+		
+		that.isConnecting=true;
+		if(UTSAndroid.getAppContext()!=null){
+			UTSAndroid.getDispatcher("io").async(function(_){
+			that.bleHelper!.connect(UTSAndroid.getAppContext()!,mac,auto)
+		},null)
+			
+		}
+		if(auto){
+			this.startAutoConnectBt(this.auto_connect_time,callback);
+		}
+		
+	}
+	
+	
+	public startAutoConnectBt(time:number,callback: (sth:MyApiResult) => void){
+		var that=this;
+		if(this.connectInternal!=0){
+			clearInterval(this.connectInternal);
+		}
+		this.connectInternal=setInterval(function(){
+			if(that.isConnecting){
+				return
+			}
+			if(!that.isConnected()){
+				that.connect(that.beginToConnectMac!,false,function(res:MyApiResult){
+					if(res.type==0){
+						callback(bleResult(0,"connect success",1))
+					}else if(res.type==10001){
+						callback(bleResult(10001,"disconnect",1))
+					}
+				})
+			}
+		},time.toInt())
+	}
+	
+	
+	
+	
+	
+	public cancelAutoConnectBt(){
+		if(this.connectInternal!=0){
+			clearInterval(this.connectInternal);
+		}
+	}  
+	@UTSJS.keepAlive
+	public scanServices(callback:(sth:MyApiResult) => void  ):void{
+		var that=this;
+		 class MyOnBleScanServicesListener implements OnBleScanServicesListener{
+			 override onScanService(res:MyApiResult){
+				 var services:BleServices[]=res.data as BleServices[];
+				  that.wNList=[] as string[];
+				 for(var i=0;i<services.length;i++){
+					 var haveW=false;
+					 var haveN=false;
+					 var nid="";
+					 var wid="";
+					 // that.tarServiceUUID="";
+					 for(var j=0;j<services[i].characteristics.length;j++){
+						 if(services[i].characteristics[j].properties.NOTIFY){
+							 haveN=true;
+							 nid=services[i].characteristics[j].uuid
+						 }
+						 if(services[i].characteristics[j].properties.WRITE){
+						 	 haveW=true;
+							 wid=services[i].characteristics[j].uuid
+						 }
+						 
+						 
+					 }
+					 if(haveW&&haveN){
+						 that.wNList.push(services[i].uuid+"_"+nid+"_"+wid)
+					 	
+					 }
+				
+				 }
+				 if(that.wNList.length>0){
+					var size=that.wNList.length;
+					that.setSelectUUID(Number.from(size)-1);
+				 }
+				 callback(res)
+			 }
+		 }
+	    this.onBleScanServicesListener=new MyOnBleScanServicesListener();
+		UTSAndroid.getDispatcher("io").async(function(_){
+						that.bleHelper!.readServices();
+		},null)
+		
+	} 
+	
+	
+	public getUUIDs():WNuuid[]{
+		var ids=[] as WNuuid[];
+		for(var i=0;i<this.wNList.length;i++){
+			var b=this.wNList[i].split("_");
+			ids.push({
+				serviceId:b[0],
+				nuuid:b[1],
+				wuuid:b[2]
+			} as WNuuid)
+		}
+		return ids;
+	}
+	
+	public setSelectUUID(id:number){
+		if(id<this.wNList.length){
+			var b=this.wNList[id].split("_");
+			this.tarServiceUUID=b[0];
+			this.nUUID=b[1];
+			this.wUUID=b[2];
+		}
+			
+	}
+	
+	
+	
+	
+	 @UTSJS.keepAlive
+	 public listenerBleMessage(callback:(sth:MyApiResult) => void  ):void{
+	 }
+	 
+	 public disListenerBleMessage():void{
+		 // this.systemCallback=null;
+		 UTSAndroid.getAppContext()!.unregisterReceiver(this);
+	 }
+	 
+	 
+		public   isConnected():boolean{
+			return this.bleHelper!.isConnected();
+		}
+	 
+	 
+	     public getConnectMac():string{
+			 var s=this.bleHelper!.getConnectMac();
+			 return	s;
+			 
+			
+	     }
+		
+		public  byte2HexString(data:number[]):string {
+			var bytes=new ByteArray(data.length.toInt());
+			for(var i =0;i<data.length;i++){
+				bytes[i.toInt()]=data[i].toByte();
+			}
+			return ByteUtil.byte2HexString(bytes);
+		}
+		
+		
+		
+		@UTSJS.keepAlive
+		public  writeDataToBle(service:string,chars:string,data:number[],callback:(sth:MyApiResult) => void){
+			if(!this.isConnected()){
+				return
+			}
+			
+			
+			var bytes=new ByteArray(data.length.toInt());
+			var that=this;
+			for(var i =0;i<data.length;i++){
+				bytes[i.toInt()]=data[i].toByte();
+			}
+			// console.log(ByteUtil.byte2HexString(bytes))
+			class MyOnBleWriteDataListener implements OnBleWriteDataListener{
+				override	onWriteData(res:MyApiResult){
+					 callback(res)
+				}
+			}
+			this.onBleWriteDataListener=new MyOnBleWriteDataListener();
+			// this.bleHelper!.sendData(service,chars,bytes);
+			UTSAndroid.getDispatcher("io").async(function(_){
+				 that.bleHelper!.sendData(service,chars,bytes,!that.haveSetMtu);
+			},null)
+		}
+		
+		
+		@UTSJS.keepAlive
+		public  writeDataToBleWithType(service:string,chars:string,data:number[],writeType:number,callback:(sth:MyApiResult) => void){
+			if(!this.isConnected()){
+				return
+			}
+			var bytes=new ByteArray(data.length.toInt());
+			var that=this;
+			for(var i =0;i<data.length;i++){
+				bytes[i.toInt()]=data[i].toByte();
+			}
+			// console.log(ByteUtil.byte2HexString(bytes))
+			class MyOnBleWriteDataListener implements OnBleWriteDataListener{
+				override	onWriteData(res:MyApiResult){
+					 callback(res)
+				}
+			}
+			this.onBleWriteDataListener=new MyOnBleWriteDataListener();
+			// this.bleHelper!.sendData(service,chars,bytes);
+			UTSAndroid.getDispatcher("io").async(function(_){
+				 that.bleHelper!.sendDataNew(service,chars,bytes,!that.haveSetMtu,writeType.toInt());
+			},null)
+		}
+		
+		@UTSJS.keepAlive
+		public  writeStringDataToBleWithType(service:string,chars:string,data:string,writeType:number,callback:(sth:MyApiResult) => void){
+			if(!this.isConnected()){
+				return
+			}
+			var that=this;
+			// console.log(ByteUtil.byte2HexString(bytes))
+			class MyOnBleWriteDataListener implements OnBleWriteDataListener{
+				override	onWriteData(res:MyApiResult){
+					 callback(res)
+				}
+			}
+			this.onBleWriteDataListener=new MyOnBleWriteDataListener();
+			// this.bleHelper!.sendData(service,chars,bytes);
+			UTSAndroid.getDispatcher("io").async(function(_){
+				 that.bleHelper!.sendDataNew(service,chars,ByteUtil.parseHexStr2Byte(data),!that.haveSetMtu,writeType.toInt());
+			},null)
+		}
+		
+		
+		@UTSJS.keepAlive
+	 public  writeStringDataToBle(service:string,chars:string,data:string,callback:(sth:MyApiResult) => void){
+	 			 // console.log("writeDataToBle")
+	 			// var bytes=new ByteArray(data.length.toInt());
+	 			// for(var i =0;i<data.length;i++){
+	 			// 	bytes[i.toInt()]=data[i].toByte();
+	 			// }
+	 			// console.log(ByteUtil.byte2HexString(bytes))
+	 			class MyOnBleWriteDataListener implements OnBleWriteDataListener{
+	 				override	onWriteData(res:MyApiResult){
+	 					 callback(res)
+	 				}
+	 			}
+	 			this.onBleWriteDataListener=new MyOnBleWriteDataListener();
+	 			
+				var that=this;
+				
+					UTSAndroid.getDispatcher("io").async(function(_){
+						that.bleHelper!.sendData(service,chars,ByteUtil.parseHexStr2Byte(data),!that.haveSetMtu);
+					},null)
+	 }
+	 
+	 
+	 
+	 @UTSJS.keepAlive
+	 public  sendData(data:WriteData,callback:(b:MyApiResult)=>void){
+		 
+		 var that=this;
+		 var haveErr=false;
+		 var writeDelayId=-1;
+		 // console.log(ByteUtil.byte2HexString(bytes))
+		 class MyOnBleWriteDataListener implements OnBleWriteDataListener{
+		 	override	onWriteData(res:MyApiResult){
+				
+				if(res.type!=0){
+					haveErr=true;
+				}
+				if(data.fenbao){
+					clearTimeout(writeDelayId)
+					writeDelayId=setTimeout(function(){
+						if(haveErr){
+							callback(bleResult(10001,"分包过程有写入失败",""))
+						}else{
+							callback(bleResult(0,"分包写入成功",""))
+						}
+				},100)
+					
+				}else{
+					callback(res);
+				}
+				
+				
+		 		 
+		 	}
+		 }
+		 var bytes:ByteArray|null=null;
+		 if(data.data!=null){
+			  bytes=new ByteArray(data.data!.length.toInt());
+			 var that=this;
+			 for(var i =0;i<data.data.length;i++){
+			 	bytes[i.toInt()]=data.data[i].toByte();
+			 }
+		 }
+		if(data.hexStrData!=null){
+			bytes=ByteUtil.parseHexStr2Byte(data.hexStrData!)
+		}
+		 this.onBleWriteDataListener=new MyOnBleWriteDataListener();
+		 UTSAndroid.getDispatcher("io").async(function(_){
+			 if(data.writeType==null){
+				that.bleHelper!.sendData(data.serviceId,data.characteristicId,bytes!,data.fenbao);
+			 }else{
+				that.bleHelper!.sendDataNew(data.serviceId,data.characteristicId,bytes!,data.fenbao,data.writeType.toInt());
+			 }
+			 
+		 },null)
+		 
+		 
+	 }
+	 
+	 
+	 
+	 
+	 @UTSJS.keepAlive
+	 public onNotityReadBleData(service:string,chars:string,state:boolean,callback:(sth:MyApiResult) => void){
+		 var that=this;
+		 UTSAndroid.getDispatcher("io").async(function(_){
+			if(state){
+				class  MyOnBleNotityListener implements OnBleNotityListener{
+					 
+					 override onNotityData(res:MyApiResult){
+						 callback(res)
+					 }
+					 
+					 override onNotityDatas(res:MyApiResult){
+					 		// callback(res)
+					 }
+				 }
+				 that.onBleNotityListener=new MyOnBleNotityListener();
+			}else{
+				that.onBleNotityListener=null;
+			}
+		 	that.bleHelper!.setCharacteristicNotification(service,chars,state)
+		 },null)
+		
+	 }
+	 
+	 @UTSJS.keepAlive
+	 public onNotityBleData(service:string,chars:string,state:boolean,callback:(sth:MyApiResult) => void){
+	 		 var that=this;
+	 		 UTSAndroid.getDispatcher("io").async(function(_){
+	 			if(state){
+	 				class  MyOnBleNotityListener implements OnBleNotityListener{
+	 					 
+	 					 override onNotityData(res:MyApiResult){
+							
+							 
+	 						 
+	 					 }
+						 
+						 override onNotityDatas(res:MyApiResult){
+						 		callback(res);
+						 }
+	 				 }
+	 				 that.onBleNotityListener=new MyOnBleNotityListener();
+	 			}else{
+	 				that.onBleNotityListener=null;
+	 			}
+	 		 	that.bleHelper!.setCharacteristicNotification(service,chars,state)
+	 		 },null)
+	 		
+	 }
+	 
+	 @UTSJS.keepAlive
+	 public onNotityReadBleDataMore(service:string,chars:string,state:boolean,callback:(sth:MyApiResult) => void){
+	 		 var that=this;
+	 		 UTSAndroid.getDispatcher("io").async(function(_){
+	 			if(state){
+	 				class  MyOnBleNotityListener implements OnBleNotityListener{
+	 					 
+	 					 override onNotityData(res:MyApiResult){
+	 						 callback(res)
+	 					 }
+						 
+						 override onNotityDatas(res:MyApiResult){
+						 		// callback(res)
+						 }
+	 				 }
+	 				 that.onBleNotityListener=new MyOnBleNotityListener();
+	 			}else{
+	 				that.onBleNotityListener=null;
+	 			}
+	 		 	that.bleHelper!.setCharacteristicNotificationMore(service,chars,state)
+	 		 },null)
+	 		
+	 }
+	 
+	 
+		 
+	 public close():void {
+		var that=this;
+		this.cancelAutoConnectBt();
+		// if(this.onBleConnectListener!=null){
+		// 	this.onBleConnectListener?.onConnect(bleResult(10001,"disconnect",""))
+		// }
+		UTSAndroid.getDispatcher("io").async(function(_){
+				try{
+					that.bleHelper!.closeBt();
+				}catch(e:Exception){
+				}
+				 
+				},null)
+		 
+	 }
+	 
+	@UTSJS.keepAlive
+	public setMtu(num:number,callback:(sth:MyApiResult) => void):void{
+		 class MyOnMtuSetListener implements OnMtuSetListener{
+			 override onMtu(res:MyApiResult){
+			 					 callback(res)
+			 }
+			 
+		 }
+			this.onMtuSetListener=new MyOnMtuSetListener();
+			
+		var b= this.bleHelper!.requestMtu(num.toInt());
+		if(b==false){
+			this.onMtuSetListener!.onMtu(bleResult(1,"failed",""))
+		}else{
+			this.haveSetMtu=true;
+		}
+		 
+		 
+	 }
+	 
+	 public string2ByteStrWithCharset(data:string,code:string):string{
+		 return ByteUtil.string2ByteStrWithCharset(data,code).split(" ").join("");
+	 }
+	 public byte2StringWithCharset(data:string,code:string):string{
+	 	 return ByteUtil.byte2StringWithCharset(data.replace(" ",""),code);
+	 }
+	 
+	 
+	 public  onReadData(service:string,chars:string,callback:(b:MyApiResult)=>void){
+			this.readDataCallback=callback;
+			this.bleHelper?.readData(service,chars);
+	 }
+	 
+	 public onIndicate(service:string,chars:string,callback:(b:MyApiResult)=>void){
+		 
+		 
+	 }
+	 
+}
+
+export   interface OnBleScanListener{
+	onScanCall(scan:MyApiResult);	
+		
+}
+
+
+export interface OnBleConnectListener{
+	onConnect(res:MyApiResult);
+	
+}
+export interface OnBleScanServicesListener{
+	onScanService(res:MyApiResult);
+	
+}
+
+
+export interface OnBleNotityListener{
+	
+	onNotityData(res:MyApiResult);
+	onNotityDatas(res:MyApiResult);
+}
+
+
+
+export interface OnBleWriteDataListener{
+	
+	onWriteData(res:MyApiResult);
+	
+	
+}
+
+export interface OnMtuSetListener{
+	onMtu(res:MyApiResult)
+}

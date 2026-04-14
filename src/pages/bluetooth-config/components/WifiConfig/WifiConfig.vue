@@ -180,6 +180,7 @@ function calculateScrollHeight() {
 
 async function startWifiScan() {
   isLoadingWifi.value = true;
+  uni.hideLoading();
 
   const state = bluetoothConfigManager.getState();
   const selectedDevice = state.selectedDevice;
@@ -190,11 +191,22 @@ async function startWifiScan() {
     return;
   }
 
+  const initResult = await native.safeAsync(() => configProtocol.init(selectedDevice.deviceId));
+  if (!initResult.ok) {
+    console.error('[WifiConfig] 协议初始化失败:', initResult.errMsg);
+    native.toast($t('bluetooth.wifi.init_failed'));
+    isLoadingWifi.value = false;
+    return;
+  }
+
   console.log('[WifiConfig] 开始扫描WiFi网络');
   const result = await native.safeAsync(() => configProtocol.getWifiList(selectedDevice.deviceId));
 
   if (!result.ok) {
     console.error('[WifiConfig] WiFi扫描失败:', result.errMsg);
+    uni.hideLoading();
+    uni.hideToast();
+    configProtocol.reset();
     native.toast($t('bluetooth.wifi.scan_failed'));
     isLoadingWifi.value = false;
     return;

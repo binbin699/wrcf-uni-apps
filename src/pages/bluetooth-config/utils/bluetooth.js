@@ -4,6 +4,8 @@
  */
 
 import i18n from '@/locale';
+import { bleService } from '@/services/ble';
+import { AppInfo } from '@/const';
 
 const $t = i18n.global.t;
 
@@ -108,13 +110,7 @@ export async function initBluetooth() {
       throw new Error('蓝牙权限未授予，请授予权限后重试');
     }
 
-    if (typeof uni.openBluetoothAdapter === 'function') {
-      await uni.openBluetoothAdapter();
-    } else {
-      console.warn(
-        '[bluetooth.js] uni.openBluetoothAdapter 不存在，已跳过',
-      );
-    }
+    await bleService.openAdapter();
 
     console.log('[蓝牙] 蓝牙模块初始化成功');
   } catch (error) {
@@ -161,15 +157,23 @@ export async function resetBluetooth() {
 
     // 尝试停止设备发现，忽略可能的错误
     try {
-      await uni.stopBluetoothDevicesDiscovery();
+      await bleService.stopScan();
       console.log('[蓝牙] 已停止设备发现');
     } catch (e) {
       console.log('[蓝牙] 停止设备发现失败（可忽略）:', e?.errMsg || e);
     }
 
+    // Harmony BLE 当前采用全局单例复用策略。
+    // 页面内重新扫描时如果这里继续 close/dispose，容易把当前页面交互拖死。
+    if (AppInfo.isHarmonyApp()) {
+      await initBluetooth();
+      console.log('[蓝牙] Harmony 复用现有蓝牙会话，跳过适配器关闭');
+      return;
+    }
+
     // 尝试关闭蓝牙适配器，忽略可能的错误
     try {
-      await uni.closeBluetoothAdapter();
+      await bleService.closeAdapter();
       console.log('[蓝牙] 已关闭蓝牙适配器');
     } catch (e) {
       console.log('[蓝牙] 关闭蓝牙适配器失败（可忽略）:', e?.errMsg || e);
@@ -204,7 +208,7 @@ export async function searchBluetoothDevices() {
     try {
       // 添加 2 秒超时，防止 API 挂起
       await Promise.race([
-        uni.stopBluetoothDevicesDiscovery(),
+        bleService.stopScan(),
         new Promise((_, reject) => setTimeout(() => reject(new Error('停止扫描超时')), 2000))
       ]);
       console.log('[蓝牙扫描] 已停止之前的设备发现');
@@ -220,24 +224,22 @@ export async function searchBluetoothDevices() {
     const deviceFoundCallback = (res) => {
       foundCount += res.devices?.length || 0;
     };
-    uni.onBluetoothDeviceFound(deviceFoundCallback);
+    bleService.onDeviceFound(deviceFoundCallback);
 
     // 辅助函数：安全地移除监听器
     const removeDeviceFoundListener = () => {
       // 某些平台（如 iOS）可能没有 offBluetoothDeviceFound API
-      if (typeof uni.offBluetoothDeviceFound === 'function') {
-        try {
-          uni.offBluetoothDeviceFound(deviceFoundCallback);
-        } catch (e) {
-          // 静默处理
-        }
+      try {
+        bleService.offDeviceFound(deviceFoundCallback);
+      } catch (e) {
+        // 静默处理
       }
     };
 
     try {
       // 添加 5 秒超时，防止 API 挂起
       await Promise.race([
-        uni.startBluetoothDevicesDiscovery({
+        bleService.startScan({
           allowDuplicatesKey: false
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('开始扫描超时')), 5000))
@@ -263,9 +265,19 @@ export async function searchBluetoothDevices() {
     removeDeviceFoundListener();
     console.log('[蓝牙扫描] 等待结束，实时发现设备数:', foundCount);
 
+    try {
+      await bleService.stopScan();
+      console.log('[蓝牙扫描] 已在结果收集阶段主动停止扫描');
+    } catch (stopError) {
+      console.log(
+        '[蓝牙扫描] 结果收集后停止扫描失败(可忽略):',
+        stopError?.errMsg || stopError?.message || stopError
+      );
+    }
+
     // 获取搜索到的设备
     console.log('[蓝牙扫描] 调用 getBluetoothDevices...');
-    const result = await uni.getBluetoothDevices();
+    const result = await bleService.getDevices();
     const devices = result.devices || [];
 
     console.log('[蓝牙扫描] ===== 扫描结果 =====');
@@ -286,9 +298,9 @@ export async function searchBluetoothDevices() {
   }
 }
 
-/*处理设置失败安卓协商低功耗最大传输单元*/
-function setAndroidMTU(deviceId) {
-  console.log('处理安卓协商低功耗最大传输单元失败的方法');
+/* 处理 App 端协商低功耗最大传输单元失败后的重试 */
+function retrySetAppMTU(deviceId) {
+  console.log('处理 App 端协商低功耗最大传输单元失败的方法');
   console.log('开始循环设置MTU值');
   let retryCount = 0;
   const maxRetries = 5;
@@ -301,37 +313,51 @@ function setAndroidMTU(deviceId) {
       return;
     }
 
-    uni.setBLEMTU({
-      deviceId: deviceId,
-      mtu: 247,
-      success(res) {
-        console.log('设置mtu成功', res);
-        clearInterval(mtuTimer);
-      },
-      fail(err) {
-        console.error('设置MTU失败:', err);
-      },
-      complete() {
-        // 检查 getBLEMTU API 是否存在
-        if (typeof uni.getBLEMTU === 'function') {
-          uni.getBLEMTU({
-            deviceId: deviceId,
-            writeType: 'write',
-            success(res) {
-              console.log('获取MTU成功:', res);
-              clearInterval(mtuTimer);
-            },
-            fail(err) {
-              console.log('获取MTU失败:', err);
-            }
-          });
-        } else {
-          // API 不存在时，直接在成功后停止
-          console.log('uni.getBLEMTU API 不存在');
-        }
+    bleService.setMtu(deviceId, 247).then((res) => {
+      console.log('设置mtu成功', res);
+      clearInterval(mtuTimer);
+    }).catch((err) => {
+      console.error('设置MTU失败:', err);
+    }).finally(() => {
+      if (typeof uni.getBLEMTU === 'function') {
+        bleService.getMtu(deviceId, 'write').then((res) => {
+          console.log('获取MTU成功:', res);
+          clearInterval(mtuTimer);
+        }).catch((err) => {
+          console.log('获取MTU失败:', err);
+        });
+      } else {
+        console.log('uni.getBLEMTU API 不存在');
       }
     });
   }, 1500);
+}
+
+function shouldSetPreferredMTU() {
+  return AppInfo.isAndroidApp() || AppInfo.isHarmonyApp();
+}
+
+function requestPreferredMTU(deviceId) {
+  if (!shouldSetPreferredMTU()) {
+    return;
+  }
+
+  bleService
+    .setMtu(deviceId, 247)
+    .then(() => {
+      console.log('设置mtu成功');
+      if (typeof uni.getBLEMTU === 'function') {
+        return bleService
+          .getMtu(deviceId, 'write')
+          .then((res) => console.log('获取MTU成功:', res))
+          .catch((err) => console.log('获取MTU失败:', err));
+      }
+      console.log('uni.getBLEMTU API 不存在，跳过');
+    })
+    .catch((err) => {
+      console.log('设置mtu失败:', err);
+      retrySetAppMTU(deviceId);
+    });
 }
 
 /**
@@ -342,12 +368,19 @@ export async function connectBluetoothDevice(deviceId) {
   try {
     console.log('连接蓝牙设备:', deviceId);
 
+    try {
+      await bleService.stopScan();
+      console.log('连接前已停止蓝牙扫描');
+    } catch (stopError) {
+      console.log('连接前停止蓝牙扫描失败（可忽略）:', stopError?.errMsg || stopError?.message || stopError);
+    }
+
     // 创建连接
-    await uni.createBLEConnection({ deviceId });
+    await bleService.connect(deviceId);
     console.log('蓝牙设备连接成功');
 
     // 获取设备服务
-    const servicesResult = await uni.getBLEDeviceServices({ deviceId });
+    const servicesResult = await bleService.getServices(deviceId);
     console.log('获取到的服务:', servicesResult.services);
 
     // 存储所有特性处理的 Promise
@@ -357,41 +390,10 @@ export async function connectBluetoothDevice(deviceId) {
         // 使用固定的UUID配置，不再动态获取
         // bluetoothService.PRIMARY_SERVICE_UUID = service.uuid
 
-        await uni.getBLEDeviceCharacteristics({
-          deviceId,
-          serviceId: service.uuid
-        });
+        await bleService.getCharacteristics(deviceId, service.uuid);
       });
 
-    // 使用新的 API 替代已废弃的 getSystemInfoSync
-    const deviceInfo = uni.getDeviceInfo();
-    if (deviceInfo.platform === 'android')
-      uni.setBLEMTU({
-        deviceId: deviceId,
-        mtu: 247,
-        success: (res) => {
-          console.log('设置mtu成功');
-          // 检查 getBLEMTU API 是否存在（某些 uni-app 版本不支持）
-          if (typeof uni.getBLEMTU === 'function') {
-            uni.getBLEMTU({
-              deviceId: deviceId,
-              writeType: 'write',
-              success(res) {
-                console.log('获取MTU成功:', res);
-              },
-              fail(err) {
-                console.log('获取MTU失败:', err);
-              }
-            });
-          } else {
-            console.log('uni.getBLEMTU API 不存在，跳过');
-          }
-        },
-        fail: (err) => {
-          console.log('设置mtu失败:', err);
-          setAndroidMTU(deviceId);
-        }
-      });
+    requestPreferredMTU(deviceId);
 
     // 等待所有特性处理完成
     await Promise.all(characteristicPromises);
@@ -414,9 +416,7 @@ export async function getConnectedBluetoothDevices() {
       return [];
     }
 
-    const result = await uni.getConnectedBluetoothDevices({
-      services: [bluetoothService.PRIMARY_SERVICE_UUID] // 指定特定服务
-    });
+    const result = await bleService.getConnectedDevices([bluetoothService.PRIMARY_SERVICE_UUID]);
 
     console.log('已连接的设备:', result.devices);
     return result.devices || [];
