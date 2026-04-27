@@ -35,7 +35,7 @@ function applyLocaleResources() {
   try {
     uni.setTabBarItem({ index: 0, text: $t('tabbar.agent') });
     uni.setTabBarItem({ index: 1, text: $t('tabbar.create') });
-    uni.setTabBarItem({ index: 2, text: $t('tabbar.square') });
+    uni.setTabBarItem({ index: 2, text: $t('tabbar.squares') });
     uni.setTabBarItem({ index: 3, text: $t('tabbar.profile') });
   } catch (error) {
     console.warn('Failed to update tab bar text', error);

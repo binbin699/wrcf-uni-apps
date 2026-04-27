@@ -70,7 +70,7 @@ const tabList = computed(() => [
     text: $t('tabbar.agent')
   },
   {
-    pagePath: '/pages/square/square',
+    pagePath: '/pages/square/super_square',
     iconPath: '/static/tab-square.png',
     selectedIconPath: '/static/tab-square-active.png',
     text: $t('tabbar.square')

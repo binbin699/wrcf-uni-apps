@@ -1,6 +1,6 @@
 {
   "privacy.title": "Қызмет көрсету шарттары және құпиялылық саясаты",
-  "privacy.message": "Linx AI-ге қош келдіңіз!<br/><br/>Қызметтерімізді пайдаланбас бұрын, келесі келісімдерді оқып, келісуіңізді сұраймыз: <a href=\"https://www.qiniu.com/agreements/user-agreement\">Пайдаланушы келісімі</a> және <a href=\"https://www.qiniu.com/agreements/privacy-right\">Құпиялылық саясаты</a><br/><br/><font color=\"#335CFF\">\"Келісемін\"</font> түймесін басу арқылы сіз жоғарыдағы келісімдерді оқып, қабылдағаныңызды растайсыз. Егер келіспесеңіз, біз сізге қызмет көрсете алмаймыз.",
+  "privacy.message": "Linx AI-ге қош келдіңіз!<br/><br/>Қызметтерімізді пайдаланбас бұрын, келесі келісімдерді оқып, келісуіңізді сұраймыз: <a href=\"http://47.114.109.136:8008/user-agreement.html\">Пайдаланушы келісімі</a> және <a href=\"http://47.114.109.136:8008/privacy-policy.html\">Құпиялылық саясаты</a><br/><br/><font color=\"#335CFF\">\"Келісемін\"</font> түймесін басу арқылы сіз жоғарыдағы келісімдерді оқып, қабылдағаныңызды растайсыз. Егер келіспесеңіз, біз сізге қызмет көрсете алмаймыз.",
   "privacy.messageIntro": "Linx AI-ге қош келдіңіз!\n\nҚызметтерімізді пайдаланбас бұрын, келесі келісімдерді оқып, келісуіңізді сұраймыз:",
   "privacy.termsLink": "Пайдаланушы келісімі",
   "privacy.and": " және ",
@@ -12,7 +12,7 @@
   "privacy.buttonAccept": "Келісемін",
   "privacy.buttonRefuse": "Келіспеймін",
   "privacy.second.title": "Ескерту",
-  "privacy.second.message": "Linx AI-ді пайдалануды жалғастыру үшін <a href=\"https://www.qiniu.com/agreements/user-agreement\">Пайдаланушы келісімін</a> және <a href=\"https://www.qiniu.com/agreements/privacy-right\">Құпиялылық саясатын</a> қабылдауыңыз қажет, әйтпесе қолданба жабылады.",
+  "privacy.second.message": "Linx AI-ді пайдалануды жалғастыру үшін <a href=\"http://47.114.109.136:8008/user-agreement.html\">Пайдаланушы келісімін</a> және <a href=\"http://47.114.109.136:8008/privacy-policy.html\">Құпиялылық саясатын</a> қабылдауыңыз қажет, әйтпесе қолданба жабылады.",
   "privacy.second.messageIntro": "Сіз ",
   "privacy.second.messageFooter": " келісіп, Linx AI-ді пайдалануды жалғастыруыңыз керек, әйтпесе қолданба жабылады.",
   "privacy.second.buttonAccept": "Келісіп жалғастыру",

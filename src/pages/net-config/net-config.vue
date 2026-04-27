@@ -229,7 +229,7 @@
       </view>
 
     </view>
-    
+
     <!-- 配网操作指引弹窗 -->
     <view v-if="showGuidePopup" class="guide-modal-overlay" @click.stop>
       <view class="guide-modal">
@@ -237,7 +237,7 @@
           <view class="guide-notice">
             <text>{{ $t('net_config.guide_notice') }}</text>
           </view>
-          
+
           <view class="guide-section">
             <view class="guide-section-title">
               <text class="guide-number">1</text>
@@ -245,7 +245,7 @@
             </view>
             <text class="guide-desc">{{ $t('net_config.guide_soundwave_desc') }}</text>
           </view>
-          
+
           <view class="guide-section">
             <view class="guide-section-title">
               <text class="guide-number">2</text>
@@ -259,7 +259,7 @@
         </view>
       </view>
     </view>
-    
+
     <!-- 反扫二维码配网弹窗 -->
     <wd-popup v-model="showReverseQrPopup" position="center" :close-on-click-modal="true" custom-style="border-radius: 16px; overflow: hidden;">
       <view class="reverse-qr-popup">
@@ -274,13 +274,13 @@
             <!-- 显示生成的二维码图片 -->
             <image v-if="reverseQrImage" class="qrcode-image" :src="reverseQrImage" mode="widthFix" />
             <!-- 用于生成二维码的canvas组件，只在有值时渲染确保每次重新创建 -->
-            <l-qrcode 
+            <l-qrcode
               v-if="reverseQrValue"
               useCanvasToTempFilePath
               @success="handleReverseQrSuccess"
               class="qrcode-canvas"
-              :value="reverseQrValue" 
-              size="400rpx" 
+              :value="reverseQrValue"
+              size="400rpx"
               color="#000000"
               bgColor="#ffffff"
               :marginSize="2"
@@ -456,7 +456,7 @@ function goDeviceManage() {
   console.log('goDeviceManage');
   // 跳转到广场页面，以便触发第二步引导
   uni.switchTab({
-    url: PageMap[Pages.Square].url
+    url: PageMap[Pages.Super_square].url
   });
 }
 
@@ -488,7 +488,7 @@ async function handleScanQr() {
   if (isIOS) {
     // 先检查权限状态
     const permissionStatus = await checkPermissionStatus(PermissionType.CAMERA);
-    
+
     if (permissionStatus === PermissionStatus.DENIED) {
       // 权限已被拒绝，引导用户去设置
       uni.showModal({
@@ -752,7 +752,7 @@ async function startWifiScan(rescan: boolean = false) {
 
   // 注意：NEARBY_WIFI_DEVICES 权限的请求已统一在 wifi.ts 的 ensureAndroidScanPermissions 中处理
   // 这里不再重复请求，避免权限被永久拒绝后无法恢复
-  
+
   if (wifiScanTimer) {
     clearTimeout(wifiScanTimer);
   }
@@ -823,7 +823,7 @@ function handleErrorAction() {
   switch (wifiScanErrorInfo.value.actionType) {
     case 'wifi':
     case 'location':
-      // 跳转到系统设置      
+      // 跳转到系统设置
       // #ifdef APP-ANDROID
       try {
         // @ts-ignore
@@ -1356,7 +1356,7 @@ function updateNavigationTitle() {
  */
 async function handleFactoryQrClick() {
   console.log('Reverse QR config clicked');
-  
+
   // 检查WiFi配置是否完整
   if (!wifiConfig.ssid.trim()) {
     toast.warning({
@@ -1365,10 +1365,10 @@ async function handleFactoryQrClick() {
     });
     return;
   }
-  
+
   // 生成 WiFi 配置字符串
   const wifiString = genWiFiStr(wifiConfig, false);
-  
+
   // 只有当 WiFi 配置改变时才重新生成二维码
   if (reverseQrValue.value !== wifiString) {
     reverseQrImage.value = null;
@@ -1376,7 +1376,7 @@ async function handleFactoryQrClick() {
     await nextTick();
     reverseQrValue.value = wifiString;
   }
-  
+
   showReverseQrPopup.value = true;
 }
 
@@ -1401,12 +1401,12 @@ onLoad((options) => {
   callOnLoad();
   initAudioManager();
   fromAddDevice.value = options?.fromAddDevice === '1';
-  
+
   // 检测是否是 iOS 平台
   const systemInfo = uni.getSystemInfoSync();
   isIOS.value = systemInfo.platform === 'ios';
   isHarmony.value = AppInfo.isHarmonyApp() || AppInfo.isHarmonyRom();
-  
+
   // iOS / 鸿蒙设备自动展开手动配置并尝试获取当前连接的 WiFi
   if (isManualOnlyPlatform.value) {
     showManualConfig.value = true;
@@ -1423,7 +1423,7 @@ onLoad((options) => {
       }
     });
   }
-  
+
   // 如果有保存的WiFi配置，预填充表单
   const savedConfig = getWiFiConfig();
   if (savedConfig.ssid) {
@@ -1431,7 +1431,7 @@ onLoad((options) => {
     wifiConfig.password = savedConfig.password;
     setSecurityType(savedConfig.security);
   }
-  
+
   // 如果是从"我的"页面扫码成功后跳转过来，直接显示配网页面
   if (options?.bound === '1') {
     deviceBound.value = true;
@@ -1441,7 +1441,7 @@ onLoad((options) => {
     }
     return;
   }
-  
+
   // 否则开始扫码绑定设备
   handleScanQr();
 });
@@ -1515,11 +1515,11 @@ watch(
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
-  
+
   .section-title {
     margin-bottom: 0;
   }
-  
+
   .wifi-band-tip {
     font-size: 12px;
     color: #FA8C16;
@@ -1831,7 +1831,7 @@ watch(
 .footer-actions {
   display: flex;
   gap: 12px;
-  
+
   :deep(.wd-button) {
     flex: 1;
   }
@@ -1998,37 +1998,37 @@ watch(
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.3);
-  
+
   .guide-content {
     padding: 40rpx 32rpx 24rpx;
     max-height: 70vh;
     overflow-y: auto;
-    
+
     .guide-notice {
       padding: 20rpx 24rpx;
       background-color: #FFF7E6;
       border-radius: 12rpx;
       margin-bottom: 32rpx;
-      
+
       text {
         font-size: 30rpx;
         color: #FA8C16;
         line-height: 1.6;
       }
     }
-    
+
     .guide-section {
       margin-bottom: 32rpx;
-      
+
       &:last-child {
         margin-bottom: 0;
       }
-      
+
       .guide-section-title {
         display: flex;
         align-items: center;
         margin-bottom: 16rpx;
-        
+
         .guide-number {
           width: 44rpx;
           height: 44rpx;
@@ -2043,14 +2043,14 @@ watch(
           margin-right: 16rpx;
           flex-shrink: 0;
         }
-        
+
         .guide-label {
           font-size: 34rpx;
           font-weight: 600;
           color: #333;
         }
       }
-      
+
       .guide-desc {
         font-size: 30rpx;
         color: #666;
@@ -2059,11 +2059,11 @@ watch(
       }
     }
   }
-  
+
   .guide-actions {
     display: flex;
     border-top: 1rpx solid #f0f0f0;
-    
+
     .guide-btn {
       flex: 1;
       height: 100rpx;
@@ -2075,11 +2075,11 @@ watch(
       border: none;
       border-radius: 0;
       background: transparent;
-      
+
       &::after {
         border: none;
       }
-      
+
       &:active {
         background: #f0f7ff;
       }
@@ -2091,36 +2091,36 @@ watch(
 .reverse-qr-popup {
   width: 600rpx;
   background-color: #fff;
-  
+
   .popup-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 32rpx;
     border-bottom: 1px solid #f0f0f0;
-    
+
     .popup-title {
       font-size: 36rpx;
       font-weight: 600;
       color: #333;
     }
-    
+
     .popup-close {
       padding: 8rpx;
       color: #999;
-      
+
       &:active {
         opacity: 0.7;
       }
     }
   }
-  
+
   .popup-content {
     padding: 32rpx;
     display: flex;
     flex-direction: column;
     align-items: center;
-    
+
     .qr-container {
       position: relative;
       padding: 24rpx;
@@ -2132,12 +2132,12 @@ watch(
       align-items: center;
       min-width: 400rpx;
       min-height: 400rpx;
-      
+
       .qrcode-image {
         width: 400rpx;
         height: 400rpx;
       }
-      
+
       .qrcode-canvas {
         // #ifdef APP-PLUS || APP-HARMONY
         position: absolute;
@@ -2150,31 +2150,31 @@ watch(
         // #endif
       }
     }
-    
+
     .wifi-info-display {
       width: 100%;
       margin-top: 32rpx;
       padding: 24rpx;
       background-color: #f8f9fa;
       border-radius: 12rpx;
-      
+
       .info-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 8rpx 0;
-        
+
         &:not(:last-child) {
           border-bottom: 1px solid #e9ecef;
           padding-bottom: 16rpx;
           margin-bottom: 8rpx;
         }
-        
+
         .info-label {
           font-size: 28rpx;
           color: #666;
         }
-        
+
         .info-value {
           font-size: 28rpx;
           color: #333;
@@ -2182,7 +2182,7 @@ watch(
         }
       }
     }
-    
+
     .popup-tips {
       margin-top: 24rpx;
       padding: 20rpx;
@@ -2190,7 +2190,7 @@ watch(
       border-radius: 8rpx;
       width: 100%;
       box-sizing: border-box;
-      
+
       text {
         font-size: 24rpx;
         color: #d48806;

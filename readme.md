@@ -1,4 +1,4 @@
-# 灵矽 AI App / 小程序
+# 九宝 AI App / 小程序
 
 基于 uni-app 框架开发的多平台应用项目，支持微信小程序、Android、iOS、HarmonyOS NEXT 多个平台。
 
@@ -304,7 +304,7 @@ pnpm build:h5      # H5 生产构建
 ## 参考文档
 
 - [uni-app 官方文档](https://uniapp.dcloud.net.cn/)（注意：本项目是 uni-app，不是 uni-app-x）
-- [灵矽 App 完整文档站](https://lingxiwmp.qiniu.com/docs/publish/)
+- [九宝 App 完整文档站](https://lingxiwmp.qiniu.com/docs/publish/)
 - [后端服务仓库](https://github.com/Qiniu-linx/linx-app-backend)
 - [DCloud 开发者中心](https://dev.dcloud.net.cn/)
 

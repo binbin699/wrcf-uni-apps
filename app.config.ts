@@ -25,7 +25,7 @@ export default function getAppConfig(
   } else {
     // App 端根据版本选择服务器
     BASE_API_URL =
-      appEdition === 'intl' ? 'http://204.141.229.218:8000' : 'http://111.62.241.103:8000';
+      appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
   }
 
   // 是否支持微信小程序手机号登录
@@ -71,12 +71,12 @@ export default function getAppConfig(
   const APP_PRIMARY_SETUP_MODE = 'none';
   // 用户协议和隐私政策 URL（微信小程序不显示）
   const TERMS_URL =
-    platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/user-agreement';
+    platform === 'mp-weixin' ? '' : 'http://47.114.109.136:8008/user-agreement.html';
   const PRIVACY_URL =
-    platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/privacy-right';
+    platform === 'mp-weixin' ? '' : 'http://47.114.109.136:8008/privacy-policy.html';
 
   // 用户反馈邮箱（留空则不显示反馈入口，微信小程序不显示）
-  // 灵矽：jubao@qiniu.com
+  // 九宝：jubao@qiniu.com
   // 萌点：luomiaoxia@szsmdt.cn
   const FEEDBACK_EMAIL = platform === 'mp-weixin' ? '' : 'jubao@qiniu.com';
 
@@ -84,7 +84,7 @@ export default function getAppConfig(
   const SHOW_INSTRUCTIONS_TUTORIALS = platform !== 'mp-weixin';
 
   // Google 授权登录，海外版需要配置 Google Client ID
-  const GOOGLE_OAUTH_CLIENT_ID_WEB = 
+  const GOOGLE_OAUTH_CLIENT_ID_WEB =
     appEdition === 'cn'
       ? ''
       : '668197306109-2glguqobqtbm92rt9upnot9rrt0t7bmf.apps.googleusercontent.com';

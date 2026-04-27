@@ -112,8 +112,12 @@ export const agentApi = {
 
   // 获取公开的智能体列表
   // language: 'all' 获取所有智能体，不传则根据系统语言自动筛选
-  getPublicAgents(language = 'all') {
-    return request.get('/app/agent/public', { data: { language } });
+  getPublicAgents(language = 'all', level = 0) {
+    return request.get('/app/agent/public', { data: { language, level } });
+  },
+  // 获取子层智能体
+  getPublicAgentsXu(father = date.id) {
+    return request.get('/app/agent/public', { data: { father } });
   },
 
   // 获取模板智能体列表
@@ -122,7 +126,7 @@ export const agentApi = {
     return request.get('/app/agent/templates', { data: { language } });
   },
 
-  // 优化提示词（灵矽平台AI处理需要较长时间，设置60秒超时，禁用默认loading）
+  // 优化提示词（九宝平台AI处理需要较长时间，设置60秒超时，禁用默认loading）
   optimizePrompt(data) {
     return request.post('/app/agent/optimize-prompt', data, { timeout: 60000, showLoading: false });
   }

@@ -184,9 +184,9 @@ function onStoreStateChange(newState: any) {
 function handleBack() {
   // 如果配网已完成，跳转到智能体广场方便用户绑定智能体
   if (state.value.configCompleted) {
-    console.log('配网已完成，跳转智能体广场');
+    console.log('配网已完成，跳转智能体角色');
     uni.switchTab({
-      url: '/pages/square/square'
+      url: '/pages/square/super_square'
     });
     return;
   }
@@ -247,7 +247,7 @@ function handleBack() {
 
 function handleSkipConfig() {
   uni.switchTab({
-    url: PageMap[Pages.Square].url
+    url: PageMap[Pages.Super_square].url
   });
 }
 

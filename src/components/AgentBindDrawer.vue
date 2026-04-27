@@ -182,7 +182,7 @@ export default {
             message: this.$t('agent_bind_drawer.bind_success')
           };
         } else {
-          if (res.message.includes('设备已存在灵矽平台')) {
+          if (res.message.includes('设备已存在九宝平台')) {
             return {
               success: false,
               message: this.$t('agent_bind_drawer.device_exist')
@@ -209,7 +209,7 @@ export default {
           error?.message || error?.errMsg || (typeof error === 'string' ? error : '');
 
         // 处理特定错误
-        if (errorMsg.includes('设备已存在灵矽平台')) {
+        if (errorMsg.includes('设备已存在九宝平台')) {
           return {
             success: false,
             message: this.$t('agent_bind_drawer.device_exist')

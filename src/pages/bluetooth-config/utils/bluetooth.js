@@ -491,7 +491,7 @@ export function normalizeDeviceList(deviceList, useLocalName = false) {
     let macAddress = null;
     let macSource = null; // 记录 MAC 来源，用于调试
     // 优先从设备名称中提取 MAC 地址（固件写入的真实 WiFi MAC）
-    // 这个 MAC 用于后端注册和灵矽平台绑定
+    // 这个 MAC 用于后端注册和九宝平台绑定
     // deviceId 放在最后作为兜底，但可能是蓝牙 MAC 而非 WiFi MAC
     const fields = ['name', 'localName', 'deviceId'];
 
@@ -539,7 +539,7 @@ export function normalizeDeviceList(deviceList, useLocalName = false) {
         // iOS 上是 UUID 格式，Android 上是蓝牙 MAC
         deviceId: device.deviceId,
         // macAddress 存储从设备名称提取的真实 WiFi MAC
-        // 用于后端设备注册和灵矽平台绑定
+        // 用于后端设备注册和九宝平台绑定
         macAddress: macAddress,
         // 记录 MAC 来源，便于调试
         _macSource: macSource

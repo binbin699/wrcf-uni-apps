@@ -1,6 +1,6 @@
 {
   "privacy.title": "서비스 약관 및 개인정보 처리방침",
-  "privacy.message": "Linx AI에 오신 것을 환영합니다!<br/><br/>서비스를 이용하기 전에 다음 약관을 읽고 동의해 주세요: <a href=\"https://www.qiniu.com/agreements/user-agreement\">사용자 약관</a> 및 <a href=\"https://www.qiniu.com/agreements/privacy-right\">개인정보 처리방침</a><br/><br/><font color=\"#335CFF\">\"동의\"</font>를 누르면 위 약관을 읽고 동의한 것으로 간주됩니다. 동의하지 않으면 서비스를 제공할 수 없습니다.",
+  "privacy.message": "Linx AI에 오신 것을 환영합니다!<br/><br/>서비스를 이용하기 전에 다음 약관을 읽고 동의해 주세요: <a href=\"http://47.114.109.136:8008/user-agreement.html\">사용자 약관</a> 및 <a href=\"http://47.114.109.136:8008/privacy-policy.html\">개인정보 처리방침</a><br/><br/><font color=\"#335CFF\">\"동의\"</font>를 누르면 위 약관을 읽고 동의한 것으로 간주됩니다. 동의하지 않으면 서비스를 제공할 수 없습니다.",
   "privacy.messageIntro": "Linx AI에 오신 것을 환영합니다!\n\n서비스를 이용하기 전에 다음 약관을 읽고 동의해 주세요:",
   "privacy.termsLink": "사용자 약관",
   "privacy.and": " 및 ",
@@ -12,7 +12,7 @@
   "privacy.buttonAccept": "동의",
   "privacy.buttonRefuse": "동의 안 함",
   "privacy.second.title": "안내",
-  "privacy.second.message": "Linx AI를 계속 사용하려면 <a href=\"https://www.qiniu.com/agreements/user-agreement\">사용자 약관</a> 및 <a href=\"https://www.qiniu.com/agreements/privacy-right\">개인정보 처리방침</a>에 동의해야 합니다. 동의하지 않으면 앱이 종료됩니다.",
+  "privacy.second.message": "Linx AI를 계속 사용하려면 <a href=\"http://47.114.109.136:8008/user-agreement.html\">사용자 약관</a> 및 <a href=\"http://47.114.109.136:8008/privacy-policy.html\">개인정보 처리방침</a>에 동의해야 합니다. 동의하지 않으면 앱이 종료됩니다.",
   "privacy.second.messageIntro": "",
   "privacy.second.messageFooter": "에 동의해야 Linx AI를 계속 사용할 수 있으며, 그렇지 않으면 앱이 종료됩니다.",
   "privacy.second.buttonAccept": "동의하고 계속",

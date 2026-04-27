@@ -1,6 +1,6 @@
 {
   "privacy.title": "利用規約とプライバシーポリシー",
-  "privacy.message": "Linx AIへようこそ！<br/><br/>サービスをご利用になる前に、以下の規約をお読みいただき、同意してください：<a href=\"https://www.qiniu.com/agreements/user-agreement\">《利用規約》</a>と<a href=\"https://www.qiniu.com/agreements/privacy-right\">《プライバシーポリシー》</a><br/><br/><font color=\"#335CFF\">「同意する」</font>をクリックすると、上記の規約を読み、同意したことになります。同意されない場合、サービスを提供することができません。",
+  "privacy.message": "Linx AIへようこそ！<br/><br/>サービスをご利用になる前に、以下の規約をお読みいただき、同意してください：<a href=\"http://47.114.109.136:8008/user-agreement.html\">《利用規約》</a>と<a href=\"http://47.114.109.136:8008/privacy-policy.html\">《プライバシーポリシー》</a><br/><br/><font color=\"#335CFF\">「同意する」</font>をクリックすると、上記の規約を読み、同意したことになります。同意されない場合、サービスを提供することができません。",
   "privacy.messageIntro": "Linx AIへようこそ！\n\nサービスをご利用になる前に、以下の規約をお読みいただき、同意してください：",
   "privacy.termsLink": "《利用規約》",
   "privacy.and": "と",
@@ -12,7 +12,7 @@
   "privacy.buttonAccept": "同意する",
   "privacy.buttonRefuse": "同意しない",
   "privacy.second.title": "ご確認ください",
-  "privacy.second.message": "Linx AIを続けてご利用いただくには、<a href=\"https://www.qiniu.com/agreements/user-agreement\">《利用規約》</a>と<a href=\"https://www.qiniu.com/agreements/privacy-right\">《プライバシーポリシー》</a>に同意する必要があります。同意されない場合、アプリを終了します。",
+  "privacy.second.message": "Linx AIを続けてご利用いただくには、<a href=\"http://47.114.109.136:8008/user-agreement.html\">《利用規約》</a>と<a href=\"http://47.114.109.136:8008/privacy-policy.html\">《プライバシーポリシー》</a>に同意する必要があります。同意されない場合、アプリを終了します。",
   "privacy.second.messageIntro": "Linx AIを続けてご利用いただくには、",
   "privacy.second.messageFooter": "に同意する必要があります。同意されない場合、アプリを終了します。",
   "privacy.second.buttonAccept": "同意して続ける",
@@ -846,7 +846,7 @@
   "agent_bind_drawer.please_select_device": "デバイスを選択してください",
   "agent_bind_drawer.get_device_list_failed": "デバイスリストの取得に失敗しました",
   "agent_bind_drawer.bind_device_failed": "デバイスのバインドに失敗しました",
-  "agent_bind_drawer.device_exist": "デバイスは既に灵矽プラットフォームに存在します",
+  "agent_bind_drawer.device_exist": "デバイスは既に九宝プラットフォームに存在します",
 
   "voice_selector.language_all": "すべての言語",
   "voice_selector.language_unknown": "その他",

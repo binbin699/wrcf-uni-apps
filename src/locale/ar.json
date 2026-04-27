@@ -1,6 +1,6 @@
 {
   "privacy.title": "شروط الخدمة وسياسة الخصوصية",
-  "privacy.message": "مرحبًا بك في Linx AI!<br/><br/>قبل استخدام خدماتنا، يُرجى قراءة والموافقة على الاتفاقيات التالية: <a href=\"https://www.qiniu.com/agreements/user-agreement\">اتفاقية المستخدم</a> و<a href=\"https://www.qiniu.com/agreements/privacy-right\">سياسة الخصوصية</a><br/><br/>بالنقر على <font color=\"#335CFF\">\"موافق\"</font>، فإنك تؤكد أنك قرأت ووافقت على الاتفاقيات أعلاه. إذا لم توافق، فلن نتمكن من تقديم الخدمة لك.",
+  "privacy.message": "مرحبًا بك في Linx AI!<br/><br/>قبل استخدام خدماتنا، يُرجى قراءة والموافقة على الاتفاقيات التالية: <a href=\"http://47.114.109.136:8008/user-agreement.html\">اتفاقية المستخدم</a> و<a href=\"http://47.114.109.136:8008/privacy-policy.html\">سياسة الخصوصية</a><br/><br/>بالنقر على <font color=\"#335CFF\">\"موافق\"</font>، فإنك تؤكد أنك قرأت ووافقت على الاتفاقيات أعلاه. إذا لم توافق، فلن نتمكن من تقديم الخدمة لك.",
   "privacy.messageIntro": "مرحبًا بك في Linx AI!\n\nقبل استخدام خدماتنا، يُرجى قراءة والموافقة على الاتفاقيات التالية:",
   "privacy.termsLink": "اتفاقية المستخدم",
   "privacy.and": " و",
@@ -12,7 +12,7 @@
   "privacy.buttonAccept": "موافق",
   "privacy.buttonRefuse": "غير موافق",
   "privacy.second.title": "تنبيه",
-  "privacy.second.message": "يجب عليك الموافقة على <a href=\"https://www.qiniu.com/agreements/user-agreement\">اتفاقية المستخدم</a> و<a href=\"https://www.qiniu.com/agreements/privacy-right\">سياسة الخصوصية</a> لمتابعة استخدام Linx AI، وإلا فسيتم إغلاق التطبيق.",
+  "privacy.second.message": "يجب عليك الموافقة على <a href=\"http://47.114.109.136:8008/user-agreement.html\">اتفاقية المستخدم</a> و<a href=\"http://47.114.109.136:8008/privacy-policy.html\">سياسة الخصوصية</a> لمتابعة استخدام Linx AI، وإلا فسيتم إغلاق التطبيق.",
   "privacy.second.messageIntro": "",
   "privacy.second.messageFooter": " لمتابعة استخدام Linx AI، وإلا فسيتم إغلاق التطبيق.",
   "privacy.second.buttonAccept": "موافقة ومتابعة",

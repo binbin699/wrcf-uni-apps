@@ -111,6 +111,16 @@
     {
       "path": "pages/square/square",
       "style": {
+        "navigationBarTitleText": "%square.bind_devices%",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/square/super_square",
+      "style": {
         "navigationBarTitleText": "%pages.square%",
         "navigationStyle": "custom",
         "app-plus": {
@@ -228,6 +238,12 @@
       },
       {
         "pagePath": "pages/square/square",
+        "iconPath": "static/tab-square.png",
+        "selectedIconPath": "static/tab-square-active.png",
+        "text": "%square.bind_devices%"
+      },
+      {
+        "pagePath": "pages/square/super_square",
         "iconPath": "static/tab-square.png",
         "selectedIconPath": "static/tab-square-active.png",
         "text": "%tabbar.square%"

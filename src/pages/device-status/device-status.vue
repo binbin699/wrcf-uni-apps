@@ -296,10 +296,10 @@
     <!-- 底部插图 -->
     <image class="bottom-illustration" src="/static/bg_removal.png" mode="aspectFill"></image>
 
-    <!-- AI 生成提示 -->
-    <view v-if="!loading" class="ai-generated-tip">
-      <text class="ai-generated-text">{{ $t('common.ai_generated_disclaimer') }}</text>
-    </view>
+<!--    &lt;!&ndash; AI 生成提示 &ndash;&gt;-->
+<!--    <view v-if="!loading" class="ai-generated-tip">-->
+<!--      <text class="ai-generated-text">{{ $t('common.ai_generated_disclaimer') }}</text>-->
+<!--    </view>-->
 
     <!-- 自定义 TabBar -->
     <CustomTabBar :current="0" />
@@ -745,7 +745,7 @@ const handleBindAgent = () => {
 // 跳转到智能体广场绑定智能体
 const handleGoToSquare = () => {
   uni.switchTab({
-    url: PageMap[Pages.Square].url
+    url: PageMap[Pages.Super_square].url
   });
 };
 
@@ -766,9 +766,9 @@ onShow(async () => {
 
   // 配置完成后，如果设备已成功添加，跳转智能体广场方便用户绑定智能体
   if (shouldRedirect && deviceList.value.length > 0) {
-    console.log('[设备状态] 配置完成，跳转智能体广场');
+    console.log('[设备状态] 配置完成，跳转智能体角色');
     uni.switchTab({
-      url: '/pages/square/square'
+      url: '/pages/square/super_square'
     });
     return;
   }

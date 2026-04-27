@@ -1,6 +1,7 @@
 <template>
   <wd-toast />
   <view class="page-container">
+
     <!-- 自定义导航栏 -->
     <view class="custom-navbar">
       <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
@@ -41,6 +42,12 @@
           </view>
         </view>
         <text class="nav-title">{{ $t('square.title') }}</text>
+
+        <!-- 右侧返回按钮 -->
+        <view class="back-btna" @click="goBack">
+          <text class="back-text">返回</text>
+          <image class="back-icona" src="/static/icons/arrow-left.svg" mode="aspectFit" />
+        </view>
       </view>
     </view>
 
@@ -452,6 +459,13 @@ function skipSquareBindGuide() {
   }
 }
 
+// 返回上一页
+function goBack() {
+  uni.switchTab({
+    url: '/pages/square/super_square'
+  });
+}
+
 /**
  * 获取第一个绑定按钮的位置
  */
@@ -518,17 +532,38 @@ onLoad(() => {
   setStatusBarHeight();
 });
 
+// onShow(() => {
+//   showBindDrawer.value = false;
+//
+//   // TODO: 临时重置引导状态，需要测试时取消注释
+//   // resetUserGuideState();
+//   // console.log('[Square] 已重置用户引导状态');
+//
+//   // 页面显示时刷新数据
+//   loadPublicAgents();
+//   refreshSquareGuideState();
+//   // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
+//   uni.hideTabBar({ animation: false });
+// });
+
 onShow(() => {
   showBindDrawer.value = false;
 
-  // TODO: 临时重置引导状态，需要测试时取消注释
-  // resetUserGuideState();
-  // console.log('[Square] 已重置用户引导状态');
+  // 读取全局变量中的 fatherId
+  const fatherId = getApp().globalData?.fatherId;
 
-  // 页面显示时刷新数据
-  loadPublicAgents();
+  if (fatherId) {
+    console.log('[Square] 收到 fatherId:', fatherId);
+    // 加载子级智能体
+    loadPublicAgentsWithFather(fatherId);
+    // 清空全局变量
+    delete getApp().globalData.fatherId;
+  } else {
+    // 正常加载所有智能体
+    loadPublicAgents();
+  }
+
   refreshSquareGuideState();
-  // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
 });
 
@@ -627,6 +662,69 @@ async function loadPublicAgents() {
   } catch (error) {
     console.error('获取公开助手失败:', error);
     // 不再显示toast，因为request.ts已经处理了
+  } finally {
+    loading.value = false;
+    refreshSquareGuideState();
+  }
+}
+
+async function loadPublicAgentsWithFather(fatherId: number) {
+  try {
+    loading.value = true;
+    await initLanguageDisplayNameCache();
+
+    // 调用带 father 参数的接口
+    const res = await agentApi.getPublicAgentsXu(fatherId);
+    console.log('[Square] 获取子级智能体列表, fatherId:', fatherId, res);
+
+    if (res.code === 1000) {
+      const modalKeyword = {
+        gpt4: ['gpt4', 'gpt-4'],
+        gpt5: ['gpt5', 'gpt-5'],
+        'gpt-oss': ['gpt-oss'],
+        qwen: ['qwen', '通义千问'],
+        'deepseek-v3': ['deepseek-v3'],
+        deepseek: ['deepseek']
+      };
+
+      allAgents.value = (res.data || []).map((agent: Agent) => {
+        const llmModelName = agent.config?.llmModelName?.toLowerCase() || '';
+        let modalTag = '';
+        for (const [modalType, keywords] of Object.entries(modalKeyword)) {
+          const hasKeyword = keywords.some((keyword) =>
+              llmModelName.includes(keyword.toLowerCase())
+          );
+          if (hasKeyword) {
+            modalTag = modalType;
+            break;
+          }
+        }
+        const langSource =
+            agent.config?.langCode || (Array.isArray(agent.lang) ? agent.lang[0] : agent.lang) || '';
+        const langCodes = langSource ? [backendLangToLangCode(langSource)] : [];
+        return {
+          ...agent,
+          id: agent.id,
+          name: agent.agentName,
+          description: agent.description || agent.config?.systemPrompt || $t('square.no_description'),
+          voiceName: agent.config?.voiceName || $t('square.default'),
+          creatorName: agent.userName || $t('square.anonymous'),
+          agentId: agent.agentId,
+          modalTag: modalTag,
+          langCodes: langCodes
+        } as SquareAgent;
+      });
+
+      await extractAvailableLanguages();
+      if (!selectedLanguage.value) {
+        initDefaultLanguage();
+      }
+      filterAgentsByLanguage();
+    } else {
+      console.warn('获取子级智能体失败:', res.message);
+    }
+  } catch (error) {
+    console.error('获取子级智能体失败:', error);
   } finally {
     loading.value = false;
     refreshSquareGuideState();
@@ -1860,5 +1958,34 @@ function handleBindCancel() {
   font-size: 26rpx;
   line-height: 40rpx;
   color: var(--color-primary);
+}
+
+.back-btna {
+  position: absolute;
+  right: 8rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8rpx;
+  width: 128rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  backdrop-filter: blur(10rpx);
+  z-index: 200;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.back-text {
+  font-size: 28rpx;
+  color: #01061c;
+}
+
+.back-icona {
+  width: 28rpx;
+  height: 28rpx;
 }
 </style>
