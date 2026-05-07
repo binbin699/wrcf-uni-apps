@@ -2,7 +2,7 @@
     "name" : "AI九宝智能",
     "appid" : "__UNI__3F8A11F",
     "description" : "%app.wrcf%",
-    "versionName" : "1.0.0",
+    "versionName" : "1.0.1",
     "versionCode" : 101072,
     "transformPx" : false,
     "app-plus" : {

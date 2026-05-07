@@ -1,4 +1,4 @@
-export const GLOBAL_REQUEST_ERROR_EVENT = 'linx:request-error';
+export const GLOBAL_REQUEST_ERROR_EVENT = 'JiuBao:request-error';
 export const GLOBAL_REQUEST_ERROR_SELECTOR = 'global-request-error';
 
 let globalRequestErrorPresenterCount = 0;

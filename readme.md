@@ -2,16 +2,16 @@
 
 基于 uni-app 框架开发的多平台应用项目，支持微信小程序、Android、iOS、HarmonyOS NEXT 多个平台。
 
-代码仓库：[https://github.com/Qiniu-linx/linx-app](https://github.com/Qiniu-linx/linx-app)
+代码仓库：[https://github.com/Qiniu-JiuBao/JiuBao-app](https://github.com/Qiniu-JiuBao/JiuBao-app)
 
-> **注意**：请使用最新分支（形如 `feat/v1.X.X`，版本号越大越新）。`linx-android-app` 与 `linx-ios-app` 已废弃，请勿使用。
+> **注意**：请使用最新分支（形如 `feat/v1.X.X`，版本号越大越新）。`JiuBao-android-app` 与 `JiuBao-ios-app` 已废弃，请勿使用。
 
 完整文档站点：[https://lingxiwmp.qiniu.com/docs/publish/](https://lingxiwmp.qiniu.com/docs/publish/)
 
 ## 项目结构
 
 ```
-linx-app
+JiuBao-app
 ├── .env.example              环境变量示例
 ├── app.config.ts             应用功能配置（根据版本和平台返回不同配置）
 ├── vite.config.ts            Vite 构建配置
@@ -280,7 +280,7 @@ pnpm build:h5      # H5 生产构建
 | uploadFile 合法域名   | `https://lingxiwmp.qiniu.com` |
 | downloadFile 合法域名 | `https://lingxiwmp.qiniu.com` |
 
-> 如需自建后端，参考 [linx-app-backend 部署文档](https://github.com/Qiniu-linx/linx-app-backend/blob/master/backend/deploy.md)
+> 如需自建后端，参考 [JiuBao-app-backend 部署文档](https://github.com/Qiniu-JiuBao/JiuBao-app-backend/blob/master/backend/deploy.md)
 
 ## 打包脚本参数一览
 
@@ -305,7 +305,7 @@ pnpm build:h5      # H5 生产构建
 
 - [uni-app 官方文档](https://uniapp.dcloud.net.cn/)（注意：本项目是 uni-app，不是 uni-app-x）
 - [九宝 App 完整文档站](https://lingxiwmp.qiniu.com/docs/publish/)
-- [后端服务仓库](https://github.com/Qiniu-linx/linx-app-backend)
+- [后端服务仓库](https://github.com/Qiniu-JiuBao/JiuBao-app-backend)
 - [DCloud 开发者中心](https://dev.dcloud.net.cn/)
 
 ## 提交前检查

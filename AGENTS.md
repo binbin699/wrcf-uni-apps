@@ -1,4 +1,4 @@
-# Linx-App AI Agent Instructions
+# JiuBao-App AI Agent Instructions
 
 ## 📚 规则模块导航
 

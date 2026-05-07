@@ -22,10 +22,10 @@ import io.dcloud.uts.Map
 import io.dcloud.uts.Set
 import io.dcloud.uts.UTSAndroid
 import kotlin.properties.Delegates
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotJiuBao.coroutines.CoroutineScope
+import kotJiuBao.coroutines.Deferred
+import kotJiuBao.coroutines.Dispatchers
+import kotJiuBao.coroutines.async
 open class StartWifiOptions (
     open var success: ((res: UniWifiResult) -> Unit)? = null,
     open var fail: ((res: UniError) -> Unit)? = null,
