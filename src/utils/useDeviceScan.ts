@@ -109,10 +109,15 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
             });
 
             // 调用绑定设备接口
-            const result = await deviceApi.bindByQrcode({ m: qrcodeData.m });
+            const result = await deviceApi.bindByQrcode({
+              m: qrcodeData.m,
+              s: qrcodeData.s,
+              v: qrcodeData.v
+            });
             if (result && result.code === 1000) {
               console.log('设备绑定成功', result);
             } else {
+              console.log('该设备不是本公司设备或者二维码损坏，无法绑定', result)
               throw new Error(result?.message || $t('net_config.device_bind_fail'));
             }
 

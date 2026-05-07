@@ -479,6 +479,8 @@ async function loadPublicAgents() {
       res = await agentApi.getPublicAgents('all', 0);
       console.log('[Square] 获取所有公开助手:', res);
     }
+    //打印res.data
+    console.log('[Square] 获取公开助手列表111, res:', res.data);
 
     if (res.code === 1000) {
       // 打印第一条数据的所有字段，确认主键字段名
