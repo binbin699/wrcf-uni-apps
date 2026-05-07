@@ -18,7 +18,7 @@ const $t = i18n.global.t;
 const userInfoState: IUserInfoRes = {
   userId: -1,
   nickname: '',
-  avatar: '/static/logo.png',
+  avatar: '/static/logo1.jpg',
   phone: '',
   gender: 0
 };
