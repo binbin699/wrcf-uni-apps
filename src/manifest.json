@@ -34,7 +34,7 @@
         },
         "locales" : {
             "zh" : {
-                "name" : "九宝 AI",
+                "name" : "AI九宝智能",
                 "ios" : {
                     "privacyDescription" : {
                         "NSCameraUsageDescription" : "允许获得您的相机权限，以便扫描二维码，绑定设备",
