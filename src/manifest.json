@@ -1,5 +1,5 @@
 {
-    "name" : "AI九宝智能",
+    "name" : "九宝智能",
     "appid" : "__UNI__3F8A11F",
     "description" : "%app.wrcf%",
     "versionName" : "1.0.1",
@@ -34,7 +34,7 @@
         },
         "locales" : {
             "zh" : {
-                "name" : "AI九宝智能",
+                "name" : "九宝智能",
                 "ios" : {
                     "privacyDescription" : {
                         "NSCameraUsageDescription" : "允许获得您的相机权限，以便扫描二维码，绑定设备",
@@ -48,7 +48,7 @@
                 }
             },
             "en" : {
-                "name" : "Linx AI",
+                "name" : "JiuBao AI",
                 "ios" : {
                     "privacyDescription" : {
                         "NSCameraUsageDescription" : "Allow access to your camera to scan QR codes and bind devices",
@@ -62,7 +62,7 @@
                 }
             },
             "ja" : {
-                "name" : "Linx AI",
+                "name" : "JiuBao AI",
                 "ios" : {
                     "privacyDescription" : {
                         "NSCameraUsageDescription" : "QRコードをスキャンしてデバイスをバインドするために、カメラへのアクセスを許可してください",
@@ -76,7 +76,7 @@
                 }
             },
             "ru" : {
-                "name" : "Linx AI",
+                "name" : "JiuBao AI",
                 "ios" : {
                     "privacyDescription" : {
                         "NSCameraUsageDescription" : "Разрешите доступ к камере для сканирования QR-кодов и привязки устройств",

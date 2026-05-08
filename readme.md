@@ -1,4 +1,4 @@
-# 九宝 AI App / 小程序
+# 九宝智能 App / 小程序
 
 基于 uni-app 框架开发的多平台应用项目，支持微信小程序、Android、iOS、HarmonyOS NEXT 多个平台。
 
