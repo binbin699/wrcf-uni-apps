@@ -271,6 +271,14 @@ export const languageApi = {
   }
 };
 
+// 游戏玩法提示接口
+export const gameTipApi = {
+  // 获取所有玩法提示
+  getAllTips() {
+    return request.get('/api/game-play-tip/getAllTips');
+  }
+};
+
 // 教程资源接口
 export { tutorialApi } from './tutorial';
 

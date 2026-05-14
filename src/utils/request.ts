@@ -232,7 +232,7 @@ class Request {
           const response = res.data as RequestResponse<T>;
           if (res.statusCode === 200) {
             // 成功
-            if (response.code === 1000) {
+            if (response.code === 1000 || response.code === 200) {
               // 请求成功，清除重试计数
               this.retryCount.delete(requestKey);
               resolve(response);
