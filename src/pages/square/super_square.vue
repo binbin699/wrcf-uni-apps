@@ -73,44 +73,27 @@
             v-for="(agent, index) in filteredAgents"
             :key="agent.id"
             class="agent-card"
-            :style="{ zIndex: isSquareBindGuideActive && index === 0 ? 10 : 1 }">
-          <view class="agent-content">
-            <!-- 左侧内容：名称、标签 -->
-            <view class="agent-left">
-              <view class="agent-header">
-                <view class="agent-name">{{ agent.name }}</view>
-                <view class="agent-tag">
-                  <text class="tag-text">{{ getAgentTag(agent) }}</text>
-                </view>
-              </view>
+            :style="{ zIndex: isSquareBindGuideActive && index === 0 ? 10 : 1 }"
+            @click="handleNavigateClick(agent, index)">
+          <!--
+            修改位置1: 整个卡片背景图
+            使用半透明背景图作为长条按钮背景
+          -->
+          <view class="agent-bg-image">
+            <image
+                class="agent-bg-img"
+                :src="getAgentBgImage(agent)"
+                mode="aspectFill" />
+          </view>
+
+          <!-- 文字内容居中显示 -->
+          <view class="agent-content-center">
+            <view class="agent-name-art">{{ agent.name }}</view>
+            <view class="agent-tag-art">
+              <text class="tag-text-art">{{ getAgentTag(agent) }}</text>
             </view>
-            <!-- 右侧内容：选择按钮 -->
-            <view
-                class="agent-right"
-                :class="{ 'guide-highlight-wrapper': isSquareBindGuideActive && index === 0 }">
-              <button
-                  :id="index === 0 ? 'first-bind-btn' : ''"
-                  class="config-btn-white"
-                  :class="{
-                  'guide-highlight': isSquareBindGuideActive && index === 0,
-                  'guide-pulse': isSquareBindGuideActive && index === 0
-                }"
-                  @click="handleNavigateClick(agent, index)">
-                <text class="btn-text-white">{{ $t('square.bind_devices') }}</text>
-              </button>
-              <view
-                  v-if="isSquareBindGuideActive && index === 0"
-                  class="square-guide-tooltip"
-                  @click.stop>
-                <text class="square-guide-tooltip-text">
-                  {{ $t('guide.square_highlight_tip') }}
-                </text>
-                <view class="square-guide-tooltip-actions">
-                  <view class="square-guide-tooltip-skip" @click.stop="skipSquareBindGuide">
-                    {{ $t('guide.square_highlight_skip') }}
-                  </view>
-                </view>
-              </view>
+            <view class="agent-voice-art" v-if="agent.voiceName !== $t('square.default')">
+              <text class="voice-text-art">{{ agent.voiceName }}</text>
             </view>
           </view>
         </view>
@@ -178,27 +161,8 @@
     <view v-if="showSecondOverlay" class="second-overlay" @click.stop>
       <!-- 蒙层 -->
       <view class="second-overlay-mask"></view>
-      <!-- 绑定按钮高亮区域（在蒙层之上） -->
-      <view
-          v-if="highlightPosition && filteredAgents.length > 0"
-          class="second-overlay-highlight"
-          :style="{
-          top: highlightPosition.top - 8 + 'px',
-          left: highlightPosition.left - 8 + 'px'
-        }"
-          @click="handleNavigateClick(filteredAgents[0], 0)">
-        <button class="config-btn-white highlight-btn">
-          <text class="btn-text-white">{{ $t('square.bind_devices') }}</text>
-        </button>
-      </view>
       <!-- 信息条 -->
-      <view
-          class="second-overlay-card"
-          :style="
-          highlightPosition
-            ? { top: highlightPosition.top + highlightPosition.height + 20 + 'px' }
-            : {}
-        ">
+      <view class="second-overlay-card">
         <!-- 背景光晕效果 -->
         <view class="second-overlay-bg">
           <view class="second-overlay-ellipse ellipse-1"></view>
@@ -213,17 +177,6 @@
           </view>
         </view>
       </view>
-      <!-- 三角形箭头 -->
-      <view
-          class="second-overlay-arrow"
-          :style="
-          highlightPosition
-            ? {
-                left: highlightPosition.left + highlightPosition.width / 2 - 12 + 'px',
-                top: highlightPosition.top + highlightPosition.height + 14 + 'px'
-              }
-            : {}
-        "></view>
     </view>
 
     <!-- 信息提示条（固定在底部tab上方） -->
@@ -259,6 +212,13 @@ import {
 } from '../agent/lang_opts';
 import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 
+import bgImage5 from '@/img/5.png';
+import bgImage6 from '@/img/6.png';
+import bgImage7 from '@/img/7.png';
+import bgImage8 from '@/img/8.png';
+import bgImage9 from '@/img/9.png';
+const bgImages = [bgImage5, bgImage6, bgImage7, bgImage8, bgImage9];
+
 type SquareAgent = Agent & {
   name: string;
   description: string;
@@ -268,11 +228,15 @@ type SquareAgent = Agent & {
   langCodes: string[];
 };
 
+// ==================== 常量配置 ====================
+const SPECIAL_AGENT_ID = 7; // 特殊智能体ID：点击时跳转到指定页面
+const SPECIAL_AGENT_PATH = '/pages/index/index'; // 预留的特殊页面路径
+
 const { t: $t } = useI18n();
 const toast = useToast();
 useGlobalRequestErrorToast(toast);
 
-// 响应式数据
+// ==================== 响应式数据 ====================
 const allAgents = ref<SquareAgent[]>([]);
 const publicAgents = ref<SquareAgent[]>([]);
 const loading = ref<boolean>(false);
@@ -294,7 +258,7 @@ const selectedLanguage = ref<string>('');
 const showLanguagePicker = ref<boolean>(false);
 const availableLanguages = ref<{ language: string; langCode: string }[]>([]);
 
-// 计算属性
+// ==================== 计算属性 ====================
 const modelTags = computed(() => {
   const tags: { id: string; name: string }[] = [];
   const allModelTags = [
@@ -347,7 +311,7 @@ watch(
     { immediate: true }
 );
 
-// 引导系统相关函数
+// ==================== 引导系统相关函数 ====================
 async function refreshSquareGuideState() {
   try {
     const result = await deviceApi.getList();
@@ -393,31 +357,10 @@ function skipSquareBindGuide() {
   }
 }
 
-function getFirstBindBtnPosition() {
-  return new Promise<void>((resolve) => {
-    uni
-        .createSelectorQuery()
-        .select('#first-bind-btn')
-        .boundingClientRect((rect: any) => {
-          if (rect) {
-            highlightPosition.value = {
-              top: rect.top,
-              left: rect.left,
-              width: rect.width,
-              height: rect.height
-            };
-          }
-          resolve();
-        })
-        .exec();
-  });
-}
-
 async function handleOverlayDismiss() {
   dismissSquareOverlay();
   showOverlayGuide.value = false;
   if (filteredAgents.value.length > 0) {
-    await getFirstBindBtnPosition();
     showSecondOverlay.value = true;
   } else {
     showInfoBar.value = true;
@@ -429,7 +372,7 @@ function handleSecondOverlayDismiss() {
   showInfoBar.value = true;
 }
 
-// 生命周期钩子
+// ==================== 生命周期钩子 ====================
 onLoad(() => {
   loadPublicAgents();
   setStatusBarHeight();
@@ -441,7 +384,7 @@ onShow(() => {
   uni.hideTabBar({ animation: false });
 });
 
-// 基础方法
+// ==================== 基础方法 ====================
 function setStatusBarHeight() {
   const systemInfo = uni.getSystemInfoSync();
   statusBarHeight.value = systemInfo.statusBarHeight || 20;
@@ -479,11 +422,9 @@ async function loadPublicAgents() {
       res = await agentApi.getPublicAgents('all', 0);
       console.log('[Square] 获取所有公开助手:', res);
     }
-    //打印res.data
     console.log('[Square] 获取公开助手列表111, res:', res.data);
 
     if (res.code === 1000) {
-      // 打印第一条数据的所有字段，确认主键字段名
       if (res.data && res.data.length > 0) {
         console.log('[Square] 第一条数据字段:', Object.keys(res.data[0]));
         console.log('[Square] 第一条数据完整内容:', JSON.stringify(res.data[0]));
@@ -514,13 +455,12 @@ async function loadPublicAgents() {
             agent.config?.langCode || (Array.isArray(agent.lang) ? agent.lang[0] : agent.lang) || '';
         const langCodes = langSource ? [backendLangToLangCode(langSource)] : [];
 
-        // 主键可能是 id 或 agentId，打印确认
         console.log('[Square] 映射数据 - id:', agent.id, 'agentId:', agent.agentId);
 
         return {
           ...agent,
-          id: agent.id,                    // 数据库主键ID
-          agentId: agent.agentId,          // 业务ID
+          id: agent.id,
+          agentId: agent.agentId,
           name: agent.agentName,
           description: agent.description || agent.config?.systemPrompt || '',
           voiceName: agent.config?.voiceName || $t('square.default'),
@@ -617,18 +557,45 @@ function getAgentTag(agent: SquareAgent) {
   return $t('square.ai_assistant');
 }
 
+function getAgentBgImage(agent: SquareAgent) {
+  // 如果agent有自定义bgImage字段则优先使用
+  if (agent.bgImage) {
+    return agent.bgImage;
+  }
+
+  // 根据智能体在列表中的索引循环使用 5.png ~ 8.png
+  const agentIndex = filteredAgents.value.findIndex(a => a.id === agent.id);
+  const imageIndex = agentIndex % 5; // 0,1,2,3 循环
+  return bgImages[imageIndex];
+}
+
+/**
+ * 处理卡片点击跳转
+ * @param agent - 当前智能体对象
+ * @param index - 在列表中的索引
+ */
 function handleNavigateClick(agent: SquareAgent, index: number) {
-  console.log('[Square] 点击选择按钮, agent:', agent);
+  console.log('[Square] 点击智能体卡片, agent:', agent);
 
   // 使用主键 id
   const fatherId = agent.id;
   console.log('[Square] 主键 id:', fatherId);
   console.log('[Square] 业务 agentId:', agent.agentId);
 
+  // 如果是引导模式且不是第一个，则关闭引导
   if (isSquareBindGuideActive.value && index !== 0) {
     isSquareBindGuideActive.value = false;
     pendingGuideActivation.value = false;
   }
+
+  // ==================== 特殊智能体跳转逻辑 ====================
+  // 如果是ID为7的智能体，跳转到特殊页面
+  if (fatherId === SPECIAL_AGENT_ID) {
+    console.log('[Square] 检测到特殊智能体ID，跳转到特殊页面');
+    navigateToSpecialPage(agent);
+    return;
+  }
+  // ==================== 普通跳转逻辑 ====================
 
   getApp().globalData.fatherId = fatherId;
 
@@ -639,6 +606,30 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
     },
     fail: (err) => {
       console.error('[Square] 跳转失败:', err);
+      toast.error({ msg: '页面跳转失败，请重试' });
+    }
+  });
+}
+
+/**
+ * 跳转到特殊页面（ID=7的智能体）
+ * @param agent - 智能体对象
+ */
+function navigateToSpecialPage(agent: SquareAgent) {
+  console.log('[Square] 执行特殊页面跳转, agentId:', agent.agentId, 'id:', agent.id);
+
+  // 传递智能体信息到特殊页面
+  getApp().globalData.fatherId = agent.id;
+  getApp().globalData.specialAgentInfo = agent;
+
+  // 跳转到特殊页面（使用.navigateTo而非switchTab）
+  uni.switchTab({
+    url: SPECIAL_AGENT_PATH,
+    success: () => {
+      console.log('[Square] 特殊页面跳转成功');
+    },
+    fail: (err) => {
+      console.error('[Square] 特殊页面跳转失败:', err);
       toast.error({ msg: '页面跳转失败，请重试' });
     }
   });
@@ -694,6 +685,7 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
   overflow-y: auto;
   position: relative;
   z-index: 100;
+  -webkit-overflow-scrolling: touch;
 }
 
 .language-selector-container {
@@ -719,7 +711,7 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
 }
 
 .language-selector:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
 .language-selector.expanded {
@@ -762,10 +754,10 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
   top: calc(100% + 16rpx);
   left: 0;
   width: 260rpx;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 32rpx;
   border: 2rpx solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 16rpx 64rpx rgba(100, 100, 255, 0.15);
+  box-shadow: 0 16rpx 64rpx var(--color-primary-alpha-15);
   backdrop-filter: blur(20rpx);
   -webkit-backdrop-filter: blur(20rpx);
   max-height: 0;
@@ -806,11 +798,11 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
 }
 
 .language-option:active {
-  background: rgba(100, 100, 255, 0.06);
+  background: var(--color-primary-bg-hover);
 }
 
 .language-option.active {
-  background: rgba(100, 100, 255, 0.08);
+  background: var(--color-primary-bg);
 }
 
 .language-option-content {
@@ -869,6 +861,12 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
 
 .tag-scroll {
   white-space: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tag-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .tag-list {
@@ -879,22 +877,27 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
 
 .tag-item {
   padding: 12rpx 40rpx;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.6);
   border-radius: 100rpx;
   font-size: 28rpx;
   color: #6b7280;
   white-space: nowrap;
-  transition: all 0.3s;
-  border: 2rpx solid rgba(255, 255, 255, 0.6);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2rpx solid rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10rpx);
   -webkit-backdrop-filter: blur(10rpx);
+  cursor: pointer;
+}
+
+.tag-item:active {
+  transform: scale(0.95);
 }
 
 .tag-item.active {
-  background: rgba(51, 92, 255, 0.9);
+  background: var(--color-primary);
   color: white;
-  box-shadow: 0 10rpx 30rpx rgba(147, 112, 219, 0.3);
-  border: 2rpx solid rgba(51, 92, 255, 0.8);
+  box-shadow: 0 10rpx 30rpx var(--color-primary-shadow-light);
+  border: 2rpx solid var(--color-primary);
   backdrop-filter: blur(10rpx);
   -webkit-backdrop-filter: blur(10rpx);
 }
@@ -907,115 +910,121 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
   box-sizing: border-box;
 }
 
+/*
+  修改位置2: agent-card 样式 - 改为长条按钮风格
+  使用半透明背景图，文字居中，艺术字效果
+*/
 .agent-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  padding: 32rpx;
-  background: #ffffff;
-  border-radius: 32rpx;
+  align-items: center;
+  gap: 14rpx;
+  padding: 0;
   position: relative;
+  transition: transform 0.1s ease;
+  overflow: hidden;
+}
+
+.agent-card:active {
+  transform: scale(0.94);
+  opacity: 0.8;
 }
 
 .agent-card + .agent-card {
   margin-top: 24rpx;
 }
 
-.agent-content {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  gap: 32rpx;
-  width: 100%;
+/*
+  修改位置3: 背景图片容器
+  半透明背景图作为长条按钮背景
+*/
+.agent-bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
 }
 
-.agent-left {
+.agent-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8; /* 半透明效果 */
+}
+
+/*
+  修改位置4: 内容居中容器
+  文字内容居中显示
+*/
+.agent-content-center {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 24rpx;
-  flex: 1;
-  min-width: 0;
-}
-
-.agent-header {
-  display: flex;
-  flex-direction: row;
   align-items: center;
+  justify-content: center;
+  padding: 40rpx 32rpx;
   gap: 16rpx;
   width: 100%;
+  height: 100%;
 }
 
-.agent-name {
+/*
+  修改位置5: 艺术字名称
+  大号艺术字体，居中显示
+*/
+.agent-name-art {
   font-style: normal;
-  font-weight: 500;
-  font-size: 36rpx;
-  line-height: 52rpx;
-  display: flex;
-  align-items: center;
-  color: #212730;
-}
-
-.agent-right {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-
-.agent-tag {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 6rpx 12rpx;
-  gap: 20rpx;
-  background: #f3f4f7;
-  border-radius: 8rpx;
-}
-
-.tag-text {
-  font-style: normal;
-  font-weight: 400;
-  font-size: 24rpx;
-  line-height: 32rpx;
-  display: flex;
-  align-items: center;
-  color: #60718b;
-}
-
-/* 白色按钮样式 */
-.config-btn-white {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0 16rpx;
-  min-width: 128rpx;
-  width: auto;
-  height: 64rpx;
-  background: #ffffff;
-  border-radius: 16rpx;
-  border: 2rpx solid var(--color-primary);
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.btn-text-white {
-  font-style: normal;
-  font-weight: 400;
-  font-size: 28rpx;
-  line-height: 44rpx;
+  font-weight: 700;
+  font-size: 40rpx;
+  line-height: 60rpx;
   display: flex;
   align-items: center;
   text-align: center;
-  color: var(--color-primary);
+  color: #0c0c0c;
+  text-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
+  letter-spacing: 2rpx;
 }
 
-.config-btn-white:active {
-  transform: translateY(2rpx);
-  background: #f5f5f5;
+/*
+  修改位置6: 艺术字标签
+*/
+.agent-tag-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 24rpx;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10rpx);
+  -webkit-backdrop-filter: blur(10rpx);
+  border-radius: 100rpx;
+}
+
+.tag-text-art {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 24rpx;
+  line-height: 36rpx;
+  display: flex;
+  align-items: center;
+  color: #0c0c0c;
+  text-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
+}
+
+/*
+  修改位置7: 艺术字音色名称
+*/
+.agent-voice-art {
+  display: flex;
+  align-items: center;
+}
+
+.voice-text-art {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
 }
 
 .loading {
@@ -1044,63 +1053,6 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
 .empty-text {
   font-size: 28rpx;
   color: #717784;
-}
-
-.guide-highlight-wrapper {
-  position: relative;
-}
-
-.guide-highlight {
-  position: relative !important;
-  box-shadow: 0 12rpx 32rpx var(--color-primary-alpha-25), 0 0 0 4rpx var(--color-primary-alpha-20) !important;
-}
-
-.guide-pulse {
-  animation: guidePulse 1.6s ease-in-out infinite;
-}
-
-.square-guide-tooltip {
-  position: absolute;
-  bottom: calc(100% + 30rpx);
-  right: 0;
-  min-width: 400rpx;
-  max-width: 500rpx;
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 32rpx;
-  padding: 28rpx 32rpx;
-  box-shadow: 0 28rpx 72rpx var(--color-primary-alpha-25);
-  display: flex;
-  flex-direction: column;
-  gap: 18rpx;
-  z-index: 1005;
-}
-
-.square-guide-tooltip-text {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #1f2937;
-  line-height: 1.5;
-}
-
-.square-guide-tooltip-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.square-guide-tooltip-skip {
-  font-size: 24rpx;
-  color: var(--color-primary);
-}
-
-.square-guide-tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  right: 60rpx;
-  border-width: 12rpx 12rpx 0 12rpx;
-  border-style: solid;
-  border-color: rgba(255, 255, 255, 0.96) transparent transparent transparent;
-  filter: drop-shadow(0 8rpx 12rpx var(--color-primary-alpha-15));
 }
 
 .square-guide-popup {
@@ -1148,7 +1100,13 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
   border-radius: 999rpx;
   font-size: 26rpx;
   font-weight: 500;
-  box-shadow: 0 18rpx 40rpx var(--color-primary-alpha-35);
+  box-shadow: 0 18rpx 40rpx var(--color-primary-shadow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.square-guide-action:active {
+  transform: scale(0.95);
+  box-shadow: 0 12rpx 28rpx var(--color-primary-shadow);
 }
 
 .square-guide-skip {
@@ -1156,19 +1114,7 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
   color: #64748b;
 }
 
-@keyframes guidePulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(51, 92, 255, 0.45);
-  }
-  70% {
-    box-shadow: 0 0 0 20rpx rgba(51, 92, 255, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(51, 92, 255, 0);
-  }
-}
-
-/* 蒙层提示样式 - 保持原有样式 */
+/* 蒙层提示样式 */
 .overlay-guide {
   position: fixed;
   top: 0;
@@ -1320,6 +1266,13 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
   height: 56rpx;
   background: var(--color-primary);
   border-radius: 132rpx;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4rpx 12rpx var(--color-primary-shadow);
+}
+
+.overlay-guide-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2rpx 8rpx var(--color-primary-shadow);
 }
 
 .overlay-guide-btn-text {
@@ -1359,18 +1312,6 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.65);
-}
-
-.second-overlay-highlight {
-  position: fixed;
-  z-index: 2001;
-  background: #ffffff;
-  border-radius: 24rpx;
-  padding: 16rpx;
-}
-
-.second-overlay-highlight .highlight-btn {
-  margin: 0;
 }
 
 .second-overlay-card {
@@ -1469,6 +1410,13 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
   height: 56rpx;
   background: var(--color-primary);
   border-radius: 132rpx;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4rpx 12rpx var(--color-primary-shadow);
+}
+
+.second-overlay-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2rpx 8rpx var(--color-primary-shadow);
 }
 
 .second-overlay-btn-text {
@@ -1502,8 +1450,9 @@ function handleNavigateClick(agent: SquareAgent, index: number) {
   padding: 16rpx 32rpx;
   gap: 16rpx;
   min-height: 112rpx;
-  background: #ededf9;
+  background: var(--color-primary-bg);
   z-index: 101;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 
 .info-bar-icon {

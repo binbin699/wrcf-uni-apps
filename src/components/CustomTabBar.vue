@@ -63,18 +63,18 @@ const tabList = computed(() => [
     selectedIconPath: '/static/tab-device-active.png',
     text: $t('tabbar.device')
   },
-  {
-    pagePath: '/pages/index/index',
-    iconPath: '/static/tab-agent.png',
-    selectedIconPath: '/static/tab-agent-active.png',
-    text: $t('tabbar.agent')
-  },
-  {
-    pagePath: '/pages/square/super_square',
-    iconPath: '/static/tab-square.png',
-    selectedIconPath: '/static/tab-square-active.png',
-    text: $t('tabbar.square')
-  },
+  // {
+  //   pagePath: '/pages/index/index',
+  //   iconPath: '/static/tab-agent.png',
+  //   selectedIconPath: '/static/tab-agent-active.png',
+  //   text: $t('tabbar.agent')
+  // },
+  // {
+  //   pagePath: '/pages/square/super_square',
+  //   iconPath: '/static/tab-square.png',
+  //   selectedIconPath: '/static/tab-square-active.png',
+  //   text: $t('tabbar.square')
+  // },
   {
     pagePath: '/pages/profile/profile',
     iconPath: '/static/tab-profile.png',
@@ -130,7 +130,7 @@ function switchTab(index: number) {
   height: 100%;
   transition: all 0.2s ease;
   position: relative;
-  padding: 0 8rpx;
+  padding: 0 4rpx;
 
   &.active {
     .tabbar-text {

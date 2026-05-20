@@ -2,7 +2,7 @@
     "name" : "九宝智能",
     "appid" : "__UNI__3F8A11F",
     "description" : "%app.wrcf%",
-    "versionName" : "1.0.1",
+    "versionName" : "1.0.0",
     "versionCode" : 101072,
     "transformPx" : false,
     "app-plus" : {
@@ -144,7 +144,7 @@
                         "clientid" : "668197306109-hju8pngu20hqve9f0ee0bmq3ho7cmh9o.apps.googleusercontent.com"
                     },
                     "weixin" : {
-                        "appid" : "wxda3a97fbe2ab02ea",
+                        "appid" : "wx5733f1e68c22b24a",
                         "UniversalLinks" : "https://mengdiantansuo.com.cn/"
                     },
                     "apple" : {
@@ -197,7 +197,7 @@
     },
     "quickapp" : {},
     "mp-weixin" : {
-        "appid" : "wx888aaf67e7fa9643",
+        "appid" : "wx5733f1e68c22b24a",
         "setting" : {
             "urlCheck" : false,
             "es6" : true,
@@ -227,7 +227,7 @@
     "fallbackLocale" : "en",
     "app-harmony" : {
         "distribute" : {
-            "bundleName" : "com.qiniu.linx",
+            "bundleName" : "com.jiubaozhinengweir.app",
             "icons" : {
                 "foreground" : "src/static/logo.png",
                 "background" : "src/static/logo-white.png"
@@ -235,6 +235,11 @@
             "splashScreens" : {
                 "startWindowIcon" : "src/static/logo.png"
             }
+        }
+    },
+    "mp-harmony" : {
+        "distribute" : {
+            "bundleName" : "com.jiubaozhinengweir.app"
         }
     }
 }

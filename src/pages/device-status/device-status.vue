@@ -18,7 +18,6 @@
     <view class="custom-navbar">
       <view class="navbar-status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="navbar-content" :style="{ height: navBarHeight + 'px' }">
-        <!-- 切换设备按钮 - 仅当有多个设备时显示 -->
         <view
             class="switch-device-btn"
             v-if="deviceList.length > 1"
@@ -72,61 +71,94 @@
         <text class="loading-text">{{ $t('common.loading') }}</text>
       </view>
 
-      <!-- 无设备状态 - 新设计的四个模块布局 -->
-      <view class="welcome-guide" v-else-if="!currentDevice">
-        <!-- 模块1: 未绑定状态卡片 -->
+      <!-- 内容布局 -->
+      <view v-else class="content-layout">
+        <!-- 顶部：绑定状态卡片 -->
         <view class="module-bind-status">
           <view class="bind-card">
             <image class="brand-logo" src="/static/logo.jpg" mode="aspectFit" />
             <view class="bind-right">
-              <text class="status-tip">您还没绑定机器人</text>
-              <view class="add-options">
-                <view class="add-btn" @click="handleAddDeviceQrcode">
-                  <text class="add-text">扫码添加</text>
+              <!-- 无设备 -->
+              <template v-if="!currentDevice">
+                <text class="status-tip unbound">您还没绑定机器人</text>
+                <view class="add-options">
+                  <view class="add-btn" @click="handleAddDeviceQrcode">
+                    <text class="add-text">扫码添加</text>
+                  </view>
+                  <view class="add-btn" @click="handleAddDeviceBluetooth">
+                    <text class="add-text">蓝牙添加</text>
+                  </view>
                 </view>
-                <view class="add-btn" @click="handleAddDeviceBluetooth">
-                  <text class="add-text">蓝牙添加</text>
+              </template>
+
+              <!-- 有设备无智能体 -->
+              <template v-else-if="!boundAgent">
+                <text class="status-tip bound">您已绑定设备</text>
+                <view class="device-info-row">
+                  <text class="device-number">{{ currentDevice.deviceName || $t('device_status.unknown_device') }}</text>
                 </view>
-              </view>
+                <view class="no-agent-hint">
+                  <text class="no-agent-hint-text">{{ $t('device_status.no_agent_title') }}</text>
+                  <view class="no-agent-bind-btn-inline" @click="handleGoToSquare">
+                    <text class="no-agent-bind-btn-text">{{ $t('device_status.go_to_square_bind') }}</text>
+                  </view>
+                </view>
+              </template>
+
+              <!-- 有设备有智能体 -->
+              <template v-else>
+                <text class="status-tip bound">您已绑定智能体</text>
+                <view class="device-info-row">
+                  <text class="device-number">{{ currentDevice.deviceName || $t('device_status.unknown_device') }}</text>
+                </view>
+                <view class="agent-intro" @click.stop="handleAgentClick">
+                  <text class="agent-intro-text">{{ boundAgent.agentName }}</text>
+                  <text class="agent-intro-desc">{{ boundAgent.config?.systemPrompt || $t('device_status.no_description') }}</text>
+                </view>
+              </template>
             </view>
           </view>
         </view>
 
-        <!-- 模块2: 四个功能入口 -->
+        <!-- 中部：4个功能入口 -->
         <view class="module-functions">
           <view class="func-grid">
             <view class="func-item" @click="goToSquare">
-              <image class="func-icon" src="/static/vx.jpg" mode="aspectFit" />
+              <image class="func-icon" src="@/img/2.png" mode="aspectFit" />
               <text class="func-name">智能体广场</text>
             </view>
             <view class="func-item" @click="goToCustomAgent">
-              <image class="func-icon" src="/static/vx.jpg" mode="aspectFit" />
-              <text class="func-name">自定义智能体</text>
+              <image class="func-icon" src="@/img/1.png" mode="aspectFit" />
+              <text class="func-name">创建智能体</text>
             </view>
             <view class="func-item" @click="goToVoiceManage">
-              <image class="func-icon" src="/static/vx.jpg" mode="aspectFit" />
+              <image class="func-icon" src="@/img/3.png" mode="aspectFit" />
               <text class="func-name">音色管理</text>
             </view>
             <view class="func-item" @click="goToVoiceClone">
-              <image class="func-icon" src="/static/vx.jpg" mode="aspectFit" />
+              <image class="func-icon" src="@/img/4.png" mode="aspectFit" />
               <text class="func-name">音色复刻</text>
             </view>
           </view>
         </view>
 
-        <!-- 模块3: 玩法视频 & 九宝攻略 -->
+        <!-- 底部：玩法视频 + 九宝攻略 + 玩法提示 -->
         <view class="module-resources">
           <view class="resource-card" @click="goToVideoPlaylist">
             <view class="card-header">
               <text class="card-title">玩法视频</text>
-              <text class="card-more">九宝攻略</text>
+            </view>
+            <image class="cover-img" src="/static/logo.jpg" mode="aspectFill" />
+          </view>
+          <view class="resource-card" @click="goToGuidePage">
+            <view class="card-header">
+              <text class="card-title">九宝攻略</text>
             </view>
             <image class="cover-img" src="/static/logo.jpg" mode="aspectFill" />
           </view>
         </view>
 
-        <!-- 模块4: 预留空白区 -->
-        <!-- 模块4: 玩法提示列表（占剩余高度）-->
+        <!-- 玩法提示 -->
         <view class="module-tips">
           <view class="tips-header">
             <text class="tips-title">玩法提示</text>
@@ -137,7 +169,7 @@
           </view>
           <scroll-view class="tips-list" scroll-y v-if="displayTips.length > 0">
             <view class="tip-item" v-for="(tip, index) in displayTips" :key="index">
-              <text class="tip-icon">{{ tip.icon || '🎮' }}</text>
+              <text class="tip-icon">{{ tip.icon }}</text>
               <text class="tip-content">{{ tip.content || tip }}</text>
             </view>
           </scroll-view>
@@ -146,95 +178,6 @@
           </view>
           <view class="tips-empty" v-else>
             <text class="tips-empty-text">暂无玩法提示</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 有设备状态 -->
-      <view class="device-content" v-else>
-        <!-- 设备卡片 -->
-        <view class="device-card">
-          <view class="device-card-content">
-            <text class="device-name">
-              {{ currentDevice.deviceName || $t('device_status.unknown_device') }}
-            </text>
-            <view class="device-edit-btn" @click.stop="showEditNamePopup">
-              <image class="edit-icon" src="/static/icons/icon-edit.svg" mode="aspectFit"></image>
-            </view>
-          </view>
-        </view>
-
-        <!-- 当前智能体区域 -->
-        <view class="agent-section" v-if="boundAgent">
-          <view class="agent-card-container">
-            <view class="agent-card">
-              <view class="agent-avatar" @click.stop="handleAgentClick">
-                <view class="avatar-bg">
-                  <text class="avatar-text">{{ getAvatarText(boundAgent.agentName) }}</text>
-                </view>
-              </view>
-              <view class="agent-info">
-                <view class="agent-name-row">
-                  <view class="agent-name-wrapper" @click.stop="handleAgentClick">
-                    <text class="agent-name">{{ boundAgent.agentName }}</text>
-                    <view class="agent-arrow" v-if="!isPublicAgent">
-                      <image src="/static/icons/right-arrow.svg" mode="aspectFit"></image>
-                    </view>
-                  </view>
-                </view>
-                <view class="agent-tags" @click.stop="handleAgentClick">
-                  <text class="agent-tag">
-                    {{ boundAgent.config?.language || $t('device_status.default_language') }}
-                  </text>
-                  <view class="agent-tag-divider"></view>
-                  <text class="agent-tag">
-                    {{ boundAgent.config?.voiceName || $t('device_status.default_voice') }}
-                  </text>
-                  <view class="agent-tag-divider"></view>
-                  <text class="agent-tag">
-                    {{ boundAgent.config?.llmModelName || $t('device_status.default_llm') }}
-                  </text>
-                </view>
-                <view class="agent-divider"></view>
-                <text
-                    class="agent-desc"
-                    :class="{ 'is-expanded': isDescExpanded }"
-                    @click.stop="toggleDescExpand">
-                  {{ boundAgent.config?.systemPrompt || $t('device_status.no_description') }}
-                </text>
-              </view>
-            </view>
-            <view class="agent-section-footer">
-              <view class="agent-section-header">
-                <image
-                    class="agent-section-icon"
-                    src="/static/icons/icon-agent.svg"
-                    mode="aspectFit"></image>
-                <text class="agent-section-title">{{ $t('device_status.current_agent') }}</text>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <!-- 未绑定智能体卡片 -->
-        <view class="no-agent-card" v-else>
-          <view class="no-agent-info">
-            <text class="no-agent-title">{{ $t('device_status.no_agent_title') }}</text>
-            <text class="no-agent-desc">{{ $t('device_status.no_agent_desc') }}</text>
-            <view class="no-agent-bind-btn" @click="handleGoToSquare">
-              <text class="no-agent-bind-btn-text">
-                {{ $t('device_status.go_to_square_bind') }}
-              </text>
-            </view>
-          </view>
-          <view class="no-agent-icon-group">
-            <view class="no-agent-icon-card no-agent-icon-card--back"></view>
-            <view class="no-agent-icon-card no-agent-icon-card--front">
-              <image
-                  class="no-agent-icon-logo"
-                  src="/static/icons/icon-nobound-device.png"
-                  mode="aspectFit" />
-            </view>
           </view>
         </view>
       </view>
@@ -317,14 +260,13 @@ import {
 import CustomTabBar from '@/components/CustomTabBar.vue';
 import { useUserStore } from '@/store';
 import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
-// 在 script 中添加导入
 import { gameTipApi } from '@/api/index';
 
-// 添加玩法提示相关状态
+// 玩法提示相关状态
 const tipsLoading = ref(false);
-const allTips = ref<string[]>([]);  // 存储所有提示
-const currentTipIndex = ref(0);      // 当前显示的起始索引
-const TIPS_PER_PAGE = 5;              // 每页显示5条
+const allTips = ref<string[]>([]);
+const currentTipIndex = ref(0);
+const TIPS_PER_PAGE = 5;
 
 // 计算当前显示的提示
 const displayTips = computed(() => {
@@ -336,38 +278,32 @@ const displayTips = computed(() => {
 
 // 加载玩法提示
 const loadGameTips = async () => {
+  if (tipsLoading.value) return; // 防止重复加载
+
   tipsLoading.value = true;
   try {
     const res = await gameTipApi.getAllTips();
     console.log('[玩法提示] 完整响应:', res);
 
-    // 适配响应格式: { code: 200, data: [...] }
     if (res && res.code === 200 && res.data && Array.isArray(res.data)) {
       allTips.value = res.data;
       currentTipIndex.value = 0;
       console.log('[玩法提示] 加载成功，共', allTips.value.length, '条提示');
-    }
-    // 适配响应格式: { code: 1000, data: [...] }
-    else if (res && res.code === 1000 && res.data && Array.isArray(res.data)) {
+    } else if (res && res.code === 1000 && res.data && Array.isArray(res.data)) {
       allTips.value = res.data;
       currentTipIndex.value = 0;
       console.log('[玩法提示] 加载成功(code:1000)，共', allTips.value.length, '条提示');
-    }
-    // 适配直接返回数组的情况
-    else if (res && Array.isArray(res)) {
+    } else if (res && Array.isArray(res)) {
       allTips.value = res;
       currentTipIndex.value = 0;
       console.log('[玩法提示] 加载成功(直接数组)，共', allTips.value.length, '条提示');
-    }
-    else {
+    } else {
       console.warn('[玩法提示] 数据格式异常:', res);
-      // 使用默认数据
       allTips.value = getDefaultTips();
       currentTipIndex.value = 0;
     }
   } catch (error) {
     console.error('[玩法提示] 加载失败:', error);
-    // 使用默认数据
     allTips.value = getDefaultTips();
     currentTipIndex.value = 0;
   } finally {
@@ -375,7 +311,7 @@ const loadGameTips = async () => {
   }
 };
 
-// 默认玩法提示（后备数据）
+// 默认玩法提示
 const getDefaultTips = (): string[] => {
   return [
     "🎮 K宝，来玩成语接龙吧！我说\"一帆风顺\"，你接下一个～",
@@ -405,12 +341,11 @@ const getDefaultTips = (): string[] => {
     "💡 K宝，给我讲解这个知识点，用最简单易懂的方式"
   ];
 };
+
 // 换一换
 const handleRefreshTips = () => {
   if (allTips.value.length === 0) return;
-
   let nextIndex = currentTipIndex.value + TIPS_PER_PAGE;
-  // 如果超出范围，回到开头
   if (nextIndex >= allTips.value.length) {
     nextIndex = 0;
   }
@@ -736,7 +671,6 @@ const handleGoToSquare = () => {
   });
 };
 
-// 模块2 功能入口
 const goToSquare = () => {
   uni.switchTab({
     url: PageMap[Pages.Super_square].url
@@ -767,6 +701,12 @@ const goToVideoPlaylist = () => {
   });
 };
 
+const goToGuidePage = () => {
+  uni.navigateTo({
+    url: '/pages/guide/tutorial-list'
+  });
+};
+
 onShow(async () => {
   uni.hideTabBar({ animation: false });
   isNavigating.value = false;
@@ -777,9 +717,9 @@ onShow(async () => {
   }
 
   await loadDevices();
-  if (!currentDevice.value) {
-    await loadGameTips();
-  }
+
+  // 修复：无论是否有设备，都加载玩法提示
+  await loadGameTips();
 
   if (shouldRedirect && deviceList.value.length > 0) {
     uni.switchTab({
@@ -1033,11 +973,15 @@ uni.$on('deviceStatusRefresh', () => {
   color: #60718b;
 }
 
-.welcome-guide {
+// ========== 内容布局 ==========
+
+.content-layout {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
+
+// ========== 绑定状态模块 ==========
 
 .module-bind-status {
   min-height: 200rpx;
@@ -1067,14 +1011,67 @@ uni.$on('deviceStatusRefresh', () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 16rpx;
 }
 
 .status-tip {
   font-size: 28rpx;
   font-weight: 500;
-  color: #1e293b;
   letter-spacing: 1rpx;
+
+  &.unbound {
+    color: #1e293b;
+  }
+
+  &.bound {
+    color: #1e293b;
+  }
+}
+
+.device-info-row {
+  margin-top: 4rpx;
+}
+
+.device-number {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--color-primary);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.agent-intro {
+  margin-top: 4rpx;
+}
+
+.agent-intro-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #212730;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.agent-intro-desc {
+  font-size: 24rpx;
+  color: #60718b;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+.no-agent-hint {
+  margin-top: 4rpx;
+}
+
+.no-agent-hint-text {
+  font-size: 24rpx;
+  color: #60718b;
+  display: block;
+  margin-bottom: 12rpx;
 }
 
 .add-options {
@@ -1099,6 +1096,8 @@ uni.$on('deviceStatusRefresh', () => {
   font-weight: 500;
   color: #3b82f6;
 }
+
+// ========== 功能入口模块 ==========
 
 .module-functions {
   min-height: 180rpx;
@@ -1144,11 +1143,16 @@ uni.$on('deviceStatusRefresh', () => {
   text-align: center;
 }
 
+// ========== 资源卡片模块 ==========
+
 .module-resources {
+  display: flex;
+  gap: 16rpx;
   min-height: 180rpx;
 }
 
 .resource-card {
+  flex: 1;
   background: white;
   border-radius: 32rpx;
   padding: 20rpx 24rpx;
@@ -1178,12 +1182,6 @@ uni.$on('deviceStatusRefresh', () => {
   color: #0f172a;
 }
 
-.card-more {
-  font-size: 24rpx;
-  color: #3b82f6;
-  font-weight: 500;
-}
-
 .cover-img {
   width: 100%;
   height: 120rpx;
@@ -1192,318 +1190,120 @@ uni.$on('deviceStatusRefresh', () => {
   background: #eef2ff;
 }
 
-.module-reserved {
-  min-height: 80rpx;
-  background: transparent;
-}
+// ========== 玩法提示模块 ==========
 
-.device-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.device-card {
-  width: 100%;
-  height: 72px;
-  background: linear-gradient(274.82deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
-  box-shadow: 0px 0px 12px rgba(91, 118, 248, 0.06);
-  border-radius: 16px;
-  position: relative;
-  overflow: hidden;
-}
-
-.device-card-content {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  height: 100%;
-  position: relative;
-  z-index: 1;
-}
-
-.device-name {
-  font-size: 20px;
-  font-weight: 500;
-  color: #ffffff;
-  line-height: 36px;
+.module-tips {
   flex: 1;
+  background: white;
+  border-radius: 32rpx;
+  margin-top: 20rpx;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+  min-height: 300rpx;
 }
 
-.device-edit-btn {
-  width: 16px;
-  height: 16px;
+.tips-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 28rpx 16rpx;
+  border-bottom: 1rpx solid #f0f2f5;
+}
+
+.tips-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.tips-refresh {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8rpx;
+  padding: 8rpx 16rpx;
+  background: #f1f5f9;
+  border-radius: 40rpx;
+  transition: all 0.2s ease;
+
+  &:active {
+    background: #e2e8f0;
+    transform: scale(0.96);
+  }
 }
 
-.edit-icon {
-  width: 16px;
-  height: 16px;
+.tips-refresh-icon {
+  width: 28rpx;
+  height: 28rpx;
 }
 
-.agent-section {
+.tips-refresh-text {
+  font-size: 24rpx;
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.tips-list {
+  flex: 1;
+  padding: 16rpx 0 24rpx;
+  max-height: 500rpx;
+}
+
+.tip-item {
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 20rpx 28rpx;
+  border-bottom: 1rpx solid #f0f2f5;
+  transition: background 0.2s ease;
+
+  &:active {
+    background: #f8fafc;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
 }
 
-.agent-card-container {
-  display: flex;
-  flex-direction: column;
-  filter: drop-shadow(0px 0px 8px rgba(91, 118, 248, 0.05));
-}
-
-.agent-card {
-  display: flex;
-  flex-direction: row;
-  padding: 20px 16px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0px 0px 12px rgba(91, 118, 248, 0.06);
-  gap: 12px;
-}
-
-.agent-section-footer {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 0 16px 13px;
-  height: 70px;
-  margin-top: -26px;
-  background: #edf9ff;
-  border: 0.5px solid #d5dae2;
-  border-radius: 0 0 20px 20px;
-  box-sizing: border-box;
-  z-index: -1;
-}
-
-.agent-section-header {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-}
-
-.agent-section-icon {
-  width: 14px;
-  height: 14px;
-}
-
-.agent-section-title {
-  font-size: 14px;
-  color: #60718b;
-  line-height: 24px;
-}
-
-.agent-avatar {
+.tip-icon {
+  font-size: 32rpx;
   flex-shrink: 0;
 }
 
-.avatar-bg {
-  width: 44px;
-  height: 44px;
-  background: var(--color-info-bg);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar-text {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--color-primary);
-  line-height: 24px;
-  text-align: center;
-}
-
-.agent-info {
+.tip-content {
   flex: 1;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.tips-loading {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.agent-name-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.agent-name-wrapper {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-}
-
-.agent-name {
-  font-size: 18px;
-  font-weight: 500;
-  color: #212730;
-}
-
-.agent-arrow {
-  width: 16px;
-  height: 16px;
-  opacity: 0.8;
-
-  image {
-    width: 100%;
-    height: 100%;
-  }
-}
-
-.agent-tags {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  align-self: flex-start;
-  padding: 6px 12px;
-  background: var(--color-info-bg);
-  border-radius: 6px;
-  gap: 8px;
-  flex-wrap: wrap;
-  max-width: 100%;
-}
-
-.agent-tag {
-  font-size: 13px;
-  color: #36404f;
-}
-
-.agent-tag-divider {
-  width: 1px;
-  height: 8px;
-  background: #98a5b8;
-  opacity: 0.5;
-}
-
-.agent-divider {
-  width: 100%;
-  height: 1px;
-  background: #d5dae2;
-  margin: 8px 0;
-}
-
-.agent-desc {
-  font-size: 14px;
-  line-height: 22px;
-  color: #4b586d;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  overflow: hidden;
-
-  &.is-expanded {
-    -webkit-line-clamp: unset;
-    line-clamp: unset;
-  }
-}
-
-.no-agent-card {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 20px 16px;
-  background: linear-gradient(180deg, #f5f9ff 0%, #ecf4ff 46.48%, #f5f9ff 100%);
-  border-radius: 16px;
-  box-shadow: 0px 0px 12px 0px rgba(91, 118, 248, 0.06);
-  border: 0.5px solid var(--color-primary-bg);
-  min-height: 112px;
-  overflow: hidden;
-}
-
-.no-agent-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  padding-right: 96px;
-}
-
-.no-agent-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #212730;
-  line-height: 24px;
-  margin-bottom: 2px;
-}
-
-.no-agent-desc {
-  font-size: 14px;
-  color: #60718b;
-  line-height: 22px;
-  margin-bottom: 12px;
-}
-
-.no-agent-bind-btn {
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
-  min-height: 32px;
-  padding: 4px 20px;
-  background: var(--color-primary);
-  border-radius: 9999px;
-  align-self: flex-start;
-
-  &:active {
-    opacity: 0.85;
-  }
+  align-items: center;
+  padding: 60rpx;
 }
 
-.no-agent-bind-btn-text {
-  font-size: 14px;
-  font-weight: 500;
-  color: #ffffff;
-  line-height: 22px;
-  text-align: center;
+.tips-loading-text {
+  font-size: 26rpx;
+  color: #94a3b8;
 }
 
-.no-agent-icon-group {
-  position: absolute;
-  right: 26px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 72px;
-  height: 72px;
+.tips-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60rpx;
 }
 
-.no-agent-icon-card {
-  position: absolute;
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  top: 50%;
-  left: 50%;
-
-  &--back {
-    background: rgba(255, 255, 255, 0.5);
-    box-shadow: 0px 2px 8px 0px rgba(91, 118, 248, 0.1);
-    transform: translate(-50%, -50%) rotate(28.67deg);
-  }
-
-  &--front {
-    background: rgba(255, 255, 255, 0.85);
-    box-shadow: 0px 2px 8px 0px rgba(91, 118, 248, 0.12);
-    transform: translate(-50%, -50%) rotate(4.58deg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.tips-empty-text {
+  font-size: 26rpx;
+  color: #94a3b8;
 }
 
-.no-agent-icon-logo {
-  width: 51px;
-  height: 51px;
-}
+// ========== 弹窗样式 ==========
 
 .bottom-illustration {
   position: fixed;
@@ -1664,117 +1464,5 @@ uni.$on('deviceStatusRefresh', () => {
     width: 100%;
     height: 100%;
   }
-}
-
-// 模块4: 玩法提示列表
-.module-tips {
-  flex: 1;
-  background: white;
-  border-radius: 32rpx;
-  margin-top: 20rpx;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
-  min-height: 300rpx;
-}
-
-.tips-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24rpx 28rpx 16rpx;
-  border-bottom: 1rpx solid #f0f2f5;
-}
-
-.tips-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.tips-refresh {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 8rpx 16rpx;
-  background: #f1f5f9;
-  border-radius: 40rpx;
-  transition: all 0.2s ease;
-
-  &:active {
-    background: #e2e8f0;
-    transform: scale(0.96);
-  }
-}
-
-.tips-refresh-icon {
-  width: 28rpx;
-  height: 28rpx;
-}
-
-.tips-refresh-text {
-  font-size: 24rpx;
-  color: #3b82f6;
-  font-weight: 500;
-}
-
-.tips-list {
-  flex: 1;
-  padding: 16rpx 0 24rpx;
-  max-height: 500rpx;
-}
-
-.tip-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 16rpx;
-  padding: 20rpx 28rpx;
-  border-bottom: 1rpx solid #f0f2f5;
-  transition: background 0.2s ease;
-
-  &:active {
-    background: #f8fafc;
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.tip-icon {
-  font-size: 32rpx;
-  flex-shrink: 0;
-}
-
-.tip-content {
-  flex: 1;
-  font-size: 26rpx;
-  line-height: 1.5;
-  color: #334155;
-}
-
-.tips-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 60rpx;
-}
-
-.tips-loading-text {
-  font-size: 26rpx;
-  color: #94a3b8;
-}
-
-.tips-empty {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 60rpx;
-}
-
-.tips-empty-text {
-  font-size: 26rpx;
-  color: #94a3b8;
 }
 </style>

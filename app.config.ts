@@ -25,8 +25,8 @@ export default function getAppConfig(
   } else {
     // App 端根据版本选择服务器
     BASE_API_URL =
-      // appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
-      appEdition === 'intl' ? 'http://36.134.119.145:8000' : 'http://36.134.119.145:8000';
+      appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
+      // appEdition === 'intl' ? 'http://36.134.119.145:8000' : 'http://36.134.119.145:8000';
   }
 
   // 是否支持微信小程序手机号登录
@@ -77,9 +77,8 @@ export default function getAppConfig(
     platform === 'mp-weixin' ? '' : 'http://47.114.109.136:8008/privacy-policy.html';
 
   // 用户反馈邮箱（留空则不显示反馈入口，微信小程序不显示）
-  // 九宝：jubao@qiniu.com
-  // 萌点：luomiaoxia@szsmdt.cn
-  const FEEDBACK_EMAIL = platform === 'mp-weixin' ? '' : 'jubao@qiniu.com';
+  // 九宝：jiubao@qiniu.com
+  const FEEDBACK_EMAIL = platform === 'mp-weixin' ? '' : 'jiubao@qiniu.com';
 
   // 是否显示说明与教程（微信小程序不显示）
   const SHOW_INSTRUCTIONS_TUTORIALS = platform !== 'mp-weixin';
