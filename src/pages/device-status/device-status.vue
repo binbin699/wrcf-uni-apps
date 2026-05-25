@@ -80,35 +80,64 @@
           <!-- 文字区域 -->
           <view class="hero-content">
 
-            <view class="hero-title">
-              Hi，我是白泽 ✨
-            </view>
-
-            <view class="hero-desc">
-              你的专属AI小伙伴<br />
-              快去绑定，和我一起玩吧！
-            </view>
-
-            <!-- 未绑定 -->
-            <view v-if="!currentDevice" class="hero-btn-group">
-              <view class="btn primary" @click="handleAddDeviceQrcode">
-                扫码添加
+            <!-- 1. 未绑定设备 -->
+            <template v-if="!currentDevice">
+              <view class="hero-title">
+                Hi，我是白泽 ✨
               </view>
-              <view class="btn ghost" @click="handleAddDeviceBluetooth">
-                蓝牙添加
-              </view>
-            </view>
-
-            <!-- 已绑定 -->
-            <view v-else class="hero-bind">
-              <view class="device-name">
-                {{ currentDevice.deviceName || '我的设备' }}
+              <view class="hero-desc">
+                你的专属AI小伙伴<br />
+                快去绑定，和我一起玩吧！
               </view>
 
-              <view class="btn small primary" @click="handleAddDeviceQrcode">
-                再绑一个
+              <view class="hero-btn-group">
+                <view class="btn primary" @click="handleAddDeviceQrcode">
+                  扫码添加
+                </view>
+                <view class="btn ghost" @click="handleAddDeviceBluetooth">
+                  蓝牙添加
+                </view>
               </view>
-            </view>
+            </template>
+
+            <!-- 2. 有设备但没智能体 -->
+            <template v-else-if="!boundAgent">
+              <view class="hero-title">
+                已连接设备 🎉
+              </view>
+
+              <view class="hero-desc">
+                {{ currentDevice.deviceName || '我的设备' }} 已就绪<br />
+                去绑定一个智能体开始体验吧～
+              </view>
+
+              <view class="hero-btn-group">
+                <view class="btn primary" @click="goToSquare">
+                  去绑定智能体
+                </view>
+              </view>
+            </template>
+
+            <!-- 3. 已绑定智能体（重点修复） -->
+            <template v-else>
+              <view class="hero-title">
+                Hi，我是 {{ boundAgent.agentName || '你的AI助手' }} ✨
+              </view>
+
+              <view class="hero-desc">
+                {{ '很高兴为你服务～' }}
+              </view>
+
+              <view class="hero-bind">
+                <view class="device-name">
+                  {{ currentDevice.deviceName }}
+                </view>
+
+                <view class="btn small primary"  @click="goToSquare">
+                  再绑一个
+                </view>
+              </view>
+            </template>
 
             <!-- 白泽图 -->
             <image
@@ -422,7 +451,6 @@ const isPublicAgent = computed(() => boundAgent.value?.isPublic === 1);
 const showDeviceSelector = ref(false);
 const showEditName = ref(false);
 const editDeviceName = ref('');
-const isDescExpanded = ref(false);
 const showDeviceDropdown = ref(false);
 let loadDevicesVersion = 0;
 const pendingSetupRedirect = ref(false);
@@ -572,14 +600,6 @@ const loadBoundAgent = async (version?: number) => {
   }
 };
 
-const getAvatarText = (name: string) => {
-  return name ? name.charAt(0) : '?';
-};
-
-const toggleDescExpand = () => {
-  isDescExpanded.value = !isDescExpanded.value;
-};
-
 const handleAddDeviceQrcode = () => {
   pendingSetupRedirect.value = true;
   scanAndBind({
@@ -643,21 +663,6 @@ const handleSelectDevice = async (device: any) => {
   currentDevice.value = device;
   showDeviceSelector.value = false;
   await loadBoundAgent();
-};
-
-const handleAgentClick = () => {
-  if (boundAgent.value && boundAgent.value.agentId) {
-    if (isPublicAgent.value) {
-      uni.showToast({
-        title: $t('device_status.cannot_edit_public_agent'),
-        icon: 'none'
-      });
-      return;
-    }
-    uni.navigateTo({
-      url: `/pages/agent/edit?agentId=${boundAgent.value.agentId}`
-    });
-  }
 };
 
 const handleGoToSquare = () => {
@@ -979,53 +984,6 @@ uni.$on('deviceStatusRefresh', () => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-// ========== 绑定状态模块 ==========
-
-.module-bind-status {
-  min-height: 200rpx;
-}
-
-.bind-card {
-  background: white;
-  border-radius: 32rpx;
-  padding: 24rpx 28rpx;
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
-  box-sizing: border-box;
-}
-
-.brand-logo {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 28rpx;
-  background: #eef2ff;
-  flex-shrink: 0;
-  object-fit: cover;
-}
-
-.bind-right {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.status-tip {
-  font-size: 28rpx;
-  font-weight: 500;
-  letter-spacing: 1rpx;
-
-  &.unbound {
-    color: #1e293b;
-  }
-
-  &.bound {
-    color: #1e293b;
-  }
 }
 
 .device-info-row {
@@ -1515,6 +1473,7 @@ uni.$on('deviceStatusRefresh', () => {
   flex-direction: column;
   gap: 10rpx;
   margin-top: 10rpx;
+  align-items: flex-start;
 }
 
 .device-name {
@@ -1526,6 +1485,9 @@ uni.$on('deviceStatusRefresh', () => {
 .btn.small {
   padding: 10rpx 20rpx;
   font-size: 24rpx;
+  min-width: 120rpx;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .baize-img {
