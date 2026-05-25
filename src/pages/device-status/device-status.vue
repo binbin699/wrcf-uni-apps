@@ -73,70 +73,71 @@
 
       <!-- 内容布局 -->
       <view v-else class="content-layout">
-        <!-- 顶部：绑定状态卡片 -->
-        <view class="module-bind-status">
-          <view class="bind-card">
-            <image class="brand-logo" src="/static/logo.jpg" mode="aspectFit" />
-            <view class="bind-right">
-              <!-- 无设备 -->
-              <template v-if="!currentDevice">
-                <text class="status-tip unbound">您还没绑定机器人</text>
-                <view class="add-options">
-                  <view class="add-btn" @click="handleAddDeviceQrcode">
-                    <text class="add-text">扫码添加</text>
-                  </view>
-                  <view class="add-btn" @click="handleAddDeviceBluetooth">
-                    <text class="add-text">蓝牙添加</text>
-                  </view>
-                </view>
-              </template>
 
-              <!-- 有设备无智能体 -->
-              <template v-else-if="!boundAgent">
-                <text class="status-tip bound">您已绑定设备</text>
-                <view class="device-info-row">
-                  <text class="device-number">{{ currentDevice.deviceName || $t('device_status.unknown_device') }}</text>
-                </view>
-                <view class="no-agent-hint">
-                  <text class="no-agent-hint-text">{{ $t('device_status.no_agent_title') }}</text>
-                  <view class="no-agent-bind-btn-inline" @click="handleGoToSquare">
-                    <text class="no-agent-bind-btn-text">{{ $t('device_status.go_to_square_bind') }}</text>
-                  </view>
-                </view>
-              </template>
+        <!-- 顶部背景+文案+按钮 -->
+        <view class="top-hero">
 
-              <!-- 有设备有智能体 -->
-              <template v-else>
-                <text class="status-tip bound">您已绑定智能体</text>
-                <view class="device-info-row">
-                  <text class="device-number">{{ currentDevice.deviceName || $t('device_status.unknown_device') }}</text>
-                </view>
-                <view class="agent-intro" @click.stop="handleAgentClick">
-                  <text class="agent-intro-text">{{ boundAgent.agentName }}</text>
-                  <text class="agent-intro-desc">{{ boundAgent.config?.systemPrompt || $t('device_status.no_description') }}</text>
-                </view>
-              </template>
+          <!-- 文字区域 -->
+          <view class="hero-content">
+
+            <view class="hero-title">
+              Hi，我是白泽 ✨
             </view>
+
+            <view class="hero-desc">
+              你的专属AI小伙伴<br />
+              快去绑定，和我一起玩吧！
+            </view>
+
+            <!-- 未绑定 -->
+            <view v-if="!currentDevice" class="hero-btn-group">
+              <view class="btn primary" @click="handleAddDeviceQrcode">
+                扫码添加
+              </view>
+              <view class="btn ghost" @click="handleAddDeviceBluetooth">
+                蓝牙添加
+              </view>
+            </view>
+
+            <!-- 已绑定 -->
+            <view v-else class="hero-bind">
+              <view class="device-name">
+                {{ currentDevice.deviceName || '我的设备' }}
+              </view>
+
+              <view class="btn small primary" @click="handleAddDeviceQrcode">
+                再绑一个
+              </view>
+            </view>
+
+            <!-- 白泽图 -->
+            <image
+                src="@/img/baize.png"
+                class="baize-img"
+                mode="aspectFit"
+            />
+
           </view>
+
         </view>
 
         <!-- 中部：4个功能入口 -->
         <view class="module-functions">
           <view class="func-grid">
             <view class="func-item" @click="goToSquare">
-              <image class="func-icon" src="@/img/2.png" mode="aspectFit" />
+              <image class="func-icon" src="@/img/img_2.png" mode="aspectFit" />
               <text class="func-name">智能体广场</text>
             </view>
             <view class="func-item" @click="goToCustomAgent">
-              <image class="func-icon" src="@/img/1.png" mode="aspectFit" />
+              <image class="func-icon" src="@/img/img_3.png" mode="aspectFit" />
               <text class="func-name">创建智能体</text>
             </view>
             <view class="func-item" @click="goToVoiceManage">
-              <image class="func-icon" src="@/img/3.png" mode="aspectFit" />
+              <image class="func-icon" src="@/img/img_4.png" mode="aspectFit" />
               <text class="func-name">音色管理</text>
             </view>
             <view class="func-item" @click="goToVoiceClone">
-              <image class="func-icon" src="@/img/4.png" mode="aspectFit" />
+              <image class="func-icon" src="@/img/img_5.png" mode="aspectFit" />
               <text class="func-name">音色复刻</text>
             </view>
           </view>
@@ -145,16 +146,10 @@
         <!-- 底部：玩法视频 + 九宝攻略 + 玩法提示 -->
         <view class="module-resources">
           <view class="resource-card" @click="goToVideoPlaylist">
-            <view class="card-header">
-              <text class="card-title">玩法视频</text>
-            </view>
-            <image class="cover-img" src="/static/logo.jpg" mode="aspectFill" />
+            <image class="full-img" src="@/img/img.png" mode="aspectFill" />
           </view>
           <view class="resource-card" @click="goToGuidePage">
-            <view class="card-header">
-              <text class="card-title">九宝攻略</text>
-            </view>
-            <image class="cover-img" src="/static/logo.jpg" mode="aspectFill" />
+            <image class="full-img" src="@/img/img_1.png" mode="aspectFill" />
           </view>
         </view>
 
@@ -741,18 +736,23 @@ uni.$on('deviceStatusRefresh', () => {
 <style lang="scss" scoped>
 .device-status-container {
   min-height: 100vh;
-  position: relative;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
   overflow: hidden;
+
+  background-image: url('@/img/bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .gradient-bg {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  background: linear-gradient(180deg, var(--color-primary-gradient-start) 0%, var(--color-primary-gradient-mid) 22.97%, #fcfdff 100%);
-  z-index: 0;
+  display: none;
 }
 
 .custom-navbar {
@@ -1153,20 +1153,19 @@ uni.$on('deviceStatusRefresh', () => {
 
 .resource-card {
   flex: 1;
-  background: white;
   border-radius: 32rpx;
-  padding: 20rpx 24rpx;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  overflow: hidden; // ⭐必须加
+  padding: 0;       // ⭐去掉内边距
+  background: transparent;
   box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
-  transition: all 0.2s;
+}
 
-  &:active {
-    background: #fefefe;
-    transform: scale(0.99);
-  }
+
+.full-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 24rpx;
+  object-fit: cover;
 }
 
 .card-header {
@@ -1180,14 +1179,6 @@ uni.$on('deviceStatusRefresh', () => {
   font-size: 28rpx;
   font-weight: 600;
   color: #0f172a;
-}
-
-.cover-img {
-  width: 100%;
-  height: 120rpx;
-  border-radius: 24rpx;
-  object-fit: cover;
-  background: #eef2ff;
 }
 
 // ========== 玩法提示模块 ==========
@@ -1215,20 +1206,22 @@ uni.$on('deviceStatusRefresh', () => {
 .tips-title {
   font-size: 30rpx;
   font-weight: 600;
-  color: #1e293b;
+  color: #10b981;
 }
 
 .tips-refresh {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8rpx;
   padding: 8rpx 16rpx;
-  background: #f1f5f9;
+  background: #ecfdf5;
   border-radius: 40rpx;
   transition: all 0.2s ease;
+  line-height: 1;
 
   &:active {
-    background: #e2e8f0;
+    background: #d1fae5;
     transform: scale(0.96);
   }
 }
@@ -1240,7 +1233,7 @@ uni.$on('deviceStatusRefresh', () => {
 
 .tips-refresh-text {
   font-size: 24rpx;
-  color: #3b82f6;
+  color: #10b981;
   font-weight: 500;
 }
 
@@ -1464,5 +1457,87 @@ uni.$on('deviceStatusRefresh', () => {
     width: 100%;
     height: 100%;
   }
+}
+
+/* 内容区域（控制在左侧，避免压住白泽） */
+.hero-content {
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+/* 标题 */
+.hero-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* 描述 */
+.hero-desc {
+  font-size: 26rpx;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* 按钮组 */
+.hero-btn-group {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 12rpx;
+}
+
+/* 按钮 */
+.btn {
+  padding: 16rpx 28rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  text-align: center;
+}
+
+/* 主按钮 */
+.btn.primary {
+  background: linear-gradient(135deg, #34d399, #10b981);
+  color: #fff;
+}
+
+/* 次按钮 */
+.btn.ghost {
+  background: rgba(255,255,255,0.7);
+  color: #10b981;
+  border: 1px solid #a7f3d0;
+}
+
+/* 已绑定 */
+.hero-bind {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  margin-top: 10rpx;
+}
+
+.device-name {
+  font-size: 28rpx;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.btn.small {
+  padding: 10rpx 20rpx;
+  font-size: 24rpx;
+}
+
+.baize-img {
+  position: fixed;
+  right: 20rpx;
+  top: calc(var(--status-bar-height, 44px) + 10rpx);
+  width: 460rpx;
+  height: 460rpx;
+  z-index: 10;
+  pointer-events: none;
+  transform: translateX(50rpx);
+
+  mix-blend-mode: multiply;
 }
 </style>
