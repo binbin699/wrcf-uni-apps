@@ -3,16 +3,16 @@
     <view class="custom-tabbar" :style="{ paddingBottom: finalPaddingBottom }">
       <view class="tabbar-inner">
         <view
-          v-for="(item, index) in tabList"
-          :key="index"
-          class="tabbar-item"
-          :class="{ active: current === index }"
-          @click="switchTab(index)">
+            v-for="(item, index) in tabList"
+            :key="index"
+            class="tabbar-item"
+            :class="{ active: currentTab === index }"
+            @click="switchTab(index)">
           <view class="tabbar-icon-wrapper">
             <image
-              class="tabbar-icon"
-              :src="current === index ? item.selectedIconPath : item.iconPath"
-              mode="aspectFit" />
+                class="tabbar-icon"
+                :src="currentTab === index ? item.selectedIconPath : item.iconPath"
+                mode="aspectFit" />
           </view>
           <text class="tabbar-text">{{ item.text }}</text>
         </view>
@@ -22,40 +22,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 const { t: $t } = useI18n();
 
-const props = withDefaults(
-  defineProps<{
-    current?: number;
-  }>(),
-  {
-    current: 0
-  }
-);
+// 内部维护当前选中的索引
+const currentTab = ref(0);
 
-const emit = defineEmits<{
-  (e: 'change', index: number): void;
-}>();
+// 根据当前页面路径获取对应的 tab 索引
+function getCurrentTabIndex(): number {
+  const pages = getCurrentPages();
+  if (pages.length === 0) return 0;
 
-// 获取安全区域底部高度并区分平台
-const finalPaddingBottom = ref('0px');
-onMounted(() => {
-  const systemInfo = uni.getSystemInfoSync();
-  const isAndroid = systemInfo.platform === 'android';
-  const bottom = systemInfo.safeAreaInsets?.bottom || 0;
+  const currentPage = pages[pages.length - 1];
+  const path = '/' + currentPage.route;
 
-  if (isAndroid) {
-    // 关键：安卓端如果返回很小（一般是0），强制给 54rpx 避开手势条；如果不为 0，在原有基础上补一点
-    finalPaddingBottom.value = bottom < 5 ? '54rpx' : `calc(${bottom}px + 20rpx)`;
-  } else {
-    // iOS 端：如果 bottom 为很小（一般是0，旧版 iPhone），给一个基础高度；如果是全面屏，保持原样
-    finalPaddingBottom.value = bottom < 5 ? '28rpx' : `${bottom}px`;
-  }
-});
+  const index = tabList.value.findIndex(item => item.pagePath === path);
+  return index !== -1 ? index : 0;
+}
 
-// Tab 配置：设备(0) → 智能体(1) → 广场(2) → 我的(3)
+// 更新当前 tab
+function updateCurrentTab() {
+  currentTab.value = getCurrentTabIndex();
+}
+
+// Tab 配置
 const tabList = computed(() => [
   {
     pagePath: '/pages/device-status/device-status',
@@ -63,18 +54,6 @@ const tabList = computed(() => [
     selectedIconPath: '/static/tab-device-active.png',
     text: $t('tabbar.device')
   },
-  // {
-  //   pagePath: '/pages/index/index',
-  //   iconPath: '/static/tab-agent.png',
-  //   selectedIconPath: '/static/tab-agent-active.png',
-  //   text: $t('tabbar.agent')
-  // },
-  // {
-  //   pagePath: '/pages/square/super_square',
-  //   iconPath: '/static/tab-square.png',
-  //   selectedIconPath: '/static/tab-square-active.png',
-  //   text: $t('tabbar.square')
-  // },
   {
     pagePath: '/pages/profile/profile',
     iconPath: '/static/tab-profile.png',
@@ -83,17 +62,70 @@ const tabList = computed(() => [
   }
 ]);
 
-// 切换 tab - 直接跳转，新页面会使用正确的 current 值
+// 切换 tab
 function switchTab(index: number) {
-  if (props.current === index) return;
-
-  emit('change', index);
+  if (currentTab.value === index) return;
 
   const item = tabList.value[index];
   uni.switchTab({
-    url: item.pagePath
+    url: item.pagePath,
+    success: () => {
+      // 跳转成功后立即更新高亮
+      currentTab.value = index;
+    },
+    fail: (err) => {
+      console.error('switchTab 失败:', err);
+    }
   });
 }
+
+// 获取安全区域底部高度
+const finalPaddingBottom = ref('0px');
+onMounted(() => {
+  const systemInfo = uni.getSystemInfoSync();
+  const isAndroid = systemInfo.platform === 'android';
+  const bottom = systemInfo.safeAreaInsets?.bottom || 0;
+
+  if (isAndroid) {
+    finalPaddingBottom.value = bottom < 5 ? '54rpx' : `calc(${bottom}px + 20rpx)`;
+  } else {
+    finalPaddingBottom.value = bottom < 5 ? '28rpx' : `${bottom}px`;
+  }
+
+  // 初始化当前 tab
+  updateCurrentTab();
+});
+
+// 使用 uni-app 生命周期，在页面显示时更新
+// 需要在每个使用该组件的页面中调用，或者使用全局方式
+// 更简单的方式：监听路由变化
+let observer: any = null;
+
+// 方案：使用定时器监听页面栈变化（简单可靠）
+let timer: any = null;
+function startWatchPages() {
+  if (timer) clearInterval(timer);
+  timer = setInterval(() => {
+    const newIndex = getCurrentTabIndex();
+    if (newIndex !== -1 && currentTab.value !== newIndex) {
+      currentTab.value = newIndex;
+    }
+  }, 100);
+}
+
+onMounted(() => {
+  // ... 上面的代码 ...
+
+  // 启动监听
+  startWatchPages();
+});
+
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -103,14 +135,13 @@ function switchTab(index: number) {
   left: 0;
   right: 0;
   z-index: 999;
-  pointer-events: none; /* 防止遮挡页面底部非点击区域 */
+  pointer-events: none;
 }
 
 .custom-tabbar {
   pointer-events: auto;
   background: #ffffff;
   box-shadow: 0 -8rpx 48rpx rgba(0, 0, 0, 0.08);
-  /* 移除这里的固定 calc，改由 JS 动态计算注入，防止 iOS 过高 */
 }
 
 .tabbar-inner {
@@ -122,7 +153,7 @@ function switchTab(index: number) {
 
 .tabbar-item {
   flex: 1;
-  min-width: 0; /* 允许 flex 子元素收缩 */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;

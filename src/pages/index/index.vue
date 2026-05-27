@@ -457,7 +457,7 @@ function handleBluetoothSetup() {
   justify-content: center;
   gap: 8px;
   padding: 16px 19px;
-  background: var(--color-primary);
+  background: #10b981;
   border-radius: 12px;
   box-sizing: border-box;
   z-index: 998;

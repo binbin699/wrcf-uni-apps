@@ -883,9 +883,9 @@ async function handleApplyTemplate(template: any) {
 
 .use-template-btn {
   font-size: 26rpx;
-  color: var(--color-primary);
+  color: #FFFFFF;
   margin-left: 16rpx;
-  background: var(--color-primary-bg);
+  background: #10b981;
   padding: 8rpx 20rpx;
   border-radius: 12rpx;
   font-weight: 500;
@@ -899,7 +899,7 @@ async function handleApplyTemplate(template: any) {
   width: 100%;
   height: 96rpx;
   border-radius: 24rpx;
-  background: var(--color-primary);
+  background: #059669;
   color: #ffffff !important;
   font-size: 32rpx;
   font-weight: 600;
@@ -913,13 +913,13 @@ async function handleApplyTemplate(template: any) {
 }
 .create-btn[disabled],
 .create-btn[loading] {
-  background: var(--color-primary-disabled) !important;
+  background: #10b981 !important;
   color: rgba(255, 255, 255, 0.8) !important;
   opacity: 1;
 }
 .create-btn:active {
   transform: scale(0.98);
-  background: var(--color-primary);
+  background: #059669 !important;
   color: #ffffff !important;
 }
 
