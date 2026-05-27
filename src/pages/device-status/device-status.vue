@@ -133,7 +133,7 @@
                   {{ currentDevice.deviceName }}
                 </view>
 
-                <view class="btn small primary"  @click="goToSquare">
+                <view class="btn small primary"  @click="handleAddDeviceQrcode">
                   再绑一个
                 </view>
               </view>
@@ -1193,6 +1193,9 @@ uni.$on('deviceStatusRefresh', () => {
   font-size: 24rpx;
   color: #10b981;
   font-weight: 500;
+  //居中
+  display: flex;
+  padding-right: 20px;
 }
 
 .tips-list {

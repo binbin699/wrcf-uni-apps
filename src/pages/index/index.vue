@@ -24,7 +24,7 @@
         <!-- 如果列表为空但仍在渲染（理论上被外部 v-else-if 挡住，但为了保险） -->
         <view class="empty-state" v-if="agentList.length === 0">
           <view class="empty-content">
-            <image class="empty-icon" src="/static/icons/agent-icon.png" mode="aspectFit"></image>
+            <image class="empty-icon" src="@/img/baize.png" mode="aspectFit"></image>
             <view class="empty-text">
               <view class="empty-title">{{ $t('index.no_agents') }}</view>
               <view class="empty-desc">{{ $t('index.no_agents_desc') }}</view>
@@ -339,7 +339,7 @@ function handleBluetoothSetup() {
   flex-direction: column;
   align-items: center;
   padding: 0px;
-  gap: 24px;
+  gap: 120px;
   width: 358px;
   height: 258px;
   margin: 0 auto;
@@ -361,8 +361,8 @@ function handleBluetoothSetup() {
 }
 
 .empty-icon {
-  width: 120px;
-  height: 120px;
+  width: 220px;
+  height: 220px;
   flex: none;
   order: 0;
   flex-grow: 0;
@@ -409,7 +409,7 @@ function handleBluetoothSetup() {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--color-primary);
+  background: #10b981;
   box-shadow: 0 4px 12px var(--color-primary-alpha-25);
   box-sizing: border-box;
   transition: all 0.2s ease;

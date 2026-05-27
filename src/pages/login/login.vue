@@ -398,6 +398,15 @@ async function handleAppleLogin() {
  * 请求 WeChat OAuth（App端）
  */
 async function handleWxAppLogin() {
+  console.log('=== 开始微信登录 ===');
+  console.log('平台:', process.env.UNI_PLATFORM);
+  console.log('isLoading:', userStore.isLoading);
+  // ⚠️ 防止重复点击
+  if (userStore.isLoading) {
+    console.warn('微信登录正在处理中，请勿重复点击');
+    return;
+  }
+
   const isSuccess = await userStore.wxAppLogin();
   if (isSuccess) {
     handleLoginSuccess();
@@ -609,7 +618,7 @@ async function handleSmsLoginSubmit(data: { phone: string; ticket: string; code:
       ticket: data.ticket,
       smsCode: data.code
     });
-    
+
     // 实际登录逻辑
     if (!success) {
       if (userStore.loginError) {

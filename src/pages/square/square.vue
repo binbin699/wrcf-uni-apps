@@ -1351,7 +1351,7 @@ function handleBindCancel() {
   min-width: 128rpx;
   width: auto;
   height: 64rpx;
-  background: var(--color-primary);
+  background: #10b981;
   border-radius: 16rpx;
   border: none;
   flex-shrink: 0;
