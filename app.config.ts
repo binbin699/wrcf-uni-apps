@@ -25,8 +25,8 @@ export default function getAppConfig(
   } else {
     // App 端根据版本选择服务器
     BASE_API_URL =
-      appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
-      // appEdition === 'intl' ? 'http://36.134.119.145:8000' : 'http://36.134.119.145:8000';
+      // appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
+      appEdition === 'intl' ? 'http://36.134.119.145:8000' : 'http://36.134.119.145:8000';
   }
 
   // 是否支持微信小程序手机号登录
@@ -94,6 +94,10 @@ export default function getAppConfig(
   const ARMS_ENDPOINT = 'https://hmn73dtabu-default-cn.rum.aliyuncs.com/rum/web/v2';
   const ARMS_ENV = 'prod';
 
+  // 音频文件上传域名（灵矽平台需要能直接访问的公网域名）
+  // 如果不配置，默认使用 BASE_API_URL
+  const UPLOAD_DOMAIN = 'https://jiubaozhinengweir.com/var/www/music';
+
   return {
     BASE_API_URL,
     SUPPORT_LOGIN_TYPE_WX_MP_PHONE,
@@ -118,5 +122,6 @@ export default function getAppConfig(
     ARMS_ENDPOINT,
     ARMS_ENV,
     APP_PRIMARY_SETUP_MODE,
+    UPLOAD_DOMAIN
   };
 }

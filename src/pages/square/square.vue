@@ -843,6 +843,11 @@ function getAgentTag(agent: SquareAgent) {
 }
 
 function showBindPopup(agent: SquareAgent) {
+  console.log('[绑定调试] 完整 agent 对象:', JSON.stringify(agent));
+  console.log('[绑定调试] agentId:', agent.agentId);
+  console.log('[绑定调试] agent.id:', agent.id);
+  console.log('[绑定调试] agent.name:', agent.name);
+
   selectedAgent.value = agent;
   selectedDevice.value = null;
   showBindDrawer.value = true;
@@ -907,7 +912,12 @@ const handleBindSuccess = (data: any) => {
     duration: 2000,
     zIndex: 2005
   });
-  loadPublicAgents();
+  // ⭐ 添加自动返回逻辑
+  setTimeout(() => {
+    uni.switchTab({
+      url: '/pages/square/super_square'
+    });
+  }, 2000);
 };
 
 function handleBindError(data: any) {

@@ -174,9 +174,11 @@
 
         <!-- 底部：玩法视频 + 九宝攻略 + 玩法提示 -->
         <view class="module-resources">
+        <!--          玩法视频-->
           <view class="resource-card" @click="goToVideoPlaylist">
             <image class="full-img" src="@/img/img.png" mode="aspectFill" />
           </view>
+          <!--          九宝攻略-->
           <view class="resource-card" @click="goToGuidePage">
             <image class="full-img" src="@/img/img_1.png" mode="aspectFill" />
           </view>
@@ -697,13 +699,13 @@ const goToVoiceClone = () => {
 
 const goToVideoPlaylist = () => {
   uni.navigateTo({
-    url: '/pages/guide/video-list'
+    url: '/video/play'
   });
 };
 
 const goToGuidePage = () => {
   uni.navigateTo({
-    url: '/pages/guide/tutorial-list'
+    url: '/video/strategy'
   });
 };
 

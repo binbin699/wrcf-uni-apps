@@ -1277,7 +1277,7 @@ function formatDuration(seconds: number) {
   transition: all 0.25s ease;
 
   &.active {
-    background: var(--color-primary);
+    background: #10b981;
     color: #FFFFFF;
   }
 

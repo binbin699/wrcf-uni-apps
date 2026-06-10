@@ -5,6 +5,11 @@
     <view class="custom-navbar">
       <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="nav-content" :style="{ height: navBarHeight + 'px' }">
+        <!-- 右侧返回按钮 -->
+        <view class="back-btna" @click="goBacks">
+          <text class="back-text">返回</text>
+          <image class="back-icona" src="/static/icons/arrow-left.svg" mode="aspectFit" />
+        </view>
         <view class="language-selector-container" v-if="availableLanguages.length > 0">
           <view
               class="language-selector"
@@ -75,19 +80,17 @@
             class="agent-card"
             :style="{ zIndex: isSquareBindGuideActive && index === 0 ? 10 : 1 }"
             @click="handleNavigateClick(agent, index)">
-          <!--
-            修改位置1: 整个卡片背景图
-            使用半透明背景图作为长条按钮背景
-          -->
-          <view class="agent-bg-image">
+
+          <!-- 左侧：完整图片区域 -->
+          <view class="agent-image-wrapper">
             <image
-                class="agent-bg-img"
+                class="agent-image"
                 :src="getAgentBgImage(agent)"
                 mode="aspectFill" />
           </view>
 
-          <!-- 文字内容居中显示 -->
-          <view class="agent-content-center">
+          <!-- 右侧：渐变背景 + 文字内容 -->
+          <view class="agent-content-wrapper">
             <view class="agent-name-art">{{ agent.name }}</view>
             <view class="agent-tag-art">
               <text class="tag-text-art">{{ getAgentTag(agent) }}</text>
@@ -191,6 +194,7 @@
 </template>
 
 <script setup lang="ts">
+// ... (您的 script 逻辑保持不变，无需修改)
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { onLoad, onShow } from '@dcloudio/uni-app';
@@ -212,12 +216,13 @@ import {
 } from '../agent/lang_opts';
 import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 
-import bgImage5 from '@/img/5.png';
-import bgImage6 from '@/img/6.png';
-import bgImage7 from '@/img/7.png';
-import bgImage8 from '@/img/8.png';
-import bgImage9 from '@/img/9.png';
-const bgImages = [bgImage5, bgImage6, bgImage7, bgImage8, bgImage9];
+import bgImage5 from '@/static/5.png';
+import bgImage6 from '@/static/6.png';
+import bgImage7 from '@/static/7.png';
+import bgImage8 from '@/static/8.png';
+import bgImage9 from '@/static/9.png';
+import bgImage10 from '@/static/10.png';
+const bgImages = [bgImage5, bgImage6, bgImage7, bgImage8, bgImage9, bgImage10];
 
 type SquareAgent = Agent & {
   name: string;
@@ -338,6 +343,13 @@ async function refreshSquareGuideState() {
   pendingGuideActivation.value = false;
   showOverlayGuide.value = false;
   showInfoBar.value = false;
+}
+
+// 返回上一页
+function goBacks() {
+  uni.switchTab({
+    url: '/pages/device-status/device-status'
+  });
 }
 
 function startSquareBindGuide() {
@@ -565,7 +577,7 @@ function getAgentBgImage(agent: SquareAgent) {
 
   // 根据智能体在列表中的索引循环使用 5.png ~ 8.png
   const agentIndex = filteredAgents.value.findIndex(a => a.id === agent.id);
-  const imageIndex = agentIndex % 5; // 0,1,2,3 循环
+  const imageIndex = agentIndex % 6; // 0,1,2,3 循环
   return bgImages[imageIndex];
 }
 
@@ -911,95 +923,72 @@ function navigateToSpecialPage(agent: SquareAgent) {
 }
 
 /*
-  修改位置2: agent-card 样式 - 改为长条按钮风格
-  使用半透明背景图，文字居中，艺术字效果
+  核心修改：卡片布局改为 Flex Row (左图右文)
 */
 .agent-card {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14rpx;
-  padding: 0;
+  flex-direction: row; /* 横向排列 */
+  align-items: stretch; /* 高度拉满 */
   position: relative;
-  transition: transform 0.1s ease;
+  margin-bottom: 24rpx;
+  border-radius: 24rpx;
   overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  transition: transform 0.1s ease;
 }
 
 .agent-card:active {
-  transform: scale(0.94);
-  opacity: 0.8;
+  transform: scale(0.98);
+  opacity: 0.9;
 }
 
-.agent-card + .agent-card {
-  margin-top: 24rpx;
+/* 左侧图片区域 */
+.agent-image-wrapper {
+  width: 480rpx; /* 固定图片宽度 */
+  flex-shrink: 0;
+  position: relative;
 }
 
-/*
-  修改位置3: 背景图片容器
-  半透明背景图作为长条按钮背景
-*/
-.agent-bg-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 0;
-}
-
-.agent-bg-img {
+.agent-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  opacity: 0.8; /* 半透明效果 */
+  object-fit: cover; /* 保持图片比例填充 */
+  display: block;
 }
 
-/*
-  修改位置4: 内容居中容器
-  文字内容居中显示
-*/
-.agent-content-center {
-  position: relative;
-  z-index: 1;
+/* 右侧内容区域 (渐变背景) */
+.agent-content-wrapper {
+  flex: 1; /* 占据剩余空间 */
+  padding: 24rpx 32rpx;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  padding: 40rpx 32rpx;
-  gap: 16rpx;
-  width: 100%;
-  height: 100%;
+  /* 模拟图中的淡蓝紫色渐变 */
+  background: linear-gradient(135deg, #c9f8e8 15%, #9ff4da 20%, #91efd2 30%, #4ef4c1 35%);
+  position: relative;
 }
 
-/*
-  修改位置5: 艺术字名称
-  大号艺术字体，居中显示
-*/
+/* 文字样式微调以适配渐变背景 */
 .agent-name-art {
   font-style: normal;
   font-weight: 700;
-  font-size: 40rpx;
-  line-height: 60rpx;
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: #0c0c0c;
-  text-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
-  letter-spacing: 2rpx;
+  font-size: 36rpx;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: #ffffff;
+  margin-bottom: 12rpx;
+  text-shadow: none; /* 渐变背景下不需要重阴影 */
 }
 
-/*
-  修改位置6: 艺术字标签
-*/
 .agent-tag-art {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 8rpx 24rpx;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10rpx);
-  -webkit-backdrop-filter: blur(10rpx);
-  border-radius: 100rpx;
+  justify-content: flex-start;
+  margin-bottom: 16rpx;
 }
 
 .tag-text-art {
@@ -1009,22 +998,22 @@ function navigateToSpecialPage(agent: SquareAgent) {
   line-height: 36rpx;
   display: flex;
   align-items: center;
-  color: #0c0c0c;
-  text-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
+  color: #ffffff; /* 灰色文字 */
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
 }
 
-/*
-  修改位置7: 艺术字音色名称
-*/
 .agent-voice-art {
   display: flex;
   align-items: center;
 }
 
 .voice-text-art {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
+  font-size: 22rpx;
+  color: #6b7280;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
 }
 
 .loading {
@@ -1055,6 +1044,7 @@ function navigateToSpecialPage(agent: SquareAgent) {
   color: #717784;
 }
 
+/* 下方引导弹窗样式保持不变... */
 .square-guide-popup {
   position: fixed;
   left: 50%;
@@ -1370,31 +1360,6 @@ function navigateToSpecialPage(agent: SquareAgent) {
 .second-overlay-ellipse.ellipse-4 {
   width: 364rpx;
   height: 364rpx;
-  right: -70rpx;
-  top: -162rpx;
-  background: #a8dfff;
-  opacity: 0.5;
-  filter: blur(82rpx);
-}
-
-.second-overlay-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 32rpx 40rpx;
-  gap: 24rpx;
-}
-
-.second-overlay-text {
-  width: 100%;
-  font-style: normal;
-  font-weight: 400;
-  font-size: 26rpx;
-  line-height: 40rpx;
-  display: flex;
-  align-items: center;
   text-align: center;
   justify-content: center;
   color: #36404f;
@@ -1415,15 +1380,7 @@ function navigateToSpecialPage(agent: SquareAgent) {
 }
 
 .second-overlay-btn:active {
-  transform: scale(0.95);
-  box-shadow: 0 2rpx 8rpx var(--color-primary-shadow);
-}
-
-.second-overlay-btn-text {
-  font-style: normal;
-  font-weight: 400;
-  font-size: 28rpx;
-  line-height: 44rpx;
+  transform: scale(0.9);
   display: flex;
   align-items: center;
   text-align: center;
@@ -1468,5 +1425,34 @@ function navigateToSpecialPage(agent: SquareAgent) {
   font-size: 26rpx;
   line-height: 40rpx;
   color: var(--color-primary);
+}
+
+.back-btna {
+  position: absolute;
+  right: 8rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8rpx;
+  width: 128rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  backdrop-filter: blur(10rpx);
+  z-index: 200;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.back-text {
+  font-size: 28rpx;
+  color: #01061c;
+}
+
+.back-icona {
+  width: 28rpx;
+  height: 28rpx;
 }
 </style>

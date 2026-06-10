@@ -1,6 +1,18 @@
 <template>
   <wd-toast />
   <view class="home-container">
+    <!-- 自定义导航栏 -->
+    <view class="custom-navbar">
+      <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
+      <view class="nav-content" :style="{ height: navBarHeight + 'px' }">
+        <!-- 返回按钮 -->
+        <view class="nav-back-btn" @click="handleBack">
+          <image class="back-icon"  mode="aspectFit" />
+        </view>
+        <text class="nav-title">{{ $t('index.my_agents') }}</text>
+      </view>
+    </view>
+
     <!-- 主要内容区域 -->
     <view class="content-area">
       <!-- 加载状态 -->
@@ -13,12 +25,12 @@
         <!-- 统一的智能体列表 -->
         <view class="agent-list">
           <AgentCard
-            v-for="agent in agentList"
-            :key="agent.id"
-            :agent="agent"
-            :swipable="agent.userId === userStore.userId"
-            @click="handleAgentClick(agent)"
-            @delete="handleAgentDelete" />
+              v-for="agent in agentList"
+              :key="agent.id"
+              :agent="agent"
+              :swipable="agent.userId === userStore.userId"
+              @click="handleAgentClick(agent)"
+              @delete="handleAgentDelete" />
         </view>
 
         <!-- 如果列表为空但仍在渲染（理论上被外部 v-else-if 挡住，但为了保险） -->
@@ -40,20 +52,20 @@
 
     <!-- 设备绑定抽屉 -->
     <AgentBindDrawer
-      :visible="showBindDrawer"
-      :agent="selectedAgent"
-      :configAble="userStore.userId === selectedAgent?.userId"
-      @update:visible="showBindDrawer = $event"
-      @success="handleBindSuccess"
-      @error="handleBindError"
-      @cancel="handleBindCancel" />
+        :visible="showBindDrawer"
+        :agent="selectedAgent"
+        :configAble="userStore.userId === selectedAgent?.userId"
+        @update:visible="showBindDrawer = $event"
+        @success="handleBindSuccess"
+        @error="handleBindError"
+        @cancel="handleBindCancel" />
 
     <!-- 浮动创建按钮（有智能体时显示，滚动时收起） -->
     <view
-      class="fab-btn"
-      :class="{ 'fab-collapsed': isScrolling }"
-      v-if="agentList.length > 0"
-      @click="handleCreateAgent">
+        class="fab-btn"
+        :class="{ 'fab-collapsed': isScrolling }"
+        v-if="agentList.length > 0"
+        @click="handleCreateAgent">
       <image class="fab-btn-icon" src="/static/icons/add.svg" mode="aspectFit"></image>
       <text class="fab-btn-text">{{ $t('create_agent.create') }}</text>
     </view>
@@ -102,9 +114,13 @@ let scrollTimer: ReturnType<typeof setTimeout> | null = null;
 const PENDING_BIND_KEY = 'pendingBindAction';
 type PendingBindAction = 'qrcode' | 'bluetooth';
 
+// 导航栏高度相关
+const statusBarHeight = ref<number>(20);
+const navBarHeight = ref<number>(44);
+
 // 生命周期钩子
 function updateNavigationTitle() {
-  uni.setNavigationBarTitle({ title: $t('index.my_agents') });
+  // 不再需要设置原生导航栏标题
 }
 
 onLoad(async () => {
@@ -118,6 +134,7 @@ onLoad(async () => {
   }
   // #endif
   await loadAgentList(true);
+  setStatusBarHeight();
   updateNavigationTitle();
 });
 
@@ -130,10 +147,10 @@ onShow(() => {
 });
 
 watch(
-  () => locale.value,
-  () => {
-    updateNavigationTitle();
-  }
+    () => locale.value,
+    () => {
+      updateNavigationTitle();
+    }
 );
 
 // 页面滚动监听（用于控制 FAB 按钮收起/展开）
@@ -190,6 +207,32 @@ function handleScroll(e: { scrollTop: number }) {
   }, 300);
 }
 
+function handleBack() {
+  uni.switchTab({
+    url: '/pages/square/super_square'
+  });
+}
+
+function setStatusBarHeight() {
+  const systemInfo = uni.getSystemInfoSync();
+  statusBarHeight.value = systemInfo.statusBarHeight || 20;
+  const isAndroid = systemInfo.platform === 'android';
+  try {
+    const menuButtonInfo =
+        typeof uni.getMenuButtonBoundingClientRect === 'function'
+            ? uni.getMenuButtonBoundingClientRect()
+            : null;
+    if (menuButtonInfo && menuButtonInfo.height) {
+      const topGap = menuButtonInfo.top - statusBarHeight.value;
+      navBarHeight.value = menuButtonInfo.height + Math.max(topGap, 0) * 2;
+    } else {
+      navBarHeight.value = isAndroid ? 48 : 44;
+    }
+  } catch (error) {
+    navBarHeight.value = isAndroid ? 48 : 44;
+  }
+}
+
 function handleAgentClick(agent: Agent) {
   selectedAgent.value = agent;
   showBindDrawer.value = true;
@@ -232,35 +275,35 @@ function handleBindCancel() {
 function handleAgentDelete(agent: Agent) {
   // 直接执行删除，确认弹窗已在 AgentCard 组件中处理
   agentApi
-    .deleteAgent(agent.agentId)
-    .then(async (res: any) => {
-      if (res.code === 1000) {
-        toast.success({
-          msg: $t('common.delete_success'),
-          duration: 2000
-        });
-        await loadAgentList(false); // 刷新智能体列表
-      } else if (res.code === 1001) {
-        toast.warning({
-          msg: `${$t('common.failed_with_message')}: ${res.message || res.errMsg}`,
-          duration: 2000
-        });
-      } else {
-        toast.error({
-          msg: res.message || $t('common.delete_failed'),
-          duration: 2000
-        });
-      }
-    })
-    .catch((err: any) => {
-      console.error('删除失败:', err);
-      if (!isRequestHandledError(err)) {
-        toast.error({
-          msg: `${$t('common.delete_failed_with_message')}: ${err.message || err.errMsg}`,
-          duration: 2000
-        });
-      }
-    });
+      .deleteAgent(agent.agentId)
+      .then(async (res: any) => {
+        if (res.code === 1000) {
+          toast.success({
+            msg: $t('common.delete_success'),
+            duration: 2000
+          });
+          await loadAgentList(false); // 刷新智能体列表
+        } else if (res.code === 1001) {
+          toast.warning({
+            msg: `${$t('common.failed_with_message')}: ${res.message || res.errMsg}`,
+            duration: 2000
+          });
+        } else {
+          toast.error({
+            msg: res.message || $t('common.delete_failed'),
+            duration: 2000
+          });
+        }
+      })
+      .catch((err: any) => {
+        console.error('删除失败:', err);
+        if (!isRequestHandledError(err)) {
+          toast.error({
+            msg: `${$t('common.delete_failed_with_message')}: ${err.message || err.errMsg}`,
+            duration: 2000
+          });
+        }
+      });
 }
 
 const { scanAndBind } = useDeviceScan({ toast, showNotify, closeNotify });
@@ -308,6 +351,72 @@ function handleBluetoothSetup() {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+}
+
+.custom-navbar {
+  position: relative;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.status-bar {
+  height: 0;
+}
+
+.nav-content {
+  min-height: 88rpx;
+  padding: 16rpx 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.nav-back-btn {
+  position: absolute;
+  left: 40rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  cursor: pointer;
+}
+
+.back-icon {
+  width: 32rpx;
+  height: 32rpx;
+  transform: rotate(180deg);
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.nav-back-btn:active .back-icon {
+  opacity: 1;
+}
+.back-icon {
+  width: 24rpx;
+  height: 24rpx;
+  border-left: 4rpx solid #000;
+  border-bottom: 4rpx solid #000;
+  transform: rotate(45deg);
+}
+
+
+.nav-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #0f172a;
+  white-space: pre-line;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .content-area {
@@ -463,8 +572,8 @@ function handleBluetoothSetup() {
   z-index: 998;
   box-shadow: 0 4px 12px var(--color-primary-alpha-25);
   transition:
-    all 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.15s ease;
+      all 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.15s ease;
   overflow: hidden;
 }
 
@@ -501,8 +610,8 @@ function handleBluetoothSetup() {
   white-space: nowrap;
   opacity: 1;
   transition:
-    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-    max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 收起时隐藏文字 */

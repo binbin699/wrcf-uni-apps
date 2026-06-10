@@ -243,14 +243,14 @@ const menuItems = computed(() => {
             })
         }
       : undefined,
-    APP_CONFIG.SHOW_INSTRUCTIONS_TUTORIALS
-      ? {
-          id: 'instructions_tutorials',
-          title: $t('profile.instructions_tutorials'),
-          icon: '/static/icons/instructions.svg',
-          handleClick: () => uni.navigateTo({ url: '/pages/profile/help' })
-        }
-      : undefined,
+    // APP_CONFIG.SHOW_INSTRUCTIONS_TUTORIALS
+    //   ? {
+    //       id: 'instructions_tutorials',
+    //       title: $t('profile.instructions_tutorials'),
+    //       icon: '/static/icons/instructions.svg',
+    //       handleClick: () => uni.navigateTo({ url: '/pages/profile/help' })
+    //     }
+    //   : undefined,
     APP_CONFIG.TERMS_URL
       ? {
           id: 'user_agreement',
@@ -294,7 +294,7 @@ const groupDefs: string[][] = [
   ['net_config', 'wifi_config_qrcode'],
   ['bluetooth_config', 'wifi_config_bluetooth'],
   ['voice_manage', 'voice_clone'],
-  ['instructions_tutorials'],
+  // ['instructions_tutorials'],
   ['user_agreement', 'privacy_policy'],
   ['feedback']
 ];
@@ -454,7 +454,10 @@ function goDeleteAccount() {
   flex-direction: column;
   box-sizing: border-box;
   position: relative;
-  background: linear-gradient(180deg, var(--color-primary-bg) 18.68%, #ffffff 124.53%);
+  background-image: url('@/img/bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow: hidden;
 }
 

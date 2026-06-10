@@ -467,7 +467,7 @@ function showRenameModal(voice: Voice) {
 }
 
 .add-btn {
-  background: var(--color-primary);
+  background: #10b981;
 }
 
 .add-icon {
@@ -732,7 +732,7 @@ function showRenameModal(voice: Voice) {
   gap: 20rpx;
   width: 160rpx;
   height: 56rpx;
-  background: var(--color-primary);
+  background: #10b981;
   border-radius: 8rpx;
   box-sizing: border-box;
 }

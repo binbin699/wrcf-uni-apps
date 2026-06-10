@@ -40,6 +40,21 @@
         </view>
       </view>
 
+
+      <view class="agreement-section">
+        <checkbox-group @change="onAgreementChange">
+          <label class="agreement-label">
+            <checkbox :checked="isAgree" color="#8FD3F4" />
+            <text class="agreement-text">
+              已阅读并同意
+              <a href="http://47.114.109.136:8008/user-agreement.html" class="agreement-link">《九宝用户协议》</a>
+              和
+              <a href="http://47.114.109.136:8008/privacy-policy.html" class="agreement-link">《隐私政策》</a>
+            </text>
+          </label>
+        </checkbox-group>
+      </view>
+
       <view class="modal-actions">
         <button class="cancel-btn" @click="handleClose">{{ $t('login.cancel') }}</button>
         <button
@@ -111,6 +126,25 @@ function clearCountdownTimer() {
   if (countdownTimer) {
     clearInterval(countdownTimer);
     countdownTimer = null;
+  }
+}
+
+// 新增协议同意状态
+const isAgree = ref(false);
+
+// 协议变更处理
+function onAgreementChange(e: any) {
+  isAgree.value = e.detail.value.length > 0;
+}
+
+// 登录提交时校验
+async function handleLoginSubmit() {
+  if (!isAgree.value) {
+    uni.showToast({
+      title: '请先同意用户协议和隐私政策',
+      icon: 'none'
+    });
+    return;
   }
 }
 
@@ -188,6 +222,17 @@ async function sendVerificationCode() {
  * 提交短信登录
  */
 async function submitSmsLogin() {
+
+
+  // 新增：协议勾选校验
+  if (!isAgree.value) {
+    uni.showToast({
+      title: '请先同意用户协议和隐私政策',
+      icon: 'none'
+    });
+    return; // 直接返回，阻止后续登录请求
+  }
+
   // 验证手机号
   if (!smsForm.value.phone) {
     toast.warning({ msg: $t('login.phone_required'), duration: 3000 });
@@ -216,6 +261,35 @@ async function submitSmsLogin() {
 </script>
 
 <style lang="scss" scoped>
+
+
+/* 新增协议区域样式 */
+.agreement-section {
+  margin-top: 24rpx;
+  display: flex;
+  align-items: flex-start;
+}
+
+.agreement-label {
+  display: flex;
+  align-items: center;
+  font-size: 20rpx;
+  color: #666;
+  line-height: 1.5;
+}
+.agreement-label checkbox {
+  transform: scale(0.8); /* 缩小到 80% */
+  margin-right: 8rpx;
+}
+.agreement-text {
+  margin-left: 16rpx;
+}
+
+.agreement-link {
+  color: #8FD3F4;
+  text-decoration: underline;
+}
+
 /* 弹窗遮罩层 */
 .password-modal-overlay {
   position: fixed;

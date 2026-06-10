@@ -14,9 +14,9 @@
 :root,
 page {
   /* ===== 品牌核心色 ===== */
-  --color-primary: #335cff;
+  --color-primary: #10b981;
   --color-primary-dark: #2850e0;
-  --color-primary-light: #6b8cff;
+  --color-primary-light: #10b981;
 
   /* ===== 品牌色透明度变体 ===== */
   --color-primary-bg: #eff2ff;

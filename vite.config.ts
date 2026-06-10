@@ -34,6 +34,10 @@ export default defineConfig(({ mode }) => {
     appConfig.BASE_API_URL = env.VITE_BASE_API_URL;
   }
 
+  if (env.VITE_UPLOAD_DOMAIN) {
+    appConfig.UPLOAD_DOMAIN = env.VITE_UPLOAD_DOMAIN;
+  }
+
   const config: UserConfig = {
     css: {
       preprocessorOptions: {
