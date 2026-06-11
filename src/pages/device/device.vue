@@ -14,13 +14,10 @@
     </view>
 
     <view class="page-content" :style="{ paddingTop: statusBarHeight + navContentHeight + 'px' }">
-    <!-- 加载态 -->
-    <view class="loading-state" v-if="loading">
-      <text class="loading-text">{{ $t('device.loading') }}</text>
-    </view>
+
 
     <!-- 设备列表 -->
-    <view class="device-list" v-else-if="deviceList.length > 0">
+    <view class="device-list" v-if="deviceList.length > 0">
       <template v-for="(device, index) in deviceList" :key="device.id">
         <view class="device-item" @click.stop="handleSelectDevice(device)">
           <!-- 左侧：设备信息 -->

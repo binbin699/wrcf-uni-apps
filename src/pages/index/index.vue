@@ -15,13 +15,9 @@
 
     <!-- 主要内容区域 -->
     <view class="content-area">
-      <!-- 加载状态 -->
-      <view class="loading-state" v-if="loading">
-        <view class="loading-text">{{ $t('index.loading') }}</view>
-      </view>
 
       <!-- 智能体列表区域 -->
-      <view v-else class="agent-list-container">
+      <view  class="agent-list-container">
         <!-- 统一的智能体列表 -->
         <view class="agent-list">
           <AgentCard

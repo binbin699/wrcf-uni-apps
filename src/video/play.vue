@@ -71,31 +71,34 @@ interface VideoItem {
 
 const statusBarHeight = ref(20);
 const navBarHeight = ref(56);
+//视频存储路径
+const VIDEO_SERVER_DOMAIN = 'https://wrcfmo.cn/';
+const VIDEO_STORAGE_PATH = '/static_in/video/';
 
 const videoList = ref<VideoItem[]>([
   {
     id: 1,
     title: '使用说明',
     cover: '/static/strategy/explanation.png',
-    videoUrl: '/static/video/1.mp4'
+    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}1.mp4`
   },
   {
     id: 2,
     title: '英语听写',
     cover: '/static/strategy/speaking_partner.png',
-    videoUrl: '/static/video/听写单词.mp4'
+    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}4.mp4`
   },
   {
     id: 3,
     title: '课文理解',
     cover: '/static/strategy/visual_primary.png',
-    videoUrl: '/static/video/课文理解.mp4'
+    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}3.mp4`
   },
   {
     id: 4,
     title: '讲故事',
     cover: '/static/strategy/storytelling.png',
-    videoUrl: '/static/video/讲故事.mp4'
+    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}2.mp4`
   },
   // {
   //   id: 5,

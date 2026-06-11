@@ -66,13 +66,10 @@
 
     <!-- 主要内容区域 -->
     <view class="content-area" :style="{ paddingTop: statusBarHeight + navBarHeight + 16 + 'px' }">
-      <!-- 加载状态 -->
-      <view class="loading-state" v-if="loading">
-        <text class="loading-text">{{ $t('common.loading') }}</text>
-      </view>
+
 
       <!-- 内容布局 -->
-      <view v-else class="content-layout">
+      <view class="content-layout">
 
         <!-- 顶部背景+文案+按钮 -->
         <view class="top-hero">
@@ -200,7 +197,7 @@
             </view>
           </scroll-view>
           <view class="tips-loading" v-else-if="tipsLoading">
-            <text class="tips-loading-text">加载中...</text>
+<!--            <text class="tips-loading-text">加载中...</text>-->
           </view>
           <view class="tips-empty" v-else>
             <text class="tips-empty-text">暂无玩法提示</text>

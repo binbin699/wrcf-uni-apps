@@ -1,7 +1,0 @@
-{
-	"frameworks": [
-		"CoreLocation.framework",
-		"SystemConfiguration.framework"
-	],
-	"deploymentTarget": "12"
-}

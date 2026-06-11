@@ -20,9 +20,9 @@ uni.hideLoading()
 
 ```javascript
 // 显示加载
-uni.showLoading({
-  title: '加载中...'
-})
+// uni.showLoading({
+//   title: '加载中...'
+// })
 
 // 隐藏加载
 setTimeout(() => {
@@ -34,10 +34,10 @@ setTimeout(() => {
 
 ```javascript
 // 显示加载
-uni.showLoading({
-  title: '加载中...',
-  mask: true
-})
+// uni.showLoading({
+//   title: '加载中...',
+//   mask: true
+// })
 
 uni.request({
   url: 'https://api.example.com/data',
@@ -64,10 +64,10 @@ uni.request({
 export default {
   methods: {
     loadData() {
-      uni.showLoading({
-        title: '加载中...',
-        mask: true
-      })
+      // uni.showLoading({
+      //   title: '加载中...',
+      //   mask: true
+      // })
       
       uni.request({
         url: 'https://api.example.com/data',
@@ -129,10 +129,10 @@ function loadData() {
   let loadingShown = false
   
   try {
-    uni.showLoading({
-      title: '加载中...',
-      mask: true
-    })
+    // uni.showLoading({
+    //   title: '加载中...',
+    //   mask: true
+    // })
     loadingShown = true
     
     // 执行加载逻辑

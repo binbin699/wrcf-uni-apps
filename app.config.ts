@@ -98,6 +98,9 @@ export default function getAppConfig(
   // 如果不配置，默认使用 BASE_API_URL
   const UPLOAD_DOMAIN = 'https://jiubaozhinengweir.com/var/www/music';
 
+  //视频存储路径
+  const VIDEO_SERVER_DOMAIN = 'https://wrcfmo.cn/';
+  const VIDEO_STORAGE_PATH = '/static_in/video/';
   return {
     BASE_API_URL,
     SUPPORT_LOGIN_TYPE_WX_MP_PHONE,
@@ -122,6 +125,8 @@ export default function getAppConfig(
     ARMS_ENDPOINT,
     ARMS_ENV,
     APP_PRIMARY_SETUP_MODE,
-    UPLOAD_DOMAIN
+    UPLOAD_DOMAIN,
+    VIDEO_SERVER_DOMAIN,
+    VIDEO_STORAGE_PATH
   };
 }

@@ -208,13 +208,7 @@ class Request {
 
     header['Content-Type'] = 'application/json';
 
-    // 显示加载提示
-    if (options.showLoading !== false) {
-      uni.showLoading({
-        title: $t('common.loading'),
-        mask: true
-      });
-    }
+
 
     return new Promise<RequestResponse<T>>((resolve, reject) => {
       console.log('request', this.baseURL + options.url, options.data);

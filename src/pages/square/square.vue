@@ -136,10 +136,6 @@
         </view>
       </view>
 
-      <view v-if="loading" class="loading">
-        <text>{{ $t('common.loading') }}</text>
-      </view>
-
       <view v-if="!loading && filteredAgents.length === 0" class="empty">
         <image class="empty-icon" src="/static/icons/box.svg" mode="aspectFit"></image>
         <text class="empty-text">

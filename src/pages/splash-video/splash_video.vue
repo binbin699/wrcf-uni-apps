@@ -41,8 +41,10 @@ onLoad(() => {
 defineOptions({
   name: 'SplashVideo'
 });
+const VIDEO_SERVER_DOMAIN = 'https://wrcfmo.cn/';
+const VIDEO_STORAGE_PATH = '/static_in/video/';
 
-const videoSrc = ref('/static/video/opening_animation.mp4');
+const videoSrc = ref(`${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}opening_animation.mp4`);
 const isNavigating = ref(false);
 
 function preloadVideo() {
