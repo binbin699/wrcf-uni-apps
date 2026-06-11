@@ -606,13 +606,35 @@ async function createAgent() {
         uni.navigateBack();
       }, 1500);
     } else {
+      // 后端返回的业务错误（包括数据库拦截）
+      let errorMsg = result.message || $t('智能体名称包含敏感词，请修改后重试');
+
+      // 可选：若错误信息包含“敏感词”，改为更友好的提示
+      if (errorMsg.includes('敏感词') || errorMsg.includes('sensitive')) {
+        errorMsg =  '智能体名称包含敏感词，请修改后重试';
+      }
+
       toast.warning({
-        msg: result.message || $t('create_agent.create_failed'),
+        msg: result.message || $t('智能体名称包含敏感词，请修改后重试'),
         duration: 2000
       });
     }
   } catch (error) {
     console.error('创建智能体失败:', error);
+
+// 捕获网络错误或未知异常
+    let errorMsg = $t('智能体名称包含敏感词，请修改后重试');
+
+
+    // 同样检查敏感词关键词
+    if (errorMsg.includes('敏感词') || errorMsg.includes('sensitive')) {
+      errorMsg = '智能体名称包含敏感词，请修改后重试';
+    }
+
+    toast.warning({
+      msg: errorMsg,
+      duration: 2000
+    });
   } finally {
     creating.value = false;
   }

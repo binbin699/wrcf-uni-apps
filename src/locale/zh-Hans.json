@@ -171,7 +171,7 @@
   "create_agent.llm_load_failed": "大模型加载失败，点击重试",
   "create_agent.network_error": "网络错误",
   "create_agent.create_success": "创建成功",
-  "create_agent.create_failed": "创建失败",
+  "create_agent.create_failed": "智能体名称包含敏感词，请修改后重试",
   "create_agent.chat_language": "对话语言",
   "create_agent.select_chat_language": "请选择对话语言",
   "create_agent.select_chat_language_title": "选择对话语言",
