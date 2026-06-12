@@ -152,8 +152,11 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
               });
             }, 1500);
           } catch (error: any) {
+
+            console.log('此设备已经绑定,无法重复绑定', error);
             console.error('[扫码绑定/bindByQrcode] 失败:', error);
             toast.close();
+            toast.error('此设备已经绑定,无法重复绑定');
             isNavigating.value = false;
           }
         },

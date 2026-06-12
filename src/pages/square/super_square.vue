@@ -173,12 +173,6 @@
           <view class="second-overlay-ellipse ellipse-3"></view>
           <view class="second-overlay-ellipse ellipse-4"></view>
         </view>
-        <view class="second-overlay-content">
-          <view class="second-overlay-text">{{ $t('guide.second_overlay_text') }}</view>
-          <view class="second-overlay-btn" @click.stop="handleSecondOverlayDismiss">
-            <text class="second-overlay-btn-text">{{ $t('guide.overlay_action') }}</text>
-          </view>
-        </view>
       </view>
     </view>
 
@@ -1293,6 +1287,9 @@ function navigateToSpecialPage(agent: SquareAgent) {
   right: 0;
   bottom: 0;
   z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .second-overlay-mask {
@@ -1304,15 +1301,17 @@ function navigateToSpecialPage(agent: SquareAgent) {
   background: rgba(0, 0, 0, 0.65);
 }
 
-.second-overlay-card {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+.second-overlay-card-wrapper {
+  position: relative;
+  z-index: 2001;
   width: 548rpx;
+}
+
+.second-overlay-card {
+  position: relative;
   background: #e3efff;
   border-radius: 32rpx;
   overflow: hidden;
-  z-index: 2001;
 }
 
 .second-overlay-bg {
@@ -1388,7 +1387,7 @@ function navigateToSpecialPage(agent: SquareAgent) {
 }
 
 .second-overlay-arrow {
-  position: fixed;
+
   z-index: 2001;
   width: 24rpx;
   height: 14rpx;

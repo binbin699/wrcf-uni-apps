@@ -231,12 +231,6 @@
           <view class="second-overlay-ellipse ellipse-3"></view>
           <view class="second-overlay-ellipse ellipse-4"></view>
         </view>
-        <view class="second-overlay-content">
-          <view class="second-overlay-text">{{ $t('guide.second_overlay_text') }}</view>
-          <view class="second-overlay-btn" @click.stop="handleSecondOverlayDismiss">
-            <text class="second-overlay-btn-text">{{ $t('guide.overlay_action') }}</text>
-          </view>
-        </view>
       </view>
       <!-- 三角形箭头 -->
       <view
