@@ -285,6 +285,8 @@ import { useUserStore } from '@/store';
 import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
 import { gameTipApi } from '@/api/index';
 
+import { checkAppUpdate } from '@/utils/update';
+
 // 玩法提示相关状态
 const tipsLoading = ref(false);
 const allTips = ref<string[]>([]);
@@ -719,6 +721,11 @@ onShow(async () => {
 
   // 修复：无论是否有设备，都加载玩法提示
   await loadGameTips();
+
+  setTimeout(() => {
+    checkAppUpdate();
+  }, 1500);
+
 
   if (shouldRedirect && deviceList.value.length > 0) {
     uni.switchTab({
