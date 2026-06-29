@@ -78,40 +78,40 @@ const VIDEO_STORAGE_PATH = '/static_in/video/';
 const videoList = ref<VideoItem[]>([
   {
     id: 1,
-    title: '使用说明',
+    title: '开机教学',
     cover: '/static/strategy/explanation.png',
-    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}1.mp4`
+    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}kj.mp4`
   },
   {
     id: 2,
-    title: '英语听写',
+    title: '蓝牙配网',
     cover: '/static/strategy/speaking_partner.png',
-    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}4.mp4`
+    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}ly.mp4`
   },
   {
     id: 3,
-    title: '课文理解',
+    title: '声波配网',
     cover: '/static/strategy/visual_primary.png',
-    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}3.mp4`
+    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}sbpw.mp4`
   },
   {
     id: 4,
-    title: '讲故事',
+    title: '智能体切换',
     cover: '/static/strategy/storytelling.png',
-    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}2.mp4`
+    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}zntqh.mp4`
   },
-  // {
-  //   id: 5,
-  //   title: '双语聊天',
-  //   cover: '/static/strategy/bilingual_chat.png',
-  //   videoUrl: ''
-  // },
-  // {
-  //   id: 6,
-  //   title: '绘本伴读',
-  //   cover: '/static/strategy/picture_book.png',
-  //   videoUrl: ''
-  // }
+  {
+    id: 5,
+    title: '自定义智能体',
+    cover: '/static/strategy/bilingual_chat.png',
+    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}zdyznt.mp4`
+  },
+  {
+    id: 6,
+    title: '音色复刻',
+    cover: '/static/strategy/picture_book.png',
+    videoUrl: `${VIDEO_SERVER_DOMAIN}${VIDEO_STORAGE_PATH}ysfk.mp4`
+  }
 ]);
 
 const showVideoPlayer = ref(false);
@@ -198,12 +198,27 @@ function onVideoEnded() {
 }
 
 function onVideoError(e: any) {
-  console.error('视频播放错误:', e);
+  // 获取视频 DOM 元素
+  const video = e.target || e.currentTarget;
+  let errorMsg = '未知错误';
+  let errorCode = -1;
+  if (video && video.error) {
+    errorCode = video.error.code;
+    errorMsg = video.error.message || `媒体错误码: ${errorCode}`;
+  }
+  console.error('视频播放错误 - 错误码:', errorCode, '详细信息:', errorMsg);
+  console.error('完整事件:', e);
+
+  // 同时把错误信息显示给用户，帮助调试
   uni.showToast({
-    title: '视频播放失败',
-    icon: 'none'
+    title: `播放失败 (${errorCode})`,
+    icon: 'none',
+    duration: 2000
   });
-  closeVideoPlayer();
+
+  // 不自动关闭，让用户能看到错误提示后手动关闭？或者你也可以保留关闭
+  // 但为了调试，建议先不关闭，等用户确认
+   closeVideoPlayer();
 }
 </script>
 

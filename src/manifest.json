@@ -2,8 +2,8 @@
     "name" : "九宝智能",
     "appid" : "__UNI__3F8A11F",
     "description" : "%app.wrcf%",
-    "versionName" : "1.0.1",
-    "versionCode" : 101073,
+    "versionName" : "1.0.2",
+    "versionCode" : 101074,
     "transformPx" : false,
     "app-plus" : {
         "usingComponents" : true,
