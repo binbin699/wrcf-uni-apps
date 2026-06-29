@@ -186,9 +186,10 @@
               <checkbox :checked="isAgree" color="#8FD3F4" />
               <text class="agreement-text">
                 已阅读并同意
-                <a href="http://47.114.109.136:8008/user-agreement.html" class="agreement-link">《九宝用户协议》</a>
+                <!-- 使用 text 标签 + @click.stop，与 profile 页面行为一致 -->
+                <text class="agreement-link" @click.stop="openTerms('user')">《九宝用户协议》</text>
                 和
-                <a href="http://47.114.109.136:8008/privacy-policy.html" class="agreement-link">《隐私政策》</a>
+                <text class="agreement-link" @click.stop="openTerms('privacy')">《隐私政策》</text>
               </text>
             </label>
           </checkbox-group>
@@ -348,6 +349,26 @@ onLoad(async () => {
     emailForm.value.email = lastLoginEmail;
   }
 });
+
+// ========== ✨ 修改点：新增 openExternal 和 openTerms 方法（与 profile 页面一致） ==========
+function openExternal(src: string) {
+  const encoded = encodeURIComponent(src);
+  uni.navigateTo({ url: '/pages/webview/webview?src=' + encoded });
+}
+
+function openTerms(type: 'user' | 'privacy') {
+  const urlMap = {
+    user: APP_CONFIG.TERMS_URL,
+    privacy: APP_CONFIG.PRIVACY_URL
+  };
+  const url = urlMap[type];
+  if (url) {
+    openExternal(url);
+  } else {
+    toast.warning({ msg: '协议地址未配置', duration: 2000 });
+  }
+}
+// ========== 修改点结束 ==========
 
 // 方法
 function handleLoginSuccess() {

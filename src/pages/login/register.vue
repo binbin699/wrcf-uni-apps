@@ -24,31 +24,31 @@
         <!-- 用户名输入 -->
         <view class="input-group">
           <input
-            class="input-field"
-            type="text"
-            v-model="form.unionid"
-            :placeholder="$t('register.unionid_placeholder')"
-            maxlength="20" />
+              class="input-field"
+              type="text"
+              v-model="form.unionid"
+              :placeholder="$t('register.unionid_placeholder')"
+              maxlength="20" />
         </view>
 
         <!-- 昵称输入 -->
         <view class="input-group">
           <input
-            class="input-field"
-            type="text"
-            v-model="form.nickName"
-            :placeholder="$t('register.nickname_placeholder')"
-            maxlength="20" />
+              class="input-field"
+              type="text"
+              v-model="form.nickName"
+              :placeholder="$t('register.nickname_placeholder')"
+              maxlength="20" />
         </view>
 
         <!-- 密码输入 -->
         <view class="input-group">
           <input
-            class="input-field"
-            :type="showPassword ? 'text' : 'password'"
-            v-model="form.password"
-            :placeholder="$t('register.password_placeholder')"
-            maxlength="20" />
+              class="input-field"
+              :type="showPassword ? 'text' : 'password'"
+              v-model="form.password"
+              :placeholder="$t('register.password_placeholder')"
+              maxlength="20" />
           <view class="password-toggle" @click="togglePassword">
             <text class="toggle-icon">{{ showPassword ? '👁️' : '👁️‍🗨️' }}</text>
           </view>
@@ -57,35 +57,39 @@
         <!-- 确认密码输入 -->
         <view class="input-group">
           <input
-            class="input-field"
-            :type="showConfirmPassword ? 'text' : 'password'"
-            v-model="form.confirmPassword"
-            :placeholder="$t('register.confirm_password_placeholder')"
-            maxlength="20" />
+              class="input-field"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              v-model="form.confirmPassword"
+              :placeholder="$t('register.confirm_password_placeholder')"
+              maxlength="20" />
           <view class="password-toggle" @click="toggleConfirmPassword">
             <text class="toggle-icon">{{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}</text>
           </view>
         </view>
 
+        <!-- ========== ✨ 修改点：协议链接改为 @click 调用 openTerms，不再使用 <a> 标签 ========== -->
         <view class="agreement-section">
           <checkbox-group @change="onAgreementChange">
             <label class="agreement-label">
               <checkbox :checked="isAgree" color="#8FD3F4" />
               <text class="agreement-text">
                 已阅读并同意
-                <a href="http://47.114.109.136:8008/user-agreement.html" class="agreement-link">《九宝用户协议》</a>
+                <!-- 使用 text 标签 + @click.stop，与 profile 页面行为一致 -->
+                <text class="agreement-link" @click.stop="openTerms('user')">《九宝用户协议》</text>
                 和
-                <a href="http://47.114.109.136:8008/privacy-policy.html" class="agreement-link">《隐私政策》</a>
+                <text class="agreement-link" @click.stop="openTerms('privacy')">《隐私政策》</text>
               </text>
             </label>
           </checkbox-group>
         </view>
+        <!-- ========== 修改点结束 ========== -->
+
         <!-- 注册按钮 -->
         <button
-          class="register-btn primary"
-          @click="handleRegister"
-          :loading="userStore.isLoading"
-          :disabled="!canRegister">
+            class="register-btn primary"
+            @click="handleRegister"
+            :loading="userStore.isLoading"
+            :disabled="!canRegister">
           {{ $t('register.register_btn') }}
         </button>
 
@@ -125,32 +129,41 @@ const showConfirmPassword = ref(false);
 // 计算属性
 const canRegister = computed(() => {
   return (
-    form.value.unionid.length >= 3 &&
-    form.value.unionid.length <= 16 &&
-    form.value.nickName.length >= 1 &&
-    form.value.password.length >= 8 &&
-    form.value.password.length <= 24 &&
-    form.value.confirmPassword === form.value.password
+      form.value.unionid.length >= 3 &&
+      form.value.unionid.length <= 16 &&
+      form.value.nickName.length >= 1 &&
+      form.value.password.length >= 8 &&
+      form.value.password.length <= 24 &&
+      form.value.confirmPassword === form.value.password
   );
 });
 
-// 新增协议同意状态
+// 协议同意状态
 const isAgree = ref(false);
+
+// ========== ✨ 修改点：新增 openExternal 和 openTerms 方法（与 profile 页面一致） ==========
+function openExternal(src: string) {
+  const encoded = encodeURIComponent(src);
+  uni.navigateTo({ url: '/pages/webview/webview?src=' + encoded });
+}
+
+function openTerms(type: 'user' | 'privacy') {
+  const urlMap = {
+    user: APP_CONFIG.TERMS_URL,
+    privacy: APP_CONFIG.PRIVACY_URL
+  };
+  const url = urlMap[type];
+  if (url) {
+    openExternal(url);
+  } else {
+    toast.warning({ msg: '协议地址未配置', duration: 2000 });
+  }
+}
+// ========== 修改点结束 ==========
 
 // 协议变更处理
 function onAgreementChange(e: any) {
   isAgree.value = e.detail.value.length > 0;
-}
-
-// 登录提交时校验
-async function handleLoginSubmit() {
-  if (!isAgree.value) {
-    uni.showToast({
-      title: '请先同意用户协议和隐私政策',
-      icon: 'none'
-    });
-    return;
-  }
 }
 
 // 方法
@@ -163,7 +176,6 @@ function toggleConfirmPassword() {
 }
 
 async function handleRegister() {
-
   if (!isAgree.value) {
     toast.warning({
       msg: '请先阅读并同意用户协议和隐私政策',
@@ -323,7 +335,7 @@ function redirectToMain() {
   gap: 120rpx;
 }
 
-/* 新增协议区域样式 */
+/* 协议区域样式 */
 .agreement-section {
   margin-top: 24rpx;
   display: flex;
@@ -338,13 +350,14 @@ function redirectToMain() {
   line-height: 1.5;
 }
 .agreement-label checkbox {
-  transform: scale(0.8); /* 缩小到 80% */
+  transform: scale(0.8);
   margin-right: 8rpx;
 }
 .agreement-text {
   margin-left: 16rpx;
 }
 
+/* ✨ 修改点：保持与之前相同的样式，但现在是 text 标签，依然使用相同的 class */
 .agreement-link {
   color: #8FD3F4;
   text-decoration: underline;
