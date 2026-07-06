@@ -1,0 +1,129 @@
+
+export type WNuuid ={
+	serviceId:string,
+	wuuid:string,
+	nuuid:string,
+}
+
+
+
+export type ScanPara={
+	btNameFilter?:string,
+	fliterNames?:string[],
+	scantime?:number,
+	showEmptyName?:number,
+	iosFilterUUIDs?:string[],
+	
+	onScanResult?:(b:MyApiResult)=>void,
+	scanComplate?:()=>void,
+}
+
+
+export type WriteData={
+	serviceId:string,
+	characteristicId:string,
+	writeType?:number,
+	data?:number[],
+	hexStrData?:string,
+	fenbao:boolean,
+}
+
+
+
+export type ScanRecord ={
+		       deviceName?: string|null,
+				txPowerLevel?:number|null,
+				bytes?: string|null,
+				serviceData?: string|null,
+				serviceUuids?: string|null,
+				advertiseFlags?:number|null,
+				manufacturerSpecificData?: string|null,
+				serviceSolicitationUuids?:string|null
+}
+export type Device={
+		name?: string|null,
+		iosLocalName?:string|null,
+		alias?:string|null,
+		bondState?: number|null,
+		type?: number|null,
+		address:string
+}
+
+
+export type BleScanResult={
+	connectType?:number|null,
+	rssi?: number|null,
+	isLegacy?: boolean|null,
+	advertisingSid?: number|null,
+	dataStatus?: number|null,
+	isConnectable?: boolean|null,
+	periodicAdvertisingInterval?: number|null,
+	primaryPhy?: number|null,
+	secondaryPhy?: number|null,
+	timestampNanos?:number|null,
+	scanRecord?:ScanRecord|null	,
+	device:Device
+	
+}
+export type MyApiResult = {
+  type : number,
+  message : string,
+  data : any
+}
+
+
+export type ScanRssiBR={
+	mac:string,
+	rssi:number,
+	data:string,
+	iosLocalName?:string|null,
+	name?:string|null,
+	manufacturerData?:string,
+}
+
+export type BleServices={
+	 type:number,
+	 uuid: string,
+	 characteristics:Characteristics[]
+}
+
+export type Characteristics={
+	properties:CharacteristicsProperties, 
+	 uuid: string,
+	 propertiesType: number
+}
+
+export type CharacteristicsProperties={
+	 READ: boolean,
+	 WRITE:boolean,
+	 NOTIFY:boolean,
+	 INDICATE:boolean
+}
+
+export type NotityData={
+	data:number[],
+	mac?:string,
+	serviceId?:string,
+	characteristicsId?:string,
+}
+
+
+export  function bleResult(type1 : number, message1 : string,data1 : any):MyApiResult{
+	return {
+		type : type1,
+		message : message1,
+		data : data1
+	} as MyApiResult
+	
+}
+
+
+
+
+
+
+
+
+
+
+

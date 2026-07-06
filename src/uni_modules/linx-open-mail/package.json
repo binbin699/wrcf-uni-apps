@@ -1,0 +1,37 @@
+{
+  "id": "linx-open-mail",
+  "displayName": "linx-open-mail",
+  "version": "1.0.0",
+  "description": "Open mailto links on HarmonyOS via startAbility",
+  "keywords": ["mailto", "harmony", "email"],
+  "engines": {
+    "HBuilderX": "^4.0.0",
+    "uni-app": "^4.0.0"
+  },
+  "dcloudext": {
+    "type": "uts",
+    "sale": {
+      "regular": { "price": "0.00" }
+    },
+    "declaration": {
+      "ads": "无",
+      "data": "无",
+      "permissions": "无"
+    }
+  },
+  "uni_modules": {
+    "dependencies": [],
+    "encrypt": [],
+    "platforms": {
+      "client": {
+        "uni-app": {
+          "vue": { "vue3": "√" },
+          "app": {
+            "vue": "√",
+            "harmony": "√"
+          }
+        }
+      }
+    }
+  }
+}

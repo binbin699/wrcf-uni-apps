@@ -1,0 +1,24 @@
+{
+  "endpoints": {
+    "baseApiUrl": "https://lingxiwmp.qiniu.com/api"
+  },
+  "features": {
+    "login": {
+      "supportGuestMp": true
+    }
+  },
+  "legal": {
+    "termsUrl": "",
+    "privacyUrl": "",
+    "feedbackEmail": ""
+  },
+  "ui": {
+    "showInstructionsTutorials": false
+  },
+  "thirdParty": {
+    "weixin": {
+      "mpAppId": "wx888aaf67e7fa9643",
+      "mpLocationDesc": "您的位置信息将用于获取附近的WiFi列表，优化配网体验"
+    }
+  }
+}

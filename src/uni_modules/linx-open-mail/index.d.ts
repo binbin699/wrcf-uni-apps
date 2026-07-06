@@ -1,0 +1,11 @@
+export type OpenMailtoOptions = {
+  email: string;
+  subject?: string;
+};
+
+export type OpenMailtoResult = {
+  success: boolean;
+  message?: string;
+};
+
+export function openMailto(options: OpenMailtoOptions): Promise<OpenMailtoResult>;

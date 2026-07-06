@@ -1,0 +1,50 @@
+appId: "${APP_PACKAGE}"
+name: Agent - open bind drawer
+tags:
+  - agent
+  - bind
+  - requires-agent
+  - requires-device
+  - android
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+    optional: true
+- runFlow:
+    when:
+      visible: "七牛云.*协议|服务用户协议|本协议.*"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "扫一扫"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    point: "37%,90%"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: "智能体"
+- waitForAnimationToEnd:
+    timeout: 1000
+- extendedWaitUntil:
+    visible: "我的智能体"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn:
+    point: "50%,17%"
+- extendedWaitUntil:
+    visible: "选择设备绑定"
+    timeout: 15000
+- assertVisible: "${TEST_DEVICE_NAME_REGEX}"
+- assertVisible: "确定"
+- tapOn: "取消"
+- extendedWaitUntil:
+    visible: "我的智能体"
+    timeout: 10000

@@ -1,0 +1,96 @@
+appId: "${APP_PACKAGE}"
+name: Agent - open edit page
+tags:
+  - agent
+  - edit
+  - requires-agent
+  - android
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+    optional: true
+- runFlow:
+    when:
+      visible: "七牛云.*协议|服务用户协议|本协议.*"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "搜索音色"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "选择.*"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "编辑智能体"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "创建智能体"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "选择设备绑定"
+    commands:
+      - tapOn: "取消"
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "扫一扫"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    point: "37%,90%"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: "智能体"
+- waitForAnimationToEnd:
+    timeout: 1000
+- extendedWaitUntil:
+    visible: "我的智能体"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn:
+    point: "50%,17%"
+- extendedWaitUntil:
+    visible: "选择设备绑定"
+    timeout: 15000
+- tapOn:
+    point: "61%,56%"
+- waitForAnimationToEnd:
+    timeout: 1000
+- extendedWaitUntil:
+    visible: "编辑智能体"
+    timeout: 10000
+- assertVisible: "智能体名称"
+- assertVisible: "角色描述"
+- assertVisible: "大模型类型"
+- assertVisible: "对话语言"
+- assertVisible: "语音类型"
+- assertVisible: "更新智能体"
+- assertVisible: "取消"
+- tapOn: "取消"
+- extendedWaitUntil:
+    visible: "我的智能体"
+    timeout: 10000

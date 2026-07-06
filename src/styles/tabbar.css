@@ -1,0 +1,52 @@
+/* 自定义底部导航栏样式 - 圆角 + 阴影 */
+
+/* ============================================
+   通用 tabBar 样式覆盖
+   ============================================ */
+
+/* 隐藏默认边框线 */
+.uni-tabbar::before,
+.uni-tabbar__border {
+    display: none !important;
+}
+
+/* tabBar 圆角和阴影 */
+.uni-tabbar {
+    border-radius: 20px 20px 0 0 !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06) !important;
+    overflow: hidden;
+    border-top: none !important;
+}
+
+/* uni-app 原生组件容器 */
+uni-tabbar {
+    overflow: visible !important;
+}
+
+uni-tabbar .uni-tabbar {
+    border-radius: 20px 20px 0 0 !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ============================================
+   TabBar 页面底部圆角装饰（视觉增强）
+   用于在 tabBar 上方创建圆角过渡效果
+   ============================================ */
+
+/* 为带有 tabBar 的页面添加底部装饰 */
+.tabbar-page-wrapper {
+    position: relative;
+}
+
+.tabbar-page-wrapper::after {
+    content: '';
+    position: fixed;
+    bottom: calc(50px + env(safe-area-inset-bottom));
+    left: 0;
+    right: 0;
+    height: 24px;
+    background: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.3) 100%);
+    pointer-events: none;
+    z-index: 999;
+}
+

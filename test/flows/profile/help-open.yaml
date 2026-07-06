@@ -1,0 +1,80 @@
+appId: "${APP_PACKAGE}"
+name: Profile - open help
+tags:
+  - profile
+  - android
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+    optional: true
+- runFlow:
+    when:
+      visible: "申请蓝牙权限"
+    commands:
+      - tapOn: "取消"
+      - waitForAnimationToEnd:
+          timeout: 1000
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "编辑设备名称"
+    commands:
+      - tapOn: "取消"
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "确认删除"
+    commands:
+      - tapOn: "取消"
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "本协议.*"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "更新智能体"
+    commands:
+      - hideKeyboard
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "创建智能体"
+    commands:
+      - hideKeyboard
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    point: "84%,94%"
+- extendedWaitUntil:
+    visible: "${TEST_USER_NAME}|设备管理|说明与教程|退出登录"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "说明与教程"
+    direction: DOWN
+    timeout: 10000
+    visibilityPercentage: 80
+    centerElement: true
+- tapOn: "说明与教程"
+- extendedWaitUntil:
+    visible: "说明与教程"
+    timeout: 10000
+- assertVisible: "说明与教程"
+- pressKey: Back
+- scrollUntilVisible:
+    element: "说明与教程"
+    direction: DOWN
+    timeout: 10000
+    visibilityPercentage: 80
+    centerElement: true

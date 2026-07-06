@@ -1,0 +1,46 @@
+@import './theme.css';
+@import './button.css';
+@import './layout.css';
+@import './text.css';
+@import './tabbar.css';
+
+/* 全局字体设置 - 解决 iOS 字体不一致问题 */
+page,
+view,
+text,
+button,
+input,
+textarea {
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        'Helvetica Neue',
+        Helvetica,
+        'PingFang SC',
+        'Hiragino Sans GB',
+        'Microsoft YaHei',
+        '微软雅黑',
+        Arial,
+        sans-serif;
+}
+
+/* 全局 picker-view indicator 横线移除 */
+.agent-select-sheet-popup .uni-picker-view-indicator,
+.agent-select-sheet-popup .sheet-picker-indicator {
+    border-top: none !important;
+    border-bottom: none !important;
+    border-width: 0 !important;
+    border-color: transparent !important;
+}
+
+.agent-select-sheet-popup .uni-picker-view-indicator::before,
+.agent-select-sheet-popup .uni-picker-view-indicator::after,
+.agent-select-sheet-popup .sheet-picker-indicator::before,
+.agent-select-sheet-popup .sheet-picker-indicator::after {
+    display: none !important;
+    border: none !important;
+    border-color: transparent !important;
+    height: 0 !important;
+    background: transparent !important;
+    content: none !important;
+}

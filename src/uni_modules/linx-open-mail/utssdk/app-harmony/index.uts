@@ -1,0 +1,69 @@
+import { common, Want } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { OpenMailtoOptions, OpenMailtoResult } from '../interface.uts';
+
+function buildMailtoUri(email: string, subject: string): string {
+  let uri = 'mailto:' + email;
+  if (subject.length > 0) {
+    uri += '?subject=' + encodeURIComponent(subject);
+  }
+  return uri;
+}
+
+/**
+ * 通过 startAbility + mailto Want 拉起系统邮件客户端
+ */
+export function openMailto(options: OpenMailtoOptions): Promise<OpenMailtoResult> {
+  const email = (options.email ?? '').trim();
+  if (email.length === 0) {
+    console.error('[linx-open-mail] email is empty');
+    return Promise.resolve({
+      success: false,
+      message: 'email is empty'
+    } as OpenMailtoResult);
+  }
+
+  const subject = (options.subject ?? '').trim();
+  const uri = buildMailtoUri(email, subject);
+  console.log('[linx-open-mail] openMailto uri:', uri);
+
+  const context = UTSHarmony.getUIAbilityContext() as common.UIAbilityContext;
+  const want: Want = {
+    action: 'ohos.want.action.viewData',
+    uri: uri,
+    entities: ['entity.system.browsable']
+  };
+
+  return new Promise((resolve) => {
+    context
+      .startAbility(want)
+      .then(() => {
+        console.log('[linx-open-mail] startAbility success');
+        resolve({ success: true });
+      })
+      .catch((err: BusinessError) => {
+        console.error(
+          '[linx-open-mail] startAbility failed, code:',
+          err.code,
+          'message:',
+          err.message
+        );
+        // 部分系统版本可用 openLink 作为兜底
+        context
+          .openLink(uri)
+          .then(() => {
+            console.log('[linx-open-mail] openLink success');
+            resolve({ success: true });
+          })
+          .catch((linkErr: BusinessError) => {
+            console.error(
+              '[linx-open-mail] openLink failed, code:',
+              linkErr.code,
+              'message:',
+              linkErr.message
+            );
+            resolve({ success: false, message: linkErr.message });
+          });
+      });
+  });
+}

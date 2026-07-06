@@ -1,0 +1,49 @@
+appId: "${APP_PACKAGE}"
+name: Device - status edit name dialog
+tags:
+  - device
+  - requires-device
+  - android
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+    optional: true
+- runFlow:
+    when:
+      visible: "编辑设备名称"
+    commands:
+      - tapOn: "取消"
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "说明与教程"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "用户协议"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    point: "9%,94%"
+- extendedWaitUntil:
+    visible: "${TEST_DEVICE_NAME_REGEX}"
+    timeout: 10000
+- tapOn:
+    point: "89%,19%"
+- extendedWaitUntil:
+    visible: "编辑设备名称"
+    timeout: 5000
+- assertVisible: "${TEST_DEVICE_NAME_REGEX}"
+- assertVisible: "取消"
+- assertVisible: "确认"
+- tapOn: "取消"
+- extendedWaitUntil:
+    visible: "${TEST_DEVICE_NAME_REGEX}"
+    timeout: 5000
