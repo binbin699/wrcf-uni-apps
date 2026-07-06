@@ -1,16 +1,6 @@
 {
   "pages": [
     {
-      "path": "pages/splash-video/splash_video",
-      "style": {
-        "navigationBarTitleText": "",
-        "navigationStyle": "custom",
-        "app-plus": {
-          "bounce": "none"
-        }
-      }
-    },
-    {
       "path": "pages/login/login",
       "style": {
         "navigationBarTitleText": "%pages.login%",

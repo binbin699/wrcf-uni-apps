@@ -1,6 +1,9 @@
 // utils/update.ts
+// ====================================================
+// 最小改动：从服务器获取版本号 + 本地降级
+// ====================================================
 
-// ============ 配置区域（每次发版时修改此处） ============
+// ============ 配置区域 ============
 const CONFIG = {
     // iOS 应用商店 ID（必填）
     iOSAppId: '6778761026',
@@ -8,14 +11,20 @@ const CONFIG = {
     // Android 备用下载页（当市场链接打不开时的降级地址）
     fallbackDownloadUrl: 'https://wrcfmo.cn/twoweima/wrcf.apk',
 
-    // 🔥 新增：Android 应用包名（必须与各大应用商店上架的包名一致）
-    androidPackageName: 'com.jiubaozhinengweir.app', // 请替换为您的实际包名
+    // Android 应用包名
+    androidPackageName: 'com.jiubaozhinengweir.app',
+
+    // 🔥 新增：服务器版本文件地址（使用你的域名）
+    serverVersionUrl: 'https://wrcfmo.cn/version.json',
+    
+    // 🔥 新增：请求超时时间（毫秒）
+    timeout: 3000,
 };
 
-// 🔥 最新版本信息（硬编码，每次发版更新）
-const REMOTE_VERSION = {
-    versionName: '1.0.2',
-    versionCode: 101074,
+// 🔥 修改：本地降级配置（当服务器请求失败时使用）
+const FALLBACK_VERSION = {
+    versionName: '1.0.7',
+    versionCode: 101079,
 };
 // ======================================================
 
@@ -39,7 +48,39 @@ export const getCurrentVersionInfo = (): Promise<{ versionName: string; versionC
 };
 
 /**
- * 跳转应用商店更新（已修复包名问题）
+ * 🔥 新增：从服务器获取最新版本号
+ */
+const fetchServerVersion = (): Promise<{ versionName: string; versionCode: number }> => {
+    return new Promise((resolve, reject) => {
+        uni.request({
+            url: CONFIG.serverVersionUrl,
+            method: 'GET',
+            timeout: CONFIG.timeout,
+            success: (res) => {
+                if (res.statusCode === 200 && res.data) {
+                    const data = res.data as any;
+                    // 验证数据格式
+                    if (data.versionCode && data.versionName) {
+                        resolve({
+                            versionName: data.versionName,
+                            versionCode: data.versionCode,
+                        });
+                    } else {
+                        reject(new Error('版本数据格式错误'));
+                    }
+                } else {
+                    reject(new Error(`HTTP ${res.statusCode}`));
+                }
+            },
+            fail: (err) => {
+                reject(err);
+            }
+        });
+    });
+};
+
+/**
+ * 跳转应用商店更新（保持不变）
  */
 export const goToAppStoreUpdate = () => {
     // @ts-ignore
@@ -53,19 +94,15 @@ export const goToAppStoreUpdate = () => {
     }
 
     // ---------- Android 部分 ----------
-    // ✅ 使用配置的正确包名，而不是 plus.runtime.appid
     const pkgName = CONFIG.androidPackageName;
     // @ts-ignore
     const vendor = plus.device.vendor?.toLowerCase() || '';
 
-    // 1️⃣ 根据厂商生成首选 URL
     let primaryUrl = '';
     if (vendor.includes('huawei')) {
         primaryUrl = `appmarket://details?id=${pkgName}`;
     } else if (vendor.includes('oppo')) {
-        // OPPO 官方支持两种参数，优先用 packagename
         primaryUrl = `oppomarket://details?packagename=${pkgName}`;
-        // 如果仍不生效，可以尝试改用 market://（备用会兜底）
     } else if (vendor.includes('vivo')) {
         primaryUrl = `vivomarket://details?id=${pkgName}`;
     } else if (vendor.includes('xiaomi')) {
@@ -73,17 +110,15 @@ export const goToAppStoreUpdate = () => {
     } else if (vendor.includes('samsung')) {
         primaryUrl = `samsungapps://ProductDetail/${pkgName}`;
     } else {
-        primaryUrl = `market://details?id=${pkgName}`; // 默认通用
+        primaryUrl = `market://details?id=${pkgName}`;
     }
 
-    // 2️⃣ 降级备用列表（按优先级排序）
     const fallbackUrls = [
-        `market://details?id=${pkgName}`,                      // 通用市场
-        `https://a.app.qq.com/o/simple.jsp?pkgname=${pkgName}`, // 应用宝网页版（可拉起）
-        CONFIG.fallbackDownloadUrl,                            // 最终备用下载页
+        `market://details?id=${pkgName}`,
+        `https://a.app.qq.com/o/simple.jsp?pkgname=${pkgName}`,
+        CONFIG.fallbackDownloadUrl,
     ];
 
-    // 3️⃣ 尝试打开首选 URL，失败则依次尝试备用
     // @ts-ignore
     plus.runtime.openURL(primaryUrl, (err: any) => {
         if (err) {
@@ -103,7 +138,6 @@ export const goToAppStoreUpdate = () => {
                     if (err2) {
                         tryNext(index + 1);
                     }
-                    // 成功则无需处理
                 });
             };
             tryNext(0);
@@ -112,19 +146,32 @@ export const goToAppStoreUpdate = () => {
 };
 
 /**
- * 主检查更新函数
+ * 🔥 修改：主检查更新函数（优先从服务器获取）
  */
 export const checkAppUpdate = async () => {
     try {
+        // 1. 获取本地版本
         const localInfo = await getCurrentVersionInfo();
-        const { versionName: remoteVersionName, versionCode: remoteVersionCode } = REMOTE_VERSION;
+        console.log(`当前版本: v${localInfo.versionName} (${localInfo.versionCode})`);
 
-        if (remoteVersionCode > localInfo.versionCode) {
+        // 2. 🔥 从服务器获取最新版本
+        let remoteVersion;
+        try {
+            remoteVersion = await fetchServerVersion();
+            console.log('服务器版本:', remoteVersion);
+        } catch (error) {
+            // 服务器请求失败，使用本地降级配置
+            console.warn('服务器请求失败，使用降级配置', error);
+            remoteVersion = FALLBACK_VERSION;
+        }
+
+        // 3. 对比版本号
+        if (remoteVersion.versionCode > localInfo.versionCode) {
             uni.showModal({
                 title: '发现新版本',
-                content: `检测到 v${remoteVersionName} 版本，是否前往应用商店更新？`,
+                content: `检测到 v${remoteVersion.versionName} 版本，是否前往应用商店更新？`,
                 confirmText: '立即更新',
-                // cancelText: '暂不',
+                cancelText: '暂不',
                 success: (modalRes) => {
                     if (modalRes.confirm) {
                         goToAppStoreUpdate();
@@ -132,7 +179,7 @@ export const checkAppUpdate = async () => {
                 }
             });
         } else {
-            console.log('当前已是最新版本');
+            console.log('✅ 当前已是最新版本');
         }
     } catch (error) {
         console.error('检查更新失败', error);
