@@ -1,0 +1,89 @@
+appId: "${APP_PACKAGE}"
+name: Agent - open create page
+tags:
+  - agent
+  - create
+  - android
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+    optional: true
+- runFlow:
+    when:
+      visible: "七牛云.*协议|服务用户协议|本协议.*"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "搜索音色"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "选择.*"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "编辑智能体"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "创建智能体"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "选择设备绑定"
+    commands:
+      - tapOn: "取消"
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "扫一扫"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    point: "37%,90%"
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn: "智能体"
+- extendedWaitUntil:
+    visible: "我的智能体"
+    timeout: 10000
+- tapOn: "创建"
+- extendedWaitUntil:
+    visible: "智能体名称"
+    timeout: 10000
+- runFlow:
+    when:
+      visible: "加载失败，点击重试"
+    commands:
+      - tapOn: "加载失败，点击重试"
+      - waitForAnimationToEnd:
+          timeout: 3000
+- assertVisible: "智能体名称"
+- assertVisible: "角色描述"
+- assertVisible: "大模型类型"
+- assertVisible: "对话语言"
+- assertVisible: "语音类型"
+- assertVisible: "模板"
+- pressKey: Back
+- extendedWaitUntil:
+    visible: "我的智能体"
+    timeout: 10000

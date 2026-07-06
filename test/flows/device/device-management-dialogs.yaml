@@ -1,0 +1,72 @@
+appId: "${APP_PACKAGE}"
+name: Device - management dialogs
+tags:
+  - device
+  - requires-device
+  - android
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+    optional: true
+- runFlow:
+    when:
+      visible: "编辑设备名称"
+    commands:
+      - tapOn: "取消"
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "确认删除"
+    commands:
+      - tapOn: "取消"
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "说明与教程"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    point: "84%,94%"
+- scrollUntilVisible:
+    element: "设备管理"
+    direction: UP
+    timeout: 10000
+    visibilityPercentage: 80
+- tapOn: "设备管理"
+- extendedWaitUntil:
+    visible: "${TEST_DEVICE_NAME_REGEX}"
+    timeout: 10000
+- assertVisible: "绑定智能体：.*"
+- tapOn:
+    point: "91%,15%"
+- extendedWaitUntil:
+    visible: "编辑设备名称"
+    timeout: 5000
+- assertVisible: "取消"
+- assertVisible: "确认"
+- tapOn: "取消"
+- extendedWaitUntil:
+    visible: "${TEST_DEVICE_NAME_REGEX}"
+    timeout: 5000
+- tapOn: "删除设备"
+- extendedWaitUntil:
+    visible: "确认删除"
+    timeout: 5000
+- assertVisible: "确认删除设备.*"
+- assertVisible: "取消"
+- assertVisible: "确认"
+- tapOn: "取消"
+- extendedWaitUntil:
+    visible: "${TEST_DEVICE_NAME_REGEX}"
+    timeout: 5000
+- pressKey: Back
+- scrollUntilVisible:
+    element: "设备管理"
+    direction: UP
+    timeout: 10000
+    visibilityPercentage: 80

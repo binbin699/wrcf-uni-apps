@@ -1,0 +1,917 @@
+import {  bleResult,MyApiResult,BleScanResult, BleServices, ScanRecord, Device, Characteristics, CharacteristicsProperties, ScanRssiBR,WNuuid, ScanPara, WriteData, NotityData} from '../interface.uts';
+import { CBPeripheral, CBService , CBCharacteristic , CBPeripheralState, CBUUID } from "CoreBluetooth";
+import { Callback } from 'AuthenticationServices';
+import { Data, UUID } from 'Foundation';
+import { Int } from 'Swift';
+var scanMap=new Map<String,CBPeripheral>();
+var scanId=0;
+var iosscanMap=new Map<String,CBPeripheral>();
+var sLibMap:Map<string,BleLib>=new Map<string,BleLib>();
+
+var cbServiceMap=new Map<String,CBService>();
+var cBCharacteristicMap=new Map<String,CBCharacteristic>();
+export class BleLib {
+	 defaultService:string="";
+	 defaultNotity:string="";
+	 defaultWrite:string="";
+	 curdataCBPeripheral:CBPeripheral|null=null;
+	  connectInternal:number=0;
+	  connectCallback : (sth:MyApiResult) => void = (res) => { };
+	beginToConnectMac:string|null=null;
+	appbtconnect:boolean=false;
+	btOpenStateCallback : (sth:MyApiResult) => void = (res) => { };
+	connectTimeout:number=0;
+	scanListenerMac:string|null=null;
+	 connectPb:Map<string,CBPeripheral>=new Map<string,CBPeripheral>();
+	scanDataListenerCallback : (sth:MyApiResult) => void = (res) => { };
+	wNList:string[]=[] as string[];
+	isConnecting:boolean=false;	
+	threadName:string="io";
+	haveSetMtu:boolean=false;
+	connect_time_out:number=15*1000;
+	de:boolean=false;
+	constructor(){
+		super();
+		scanMap.clear();
+		this.btListener();
+	}
+	
+	public setBtConnectTimeout(time:number){
+			 this.connect_time_out=time;
+	}
+	 auto_connect_time:number=12*1000;
+	 public setBtAutoConnectTime(time:number){
+	 	this.auto_connect_time=time;
+	 }
+	public setDebugMode(debug:boolean){
+		this.de=debug;
+		BluetoothController.shared.setDebug(debug);
+	}
+	
+	
+	public  setThreadTypeName(name:string){
+		this.threadName=name;
+	}
+	
+	@UTSJS.keepAlive
+	public onScanDataListener( callback:(res:MyApiResult)=>void){
+		// this.scanListenerMac=mac;
+		this.scanDataListenerCallback=callback;
+	}
+	
+	
+	public onBtOpenStateListener(callback: (sth:MyApiResult) => void ){
+		this.btOpenStateCallback=callback;
+		callback(bleResult(0,"",BluetoothController.shared.isBluetoothEnabled()))
+	}
+	@UTSJS.keepAlive
+	public btListener(){
+		var that=this;
+		BluetoothController.shared.btInit(function(res:boolean){
+			// console.log(res,that.isConnected());
+			if(that.appbtconnect){
+				
+				that.appbtconnect=that.isConnected();
+				that.connectCallback(bleResult(10001,"bt close",""))
+			}
+			that.btOpenStateCallback(bleResult(0,"bt state change",res))
+		})
+	}
+	
+	
+	
+	
+	
+	openBtBluetooth(callback:(b:MyApiResult)=>void){
+		
+		
+	}	
+	
+	openBluetooth(on:boolean):void{
+		// if(on){
+			
+	}
+	
+	
+	// 调用此方法打开蓝牙设置页面
+	public  openBluetoothSettings():void {
+	}
+	
+	
+	public getSericUUID():string{
+		return this.defaultService;
+	}
+	public getNotityUUID():string{
+		
+		return  this.defaultNotity;
+	}
+	
+	public getwriteUUID():string{
+		
+		return  this.defaultWrite;
+	}
+	
+	public getServiceUUID():string{
+		return this.defaultService;
+	}
+	
+	
+		
+	public isHavePermision(pername:string): boolean {
+		return	true
+		 }
+	 
+	 
+	
+	 public requestPermison(pername:string, callback: (sth:boolean) => void ) {
+		
+		 
+		 
+	 }
+	 
+	 public requesMoretPermison(pername:string[], callback: (sth:boolean) => void ) {
+			
+	 		 
+	 }
+	public  isEnabled():boolean{
+		 return BluetoothController.shared.isBluetoothEnabled();
+	 }
+	 
+	 
+	 
+		@UTSJS.keepAlive
+		public  onStartScanBle(para:ScanPara){
+			var that=this;
+			BluetoothController.checkCentralPermission(function(b:Int){
+				var s=Number.from(b);
+				if(s==0){
+					that.onScanBle(para);
+				}else{
+					if(para.onScanResult!=null){
+						para.onScanResult!(bleResult(10001,"无权限",that.isEnabled()))
+					}
+					
+					
+				}
+				
+				
+			})
+			
+		}
+		
+		@UTSJS.keepAlive
+		public onScanBle(para:ScanPara ){
+			// if(!this.isEnabled()){
+			// 	if(para.onScanResult!=null){
+			// 		para.onScanResult!(bleResult(10002,"蓝牙未开启",""))
+			// 	}
+				
+			// 	return
+			// }
+			if(this.de){
+				console.log("开始蓝牙扫描,蓝牙开启状态",this.isEnabled())
+			}
+			clearTimeout(scanId);
+			var that=this;
+			if(para.scantime==null){
+				para.scantime=10*1000;
+			}
+			if(para.showEmptyName==null){
+				para.showEmptyName=0;
+			}
+			if(para.btNameFilter==null){
+				para.btNameFilter="";
+			}
+			if(para.fliterNames==null){
+				para.fliterNames=[] as string[];
+			}
+			BluetoothController.shared.setShowEmptyName(para.showEmptyName==0);
+			BluetoothController.shared.setFilterBtName(para.btNameFilter!);
+			//console.log(para.fliterNames)
+			BluetoothController.shared.setfiltersNames(para.fliterNames!);
+			if(para.scantime!=-1){
+				scanId=setTimeout(function(){
+					that.stopScanBle();
+					if(para.scanComplate!=null){
+						para.scanComplate!()
+					}
+					
+				},para.scantime!.toInt());
+			}
+			if(this.de){
+				console.log("开始蓝牙扫描 步骤1 ",this.isEnabled())
+			}
+			if(para.iosFilterUUIDs==null){
+				para.iosFilterUUIDs=[] as string[];
+			}
+			var c:CBUUID[]=[] as CBUUID[];
+			for(var i=0;i<para.iosFilterUUIDs!.length;i++){
+				c.push(  BluetoothController.shared.getCBUUID(para.iosFilterUUIDs![i]))
+			}
+			BluetoothController.shared.setScanUUIDsFiters(c);
+			BluetoothController.shared.startScan(function(res:CBPeripheral,rs:Int, advertisementData:String,maData:String,locname:String){
+				if(that.de){
+					console.log("扫描蓝牙返回 回掉步骤1  ",res);
+				}
+				var name:String="";
+				if(res.name!=null){
+					name = res.name!;
+				}
+				
+				
+				if(advertisementData.endsWith(" ")){
+					advertisementData=advertisementData.substring(0,advertisementData.length-1);
+				}
+				if(that.de){
+					console.log("扫描蓝牙返回 回掉步骤2  ");
+				}
+				if(that.scanDataListenerCallback!=null){
+					that.scanDataListenerCallback(bleResult(0,"",{
+						rssi:Number.from(rs),
+						data:advertisementData,
+						mac:res.identifier.uuidString,
+						manufacturerData:maData,
+						name:name,
+						iosLocalName:locname,
+					} as ScanRssiBR))
+				}
+				if(that.de){
+					console.log("扫描蓝牙返回 回掉步骤3  ");
+				}
+				// console.log("---------"+name);
+				// console.log("---------"+advertisementData+"-");
+				if(scanMap.get(res.identifier.uuidString)==null){
+					var b={
+						rssi:Number.from(rs),
+						device:{
+							name:name,
+							address:res.identifier.uuidString,
+							iosLocalName:locname,
+						} as Device,
+							deviceName:name,
+							
+						scanRecord:{
+							bytes:advertisementData
+						}as ScanRecord
+						
+					} as BleScanResult;
+					if(that.de){
+						console.log("扫描蓝牙返回 回掉步骤4  ");
+					}
+					if(para.onScanResult!=null){
+						para.onScanResult!(bleResult(0,"ble data ",b))
+					}
+					if(that.de){
+						console.log("扫描蓝牙返回 回掉步骤5  ");
+					}
+					
+				}
+				// console.log(res.name,  res.identifier.uuidString)
+				scanMap.set(res.identifier.uuidString,res);
+				iosscanMap.set(res.identifier.uuidString,res);
+				// console.log(b);
+			})
+			
+		}
+	
+		
+	
+	
+	@UTSJS.keepAlive
+	public   startScanBleDevice(time:number,callback: (sth:MyApiResult) => void):void{
+			var that=this;
+			BluetoothController.checkCentralPermission(function(b:Int){
+				var s=Number.from(b);
+				if(s==0){
+					that.scanBle(time,callback);
+				}else{
+					callback(bleResult(10001,"无权限",that.isEnabled()))
+					
+				}
+				
+				
+			})
+	
+	}
+	public 	stopScanBle():void{
+			clearTimeout(scanId);
+			scanMap.clear();
+			BluetoothController.shared.stopScan()
+		
+		
+	};
+	@UTSJS.keepAlive
+	public scanBle(time:number,callback: (sth:MyApiResult) => void ){
+		// if(!this.isEnabled()){
+		// 	callback(bleResult(10002,"蓝牙未开启",""))
+		// 	return
+		// }
+		clearTimeout(scanId);
+		var that=this;
+		scanId=setTimeout(function(){
+			that.stopScanBle();
+		},time.toInt());
+		BluetoothController.shared.startScan(function(res:CBPeripheral,rs:Int, advertisementData:String,maData:String,locaname:string){
+			// res.name
+			var name:String="";
+			if(res.name!=null){
+				name = res.name!;
+			}
+			
+			
+			if(advertisementData.endsWith(" ")){
+				advertisementData=advertisementData.substring(0,advertisementData.length-1);
+			}
+			if(that.scanDataListenerCallback!=null){
+				that.scanDataListenerCallback(bleResult(0,"",{
+					rssi:Number.from(rs),
+					data:advertisementData,
+					mac:res.identifier.uuidString,
+					manufacturerData:maData,
+					name:name,
+					iosLocalName:locaname,
+				} as ScanRssiBR))
+			}
+			
+			// console.log("---------"+name);
+			// console.log("---------"+advertisementData+"-");
+			if(scanMap.get(res.identifier.uuidString)==null){
+				var b={
+					rssi:Number.from(rs),
+					device:{
+						name:name,
+						address:res.identifier.uuidString,
+						iosLocalName:locaname,
+					} as Device,
+						deviceName:name,
+					
+						scanRecord:{
+						bytes:advertisementData
+					}as ScanRecord
+					
+				} as BleScanResult;
+				callback(bleResult(0,"1",b))
+				
+			}
+			// console.log(res.name,  res.identifier.uuidString)
+			scanMap.set(res.identifier.uuidString,res);
+			iosscanMap.set(res.identifier.uuidString,res);
+			// console.log(b);
+		})
+		
+	
+	}
+	
+	// @UTSJS.keepAlive
+	// public onScanDataListener(mac:string, callback:(res:MyApiResult)=>void){
+		
+		
+	// }
+	
+	@UTSJS.keepAlive
+	public connect(mac:string,auto:boolean,callback: (sth:MyApiResult) => void):void{
+			var that=this;
+			BluetoothController.checkCentralPermission(function(b:Int){
+					var f=Number.from(b);
+					if(f==0){
+						that.connectToDevice(mac,auto,callback);
+					}else{
+						callback( bleResult(10003,"无蓝牙权限",that.isEnabled()));						
+					}
+			});
+	}
+	
+	
+	public redictToConnect(mac:string,callback: (sth:MyApiResult) => void){
+		var p:CBPeripheral|null=this.connectPb.get(mac);
+		var that=this;
+		if(p!=null){
+			BluetoothController.shared.swToConnect(p!,function(state:boolean,data:CBPeripheral){
+				if(state){
+					that.curdataCBPeripheral=data;
+					that.appbtconnect=true;
+					callback(bleResult(0,"connect success",0));
+				}else{
+					that.appbtconnect=false;
+					that.curdataCBPeripheral=null;
+					callback(bleResult(10001,"bluetooth disconnect ",0));
+				}
+				
+				
+			})
+			
+		}
+		
+	}
+	
+	public getConnectedDevicesWithServices(b:string[]):MyApiResult{
+		this.connectPb.clear();
+		var c:CBUUID[]=[] as CBUUID[];
+		for(var i=0;i<b.length;i++){
+			c.push(  BluetoothController.shared.getCBUUID(b[i]))
+		}
+		var  b:CBPeripheral[] =	BluetoothController.shared.getConnectedDevicesWithServices(c)
+		
+		var ss:BleScanResult[]=[] as BleScanResult[];
+		for(var i=0;i<b.length;i++){
+			this.connectPb.set(b[i].identifier.uuidString,b[i]);
+			var connect= b[i].state==CoreBluetooth.CBPeripheralState.connected?0:1;
+			ss.push({
+						device:{
+							connectType:connect,
+							name:b[i].name,
+							address:b[i].identifier.uuidString
+						} as Device,
+							// connectstate:connect
+					} as BleScanResult)
+		}
+		return bleResult(0,"",ss);
+	}
+	public retrievePeripherals(b:string[]):MyApiResult{
+		// this.connectPb.clear();
+		var c:UUID[]=[] as UUID[];
+		for(var i=0;i<b.length;i++){
+			c.push(  BluetoothController.shared.getUUID(b[i]))
+		}
+		var  b:CBPeripheral[] =	BluetoothController.shared.retrievePeripherals(c)
+		
+		var ss:BleScanResult[]=[] as BleScanResult[];
+		for(var i=0;i<b.length;i++){
+			//this.connectPb.set(b[i].identifier.uuidString,b[i]);
+			var connect= b[i].state==CoreBluetooth.CBPeripheralState.connected?0:1;
+			ss.push({
+						device:{
+							connectType:connect,
+							name:b[i].name,
+							address:b[i].identifier.uuidString
+						} as Device,
+							// connectstate:connect
+					} as BleScanResult)
+		}
+		return bleResult(0,"",ss);
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	public connectToDevice(mac:string,auto:boolean,callback: (sth:MyApiResult) => void){
+		// if(!this.isEnabled()){
+		// 	callback( bleResult(10002,"蓝牙未开启",this.isEnabled()));
+		// 	return
+		// }
+		
+		if(this.isConnected()){
+			callback(bleResult(10004,"bluetooth is connected",""));
+			return;
+		}
+		this.beginToConnectMac=mac;
+		this.connectCallback=callback;
+		var that=this;
+		if(iosscanMap.has(mac)){
+				var p:CBPeripheral=	BluetoothController.shared.getCBPeripheral(mac);
+				this. connectTimeout=setTimeout(function(){
+					that.isConnecting=false;
+					callback(bleResult(10000,"connect timeout",0));
+				},that.connect_time_out.toInt());
+				that.connectTargetDevice(p,auto,callback);
+				
+			}else{
+				var haveSearch=false;
+				this. connectTimeout=setTimeout(function(){
+					if(!haveSearch){
+						that.stopScanBle();
+					}
+				that.isConnecting=false;
+					callback(bleResult(10000,"connect timeout",0));
+				},that.connect_time_out.toInt());
+				BluetoothController.shared.startScan(function(res:CBPeripheral,rs:Int, advertisementData:String,maData:String,localName:String){
+					iosscanMap.set(res.identifier.uuidString,res);
+					if(res.identifier.uuidString == mac){
+						haveSearch=true;
+						that.stopScanBle();
+						var p:CBPeripheral=	BluetoothController.shared.getCBPeripheral(mac);
+						that.connectTargetDevice(p,auto,callback);
+					}
+				});
+				
+			}
+	}
+	
+	
+	public  setPhy2MMode(){
+			
+	}
+	
+	
+	public connectTargetDevice(p:CBPeripheral,auto:boolean, callback: (sth:MyApiResult) => void){
+		var that=this;
+		if(auto){
+			if(this.isConnecting){
+				//callback(bleResult(10004,"current is connecting",""))
+				return;
+			}
+		}
+		that.isConnecting=true;
+		BluetoothController.shared.connectDevice(p,function(state:boolean,data:CBPeripheral){
+			clearTimeout(that.connectTimeout)
+			that.isConnecting=false;
+			if(state){
+				that.curdataCBPeripheral=data;
+				that.appbtconnect=true;
+				callback(bleResult(0,"connect success",0));
+			}else{
+				that.appbtconnect=false;
+				that.curdataCBPeripheral=null;
+				callback(bleResult(10001,"bluetooth disconnect ",0));
+			}
+			
+		})
+		if(auto){
+			this.startAutoConnectBt(this.auto_connect_time,callback);
+		}
+	}
+	
+	
+	
+	public startAutoConnectBt(time:number,callback: (sth:MyApiResult) => void){
+		var that=this;
+		if(this.connectInternal!=0){
+			clearInterval(this.connectInternal);
+		}
+		this.connectInternal=setInterval(function(){
+			if(that.isConnecting){
+				return;
+			}
+			if(!that.isConnected()){
+				// console.log("-------auto connect")
+				that.connect(that.beginToConnectMac!,false,function(res:MyApiResult){
+					// console.log("auto connect back",res)
+					if(res.type==0){
+						callback(bleResult(0,"connect success",1))
+					}else if(res.type==10001){
+						callback(bleResult(10001,"disconnect",1))
+					}
+				})
+			}
+		},time.toInt())
+	}
+	public cancelAutoConnectBt(){
+		if(this.connectInternal!=0){
+			clearInterval(this.connectInternal);
+		}
+	}  
+	
+	@UTSJS.keepAlive
+	public scanServices(callback:(sth:MyApiResult) => void  ):void{
+		var services:BleServices[]=[] as BleServices[];
+			var index=0;
+			var that=this;
+		BluetoothController.shared.scanServices(that.curdataCBPeripheral!,function(peripheral: CBPeripheral,service: CBService,size:Int){
+				 that.curdataCBPeripheral=peripheral;
+				var serviceSize=Number.from(size);
+				that.wNList=[] as string[];
+				var b=service . uuid.uuidString as string;
+				var ser={
+					type: index++,
+					uuid: b,
+					characteristics: []  as Characteristics[]
+				}  as BleServices;
+				services.push(ser)
+				cbServiceMap.set(b,service);
+				service.characteristics?.forEach(function(value : CBCharacteristic, i : number, array : CBCharacteristic[]){
+						var c=value.uuid.uuidString as string;
+						cBCharacteristicMap.set(c,value);
+						var curCharac={
+							uuid:c ,
+							propertiesType:0, 
+							properties: {
+								READ:BluetoothController.getState(0,value.properties),
+								WRITE:BluetoothController.getState(1,value.properties)||BluetoothController.getState(4,value.properties),
+								NOTIFY:BluetoothController.getState(2,value.properties),
+								INDICATE:BluetoothController.getState(3,value.properties),
+							} as CharacteristicsProperties
+						} as Characteristics;
+					 ser.characteristics.push(curCharac);
+				})
+				
+				if(services.length>=serviceSize){
+					var havew=false;
+					var haveN=false;
+					var wuuid="";
+					var nuuid="";
+					for(var i=0;i<serviceSize;i++){
+						for(var j=0;j<services[i].characteristics.length;j++){
+							if(services[i].characteristics[j].properties.NOTIFY){
+								haveN=true;
+								nuuid=services[i].characteristics[j].uuid;
+							}
+							if(services[i].characteristics[j].properties.WRITE){
+								havew=true;
+								wuuid=services[i].characteristics[j].uuid;
+							}
+						}
+						if(haveN&&havew){
+							that.wNList.push(services[i].uuid+"_"+nuuid+"_"+wuuid)
+						}
+					}
+					
+					if(that.wNList.length>0){
+							var size=that.wNList.length;
+							that.setSelectUUID(Number.from(size)-1);
+					}
+					callback(bleResult(0,"",services))
+				}
+			})
+	
+	
+	} 
+	
+	public getDataMtu(type:number):number{
+		
+		var b=	BluetoothController.shared.getDataMtu(this.curdataCBPeripheral!,type.toInt());
+	
+		return Number.from(b)
+	}
+	
+	
+	
+	 @UTSJS.keepAlive
+	 public listenerBleMessage(callback:(sth:MyApiResult) => void  ):void{
+			
+	 }
+	 
+	 public disListenerBleMessage():void{
+	 }
+	 
+	 
+		public   isConnected():boolean{
+			if(this.curdataCBPeripheral==null){
+				return false;
+			}
+			if(this.curdataCBPeripheral?.state==CBPeripheralState.connected){
+				return true;
+			}
+			return false;
+		}
+	 
+	 
+	     public getConnectMac():string{
+			if(this.isConnected()){
+				return this.beginToConnectMac!;
+			}
+			
+			return "";
+			 
+			
+	     }
+		
+		public  byte2HexString(data:number[]):string {
+			var str="";
+				for(var i=0;i<data.length;i++){
+					str=str+data[i].toString(16).padStart(2,"0");
+					if(i<data.length-1){
+						str=str+" ";
+					}
+				}
+				return str.toUpperCase();	
+		 }
+		
+		@UTSJS.keepAlive
+		public  writeDataToBle(service:string,chars:string,data:number[],callback:(sth:MyApiResult) => void){
+		// 	var c= cbServiceMap.get(service);
+		// 	var ch=cBCharacteristicMap.get(chars);
+			if(!this.isConnected()){
+				callback(bleResult(10005,"bluetooth is not connected",""))
+				return
+			}
+			var str=this.byte2HexString(data);
+			this.writeStringDataToBle(service,chars,str,callback)
+		
+		}
+		@UTSJS.keepAlive
+	 public  writeStringDataToBle(service:string,chars:string,data:string,callback:(sth:MyApiResult) => void){
+		if(!this.isConnected()){
+			callback(bleResult(10005,"bluetooth is not connected",""))
+			return
+		}
+		
+			var c= cbServiceMap.get(service);
+			data=data.split(' ').join('');
+			// console.log(data);
+			var ch=cBCharacteristicMap.get(chars);
+			BluetoothController.shared.sendLargeData(curdataCBPeripheral!,ch!,data,function(res:boolean){
+				callback(bleResult(res?0:10001,"success",""))
+			})
+		
+	 }
+	 @UTSJS.keepAlive
+	 public  writeDataToBleWithType(service:string,chars:string,data:number[],writeType:number,callback:(sth:MyApiResult) => void){
+		var str=this.byte2HexString(data);
+		 this.writeStringDataToBleWithType(service,chars,str,writeType,callback);
+	 }
+	 
+	 @UTSJS.keepAlive
+	 public  writeStringDataToBleWithType(service:string,chars:string,data:string,writeType:number,callback:(sth:MyApiResult) => void){
+		 if(!this.isConnected()){
+		 	callback(bleResult(10005,"bluetooth is not connected",""))
+		 	return
+		 }
+		 
+		 	var c= cbServiceMap.get(service);
+		 	data=data.split(' ').join('');
+		 	// console.log(data);
+		 	var ch=cBCharacteristicMap.get(chars);
+		 	BluetoothController.shared.sendLargeDatas(curdataCBPeripheral!,ch!,data,writeType.toInt(),function(res:boolean){
+		 		callback(bleResult(res?0:10001,"success",""))
+		 	})
+	 }
+	 
+	 
+	 
+	 @UTSJS.keepAlive
+	 public  sendData(data:WriteData,callback:(b:MyApiResult)=>void){
+		 if(!this.isConnected()){
+			callback(bleResult(10005,"bluetooth is not connected",""))
+		 	return
+		 }
+		 var str="";
+		 
+		 if(data.hexStrData!=null){
+			 str=data.hexStrData!;
+			 str=str.split(' ').join('');
+		 }
+		 if(data.data!=null){
+			 str=this.byte2HexString(data.data!);
+			 str=str.split(' ').join('');
+		 }
+			var c= cbServiceMap.get(data.serviceId);
+			var ch=cBCharacteristicMap.get(data.characteristicId);
+			BluetoothController.shared.setHaveSetMtu(!data.fenbao)
+			// console.log(str)
+			// data.success!(bleResult(0,"",""))
+			if(data.writeType==null){
+				// console.log("-----------")
+				BluetoothController.shared.sendLargeData(curdataCBPeripheral!,ch!,str,function(res:boolean){
+					
+					// console.log(res);
+					if(res){
+						callback(bleResult(0,"发送成功",""))
+					}else{
+						callback(bleResult(10001,"发送失败",""))
+					}
+				})
+			}else{
+				BluetoothController.shared.sendLargeDatas(curdataCBPeripheral!,ch!,str,data.writeType!.toInt(),function(res:boolean){
+					if(res){
+						callback(bleResult(0,"",""))
+					}else{
+						callback(bleResult(10001,"",""))
+					}
+				})
+			}
+			
+			
+		 
+	 }
+	 
+	 @UTSJS.keepAlive
+	 public onNotityReadBleData(service:string,chars:string,state:boolean,callback:(sth:MyApiResult) => void){
+		var that=this;
+		var c= cbServiceMap.get(service);
+		var ch=cBCharacteristicMap.get(chars);
+		if(ch==null){
+			callback(bleResult(10001,"notity chars failed",""))
+			return
+		}
+		
+		
+		BluetoothController.shared.setNotity(curdataCBPeripheral!,ch!,state,function(s:Int,data:string,chars:string,mac:String){
+			// console.log(data);
+			var st=Number.from(s);
+			if(st==3){
+				callback(bleResult(0,"read data",that.hexToTypedArray(data)))
+			}else if(st==1){
+				callback(bleResult(1001,"订阅失败",[] as number[]))
+			}else if(st==2){
+				callback(bleResult(1000,"订阅成功",[] as number[]))
+			}
+			
+		});
+	 }
+	 
+	 
+	 @UTSJS.keepAlive
+	 public onNotityBleData(service:string,chars:string,state:boolean,callback:(sth:MyApiResult) => void){
+	 		var that=this;
+	 		var c= cbServiceMap.get(service);
+	 		var ch=cBCharacteristicMap.get(chars);
+	 		if(ch==null){
+	 			callback(bleResult(10001,"notity chars failed",""))
+	 			return
+	 		}
+	 		
+	 		
+	 		BluetoothController.shared.setNotity(curdataCBPeripheral!,ch!,state,function(s:Int,data:string,chs:string,mac:String){
+	 			// console.log(data);
+	 			var st=Number.from(s);
+	 			if(st==3){
+	 				callback(bleResult(0,"read data",{
+						data:that.hexToTypedArray(data),
+						serviceId:"",
+						characteristicsId:chs,
+						mac:mac,
+					} as NotityData))
+	 			}else if(st==1){
+	 				callback(bleResult(1001,"订阅失败",[] as number[]))
+	 			}else if(st==2){
+	 				callback(bleResult(1000,"订阅成功",[] as number[]))
+	 			}
+	 			
+	 		});
+	 }
+	 
+	  hexToTypedArray(str:string):number[] {
+		var b=  str.split(" ");
+		var num:number[]= [] as number[];
+		for(var i=0;i<b.length;i++){
+			 num.push(parseInt(b[i], 16));
+		}
+		return num;
+		
+	 }
+		 
+	 public close():void {
+		 this.cancelAutoConnectBt();
+		 if(this.curdataCBPeripheral!=null){
+			 BluetoothController.shared.disconnect(this.curdataCBPeripheral!)
+		 }
+	 }
+	 
+	 @UTSJS.keepAlive
+	 readRssi(callback:(b:MyApiResult)=>void){
+	 	this.curdataCBPeripheral!.readRSSI();
+		BluetoothController.shared.setRssicallback(function(b:string){
+			 callback(bleResult(0,"信号",parseInt(b)))
+		})
+	 }
+	 
+	@UTSJS.keepAlive
+	public setMtu(num:number,callback:(sth:MyApiResult) => void):void{
+		haveSetMtu=true;
+		BluetoothController.shared.setHaveSetMtu(haveSetMtu)
+		callback(bleResult(0,"ios 不支持设置",20))
+	 }
+	 
+	 public string2ByteStrWithCharset(data:string,code:string):string{
+	 		if(code=="gbk"||code=="GBK"){
+	 				// return data.toGBKHex()!;
+	 				
+	 				return BluetoothController.shared.toGBKHex(data);
+	 			}else if(code=="utf-8"||code=="UTF-8"){
+	 				return BluetoothController.shared.utf8toHexString(data);
+	 			}
+	 			return "";
+	 }
+	 public byte2StringWithCharset(data:string,code:string):string{
+	 		if(code=="gbk"||code=="GBK"){
+	 			// return data.utf8hexToString()!;
+	 				return BluetoothController.shared.gbkHexToString(data.split(" ").join(""));
+	 				
+	 		}else if(code=="utf-8"||code=="UTF-8"){
+	 			// return data.utf8hexToString()!;
+	 				return BluetoothController.shared.utf8hexToString(data.split(" ").join(""));
+	 				
+	 		}
+	 			return ""
+	 }
+	 
+	 public getUUIDs():WNuuid[]{
+	 	var ids=[] as WNuuid[];
+	 	for(var i=0;i<this.wNList.length;i++){
+	 		var b=this.wNList[i].split("_");
+	 		ids.push({
+	 			serviceId:b[0],
+	 			nuuid:b[1],
+	 			wuuid:b[2]
+	 		} as WNuuid)
+	 	}
+	 	return ids;
+	 }
+	 
+	 public setSelectUUID(id:number){
+		 // console.log("id=",id)
+	 	if(id<this.wNList.length){
+	 		var b=this.wNList[id].split("_");
+	 		this.defaultService=b[0];
+	 		this.defaultNotity=b[1];
+	 		this.defaultWrite=b[2];
+	 	}
+	 		
+	 }
+}

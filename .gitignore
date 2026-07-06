@@ -1,0 +1,47 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+.DS_Store
+dist
+*.local
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.env
+.env.local
+.env.development
+.env.production
+test/.env
+test/reports
+
+.hbuilderx
+
+# 证书和签名文件（安全敏感，需手动放置）
+channels/*/certs/*.p12
+channels/*/certs/*.mobileprovision
+channels/*/certs/*.cer
+channels/*/certs/*.pem
+channels/*/certs/*.key
+channels/*/certs/*.pfx
+channels/*/certs/*.keystore
+channels/*/certs/*.jks
+channels/*/certs/*.certSigningRequest
+
+# AI Agent files
+.cli-path
+
+# Brand config local snapshots and backups
+.linx-config/

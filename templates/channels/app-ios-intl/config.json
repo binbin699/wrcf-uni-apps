@@ -1,0 +1,21 @@
+{
+  "endpoints": {
+    "baseApiUrl": "https://api-intl.example.com"
+  },
+  "features": {
+    "login": {
+      "supportWxMpPhone": false,
+      "supportEmail": true,
+      "supportApple": true,
+      "supportSms": false
+    }
+  },
+  "thirdParty": {
+    "apple": {
+      "universalLinks": "https://your-app.example.com/"
+    }
+  },
+  "identity": {
+    "iosBundleId": "com.example.yourapp"
+  }
+}

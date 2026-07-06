@@ -1,0 +1,41 @@
+appId: "${APP_PACKAGE}"
+name: Smoke - main tab navigation
+tags:
+  - smoke
+  - android
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+    optional: true
+- runFlow:
+    when:
+      visible: "扫一扫"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- extendedWaitUntil:
+    visible: "设备"
+    timeout: 10000
+- assertVisible: "设备"
+- tapOn: "智能体"
+- extendedWaitUntil:
+    visible: "智能体"
+    timeout: 10000
+- assertVisible: "智能体"
+- tapOn: "广场"
+- extendedWaitUntil:
+    visible: "广场"
+    timeout: 10000
+- assertVisible: "广场"
+- tapOn: "我的"
+- extendedWaitUntil:
+    visible: "我的"
+    timeout: 10000
+- assertVisible: "我的"
+- tapOn: "设备"
+- extendedWaitUntil:
+    visible: "设备"
+    timeout: 10000
+- assertVisible: "设备"

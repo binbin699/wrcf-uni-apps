@@ -1,0 +1,163 @@
+{
+  "endpoints": {
+    "baseApiUrl": "http://111.62.241.103:8000",
+    "armsPid": "hmn73dtabu@f6272e69e2e3597",
+    "armsEndpoint": "https://hmn73dtabu-default-cn.rum.aliyuncs.com/rum/web/v2",
+    "armsEnv": "prod"
+  },
+  "features": {
+    "login": {
+      "supportWxMpPhone": true,
+      "supportGuest": false,
+      "supportGuestMp": true,
+      "supportGoogle": false,
+      "supportPassword": true,
+      "supportWechatOauth": false,
+      "supportEmail": false,
+      "supportApple": false,
+      "supportSms": true
+    },
+    "device": {
+      "bleFilterEnabled": true,
+      "setupMode": "both",
+      "primarySetupMode": "none",
+      "qrcodeScanSource": "camera_and_album",
+      "useVoiceprint": false,
+      "useVoiceClone": true
+    }
+  },
+  "legal": {
+    "termsUrl": "https://www.qiniu.com/agreements/user-agreement",
+    "privacyUrl": "https://www.qiniu.com/agreements/privacy-right",
+    "feedbackEmail": "jubao@qiniu.com",
+    "privacyDescription": {
+      "NSCameraUsageDescription": "允许获得您的相机权限，以便扫描二维码，绑定设备",
+      "NSPhotoLibraryUsageDescription": "需要读取您的相册权限，用于从相册选择二维码图片，完成设备绑定操作",
+      "NSLocationWhenInUseUsageDescription": "允许获得您的位置权限，以便优化设备联网信号推荐",
+      "NSMicrophoneUsageDescription": "允许获得您的麦克风权限，以便录制音频，上传声纹信息",
+      "NSBluetoothPeripheralUsageDescription": "允许获得您的蓝牙权限，以便搜索附近的蓝牙设备进行配网",
+      "NSBluetoothAlwaysUsageDescription": "允许获得您的蓝牙权限，以便搜索附近的蓝牙设备进行配网",
+      "NSUserTrackingUsageDescription": "请放心，开启权限不会获取您在其他站点的隐私信息，该权限仅用于标识设备并保障服务安全与提示浏览体验"
+    }
+  },
+  "ui": {
+    "showInstructionsTutorials": true,
+    "profileEntryGroupOrder": [
+      "device_management",
+      "qrcode_setup",
+      "bluetooth_setup",
+      "voice",
+      "instructions_tutorials",
+      "legal",
+      "feedback"
+    ]
+  },
+  "thirdParty": {
+    "google": {
+      "oauthClientIdWeb": "",
+      "oauthClientIdNative": ""
+    },
+    "weixin": {
+      "oauthAppId": "",
+      "universalLinks": ""
+    }
+  },
+  "identity": {
+    "dcloudAppId": "__UNI__53D46D3",
+    "name": {
+      "zh-Hans": "灵矽 AI",
+      "en": "Linx AI",
+      "ja": "Linx AI",
+      "ru": "Linx AI",
+      "ko": "Linx AI",
+      "ar": "Linx AI",
+      "kk": "Linx AI"
+    },
+    "description": "%app.description%",
+    "versionName": "1.1.7",
+    "versionCode": 101072,
+    "urlSchemeWhitelist": []
+  },
+  "content": {
+    "manuals": {},
+    "tutorialVideos": {}
+  },
+  "platform": {
+    "appPlus": {
+      "modules": ["Bluetooth", "Barcode", "Record", "OAuth", "Camera", "Geolocation", "VideoPlayer"]
+    },
+    "android": {
+      "permissions": [
+        "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\" />",
+        "<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\" />",
+        "<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\" />",
+        "<uses-permission android:name=\"android.permission.NEARBY_WIFI_DEVICES\" android:usesPermissionFlags=\"neverForLocation\" />",
+        "<uses-permission android:name=\"android.permission.BLUETOOTH_ADMIN\" />",
+        "<uses-permission android:name=\"android.permission.BLUETOOTH\" />",
+        "<uses-permission android:name=\"android.permission.BLUETOOTH_SCAN\" />",
+        "<uses-permission android:name=\"android.permission.BLUETOOTH_CONNECT\" />",
+        "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
+        "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",
+        "<uses-permission android:name=\"android.permission.VIBRATE\"/>",
+        "<uses-permission android:name=\"android.permission.READ_LOGS\"/>",
+        "<uses-feature android:name=\"android.hardware.camera.autofocus\"/>",
+        "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
+        "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+        "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\"/>",
+        "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\"/>",
+        "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\"/>",
+        "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
+        "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
+        "<uses-feature android:name=\"android.hardware.camera\"/>",
+        "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>",
+        "<uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>",
+        "<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\"/>",
+        "<uses-permission android:name=\"android.permission.READ_MEDIA_IMAGES\"/>",
+        "<uses-permission android:name=\"android.permission.READ_MEDIA_VIDEO\"/>",
+        "<uses-permission android:name=\"android.permission.READ_MEDIA_VISUAL_USER_SELECTED\"/>"
+      ],
+      "abiFilters": ["armeabi-v7a", "arm64-v8a"],
+      "minSdkVersion": 21
+    },
+    "mpWeixin": {
+      "setting": {
+        "urlCheck": false,
+        "es6": true,
+        "minified": true
+      }
+    }
+  },
+  "theme": {
+    "tokens": {
+      "--color-primary": "#335cff",
+      "--color-primary-dark": "#2850e0",
+      "--color-primary-light": "#6b8cff",
+      "--color-primary-bg": "#eff2ff",
+      "--color-primary-bg-hover": "#eaeefc",
+      "--color-primary-placeholder-bg": "#ddefff",
+      "--color-primary-placeholder-text": "#91aed1",
+      "--color-primary-gradient-start": "#9cbdff",
+      "--color-primary-gradient-mid": "#d2dbff",
+      "--color-primary-alpha-10": "rgba(51, 92, 255, 0.1)",
+      "--color-primary-alpha-15": "rgba(51, 92, 255, 0.15)",
+      "--color-primary-alpha-20": "rgba(51, 92, 255, 0.2)",
+      "--color-primary-alpha-25": "rgba(51, 92, 255, 0.25)",
+      "--color-primary-alpha-35": "rgba(51, 92, 255, 0.35)",
+      "--color-primary-shadow": "rgba(51, 92, 255, 0.25)",
+      "--color-primary-shadow-light": "rgba(51, 92, 255, 0.08)",
+      "--color-primary-disabled": "#9eb0ff",
+      "--color-primary-secondary-bg": "#e8ecff",
+      "--color-primary-secondary-text": "#7a8bff",
+      "--color-primary-disabled-bg": "#f5f7ff",
+      "--color-primary-disabled-text": "#b2bdff",
+      "--color-primary-border": "#c2d0ff",
+      "--color-primary-tips-bg": "#f8f9ff",
+      "--color-primary-caret": "#5b75fb",
+      "--color-success": "#10b981",
+      "--color-success-dark": "#059669",
+      "--color-warning": "#ff9500",
+      "--color-danger": "#ff3b30",
+      "--color-info-bg": "#e3f6ff"
+    }
+  }
+}

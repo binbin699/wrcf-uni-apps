@@ -1,0 +1,21 @@
+{
+  "endpoints": {
+    "baseApiUrl": "https://api-intl.example.com"
+  },
+  "features": {
+    "login": {
+      "supportWxMpPhone": false,
+      "supportGoogle": true,
+      "supportEmail": true,
+      "supportSms": false
+    }
+  },
+  "thirdParty": {
+    "google": {
+      "oauthClientIdWeb": "your-google-web-client-id.apps.googleusercontent.com"
+    }
+  },
+  "identity": {
+    "packageName": "com.example.yourapp"
+  }
+}

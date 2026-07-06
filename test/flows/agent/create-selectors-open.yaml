@@ -1,0 +1,126 @@
+appId: "${APP_PACKAGE}"
+name: Agent - create selectors open
+tags:
+  - agent
+  - create
+  - selector
+  - android
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+    optional: true
+- runFlow:
+    when:
+      visible: "七牛云.*协议|服务用户协议|本协议.*"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "搜索音色"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "选择.*"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "编辑智能体"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "创建智能体"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "选择设备绑定"
+    commands:
+      - tapOn: "取消"
+      - waitForAnimationToEnd:
+          timeout: 1000
+- runFlow:
+    when:
+      visible: "扫一扫"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    point: "37%,90%"
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn: "智能体"
+- extendedWaitUntil:
+    visible: "我的智能体"
+    timeout: 10000
+- tapOn: "创建"
+- extendedWaitUntil:
+    visible: "智能体名称"
+    timeout: 10000
+- runFlow:
+    when:
+      visible: "加载失败，点击重试"
+    commands:
+      - tapOn: "加载失败，点击重试"
+      - waitForAnimationToEnd:
+          timeout: 3000
+- runFlow:
+    when:
+      visible: "加载失败，点击重试"
+    commands:
+      - tapOn: "加载失败，点击重试"
+      - waitForAnimationToEnd:
+          timeout: 3000
+- tapOn: "qianfan-toytalk"
+- extendedWaitUntil:
+    visible: "选择大模型"
+    timeout: 10000
+- assertVisible: "qwen-flash"
+- assertVisible: "qwen-plus"
+- tapOn: "确认"
+- extendedWaitUntil:
+    visible: "智能体名称"
+    timeout: 10000
+- tapOn: "请选择对话语言"
+- extendedWaitUntil:
+    visible: "选择对话语言"
+    timeout: 10000
+- assertVisible: "中文"
+- assertVisible: "英语"
+- tapOn: "中文"
+- tapOn: "确认"
+- extendedWaitUntil:
+    visible: "智能体名称"
+    timeout: 10000
+- runFlow:
+    when:
+      visible: "加载失败，点击重试"
+    commands:
+      - tapOn: "加载失败，点击重试"
+      - waitForAnimationToEnd:
+          timeout: 3000
+- tapOn: "请选择音色"
+- extendedWaitUntil:
+    visible: "搜索音色"
+    timeout: 10000
+- assertVisible: "全部类型"
+- assertVisible: "女声"
+- assertVisible: "男声"
+- pressKey: Back
+- extendedWaitUntil:
+    visible: "我的智能体"
+    timeout: 10000

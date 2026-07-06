@@ -1,0 +1,301 @@
+{
+  "name": "%app.name%",
+  "appid": "__UNI__53D46D3",
+  "description": "%app.description%",
+  "versionName": "1.1.7",
+  "versionCode": 101072,
+  "transformPx": false,
+  "app-plus": {
+    "usingComponents": true,
+    "nvueStyleCompiler": "uni-app",
+    "compilerVersion": 3,
+    "compatible": {
+      "ignoreVersion": true
+    },
+    "safearea": {
+      "bottom": {
+        "offset": "none"
+      }
+    },
+    "splashscreen": {
+      "alwaysShowBeforeRender": true,
+      "waiting": true,
+      "autoclose": true,
+      "delay": 0
+    },
+    "modules": {
+      "Bluetooth": {},
+      "Barcode": {},
+      "Record": {},
+      "OAuth": {},
+      "Camera": {},
+      "Geolocation": {},
+      "VideoPlayer": {}
+    },
+    "locales": {
+      "zh": {
+        "name": "灵矽 AI",
+        "ios": {
+          "privacyDescription": {
+            "NSCameraUsageDescription": "允许获得您的相机权限，以便扫描二维码，绑定设备",
+            "NSPhotoLibraryUsageDescription": "需要读取您的相册权限，用于从相册选择二维码图片，完成设备绑定操作",
+            "NSLocationWhenInUseUsageDescription": "允许获得您的位置权限，以便优化设备联网信号推荐",
+            "NSMicrophoneUsageDescription": "允许获得您的麦克风权限，以便录制音频，上传声纹信息",
+            "NSBluetoothPeripheralUsageDescription": "允许获得您的蓝牙权限，以便搜索附近的蓝牙设备进行配网",
+            "NSBluetoothAlwaysUsageDescription": "允许获得您的蓝牙权限，以便搜索附近的蓝牙设备进行配网",
+            "NSUserTrackingUsageDescription": "请放心，开启权限不会获取您在其他站点的隐私信息，该权限仅用于标识设备并保障服务安全与提示浏览体验"
+          }
+        }
+      },
+      "en": {
+        "name": "Linx AI",
+        "ios": {
+          "privacyDescription": {
+            "NSCameraUsageDescription": "Allow access to your camera to scan QR codes and bind devices",
+            "NSPhotoLibraryUsageDescription": "Photo library access is required to select QR code images from your album for device binding",
+            "NSLocationWhenInUseUsageDescription": "Allow access to your location to optimize device network signal recommendations",
+            "NSMicrophoneUsageDescription": "Allow access to your microphone to record audio and upload voiceprint information",
+            "NSBluetoothPeripheralUsageDescription": "Allow access to Bluetooth to search nearby Bluetooth devices for network configuration",
+            "NSBluetoothAlwaysUsageDescription": "Allow access to Bluetooth to search nearby Bluetooth devices for network configuration",
+            "NSUserTrackingUsageDescription": "This permission is used to identify your device and protect service security. It will not collect your private information from other websites."
+          }
+        }
+      },
+      "ja": {
+        "name": "Linx AI",
+        "ios": {
+          "privacyDescription": {
+            "NSCameraUsageDescription": "QRコードをスキャンしてデバイスをバインドするために、カメラへのアクセスを許可してください",
+            "NSPhotoLibraryUsageDescription": "アルバムからQRコード画像を選択してデバイスをバインドするために、フォトライブラリへのアクセスが必要です",
+            "NSLocationWhenInUseUsageDescription": "デバイスのネットワーク信号推奨を最適化するために、位置情報へのアクセスを許可してください",
+            "NSMicrophoneUsageDescription": "音声を録音して声紋情報をアップロードするために、マイクへのアクセスを許可してください",
+            "NSBluetoothPeripheralUsageDescription": "ネットワーク設定のために近くのBluetoothデバイスを検索するには、Bluetoothへのアクセスを許可してください",
+            "NSBluetoothAlwaysUsageDescription": "ネットワーク設定のために近くのBluetoothデバイスを検索するには、Bluetoothへのアクセスを許可してください",
+            "NSUserTrackingUsageDescription": "この権限はデバイスの識別とサービスセキュリティの保護に使用されます。他のウェブサイトからの個人情報は収集しません。"
+          }
+        }
+      },
+      "ru": {
+        "name": "Linx AI",
+        "ios": {
+          "privacyDescription": {
+            "NSCameraUsageDescription": "Разрешите доступ к камере для сканирования QR-кодов и привязки устройств",
+            "NSPhotoLibraryUsageDescription": "Доступ к фотогалерее необходим для выбора изображений QR-кода из альбома для привязки устройства",
+            "NSLocationWhenInUseUsageDescription": "Разрешите доступ к местоположению для оптимизации рекомендаций сигнала сети устройства",
+            "NSMicrophoneUsageDescription": "Разрешите доступ к микрофону для записи аудио и загрузки информации голосовой подписи",
+            "NSBluetoothPeripheralUsageDescription": "Разрешите доступ к Bluetooth для поиска ближайших Bluetooth-устройств для настройки сети",
+            "NSBluetoothAlwaysUsageDescription": "Разрешите доступ к Bluetooth для поиска ближайших Bluetooth-устройств для настройки сети",
+            "NSUserTrackingUsageDescription": "Это разрешение используется для идентификации устройства и защиты безопасности сервиса. Ваша личная информация с других сайтов не будет собираться."
+          }
+        }
+      },
+      "es": {
+        "name": "Linx AI",
+        "ios": {
+          "privacyDescription": {
+            "NSCameraUsageDescription": "Permita el acceso a la cámara para escanear códigos QR y vincular dispositivos",
+            "NSPhotoLibraryUsageDescription": "Se necesita acceso a la galería de fotos para elegir imágenes de código QR desde el álbum y completar la vinculación del dispositivo",
+            "NSLocationWhenInUseUsageDescription": "Permita el acceso a su ubicación para optimizar las recomendaciones de señal de red del dispositivo",
+            "NSMicrophoneUsageDescription": "Permita el acceso al micrófono para grabar audio y subir información de huella de voz",
+            "NSBluetoothPeripheralUsageDescription": "Permita el acceso a Bluetooth para buscar dispositivos Bluetooth cercanos y configurar la red",
+            "NSBluetoothAlwaysUsageDescription": "Permita el acceso a Bluetooth para buscar dispositivos Bluetooth cercanos y configurar la red",
+            "NSUserTrackingUsageDescription": "Este permiso se utiliza para identificar su dispositivo y proteger la seguridad del servicio; no recopilaremos su información privada de otros sitios web."
+          }
+        }
+      },
+      "th": {
+        "name": "Linx AI",
+        "ios": {
+          "privacyDescription": {
+            "NSCameraUsageDescription": "อนุญาตให้เข้าถึงกล้องเพื่อสแกนคิวอาร์โค้ดและผูกอุปกรณ์",
+            "NSPhotoLibraryUsageDescription": "ต้องเข้าถึงคลังรูปเพื่อเลือกรูปคิวอาร์โค้ดจากอัลบั้มเพื่อผูกอุปกรณ์",
+            "NSLocationWhenInUseUsageDescription": "อนุญาตให้เข้าถึงตำแหน่งเพื่อปรับคำแนะนำสัญญาณเครือข่ายของอุปกรณ์ให้เหมาะสม",
+            "NSMicrophoneUsageDescription": "อนุญาตให้เข้าถึงไมโครโฟนเพื่อบันทึกเสียงและอัปโหลดข้อมูลลายเสียง",
+            "NSBluetoothPeripheralUsageDescription": "อนุญาตให้เข้าถึงบลูทูธเพื่อค้นหาอุปกรณ์บลูทูธใกล้เคียงเพื่อตั้งค่าเครือข่าย",
+            "NSBluetoothAlwaysUsageDescription": "อนุญาตให้เข้าถึงบลูทูธเพื่อค้นหาอุปกรณ์บลูทูธใกล้เคียงเพื่อตั้งค่าเครือข่าย",
+            "NSUserTrackingUsageDescription": "การอนุญาตนี้ใช้เพื่อระบุอุปกรณ์และความปลอดภัยของบริการ และจะไม่เก็บรวบรวมข้อมูลส่วนบุคคลของคุณจากเว็บไซต์อื่น"
+          }
+        }
+      },
+      "fr": {
+        "name": "Linx AI",
+        "ios": {
+          "privacyDescription": {
+            "NSCameraUsageDescription": "Autorisez l'accès à la caméra pour scanner les codes QR et lier les appareils",
+            "NSPhotoLibraryUsageDescription": "L'accès à la photothèque est nécessaire pour choisir une image de code QR dans l'album afin de lier l'appareil",
+            "NSLocationWhenInUseUsageDescription": "Autorisez l'accès à votre position pour optimiser les recommandations de signal réseau de l'appareil",
+            "NSMicrophoneUsageDescription": "Autorisez l'accès au microphone pour enregistrer l'audio et téléverser les informations d'empreinte vocale",
+            "NSBluetoothPeripheralUsageDescription": "Autorisez l'accès au Bluetooth pour rechercher les appareils Bluetooth à proximité afin de configurer le réseau",
+            "NSBluetoothAlwaysUsageDescription": "Autorisez l'accès au Bluetooth pour rechercher les appareils Bluetooth à proximité afin de configurer le réseau",
+            "NSUserTrackingUsageDescription": "Cette autorisation est utilisée pour identifier votre appareil et protéger la sécurité du service ; nous ne collecterons pas vos informations privées sur d'autres sites Web"
+          }
+        }
+      },
+      "ko": {
+        "name": "Linx AI"
+      },
+      "ar": {
+        "name": "Linx AI"
+      },
+      "kk": {
+        "name": "Linx AI"
+      }
+    },
+    "distribute": {
+      "android": {
+        "permissions": [
+          "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\" />",
+          "<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\" />",
+          "<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\" />",
+          "<uses-permission android:name=\"android.permission.NEARBY_WIFI_DEVICES\" android:usesPermissionFlags=\"neverForLocation\" />",
+          "<uses-permission android:name=\"android.permission.BLUETOOTH_ADMIN\" />",
+          "<uses-permission android:name=\"android.permission.BLUETOOTH\" />",
+          "<uses-permission android:name=\"android.permission.BLUETOOTH_SCAN\" />",
+          "<uses-permission android:name=\"android.permission.BLUETOOTH_CONNECT\" />",
+          "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
+          "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",
+          "<uses-permission android:name=\"android.permission.VIBRATE\"/>",
+          "<uses-permission android:name=\"android.permission.READ_LOGS\"/>",
+          "<uses-feature android:name=\"android.hardware.camera.autofocus\"/>",
+          "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
+          "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+          "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\"/>",
+          "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\"/>",
+          "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\"/>",
+          "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
+          "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
+          "<uses-feature android:name=\"android.hardware.camera\"/>",
+          "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>",
+          "<uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>",
+          "<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\"/>",
+          "<uses-permission android:name=\"android.permission.READ_MEDIA_IMAGES\"/>",
+          "<uses-permission android:name=\"android.permission.READ_MEDIA_VIDEO\"/>",
+          "<uses-permission android:name=\"android.permission.READ_MEDIA_VISUAL_USER_SELECTED\"/>"
+        ],
+        "abiFilters": [
+          "armeabi-v7a",
+          "arm64-v8a"
+        ],
+        "minSdkVersion": 21,
+        "targetSdkVersion": 35
+      },
+      "ios": {
+        "dSYMs": false,
+        "privacyDescription": {
+          "NSCameraUsageDescription": "允许获得您的相机权限，以便扫描二维码，绑定设备",
+          "NSPhotoLibraryUsageDescription": "需要读取您的相册权限，用于从相册选择二维码图片，完成设备绑定操作",
+          "NSLocationWhenInUseUsageDescription": "允许获得您的位置权限，以便优化设备联网信号推荐",
+          "NSMicrophoneUsageDescription": "允许获得您的麦克风权限，以便录制音频，上传声纹信息",
+          "NSBluetoothPeripheralUsageDescription": "允许获得您的蓝牙权限，以便搜索附近的蓝牙设备进行配网",
+          "NSBluetoothAlwaysUsageDescription": "允许获得您的蓝牙权限，以便搜索附近的蓝牙设备进行配网",
+          "NSUserTrackingUsageDescription": "请放心，开启权限不会获取您在其他站点的隐私信息，该权限仅用于标识设备并保障服务安全与提示浏览体验"
+        },
+        "urlschemewhitelist": [
+          "weixin",
+          "wechat",
+          "weixinULAPI"
+        ]
+      },
+      "sdkConfigs": {
+        "oauth": {
+          "google": {
+            "clientid": ""
+          },
+          "weixin": {
+            "appid": "",
+            "UniversalLinks": ""
+          },
+          "apple": {
+            "UniversalLinks": ""
+          }
+        },
+        "geolocation": {
+          "system": {
+            "__platform__": [
+              "ios",
+              "android"
+            ]
+          }
+        }
+      },
+      "splashscreen": {
+        "androidStyle": "common",
+        "useOriginalMsgbox": true
+      },
+      "icons": {
+        "android": {
+          "hdpi": "unpackage/res/icons/72x72.png",
+          "xhdpi": "unpackage/res/icons/96x96.png",
+          "xxhdpi": "unpackage/res/icons/144x144.png",
+          "xxxhdpi": "unpackage/res/icons/192x192.png"
+        },
+        "ios": {
+          "appstore": "unpackage/res/icons/1024x1024.png",
+          "ipad": {
+            "app": "unpackage/res/icons/76x76.png",
+            "app@2x": "unpackage/res/icons/152x152.png",
+            "notification": "unpackage/res/icons/20x20.png",
+            "notification@2x": "unpackage/res/icons/40x40.png",
+            "proapp@2x": "unpackage/res/icons/167x167.png",
+            "settings": "unpackage/res/icons/29x29.png",
+            "settings@2x": "unpackage/res/icons/58x58.png",
+            "spotlight": "unpackage/res/icons/40x40.png",
+            "spotlight@2x": "unpackage/res/icons/80x80.png"
+          },
+          "iphone": {
+            "app@2x": "unpackage/res/icons/120x120.png",
+            "app@3x": "unpackage/res/icons/180x180.png",
+            "notification@2x": "unpackage/res/icons/40x40.png",
+            "notification@3x": "unpackage/res/icons/60x60.png",
+            "settings@2x": "unpackage/res/icons/58x58.png",
+            "settings@3x": "unpackage/res/icons/87x87.png",
+            "spotlight@2x": "unpackage/res/icons/80x80.png",
+            "spotlight@3x": "unpackage/res/icons/120x120.png"
+          }
+        }
+      }
+    }
+  },
+  "quickapp": {},
+  "mp-weixin": {
+    "appid": "wx888aaf67e7fa9643",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "minified": true
+    },
+    "usingComponents": true,
+    "permission": {
+      "scope.userLocation": {
+        "desc": "您的位置信息将用于获取附近的WiFi列表，优化配网体验"
+      }
+    }
+  },
+  "mp-alipay": {
+    "usingComponents": true
+  },
+  "mp-baidu": {
+    "usingComponents": true
+  },
+  "mp-toutiao": {
+    "usingComponents": true
+  },
+  "uniStatistics": {
+    "enable": false
+  },
+  "vueVersion": "3",
+  "locale": "auto",
+  "fallbackLocale": "en",
+  "app-harmony": {
+    "distribute": {
+      "bundleName": "",
+      "icons": {
+        "foreground": "",
+        "background": ""
+      },
+      "splashScreens": {
+        "startWindowIcon": ""
+      }
+    }
+  }
+}

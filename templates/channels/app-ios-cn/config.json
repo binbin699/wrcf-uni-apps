@@ -1,0 +1,18 @@
+{
+  "endpoints": {
+    "baseApiUrl": "https://api-cn.example.com"
+  },
+  "features": {
+    "login": {
+      "supportApple": true
+    }
+  },
+  "thirdParty": {
+    "apple": {
+      "universalLinks": "https://your-app.example.com/"
+    }
+  },
+  "identity": {
+    "iosBundleId": "com.example.yourapp"
+  }
+}

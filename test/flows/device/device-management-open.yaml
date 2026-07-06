@@ -1,0 +1,47 @@
+appId: "${APP_PACKAGE}"
+name: Device - open management page
+tags:
+  - device
+  - android
+---
+- launchApp:
+    clearState: false
+    stopApp: false
+    optional: true
+- runFlow:
+    when:
+      visible: "扫一扫"
+    commands:
+      - pressKey: Back
+      - waitForAnimationToEnd:
+          timeout: 1000
+- tapOn:
+    point: "84%,94%"
+- extendedWaitUntil:
+    visible: "${TEST_USER_NAME}|设备管理|用户协议|说明与教程|退出登录"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "设备管理"
+    direction: DOWN
+    timeout: 10000
+    visibilityPercentage: 80
+- tapOn: "设备管理"
+- extendedWaitUntil:
+    visible: "${TEST_DEVICE_NAME_REGEX}|暂无设备"
+    timeout: 10000
+- runFlow:
+    when:
+      visible: "${TEST_DEVICE_NAME_REGEX}"
+    commands:
+      - assertVisible: "${TEST_DEVICE_NAME_REGEX}"
+- runFlow:
+    when:
+      visible: "暂无设备"
+    commands:
+      - assertVisible: "暂无设备"
+- pressKey: Back
+- scrollUntilVisible:
+    element: "设备管理"
+    direction: DOWN
+    timeout: 10000
+    visibilityPercentage: 80

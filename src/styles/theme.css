@@ -1,0 +1,57 @@
+/**
+ * 全局主题变量定义
+ *
+ * 所有品牌相关色值必须引用此处变量，禁止在组件中硬编码。
+ * 配置包通过构建时注入覆盖此处默认值实现换肤。
+ *
+ * 变量命名规范：
+ *   --color-{语义}-{变体}
+ *   语义: primary / success / warning / danger / info
+ *   变体: dark / light / bg / bg-hover / alpha-{N} / shadow
+ */
+
+/* uni-app 小程序中 page 相当于 :root */
+:root,
+page {
+  /* ===== 品牌核心色 ===== */
+  --color-primary: #335cff;
+  --color-primary-dark: #2850e0;
+  --color-primary-light: #6b8cff;
+
+  /* ===== 品牌色透明度变体 ===== */
+  --color-primary-bg: #eff2ff;
+  --color-primary-bg-hover: #eaeefc;
+  --color-primary-placeholder-bg: #ddefff; /* 头像占位背景 */
+  --color-primary-placeholder-text: #91aed1; /* 头像占位文字 */
+  --color-primary-gradient-start: #9cbdff; /* 页面背景渐变起点 */
+  --color-primary-gradient-mid: #d2dbff; /* 页面背景渐变中段 */
+  --color-primary-alpha-10: rgba(51, 92, 255, 0.1);
+  --color-primary-alpha-15: rgba(51, 92, 255, 0.15);
+  --color-primary-alpha-20: rgba(51, 92, 255, 0.2);
+  --color-primary-alpha-25: rgba(51, 92, 255, 0.25);
+  --color-primary-alpha-35: rgba(51, 92, 255, 0.35);
+  --color-primary-shadow: rgba(51, 92, 255, 0.25);
+  --color-primary-shadow-light: rgba(51, 92, 255, 0.08);
+
+  /* ===== 品牌色衍生色（按钮状态等） ===== */
+  --color-primary-disabled: #9eb0ff;       /* 按钮禁用态背景 */
+  --color-primary-secondary-bg: #e8ecff;   /* 次要按钮背景 */
+  --color-primary-secondary-text: #7a8bff; /* 次要按钮文字 */
+  --color-primary-disabled-bg: #f5f7ff;    /* 次要按钮禁用背景 */
+  --color-primary-disabled-text: #b2bdff;  /* 次要按钮禁用文字 */
+  --color-primary-border: #c2d0ff;         /* 品牌色输入框边框 */
+  --color-primary-tips-bg: #f8f9ff;        /* 提示区域背景 */
+  --color-primary-caret: #5b75fb;          /* 输入框光标 */
+
+  /* ===== 功能色（一般不随品牌变化，但仍可配置） ===== */
+  --color-success: #10b981;
+  --color-success-dark: #059669;
+  --color-warning: #ff9500;
+  --color-danger: #ff3b30;
+  --color-info-bg: #e3f6ff;
+}
+
+/* ===== 主题工具类（供 rich-text / locale 内联 HTML 使用） ===== */
+.text-primary {
+  color: var(--color-primary);
+}

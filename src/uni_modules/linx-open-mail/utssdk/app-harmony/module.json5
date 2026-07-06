@@ -1,0 +1,7 @@
+{
+  "module": {
+    "name": "uni_modules__linx_open_mail",
+    "type": "har",
+    "deviceTypes": ["default", "tablet", "2in1"]
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "endpoints": {
+    "baseApiUrl": "https://api.example.com",
+    "armsPid": "your-arms-pid",
+    "armsEndpoint": "https://your-arms-endpoint.example.com/rum/web/v2",
+    "armsEnv": "prod"
+  },
+  "features": {
+    "login": {
+      "supportWxMpPhone": true,
+      "supportGuest": false,
+      "supportGuestMp": false,
+      "supportGoogle": false,
+      "supportPassword": true,
+      "supportWechatOauth": true,
+      "supportEmail": false,
+      "supportApple": false,
+      "supportSms": true
+    },
+    "device": {
+      "bleFilterEnabled": true,
+      "setupMode": "both",
+      "primarySetupMode": "none",
+      "useVoiceprint": false,
+      "useVoiceClone": true
+    }
+  },
+  "legal": {
+    "termsUrl": "https://example.com/terms",
+    "privacyUrl": "https://example.com/privacy",
+    "feedbackEmail": "support@example.com",
+    "privacyDescription": {
+      "NSCameraUsageDescription": "允许获得您的相机权限，以便扫描二维码并完成设备绑定。",
+      "NSPhotoLibraryUsageDescription": "需要读取您的相册权限，用于从相册选择二维码图片并完成设备绑定。",
+      "NSLocationWhenInUseUsageDescription": "允许获得您的位置权限，以便优化设备联网信号推荐。",
+      "NSMicrophoneUsageDescription": "允许获得您的麦克风权限，以便录制音频并上传声纹信息。",
+      "NSBluetoothPeripheralUsageDescription": "允许获得您的蓝牙权限，以便搜索附近的蓝牙设备进行配网。",
+      "NSBluetoothAlwaysUsageDescription": "允许获得您的蓝牙权限，以便搜索附近的蓝牙设备进行配网。",
+      "NSUserTrackingUsageDescription": "该权限仅用于标识设备并保障服务安全与提示体验。"
+    }
+  },
+  "ui": {
+    "showInstructionsTutorials": true,
+    "profileEntryGroupOrder": [
+      "device_management",
+      "qrcode_setup",
+      "bluetooth_setup",
+      "voice",
+      "instructions_tutorials",
+      "legal",
+      "feedback"
+    ],
+    "squareLanguageFilterStyle": "navbar"
+  },
+  "thirdParty": {
+    "google": {
+      "oauthClientIdWeb": "your-google-web-client-id.apps.googleusercontent.com",
+      "oauthClientIdNative": "your-google-native-client-id.apps.googleusercontent.com"
+    },
+    "weixin": {
+      "oauthAppId": "wx1234567890abcdef",
+      "universalLinks": "https://your-app.example.com/"
+    }
+  },
+  "identity": {
+    "dcloudAppId": "__UNI__XXXXXXX",
+    "name": {
+      "zh-Hans": "你的应用",
+      "en": "Your App",
+      "ja": "Your App",
+      "ru": "Your App",
+      "ko": "Your App",
+      "ar": "Your App",
+      "kk": "Your App",
+      "th": "Your App",
+      "es": "Your App",
+      "fr": "Your App"
+    },
+    "description": "%app.description%",
+    "versionName": "1.0.0",
+    "versionCode": 10000,
+    "urlSchemeWhitelist": [
+      "weixin",
+      "wechat",
+      "weixinULAPI"
+    ]
+  },
+  "theme": {
+    "tokens": {
+      "--color-primary": "#2563eb",
+      "--color-primary-dark": "#1d4ed8",
+      "--color-primary-light": "#60a5fa",
+      "--color-primary-bg": "#eff6ff",
+      "--color-primary-bg-hover": "#dbeafe",
+      "--color-primary-placeholder-bg": "#dbeafe",
+      "--color-primary-placeholder-text": "#94a3b8",
+      "--color-primary-gradient-start": "#93c5fd",
+      "--color-primary-gradient-mid": "#dbeafe",
+      "--color-primary-alpha-10": "rgba(37, 99, 235, 0.1)",
+      "--color-primary-alpha-15": "rgba(37, 99, 235, 0.15)",
+      "--color-primary-alpha-20": "rgba(37, 99, 235, 0.2)",
+      "--color-primary-alpha-25": "rgba(37, 99, 235, 0.25)",
+      "--color-primary-alpha-35": "rgba(37, 99, 235, 0.35)",
+      "--color-primary-shadow": "rgba(37, 99, 235, 0.25)",
+      "--color-primary-shadow-light": "rgba(37, 99, 235, 0.08)",
+      "--color-primary-disabled": "#93c5fd",
+      "--color-primary-secondary-bg": "#eff6ff",
+      "--color-primary-secondary-text": "#3b82f6",
+      "--color-primary-disabled-bg": "#f8fbff",
+      "--color-primary-disabled-text": "#bfdbfe",
+      "--color-primary-border": "#bfdbfe",
+      "--color-primary-tips-bg": "#f8fbff",
+      "--color-primary-caret": "#2563eb",
+      "--color-success": "#10b981",
+      "--color-success-dark": "#059669",
+      "--color-warning": "#f59e0b",
+      "--color-danger": "#ef4444",
+      "--color-info-bg": "#e0f2fe"
+    }
+  }
+}

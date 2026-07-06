@@ -1,0 +1,13 @@
+# 确保 macOS 上 pnpm install 也下载 Linux 平台的可选依赖
+# 用途: @dcloudio/uts-linux-x64-gnu 是 @dcloudio/uts 的 optionalDependencies，
+#       默认在 macOS 上会被跳过，导致云服务器（Linux）打包时版本不一致
+supportedArchitectures:
+  os:
+    - current
+    - linux
+  cpu:
+    - current
+    - x64
+  libc:
+    - current
+    - glibc

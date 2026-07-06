@@ -1,0 +1,8 @@
+{
+  "endpoints": {
+    "baseApiUrl": "https://api-cn.example.com"
+  },
+  "identity": {
+    "packageName": "com.example.yourapp"
+  }
+}
