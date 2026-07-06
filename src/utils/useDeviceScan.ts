@@ -6,15 +6,12 @@ import { PageMap, Pages } from '@/utils/route';
 import { useToast, useNotify } from '@/uni_modules/wot-design-uni';
 import {
   requestCameraAndAlbumPermission,
-  requestCameraPermission,
   checkPermissionStatus,
   PermissionType,
   PermissionStatus,
   openPermissionSetting
 } from '@/utils/permission';
 import { AppInfo } from '@/const';
-
-const isQrcodeScanCameraOnly = () => APP_CONFIG.APP_QRCODE_SCAN_SOURCE === 'camera_only';
 
 export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNotify?: any }) {
   // 安全获取 $t，避免非 setup 上下文调用 useI18n 引发错误
@@ -62,20 +59,16 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
         }
         // 对于 authorized 或 notDetermined，直接进行扫码
       } else {
-        const notify = {
-          show: showNotify,
-          close: closeNotify
-        };
-        const permissionResult = isQrcodeScanCameraOnly()
-          ? await requestCameraPermission(notify, true)
-          : (
-              await requestCameraAndAlbumPermission(
-                notify,
-                true
-              )
-            ).camera;
+        // App 非 iOS：使用合并的预请求弹窗同时请求相机和相册权限
+        const permissionResult = await requestCameraAndAlbumPermission(
+          {
+            show: showNotify,
+            close: closeNotify
+          },
+          true
+        );
 
-        if (!permissionResult.granted) {
+        if (!permissionResult.camera.granted) {
           isNavigating.value = false;
           return;
         }
@@ -84,7 +77,6 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
       uni.scanCode({
         scanType: ['qrCode'],
         autoZoom: false,
-        ...(isQrcodeScanCameraOnly() ? { onlyFromCamera: true } : {}),
         success: async (res) => {
           // 提供回调钩子，例如在解析前隐藏引导页
           if (callbacks?.onScanSuccess) {
@@ -117,10 +109,15 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
             });
 
             // 调用绑定设备接口
-            const result = await deviceApi.bindByQrcode({ m: qrcodeData.m });
+            const result = await deviceApi.bindByQrcode({
+              m: qrcodeData.m,
+              s: qrcodeData.s,
+              v: qrcodeData.v
+            });
             if (result && result.code === 1000) {
               console.log('设备绑定成功', result);
             } else {
+              console.log('该设备不是本公司设备或者二维码损坏，无法绑定', result)
               throw new Error(result?.message || $t('net_config.device_bind_fail'));
             }
 
@@ -155,8 +152,11 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
               });
             }, 1500);
           } catch (error: any) {
+
+            console.log('此设备已经绑定,无法重复绑定', error);
             console.error('[扫码绑定/bindByQrcode] 失败:', error);
             toast.close();
+            toast.error('此设备已经绑定,无法重复绑定');
             isNavigating.value = false;
           }
         },

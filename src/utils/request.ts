@@ -4,11 +4,7 @@ import type { BaseResponse, UploadOptions, UploadResponse } from '@/types/reques
 import { PageMap, Pages } from './route';
 import { getLocale } from '@/locale/index';
 import i18n from '@/locale';
-import {
-  createRequestHandledError,
-  emitGlobalRequestError,
-  isUniRequestFailTimeout
-} from './request-feedback';
+import { createRequestHandledError, emitGlobalRequestError } from './request-feedback';
 
 const $t = i18n.global.t;
 
@@ -118,10 +114,8 @@ class Request {
       return headers;
     }
 
-    await this.tokenStore!.ensureSessionReady();
-
     // 获取有效的访问token
-    let token: string | null;
+    let token: string | null = null;
     try {
       token = await this.tokenStore!.getValidAccessToken();
     } catch (error) {
@@ -192,19 +186,6 @@ class Request {
     // #endif
   }
 
-  private handleRefreshFailure(
-    response: unknown,
-    reject: (reason?: unknown) => void
-  ): void {
-    if (this.tokenStore!.canRefreshToken) {
-      reject(response);
-      return;
-    }
-
-    this.handleAuthError();
-    reject(response);
-  }
-
   /**
    * 核心请求方法
    */
@@ -215,7 +196,6 @@ class Request {
 
     const requestKey = this.generateRequestKey(options);
     const currentRetry = this.retryCount.get(requestKey) || 0;
-    const skipToken = this.isAuthFreeUrl(options.url);
 
     // 如果重试次数超过3次，直接拒绝
     if (currentRetry >= 3) {
@@ -223,17 +203,12 @@ class Request {
       throw new Error('请求重试次数过多');
     }
 
+    const skipToken = this.isAuthFreeUrl(options.url);
     const header: Record<string, string> = await this.getHeader(options.header, skipToken);
 
     header['Content-Type'] = 'application/json';
 
-    // 显示加载提示
-    if (options.showLoading !== false) {
-      uni.showLoading({
-        title: $t('common.loading'),
-        mask: true
-      });
-    }
+
 
     return new Promise<RequestResponse<T>>((resolve, reject) => {
       console.log('request', this.baseURL + options.url, options.data);
@@ -242,7 +217,7 @@ class Request {
         method: options.method || 'GET',
         data: options.data || {},
         header: header,
-        timeout: options.timeout ?? this.timeout,
+        timeout: options.timeout || this.timeout,
         success: (res) => {
           if (options.showLoading !== false) {
             uni.hideLoading();
@@ -251,7 +226,7 @@ class Request {
           const response = res.data as RequestResponse<T>;
           if (res.statusCode === 200) {
             // 成功
-            if (response.code === 1000) {
+            if (response.code === 1000 || response.code === 200) {
               // 请求成功，清除重试计数
               this.retryCount.delete(requestKey);
               resolve(response);
@@ -262,7 +237,7 @@ class Request {
                 response.message.includes('登录失效') ||
                 (this.tokenStore!.shouldRefreshToken && !this.tokenStore!.isRefreshing)
               ) {
-                this.tokenStore!.refreshAccessToken()
+                this.tokenStore!.preRefreshToken()
                   .then((refreshSuccess) => {
                     if (refreshSuccess) {
                       // 增加重试计数
@@ -270,12 +245,14 @@ class Request {
                       // 重新执行当前请求
                       this.request<T>(options).then(resolve).catch(reject);
                     } else {
-                      this.handleRefreshFailure(response, reject);
+                      this.handleAuthError();
+                      reject(response);
                       return;
                     }
                   })
                   .catch(() => {
-                    this.handleRefreshFailure(response, reject);
+                    this.handleAuthError();
+                    reject(response);
                   });
               } else {
                 // 否则直接抛出错误
@@ -319,11 +296,8 @@ class Request {
           if (options.showLoading !== false) {
             uni.hideLoading();
           }
-          const message = isUniRequestFailTimeout(err)
-            ? $t('common.request_timeout')
-            : $t('common.network_error');
           this.rejectWithGlobalError({
-            message,
+            message: $t('common.network_error'),
             response: err,
             reject
           });
@@ -426,7 +400,7 @@ class Request {
         filePath: options.filePath,
         name: options.name || `${options.filePath.split('/').pop()}-${Date.now()}`,
         header: header,
-        timeout: options.timeout ?? this.timeout,
+        timeout: options.timeout || this.timeout,
         success: (res) => {
           if (options.showLoading !== false) {
             uni.hideLoading();
@@ -444,19 +418,19 @@ class Request {
                   response.message.includes('登录失效') ||
                   (this.tokenStore!.shouldRefreshToken && !this.tokenStore!.isRefreshing)
                 ) {
-                  this.tokenStore!.refreshAccessToken()
+                  this.tokenStore!.preRefreshToken()
                     .then((refreshSuccess) => {
                       if (refreshSuccess) {
                         this.upload(options).then(resolve).catch(reject);
                       } else {
-                        this.handleRefreshFailure(response, reject);
+                        this.handleAuthError();
+                        reject(response);
                       }
                     })
                     .catch(() => {
-                      this.handleRefreshFailure(response, reject);
+                      this.handleAuthError();
+                      reject(response);
                     });
-                } else {
-                  reject(new Error(response.message));
                 }
               } else {
                 this.rejectWithGlobalError({

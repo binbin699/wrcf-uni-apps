@@ -108,8 +108,10 @@ export function useTemplateSelector(
   async function openTemplateModal() {
     templateModalVisible.value = true;
 
-    // 每次打开弹窗都刷新语言选项，确保语言名称跟随当前 locale
-    await loadLanguageOptions();
+    // 加载语言选项（如果还未加载）
+    if (chatLanguageOptions.value.length === 0) {
+      await loadLanguageOptions();
+    }
 
     // 每次打开弹窗都获取最新的模板列表，确保筛选项能够及时更新
     await fetchTemplates();

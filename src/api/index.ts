@@ -63,14 +63,6 @@ export const userInfoApi = {
   }
 };
 
-// 智能体创建/润色等慢接口：小程序端 uni.request 上限约 60s，App 端可更长
-// #ifdef MP-WEIXIN
-const AGENT_SLOW_REQUEST_MS = 60000;
-// #endif
-// #ifndef MP-WEIXIN
-const AGENT_SLOW_REQUEST_MS = 120000;
-// #endif
-
 // 智能体管理相关接口
 export const agentApi = {
   // 获取智能体列表，只包含个人智能体
@@ -88,12 +80,9 @@ export const agentApi = {
     return request.get('/app/llm/list');
   },
 
-  // 创建智能体（后端注册/同步可能较慢，延长超时）
+  // 创建智能体
   create(data) {
-    return request.post('/app/agent/create', data, {
-      timeout: AGENT_SLOW_REQUEST_MS,
-      showLoading: false
-    });
+    return request.post('/app/agent/create', data);
   },
 
   // 获取智能体详情
@@ -101,12 +90,9 @@ export const agentApi = {
     return request.get(`/app/agent/info?id=${id}`);
   },
 
-  // 更新智能体配置（与创建类似，可能涉及平台同步）
+  // 更新智能体配置
   updateConfig(data) {
-    return request.post('/app/agent/updateConfig', data, {
-      timeout: AGENT_SLOW_REQUEST_MS,
-      showLoading: false
-    });
+    return request.post('/app/agent/updateConfig', data);
   },
 
   // 智能体绑定设备
@@ -126,8 +112,12 @@ export const agentApi = {
 
   // 获取公开的智能体列表
   // language: 'all' 获取所有智能体，不传则根据系统语言自动筛选
-  getPublicAgents(language = 'all') {
-    return request.get('/app/agent/public', { data: { language } });
+  getPublicAgents(language = 'all', level = 0) {
+    return request.get('/app/agent/public', { data: { language, level } });
+  },
+  // 获取子层智能体
+  getPublicAgentsXu(father = date.id) {
+    return request.get('/app/agent/public', { data: { father } });
   },
 
   // 获取模板智能体列表
@@ -136,12 +126,9 @@ export const agentApi = {
     return request.get('/app/agent/templates', { data: { language } });
   },
 
-  // 优化提示词（后端转发灵矽 /v1/optimize-prompt，LLM 调用可能较慢）
-  optimizePrompt(data: { prompt: string }) {
-    return request.post('/app/agent/optimize-prompt', data, {
-      timeout: AGENT_SLOW_REQUEST_MS,
-      showLoading: false
-    });
+  // 优化提示词（九宝平台AI处理需要较长时间，设置60秒超时，禁用默认loading）
+  optimizePrompt(data) {
+    return request.post('/app/agent/optimize-prompt', data, { timeout: 60000, showLoading: false });
   }
 };
 
@@ -281,6 +268,14 @@ export const languageApi = {
   // 获取对话语言选项列表
   getList() {
     return request.get('/app/language/list');
+  }
+};
+
+// 游戏玩法提示接口
+export const gameTipApi = {
+  // 获取所有玩法提示
+  getAllTips() {
+    return request.get('/api/game-play-tip/getAllTips');
   }
 };
 

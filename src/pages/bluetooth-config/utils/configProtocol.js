@@ -162,8 +162,6 @@ export class ConfigProtocol {
     this.listeners = new Map();
     this.isClosing = false;
     this.configResultPromise = null;
-    /** @type {{ resolve: Function, reject: Function, timeoutId: ReturnType<typeof setTimeout>, backupTimeoutId: ReturnType<typeof setTimeout> } | null} */
-    this.configResultWaiter = null;
 
     // WiFi扫描相关
     this.wifiScanPromise = null;
@@ -185,22 +183,16 @@ export class ConfigProtocol {
     console.log('初始化蓝牙配网协议');
     this.isClosing = false;
 
-    const deviceChanged = this.deviceId !== deviceId;
-
     // 如果设备ID变化了，需要重新设置监听器
-    if (deviceChanged) {
+    if (this.deviceId !== deviceId) {
       console.log('设备ID变化，重置监听器状态');
       this.isListenerSetup = false;
     }
 
     this.deviceId = deviceId;
-    if (deviceChanged) {
-      // 新设备从新的 BluFi 会话开始，本地序列号同步回初始值。
-      bluetoothConfigManager.resetSequence();
-      console.log('设备变化，序列号已重置为0');
-    } else {
-      console.log('保持当前序列号:', bluetoothConfigManager.getCurrentSequence());
-    }
+    // 重置序列号，确保与设备同步
+    bluetoothConfigManager.resetSequence();
+    console.log('序列号已重置为0');
 
     // 清理之前的数据
     this.clearWifiFlushTimer();
@@ -227,7 +219,6 @@ export class ConfigProtocol {
     this.configResult = null;
     this.wifiScanPromise = null;
     this.configResultPromise = null;
-    this.cancelPendingConfigResultWait();
     if (this.wifiScanTimeoutId) {
       clearTimeout(this.wifiScanTimeoutId);
       this.wifiScanTimeoutId = null;
@@ -372,6 +363,18 @@ export class ConfigProtocol {
           rejectListenerSetup(error);
         });
 
+      if (AppInfo.isHarmonyApp()) {
+        setTimeout(() => {
+          if (this.isClosing) {
+            return;
+          }
+          if (!settled) {
+            console.log('鸿蒙蓝牙通知注册进入兜底放行');
+            resolveListenerSetup();
+          }
+        }, 300);
+      }
+
       // 只注册一次数据监听器（这个监听器是全局的，不需要每次都注册）
       if (!this._dataListenerRegistered) {
         this._dataListenerRegistered = true;
@@ -493,7 +496,8 @@ export class ConfigProtocol {
               }
 
               if (result) {
-                this.deliverConfigResult(result);
+                this.configResult = result;
+                this.emit('config-result', result);
               }
               return;
             }
@@ -524,7 +528,8 @@ export class ConfigProtocol {
                 error: `设备协议错误: ${errorMsg}`,
                 code: 'PROTOCOL_ERROR'
               };
-              this.deliverConfigResult(errorResult);
+              this.configResult = errorResult;
+              this.emit('config-result', errorResult);
               return;
             }
 
@@ -927,10 +932,6 @@ export class ConfigProtocol {
 
       console.log('开始发送WiFi配置:', { ssid, password: '***' });
 
-      // 新一轮配网前清除上一轮结果，避免 waitForConfigResult 误用旧结果
-      this.configResult = null;
-      this.cancelPendingConfigResultWait();
-
       // 延时函数
       const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -1019,96 +1020,78 @@ export class ConfigProtocol {
   }
 
   /**
-   * 取消正在等待的配网结果（不 resolve）
-   */
-  cancelPendingConfigResultWait() {
-    const waiter = this.configResultWaiter;
-    if (!waiter) {
-      return;
-    }
-    if (waiter.timeoutId) {
-      clearTimeout(waiter.timeoutId);
-    }
-    if (waiter.backupTimeoutId) {
-      clearTimeout(waiter.backupTimeoutId);
-    }
-    this.configResultWaiter = null;
-    this.configResultPromise = null;
-  }
-
-  /**
-   * 投递配网结果：写入缓存、触发事件，并直接 resolve 等待中的 Promise
-   * @param {Object} result - 配网结果
-   */
-  deliverConfigResult(result) {
-    this.configResult = result;
-    this.emit('config-result', result);
-
-    const waiter = this.configResultWaiter;
-    if (!waiter?.resolve) {
-      return;
-    }
-
-    if (waiter.timeoutId) {
-      clearTimeout(waiter.timeoutId);
-    }
-    if (waiter.backupTimeoutId) {
-      clearTimeout(waiter.backupTimeoutId);
-    }
-
-    const { resolve } = waiter;
-    this.configResultWaiter = null;
-    this.configResultPromise = null;
-    resolve(result);
-  }
-
-  /**
    * 等待配网结果
    * @param {string} deviceId - 设备ID
    * @param {number} timeout - 超时时间（毫秒），默认30秒
    * @returns {Promise<Object>} 配网结果
    */
   async waitForConfigResult(deviceId, timeout = 30000) {
-    if (this.isClosing) {
-      throw new Error('协议关闭中');
-    }
-
-    // 设备已上报结果（可能发生在 SubmitConfig 挂载 wait 之前）
-    if (this.configResult) {
-      console.log('已有配网结果，直接返回:', this.configResult);
-      return this.configResult;
-    }
-
-    this.cancelPendingConfigResultWait();
-
     return new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        this.cancelPendingConfigResultWait();
+      if (this.isClosing) {
+        reject(new Error('协议关闭中'));
+        return;
+      }
+      let timeoutId = null;
+      const progressTimer = null;
+      let backupTimeoutId = null; // 备用超时计时器ID
+      this.configResultPromise = { reject };
+
+      // 设置超时
+      timeoutId = setTimeout(() => {
+        if (progressTimer) {
+          clearInterval(progressTimer);
+        }
+        if (backupTimeoutId) {
+          clearTimeout(backupTimeoutId);
+        }
+        this.configResultPromise = null;
         reject(new Error('等待配网结果超时'));
       }, timeout);
 
-      const backupTimeoutId = setTimeout(() => {
-        if (this.isClosing || this.configResult) {
+      // 监听配网结果事件
+      const resultListener = (result) => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        if (progressTimer) {
+          clearInterval(progressTimer);
+        }
+        if (backupTimeoutId) {
+          clearTimeout(backupTimeoutId);
+        }
+        this.configResultPromise = null;
+
+        // 移除监听器
+        this.off('config-result', resultListener);
+
+        resolve(result);
+      };
+
+      // 添加结果监听器
+      this.on('config-result', resultListener);
+
+      // WiFi配置已在 WifiConfig.vue 中发送，这里只需等待设备反馈
+      console.log('WiFi配置已发送，等待设备反馈...');
+      // 设置当前步骤
+      this.setCurrentStep(CONFIG_STEPS.WAIT_RESULT);
+
+      // 配网状态监听已在 setupCharacteristicListener 的 dataListener 中处理
+      // 这里只需要设置备用超时机制（如果设备长时间无响应）
+      backupTimeoutId = setTimeout(() => {
+        if (this.isClosing) {
           return;
         }
-        console.log('设备长时间无响应，返回超时结果');
-        this.deliverConfigResult({
-          success: false,
-          error: '设备响应超时，请检查设备状态',
-          code: 'DEVICE_TIMEOUT'
-        });
-      }, 25000);
-
-      this.configResultWaiter = {
-        resolve,
-        reject,
-        timeoutId,
-        backupTimeoutId
-      };
-      this.configResultPromise = { reject };
-
-      console.log('WiFi配置已发送，等待设备反馈...');
-      this.setCurrentStep(CONFIG_STEPS.WAIT_RESULT);
+        if (!this.configResult) {
+          console.log('设备长时间无响应，返回超时结果');
+          const timeoutResult = {
+            success: false,
+            error: '设备响应超时，请检查设备状态',
+            code: 'DEVICE_TIMEOUT'
+          };
+          this.configResult = timeoutResult;
+          this.emit('config-result', timeoutResult);
+        }
+      }, 25000); // 25秒后如果还没有结果就超时
     });
   }
 
@@ -1126,10 +1109,10 @@ export class ConfigProtocol {
         this.wifiScanPromise.reject(new Error('连接已断开'));
         this.wifiScanPromise = null;
       }
-      if (this.configResultPromise?.reject) {
+      if (this.configResultPromise) {
         this.configResultPromise.reject(new Error('连接已断开'));
+        this.configResultPromise = null;
       }
-      this.cancelPendingConfigResultWait();
 
       console.log('蓝牙配网协议断开连接');
     } catch (error) {
@@ -1173,11 +1156,11 @@ export class ConfigProtocol {
       }
     }
 
-    this.cancelPendingConfigResultWait();
     this.listeners.clear();
     this._dataListenerRegistered = false;
     this._connectionListener = null;
     this._dataListener = null;
+    this.configResultPromise = null;
     this.deviceId = null;
     console.log('蓝牙配网协议已关闭');
   }

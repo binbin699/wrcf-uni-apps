@@ -10,7 +10,7 @@
       <view class="header">
         <view class="logo-container">
           <view class="logo">
-            <image src="/static/logo.png" alt="" class="logo-img"></image>
+            <image src="/static/logo.jpg" alt="" class="logo-img"></image>
           </view>
         </view>
         <view class="app-info">
@@ -24,31 +24,31 @@
         <!-- 用户名输入 -->
         <view class="input-group">
           <input
-            class="input-field"
-            type="text"
-            v-model="form.unionid"
-            :placeholder="$t('register.unionid_placeholder')"
-            maxlength="20" />
+              class="input-field"
+              type="text"
+              v-model="form.unionid"
+              :placeholder="$t('register.unionid_placeholder')"
+              maxlength="20" />
         </view>
 
         <!-- 昵称输入 -->
         <view class="input-group">
           <input
-            class="input-field"
-            type="text"
-            v-model="form.nickName"
-            :placeholder="$t('register.nickname_placeholder')"
-            maxlength="20" />
+              class="input-field"
+              type="text"
+              v-model="form.nickName"
+              :placeholder="$t('register.nickname_placeholder')"
+              maxlength="20" />
         </view>
 
         <!-- 密码输入 -->
         <view class="input-group">
           <input
-            class="input-field"
-            :type="showPassword ? 'text' : 'password'"
-            v-model="form.password"
-            :placeholder="$t('register.password_placeholder')"
-            maxlength="20" />
+              class="input-field"
+              :type="showPassword ? 'text' : 'password'"
+              v-model="form.password"
+              :placeholder="$t('register.password_placeholder')"
+              maxlength="20" />
           <view class="password-toggle" @click="togglePassword">
             <text class="toggle-icon">{{ showPassword ? '👁️' : '👁️‍🗨️' }}</text>
           </view>
@@ -57,22 +57,39 @@
         <!-- 确认密码输入 -->
         <view class="input-group">
           <input
-            class="input-field"
-            :type="showConfirmPassword ? 'text' : 'password'"
-            v-model="form.confirmPassword"
-            :placeholder="$t('register.confirm_password_placeholder')"
-            maxlength="20" />
+              class="input-field"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              v-model="form.confirmPassword"
+              :placeholder="$t('register.confirm_password_placeholder')"
+              maxlength="20" />
           <view class="password-toggle" @click="toggleConfirmPassword">
             <text class="toggle-icon">{{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}</text>
           </view>
         </view>
 
+        <!-- ========== ✨ 修改点：协议链接改为 @click 调用 openTerms，不再使用 <a> 标签 ========== -->
+        <view class="agreement-section">
+          <checkbox-group @change="onAgreementChange">
+            <label class="agreement-label">
+              <checkbox :checked="isAgree" color="#8FD3F4" />
+              <text class="agreement-text">
+                已阅读并同意
+                <!-- 使用 text 标签 + @click.stop，与 profile 页面行为一致 -->
+                <text class="agreement-link" @click.stop="openTerms('user')">《九宝用户协议》</text>
+                和
+                <text class="agreement-link" @click.stop="openTerms('privacy')">《隐私政策》</text>
+              </text>
+            </label>
+          </checkbox-group>
+        </view>
+        <!-- ========== 修改点结束 ========== -->
+
         <!-- 注册按钮 -->
         <button
-          class="register-btn primary"
-          @click="handleRegister"
-          :loading="userStore.isLoading"
-          :disabled="!canRegister">
+            class="register-btn primary"
+            @click="handleRegister"
+            :loading="userStore.isLoading"
+            :disabled="!canRegister">
           {{ $t('register.register_btn') }}
         </button>
 
@@ -112,14 +129,42 @@ const showConfirmPassword = ref(false);
 // 计算属性
 const canRegister = computed(() => {
   return (
-    form.value.unionid.length >= 3 &&
-    form.value.unionid.length <= 16 &&
-    form.value.nickName.length >= 1 &&
-    form.value.password.length >= 8 &&
-    form.value.password.length <= 24 &&
-    form.value.confirmPassword === form.value.password
+      form.value.unionid.length >= 3 &&
+      form.value.unionid.length <= 16 &&
+      form.value.nickName.length >= 1 &&
+      form.value.password.length >= 8 &&
+      form.value.password.length <= 24 &&
+      form.value.confirmPassword === form.value.password
   );
 });
+
+// 协议同意状态
+const isAgree = ref(false);
+
+// ========== ✨ 修改点：新增 openExternal 和 openTerms 方法（与 profile 页面一致） ==========
+function openExternal(src: string) {
+  const encoded = encodeURIComponent(src);
+  uni.navigateTo({ url: '/pages/webview/webview?src=' + encoded });
+}
+
+function openTerms(type: 'user' | 'privacy') {
+  const urlMap = {
+    user: APP_CONFIG.TERMS_URL,
+    privacy: APP_CONFIG.PRIVACY_URL
+  };
+  const url = urlMap[type];
+  if (url) {
+    openExternal(url);
+  } else {
+    toast.warning({ msg: '协议地址未配置', duration: 2000 });
+  }
+}
+// ========== 修改点结束 ==========
+
+// 协议变更处理
+function onAgreementChange(e: any) {
+  isAgree.value = e.detail.value.length > 0;
+}
 
 // 方法
 function togglePassword() {
@@ -131,6 +176,14 @@ function toggleConfirmPassword() {
 }
 
 async function handleRegister() {
+  if (!isAgree.value) {
+    toast.warning({
+      msg: '请先阅读并同意用户协议和隐私政策',
+      duration: 2000
+    });
+    return;
+  }
+
   if (!canRegister.value) {
     toast.warning({
       msg: $t('register.form_invalid'),
@@ -250,8 +303,8 @@ function redirectToMain() {
   transform: rotate(14.29deg);
   opacity: 0.2;
   background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
-  -webkit-mask: url('/static/logo.png') no-repeat center;
-  mask: url('/static/logo.png') no-repeat center;
+  -webkit-mask: url('/static/logo.svg') no-repeat center;
+  mask: url('/static/logo.svg') no-repeat center;
   -webkit-mask-size: contain;
   mask-size: contain;
   z-index: 1;
@@ -280,6 +333,34 @@ function redirectToMain() {
   max-width: 640rpx;
   padding: 60rpx 32rpx;
   gap: 120rpx;
+}
+
+/* 协议区域样式 */
+.agreement-section {
+  margin-top: 24rpx;
+  display: flex;
+  align-items: flex-start;
+}
+
+.agreement-label {
+  display: flex;
+  align-items: center;
+  font-size: 20rpx;
+  color: #666;
+  line-height: 1.5;
+}
+.agreement-label checkbox {
+  transform: scale(0.8);
+  margin-right: 8rpx;
+}
+.agreement-text {
+  margin-left: 16rpx;
+}
+
+/* ✨ 修改点：保持与之前相同的样式，但现在是 text 标签，依然使用相同的 class */
+.agreement-link {
+  color: #8FD3F4;
+  text-decoration: underline;
 }
 
 /* Logo区域 */

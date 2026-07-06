@@ -12,14 +12,13 @@ import { loginApi } from '@/api/login';
 import { useTokenStore } from './token';
 import i18n from '@/locale';
 import { isRequestHandledError } from '@/utils/request-feedback';
-import { isAuthFailureError } from '@/utils/auth-error';
 const $t = i18n.global.t;
 
 // 初始化状态
 const userInfoState: IUserInfoRes = {
   userId: -1,
   nickname: '',
-  avatar: '/static/vx.jpg',
+  avatar: '/static/logo1.jpg',
   phone: '',
   gender: 0
 };
@@ -360,7 +359,8 @@ export const useUserStore = defineStore(
         return true;
       } catch (error: any) {
         console.error('获取用户信息失败:', error);
-        if (isAuthFailureError(error)) {
+        // 如果是token相关错误，清除登录状态
+        if (error.code === 401 || error.code === 403) {
           logout();
         }
         return false;
@@ -474,16 +474,26 @@ export const useUserStore = defineStore(
      * 检查登录状态并自动刷新token
      */
     const checkLoginStatus = async (): Promise<boolean> => {
-      const sessionReady = await tokenStore.ensureSessionReady();
-      if (!sessionReady) {
+      // 如果没有token，直接返回false
+      if (!tokenStore.accessToken) {
         return false;
+      }
+
+      // 如果token过期但可以刷新，尝试刷新
+      if (tokenStore.isTokenExpired && tokenStore.canRefreshToken) {
+        const refreshSuccess = await tokenStore.refreshAccessToken();
+        if (!refreshSuccess) {
+          logout();
+          return false;
+        }
       }
 
       // 如果有token但用户信息未能正确恢复（userId <= 0），尝试获取用户信息
       if (tokenStore.isLoggedIn && userInfo.value.userId <= 0) {
         const fetchSuccess = await fetchUserInfo();
         if (!fetchSuccess) {
-          return tokenStore.isLoggedIn;
+          logout();
+          return false;
         }
       }
 
@@ -496,13 +506,14 @@ export const useUserStore = defineStore(
      */
     const initUserState = async (): Promise<void> => {
       try {
+        // 恢复token
+        tokenStore.restoreTokens();
+
         // 检查登录状态
         await checkLoginStatus();
       } catch (error) {
         console.error('初始化用户状态失败:', error);
-        if (isAuthFailureError(error)) {
-          logout();
-        }
+        logout();
       }
     };
 

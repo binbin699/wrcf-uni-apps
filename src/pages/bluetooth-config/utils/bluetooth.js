@@ -9,18 +9,6 @@ import { AppInfo } from '@/const';
 
 const $t = i18n.global.t;
 
-const BLE_OPERATION_TIMEOUT = {
-  STOP_SCAN: 1500,
-  CONNECT: 12000,
-  GET_SERVICES: 5000,
-  GET_CHARACTERISTICS: 3000
-};
-
-const IOS_CONNECT_STABILIZE_DELAY = 500;
-const IOS_SERVICE_DISCOVERY_DELAY = 400;
-const IOS_SERVICE_DISCOVERY_RETRY_DELAY = 350;
-const IOS_SERVICE_DISCOVERY_RETRIES = 3;
-
 /**
  * 蓝牙服务配置
  */
@@ -39,99 +27,6 @@ export const bluetoothService = {
  * 可以临时修改为例如 /^DTXZ/ 仅显示以DTXZ开头的设备
  */
 const DEFAULT_DEVICE_NAME_REG = /.*/;
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function normalizeUuid(uuid) {
-  return String(uuid || '')
-    .trim()
-    .toUpperCase();
-}
-
-function withBluetoothTimeout(taskFactory, timeoutMs, timeoutMessage) {
-  return new Promise((resolve, reject) => {
-    let settled = false;
-    const timeoutId = setTimeout(() => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      reject(new Error(timeoutMessage));
-    }, timeoutMs);
-
-    Promise.resolve()
-      .then(() => taskFactory())
-      .then((result) => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        clearTimeout(timeoutId);
-        resolve(result);
-      })
-      .catch((error) => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        clearTimeout(timeoutId);
-        reject(error);
-      });
-  });
-}
-
-async function getServicesWithRetry(deviceId) {
-  const isIOS = AppInfo.isIOSApp();
-  const maxAttempts = isIOS ? IOS_SERVICE_DISCOVERY_RETRIES : 1;
-  let lastError = null;
-
-  if (isIOS) {
-    console.log('[蓝牙] iOS 连接成功，等待服务稳定...');
-    await sleep(IOS_SERVICE_DISCOVERY_DELAY);
-  }
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const servicesResult = await withBluetoothTimeout(
-        () => bleService.getServices(deviceId),
-        BLE_OPERATION_TIMEOUT.GET_SERVICES,
-        $t('bluetooth.submit.device_timeout')
-      );
-      const services = Array.isArray(servicesResult?.services) ? servicesResult.services : [];
-      const targetService = services.find(
-        (service) => normalizeUuid(service?.uuid) === normalizeUuid(bluetoothService.PRIMARY_SERVICE_UUID)
-      );
-
-      if (targetService) {
-        return {
-          ...servicesResult,
-          targetService,
-          services
-        };
-      }
-
-      lastError = new Error('TARGET_SERVICE_NOT_FOUND');
-      console.warn(
-        `[蓝牙] 第 ${attempt} 次发现服务未找到目标服务:`,
-        services.map((service) => service?.uuid)
-      );
-    } catch (error) {
-      lastError = error;
-      console.warn(
-        `[蓝牙] 第 ${attempt} 次获取设备服务失败:`,
-        error?.errMsg || error?.message || error
-      );
-    }
-
-    if (attempt < maxAttempts) {
-      await sleep(IOS_SERVICE_DISCOVERY_RETRY_DELAY);
-    }
-  }
-
-  throw lastError || new Error($t('bluetooth.select_device.connection_failed'));
-}
 
 /**
  * Android 12+ 蓝牙权限请求
@@ -321,11 +216,6 @@ export async function searchBluetoothDevices() {
       console.log('[蓝牙扫描] 停止之前的发现失败(可忽略):', e?.errMsg || e?.message || e);
     }
 
-    // Harmony 插件扫描收尾是异步的，重扫前稍等避免与下一轮扫描冲突
-    if (AppInfo.isHarmonyApp()) {
-      await new Promise((resolve) => setTimeout(resolve, 350));
-    }
-
     // 开始搜索
     console.log('[蓝牙扫描] 调用 startBluetoothDevicesDiscovery...');
 
@@ -479,49 +369,34 @@ export async function connectBluetoothDevice(deviceId) {
     console.log('连接蓝牙设备:', deviceId);
 
     try {
-      await withBluetoothTimeout(
-        () => bleService.stopScan(),
-        BLE_OPERATION_TIMEOUT.STOP_SCAN,
-        'STOP_SCAN_TIMEOUT'
-      );
+      await bleService.stopScan();
       console.log('连接前已停止蓝牙扫描');
     } catch (stopError) {
-      console.log(
-        '连接前停止蓝牙扫描失败（可忽略）:',
-        stopError?.errMsg || stopError?.message || stopError
-      );
-    }
-
-    if (AppInfo.isIOSApp()) {
-      console.log(`[蓝牙] iOS 建连前等待 ${IOS_CONNECT_STABILIZE_DELAY}ms`);
-      await sleep(IOS_CONNECT_STABILIZE_DELAY);
+      console.log('连接前停止蓝牙扫描失败（可忽略）:', stopError?.errMsg || stopError?.message || stopError);
     }
 
     // 创建连接
-    console.log('[蓝牙] 开始创建 BLE 连接:', {
-      deviceId,
-      timeoutMs: BLE_OPERATION_TIMEOUT.CONNECT
-    });
-    await withBluetoothTimeout(
-      () => bleService.connect(deviceId),
-      BLE_OPERATION_TIMEOUT.CONNECT,
-      $t('bluetooth.submit.device_timeout')
-    );
+    await bleService.connect(deviceId);
     console.log('蓝牙设备连接成功');
 
     // 获取设备服务
-    const servicesResult = await getServicesWithRetry(deviceId);
+    const servicesResult = await bleService.getServices(deviceId);
     console.log('获取到的服务:', servicesResult.services);
 
-    // 仅探测目标服务的特征值，避免在 iOS 上枚举无关服务导致流程挂起
-    await withBluetoothTimeout(
-      () => bleService.getCharacteristics(deviceId, servicesResult.targetService.uuid),
-      BLE_OPERATION_TIMEOUT.GET_CHARACTERISTICS,
-      $t('bluetooth.submit.device_timeout')
-    );
-    console.log('目标服务特征值获取成功:', servicesResult.targetService.uuid);
+    // 存储所有特性处理的 Promise
+    const characteristicPromises = servicesResult.services
+      .filter((service) => service.isPrimary) // 只处理主服务
+      .map(async (service) => {
+        // 使用固定的UUID配置，不再动态获取
+        // bluetoothService.PRIMARY_SERVICE_UUID = service.uuid
+
+        await bleService.getCharacteristics(deviceId, service.uuid);
+      });
 
     requestPreferredMTU(deviceId);
+
+    // 等待所有特性处理完成
+    await Promise.all(characteristicPromises);
 
     console.log('蓝牙设备连接并配置完成');
   } catch (error) {
@@ -571,60 +446,6 @@ export function dedupeDeviceList(deviceList) {
 }
 
 /**
- * 将 MAC 规范为可比较键：去掉分隔符、取 12 位十六进制、小写。
- * 用于与后端设备列表比对及按 MAC 去重，避免 AA-BB-…、AABB…、大小写不一致导致误判。
- * @param {string} [raw]
- * @returns {string} 非标准长度则返回空串
- */
-export function normalizeMacAddressKey(raw) {
-  if (raw == null || typeof raw !== 'string') {
-    return '';
-  }
-  const hex = String(raw).replace(/[^0-9A-Fa-f]/g, '');
-  if (hex.length !== 12) {
-    return '';
-  }
-  return hex.toLowerCase();
-}
-
-/**
- * 按外设身份（优先 WiFi MAC）去重。
- * iOS 上同一硬件可能因系统缓存/重连以不同 BLE deviceId（UUID）出现在 getBluetoothDevices 结果中，
- * normalizeDeviceList 解析出的 macAddress 相同，仅按 deviceId 去重会留下两条卡片；失效 UUID 无法连接，表现为点击无响应。
- *
- * 同 MAC 多条时采用**遍历顺序中后者覆盖前者**，近似「较新出现在扫描结果中的记录」；仅凭 RSSI 可能保留失效缓存 UUID（信号仍强）。
- *
- * @param {Array} deviceList - 已规范化 macAddress 的列表（见 normalizeDeviceList）
- * @returns {Array}
- */
-export function dedupeDeviceListByMacAddress(deviceList) {
-  if (!deviceList || deviceList.length === 0) {
-    return [];
-  }
-
-  const byMac = new Map();
-  const byIdFallback = new Map();
-
-  for (const device of deviceList) {
-    const rawMac = typeof device.macAddress === 'string' ? device.macAddress.trim() : '';
-    const macKey = normalizeMacAddressKey(rawMac);
-
-    if (macKey) {
-      byMac.set(macKey, device);
-      continue;
-    }
-
-    const id = device.deviceId;
-    if (!id) {
-      continue;
-    }
-    byIdFallback.set(id, device);
-  }
-
-  return [...byMac.values(), ...byIdFallback.values()];
-}
-
-/**
  * 过滤有效设备
  * @param {Array} devices - 设备列表
  * @param {boolean} useLocalName - 是否使用 localName 兼容模式（iOS / Harmony 等平台）
@@ -670,7 +491,7 @@ export function normalizeDeviceList(deviceList, useLocalName = false) {
     let macAddress = null;
     let macSource = null; // 记录 MAC 来源，用于调试
     // 优先从设备名称中提取 MAC 地址（固件写入的真实 WiFi MAC）
-    // 这个 MAC 用于后端注册和灵矽平台绑定
+    // 这个 MAC 用于后端注册和九宝平台绑定
     // deviceId 放在最后作为兜底，但可能是蓝牙 MAC 而非 WiFi MAC
     const fields = ['name', 'localName', 'deviceId'];
 
@@ -718,7 +539,7 @@ export function normalizeDeviceList(deviceList, useLocalName = false) {
         // iOS 上是 UUID 格式，Android 上是蓝牙 MAC
         deviceId: device.deviceId,
         // macAddress 存储从设备名称提取的真实 WiFi MAC
-        // 用于后端设备注册和灵矽平台绑定
+        // 用于后端设备注册和九宝平台绑定
         macAddress: macAddress,
         // 记录 MAC 来源，便于调试
         _macSource: macSource

@@ -1,14 +1,12 @@
 <template>
   <wd-toast />
   <view class="page-container">
+
     <!-- 自定义导航栏 -->
     <view class="custom-navbar">
       <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
       <view class="nav-content" :style="{ height: navBarHeight + 'px' }">
-        <view
-          class="language-selector-container"
-          :class="{ 'navbar-language-selector-container': squareLanguageUsesNavbar }"
-          v-if="squareLanguageUsesNavbar && availableLanguages.length > 0">
+        <view class="language-selector-container" v-if="availableLanguages.length > 0">
           <view
             class="language-selector"
             :class="{ expanded: showLanguagePicker }"
@@ -44,6 +42,12 @@
           </view>
         </view>
         <text class="nav-title">{{ $t('square.title') }}</text>
+
+        <!-- 右侧返回按钮 -->
+        <view class="back-btna" @click="goBack">
+          <text class="back-text">返回</text>
+          <image class="back-icona" src="/static/icons/arrow-left.svg" mode="aspectFit" />
+        </view>
       </view>
     </view>
 
@@ -56,45 +60,6 @@
           placeholder-style="color: #374151;"
           v-model="searchKeyword"
           @input="onSearchInput" />
-      </view>
-    </view>
-
-    <!-- 语言选择下拉框（品牌配置 horizontal_bar 时显示在搜索框下方） -->
-    <view
-      v-if="!squareLanguageUsesNavbar && availableLanguages.length > 0"
-      class="language-selector-container inline-language-selector-container">
-      <view
-        class="language-selector"
-        :class="{ expanded: showLanguagePicker }"
-        @click="showLanguagePicker = !showLanguagePicker">
-        <view class="language-selector-inner">
-          <text class="language-icon">🌐</text>
-          <text class="language-label">{{ selectedLanguageLabel }}</text>
-        </view>
-        <view class="language-arrow-wrapper" :class="{ rotated: showLanguagePicker }">
-          <image class="language-arrow" src="/static/icons/arrow-down.svg" mode="aspectFit" />
-        </view>
-      </view>
-
-      <view class="language-dropdown" :class="{ show: showLanguagePicker }">
-        <view class="language-dropdown-inner">
-          <view
-            v-for="(lang, index) in availableLanguages"
-            :key="lang.langCode"
-            class="language-option"
-            :class="{ active: selectedLanguage === lang.langCode }"
-            :style="{ animationDelay: showLanguagePicker ? `${index * 30}ms` : '0ms' }"
-            @click.stop="selectLanguage(lang.langCode)">
-            <view class="language-option-content">
-              <text class="language-option-text">{{ lang.language }}</text>
-            </view>
-            <view v-if="selectedLanguage === lang.langCode" class="language-check-wrapper">
-              <view class="language-check-circle">
-                <image class="language-check" src="/static/icons/check.svg" mode="aspectFit" />
-              </view>
-            </view>
-          </view>
-        </view>
       </view>
     </view>
 
@@ -133,11 +98,11 @@
             <view class="agent-left">
               <view class="agent-header">
                 <view class="agent-name">{{ agent.name }}</view>
-                <view v-if="shouldShowAgentTag(agent)" class="agent-tag">
+                <view class="agent-tag">
                   <text class="tag-text">{{ getAgentTag(agent) }}</text>
                 </view>
               </view>
-              <view class="agent-description">{{ agent.summary }}</view>
+              <view class="agent-description">{{ agent.description }}</view>
             </view>
             <!-- 右侧内容：绑定按钮 -->
             <view
@@ -169,10 +134,6 @@
             </view>
           </view>
         </view>
-      </view>
-
-      <view v-if="loading" class="loading">
-        <text>{{ $t('common.loading') }}</text>
       </view>
 
       <view v-if="!loading && filteredAgents.length === 0" class="empty">
@@ -270,12 +231,6 @@
           <view class="second-overlay-ellipse ellipse-3"></view>
           <view class="second-overlay-ellipse ellipse-4"></view>
         </view>
-        <view class="second-overlay-content">
-          <view class="second-overlay-text">{{ $t('guide.second_overlay_text') }}</view>
-          <view class="second-overlay-btn" @click.stop="handleSecondOverlayDismiss">
-            <text class="second-overlay-btn-text">{{ $t('guide.overlay_action') }}</text>
-          </view>
-        </view>
       </view>
       <!-- 三角形箭头 -->
       <view
@@ -327,22 +282,17 @@ import {
   type ChatLanguageOption
 } from '../agent/lang_opts';
 import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
-import { resolveTtsLlmLabelsBatch } from '@/utils/resolveAgentTtsLlmDisplay';
 
 type SquareAgent = Agent & {
   name: string;
   description: string;
-  summary: string;
   voiceName: string;
   creatorName: string;
   modalTag: string;
   langCodes: string[]; // 前端 langCode 格式的语言数组
-  /** 与设备状态页一致：部分接口在顶层返回语言码 */
-  languageCode?: string;
-  tagTtsLabel: string;
 };
 
-const { t: $t, locale } = useI18n();
+const { t: $t } = useI18n();
 const toast = useToast();
 useGlobalRequestErrorToast(toast);
 
@@ -377,9 +327,6 @@ const showInfoBar = ref<boolean>(false);
 const selectedLanguage = ref<string>(''); // 选中的语言 langCode
 const showLanguagePicker = ref<boolean>(false); // 是否显示语言选择器
 const availableLanguages = ref<{ language: string; langCode: string }[]>([]); // 智能体中存在的语言选项
-
-/** 语言筛选是否在导航栏左上角展示（否则为搜索框下方下拉选择框，由品牌 ui.squareLanguageFilterStyle 控制） */
-const squareLanguageUsesNavbar = APP_CONFIG.SQUARE_LANGUAGE_FILTER_STYLE !== 'horizontal_bar';
 
 const modelTags = computed(() => {
   const tags: { id: string; name: string }[] = [];
@@ -421,7 +368,6 @@ const filteredAgents = computed(() => {
     filtered = filtered.filter(
       (agent) =>
         agent.name.toLowerCase().includes(keyword) ||
-        (agent.summary && agent.summary.toLowerCase().includes(keyword)) ||
         (agent.description && agent.description.toLowerCase().includes(keyword))
     );
   }
@@ -503,6 +449,13 @@ function skipSquareBindGuide() {
   }
 }
 
+// 返回上一页
+function goBack() {
+  uni.switchTab({
+    url: '/pages/square/super_square'
+  });
+}
+
 /**
  * 获取第一个绑定按钮的位置
  */
@@ -569,30 +522,40 @@ onLoad(() => {
   setStatusBarHeight();
 });
 
+// onShow(() => {
+//   showBindDrawer.value = false;
+//
+//   // TODO: 临时重置引导状态，需要测试时取消注释
+//   // resetUserGuideState();
+//   // console.log('[Square] 已重置用户引导状态');
+//
+//   // 页面显示时刷新数据
+//   loadPublicAgents();
+//   refreshSquareGuideState();
+//   // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
+//   uni.hideTabBar({ animation: false });
+// });
+
 onShow(() => {
   showBindDrawer.value = false;
 
-  // TODO: 临时重置引导状态，需要测试时取消注释
-  // resetUserGuideState();
-  // console.log('[Square] 已重置用户引导状态');
+  // 读取全局变量中的 fatherId
+  const fatherId = getApp().globalData?.fatherId;
 
-  // 页面显示时刷新数据
-  loadPublicAgents();
+  if (fatherId) {
+    console.log('[Square] 收到 fatherId:', fatherId);
+    // 加载子级智能体
+    loadPublicAgentsWithFather(fatherId);
+    // 清空全局变量
+    delete getApp().globalData.fatherId;
+  } else {
+    // 正常加载所有智能体
+    loadPublicAgents();
+  }
+
   refreshSquareGuideState();
-  // 隐藏系统 TabBar（解决微信小程序 iOS 双重导航栏问题）
   uni.hideTabBar({ animation: false });
 });
-
-watch(
-  () => locale.value,
-  async () => {
-    if (allAgents.value.length === 0) {
-      return;
-    }
-
-    await extractAvailableLanguages();
-  }
-);
 
 // 方法
 function setStatusBarHeight() {
@@ -638,7 +601,7 @@ async function loadPublicAgents() {
       };
 
       // 处理后端返回的数据结构
-      const mapped = (res.data || []).map((agent: Agent) => {
+      allAgents.value = (res.data || []).map((agent: Agent) => {
         const llmModelName = agent.config?.llmModelName?.toLowerCase() || '';
         let modalTag = '';
 
@@ -665,29 +628,13 @@ async function loadPublicAgents() {
           name: agent.agentName,
           description:
             agent.description || agent.config?.systemPrompt || $t('square.no_description'),
-          summary:
-            agent.summary?.trim() ||
-            agent.description?.trim() ||
-            agent.config?.systemPrompt?.trim() ||
-            $t('square.no_description'),
-          voiceName: agent.config?.voiceName || '',
+          voiceName: agent.config?.voiceName || $t('square.default'),
           creatorName: agent.userName || $t('square.anonymous'),
           agentId: agent.agentId,
           modalTag: modalTag,
-          langCodes: langCodes, // 转换为前端标准 langCode 数组
-          tagTtsLabel: ''
+          langCodes: langCodes // 转换为前端标准 langCode 数组
         } as SquareAgent;
       });
-
-      const cfgList = mapped.map((a: SquareAgent) =>
-        a.config && typeof a.config === 'object' ? (a.config as Record<string, unknown>) : undefined
-      );
-      const tagPairs = await resolveTtsLlmLabelsBatch(cfgList, { includeLlm: false });
-      tagPairs.forEach((pair, i) => {
-        mapped[i].tagTtsLabel = pair.ttsLabel;
-      });
-
-      allAgents.value = mapped;
 
       // 提取所有智能体中存在的语言
       await extractAvailableLanguages();
@@ -697,7 +644,7 @@ async function loadPublicAgents() {
         initDefaultLanguage();
       }
 
-      // 首屏按默认语言同步列表，保证筛选器和列表状态一致
+      // 根据选择的语言筛选智能体
       filterAgentsByLanguage();
     } else {
       console.warn('获取公开助手失败:', res.message);
@@ -705,6 +652,69 @@ async function loadPublicAgents() {
   } catch (error) {
     console.error('获取公开助手失败:', error);
     // 不再显示toast，因为request.ts已经处理了
+  } finally {
+    loading.value = false;
+    refreshSquareGuideState();
+  }
+}
+
+async function loadPublicAgentsWithFather(fatherId: number) {
+  try {
+    loading.value = true;
+    await initLanguageDisplayNameCache();
+
+    // 调用带 father 参数的接口
+    const res = await agentApi.getPublicAgentsXu(fatherId);
+    console.log('[Square] 获取子级智能体列表, fatherId:', fatherId, res);
+
+    if (res.code === 1000) {
+      const modalKeyword = {
+        gpt4: ['gpt4', 'gpt-4'],
+        gpt5: ['gpt5', 'gpt-5'],
+        'gpt-oss': ['gpt-oss'],
+        qwen: ['qwen', '通义千问'],
+        'deepseek-v3': ['deepseek-v3'],
+        deepseek: ['deepseek']
+      };
+
+      allAgents.value = (res.data || []).map((agent: Agent) => {
+        const llmModelName = agent.config?.llmModelName?.toLowerCase() || '';
+        let modalTag = '';
+        for (const [modalType, keywords] of Object.entries(modalKeyword)) {
+          const hasKeyword = keywords.some((keyword) =>
+              llmModelName.includes(keyword.toLowerCase())
+          );
+          if (hasKeyword) {
+            modalTag = modalType;
+            break;
+          }
+        }
+        const langSource =
+            agent.config?.langCode || (Array.isArray(agent.lang) ? agent.lang[0] : agent.lang) || '';
+        const langCodes = langSource ? [backendLangToLangCode(langSource)] : [];
+        return {
+          ...agent,
+          id: agent.id,
+          name: agent.agentName,
+          description: agent.description || agent.config?.systemPrompt || $t('square.no_description'),
+          voiceName: agent.config?.voiceName || $t('square.default'),
+          creatorName: agent.userName || $t('square.anonymous'),
+          agentId: agent.agentId,
+          modalTag: modalTag,
+          langCodes: langCodes
+        } as SquareAgent;
+      });
+
+      await extractAvailableLanguages();
+      if (!selectedLanguage.value) {
+        initDefaultLanguage();
+      }
+      filterAgentsByLanguage();
+    } else {
+      console.warn('获取子级智能体失败:', res.message);
+    }
+  } catch (error) {
+    console.error('获取子级智能体失败:', error);
   } finally {
     loading.value = false;
     refreshSquareGuideState();
@@ -811,25 +821,23 @@ function getModelTagFromName(llmModelName: string) {
   return llmModelName;
 }
 
-function getAgentInlineTag(agent: SquareAgent) {
-  return agent.tagTtsLabel?.trim() ?? '';
-}
-
-function getDisplayWidthUnits(text: string) {
-  return Array.from(text.trim()).reduce((total, char) => {
-    return total + ((char.codePointAt(0) ?? 0) > 255 ? 2 : 1);
-  }, 0);
-}
-
-function shouldShowAgentTag(agent: SquareAgent) {
-  return Boolean(getAgentInlineTag(agent)) && getDisplayWidthUnits(agent.name) <= 16;
-}
-
 function getAgentTag(agent: SquareAgent) {
-  return getAgentInlineTag(agent);
+  // todo
+  // 根据智能体名称返回相应的标签
+  const name = agent.name.toLowerCase();
+  if (name === '嘟嘟熊') {
+    return $t('square.ai_toy');
+  }
+
+  return $t('square.ai_assistant');
 }
 
 function showBindPopup(agent: SquareAgent) {
+  console.log('[绑定调试] 完整 agent 对象:', JSON.stringify(agent));
+  console.log('[绑定调试] agentId:', agent.agentId);
+  console.log('[绑定调试] agent.id:', agent.id);
+  console.log('[绑定调试] agent.name:', agent.name);
+
   selectedAgent.value = agent;
   selectedDevice.value = null;
   showBindDrawer.value = true;
@@ -894,7 +902,12 @@ const handleBindSuccess = (data: any) => {
     duration: 2000,
     zIndex: 2005
   });
-  loadPublicAgents();
+  // ⭐ 添加自动返回逻辑
+  setTimeout(() => {
+    uni.switchTab({
+      url: '/pages/square/super_square'
+    });
+  }, 2000);
 };
 
 function handleBindError(data: any) {
@@ -1022,53 +1035,27 @@ function handleBindCancel() {
   color: #374151;
 }
 
+/* 语言选择器样式 - 与搜索框风格统一 */
 .language-selector-container {
-  z-index: 200;
-}
-
-.navbar-language-selector-container {
   position: absolute;
   left: 40rpx;
   top: 50%;
   transform: translateY(-50%);
-}
-
-.inline-language-selector-container {
-  padding: 0 40rpx 24rpx;
-  position: relative;
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
+  z-index: 200;
 }
 
 .language-selector {
   display: flex;
   align-items: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-}
-
-.navbar-language-selector-container .language-selector {
   justify-content: flex-start;
-  gap: 4rpx;
-  max-width: 140rpx;
+  gap: 8rpx;
   height: 52rpx;
   padding: 0;
   background: transparent;
   border: none;
   box-shadow: none;
-}
-
-.inline-language-selector-container .language-selector {
-  justify-content: space-between;
-  height: 96rpx;
-  padding: 0 40rpx 0 42rpx;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 40rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 16rpx 64rpx rgba(100, 100, 255, 0.1);
-  backdrop-filter: blur(20rpx);
-  -webkit-backdrop-filter: blur(20rpx);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
 }
 
 .language-selector:active {
@@ -1079,57 +1066,25 @@ function handleBindCancel() {
   opacity: 0.85;
 }
 
-.inline-language-selector-container .language-selector.expanded {
-  opacity: 1;
-  border-color: rgba(100, 100, 255, 0.3);
-  box-shadow: 0 16rpx 64rpx rgba(100, 100, 255, 0.15);
-}
-
 .language-selector-inner {
   display: flex;
   align-items: center;
-  gap: 4rpx;
-  min-width: 0;
-  flex: 1;
-}
-
-.inline-language-selector-container .language-selector-inner {
-  gap: 30rpx;
-}
-
-.language-icon {
-  font-size: 32rpx;
-  opacity: 0.7;
+  gap: 8rpx;
 }
 
 .language-label {
   font-size: 28rpx;
   font-weight: 400;
   color: #212730;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.inline-language-selector-container .language-label {
-  font-size: 32rpx;
-  color: #374151;
 }
 
 .language-arrow-wrapper {
-  width: 20rpx;
-  height: 20rpx;
+  width: 24rpx;
+  height: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.inline-language-selector-container .language-arrow-wrapper {
-  width: 32rpx;
-  height: 32rpx;
 }
 
 .language-arrow-wrapper.rotated {
@@ -1137,23 +1092,16 @@ function handleBindCancel() {
 }
 
 .language-arrow {
-  width: 16rpx;
-  height: 16rpx;
+  width: 20rpx;
+  height: 20rpx;
   opacity: 0.5;
-}
-
-.inline-language-selector-container .language-arrow {
-  width: 24rpx;
-  height: 24rpx;
 }
 
 .language-dropdown {
   position: absolute;
   top: calc(100% + 16rpx);
   left: 0;
-  width: auto;
-  min-width: 220rpx;
-  max-width: 420rpx;
+  width: 260rpx;
   background: rgba(255, 255, 255, 0.85);
   border-radius: 32rpx;
   border: 2rpx solid rgba(255, 255, 255, 0.8);
@@ -1166,14 +1114,6 @@ function handleBindCancel() {
   transform: translateY(-8rpx);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 201;
-}
-
-.inline-language-selector-container .language-dropdown {
-  top: calc(100% - 12rpx);
-  left: 40rpx;
-  right: 40rpx;
-  min-width: 0;
-  max-width: none;
 }
 
 .language-dropdown.show {
@@ -1191,7 +1131,6 @@ function handleBindCancel() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16rpx;
   padding: 28rpx 40rpx;
   transition: all 0.2s ease;
   animation: optionFadeIn 0.3s ease forwards;
@@ -1216,17 +1155,12 @@ function handleBindCancel() {
 
 .language-option-content {
   flex: 1;
-  min-width: 0;
 }
 
 .language-option-text {
-  display: block;
   font-size: 30rpx;
   color: #374151;
   font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .language-option.active .language-option-text {
@@ -1238,8 +1172,6 @@ function handleBindCancel() {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 32rpx;
-  width: 32rpx;
 }
 
 .language-check-circle {
@@ -1300,10 +1232,10 @@ function handleBindCancel() {
 }
 
 .tag-item.active {
-  background: var(--color-primary);
-  color: #ffffff;
-  box-shadow: 0 10rpx 30rpx var(--color-primary-shadow);
-  border: 2rpx solid var(--color-primary-dark);
+  background: rgba(51, 92, 255, 0.9);
+  color: white;
+  box-shadow: 0 10rpx 30rpx rgba(147, 112, 219, 0.3);
+  border: 2rpx solid rgba(51, 92, 255, 0.8);
   backdrop-filter: blur(10rpx);
   -webkit-backdrop-filter: blur(10rpx);
 }
@@ -1354,7 +1286,6 @@ function handleBindCancel() {
   align-items: center;
   gap: 16rpx;
   width: 100%;
-  min-width: 0;
 }
 
 .agent-name {
@@ -1362,20 +1293,16 @@ function handleBindCancel() {
   font-weight: 500;
   font-size: 36rpx;
   line-height: 52rpx;
-  display: block;
+  display: flex;
+  align-items: center;
   color: #212730;
-  flex: 0 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .agent-description {
   font-style: normal;
   font-weight: 400;
-  font-size: 26rpx;
-  line-height: 40rpx;
+  font-size: 28rpx;
+  line-height: 44rpx;
   color: #60718b;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1404,12 +1331,6 @@ function handleBindCancel() {
   gap: 20rpx;
   background: #f3f4f7;
   border-radius: 8rpx;
-  flex: 0 999 auto;
-  min-width: 0;
-  max-width: 100%;
-  width: fit-content;
-  overflow: hidden;
-  box-sizing: border-box;
 }
 
 .tag-text {
@@ -1417,13 +1338,9 @@ function handleBindCancel() {
   font-weight: 400;
   font-size: 24rpx;
   line-height: 32rpx;
-  display: block;
+  display: flex;
   align-items: center;
   color: #60718b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
 }
 .config-btn {
   display: flex;
@@ -1434,7 +1351,7 @@ function handleBindCancel() {
   min-width: 128rpx;
   width: auto;
   height: 64rpx;
-  background: var(--color-primary);
+  background: #10b981;
   border-radius: 16rpx;
   border: none;
   flex-shrink: 0;
@@ -2041,5 +1958,34 @@ function handleBindCancel() {
   font-size: 26rpx;
   line-height: 40rpx;
   color: var(--color-primary);
+}
+
+.back-btna {
+  position: absolute;
+  right: 8rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8rpx;
+  width: 128rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  backdrop-filter: blur(10rpx);
+  z-index: 200;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.back-text {
+  font-size: 28rpx;
+  color: #01061c;
+}
+
+.back-icona {
+  width: 28rpx;
+  height: 28rpx;
 }
 </style>

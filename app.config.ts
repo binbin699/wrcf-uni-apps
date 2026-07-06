@@ -21,11 +21,12 @@ export default function getAppConfig(
 
   if (platform === 'mp-weixin') {
     // 微信小程序使用 HTTPS 线上服务器
-    BASE_API_URL = 'https://lingxiwmp.qiniu.com/api';
+    BASE_API_URL = 'https://lingxiwmp.qiniu.com/user';
   } else {
     // App 端根据版本选择服务器
     BASE_API_URL =
-      appEdition === 'intl' ? 'http://204.141.229.218:8000' : 'http://111.62.212.105:8000';
+      // appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
+      appEdition === 'intl' ? 'http://36.134.119.145:8000' : 'http://36.134.119.145:8000';
   }
 
   // 是否支持微信小程序手机号登录
@@ -69,39 +70,21 @@ export default function getAppConfig(
   const APP_USE_VOICE_CLONE = true;
   // 主要的设置引导方式，优先展示该方式，值为 qrcode、bluetooth 或 none（不展示）
   const APP_PRIMARY_SETUP_MODE = 'none';
-  // 二维码扫码来源，camera_and_album 保留相册入口，camera_only 仅保留相机扫码
-  const APP_QRCODE_SCAN_SOURCE = 'camera_and_album';
   // 用户协议和隐私政策 URL（微信小程序不显示）
   const TERMS_URL =
-    platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/user-agreement';
+    platform === 'mp-weixin' ? '' : 'http://47.114.109.136:8008/user-agreement.html';
   const PRIVACY_URL =
-    platform === 'mp-weixin' ? '' : 'https://www.qiniu.com/agreements/privacy-right';
+    platform === 'mp-weixin' ? '' : 'http://47.114.109.136:8008/privacy-policy.html';
 
   // 用户反馈邮箱（留空则不显示反馈入口，微信小程序不显示）
-  // 灵矽：jubao@qiniu.com
-  // 萌点：luomiaoxia@szsmdt.cn
-  const FEEDBACK_EMAIL = platform === 'mp-weixin' ? '' : 'jubao@qiniu.com';
+  // 九宝：jiubao@qiniu.com
+  const FEEDBACK_EMAIL = platform === 'mp-weixin' ? '' : 'jiubao@qiniu.com';
 
   // 是否显示说明与教程（微信小程序不显示）
   const SHOW_INSTRUCTIONS_TUTORIALS = platform !== 'mp-weixin';
-  const PROFILE_ENTRY_GROUP_ORDER = [
-    'device_management',
-    'qrcode_setup',
-    'bluetooth_setup',
-    'voice',
-    'instructions_tutorials',
-    'legal',
-    'feedback'
-  ];
-
-  /**
-   * 智能体广场语言筛选样式（可被品牌 config.json 的 ui.squareLanguageFilterStyle 覆盖）
-   * navbar：导航栏左上角下拉；horizontal_bar：搜索框下方下拉选择框
-   */
-  const SQUARE_LANGUAGE_FILTER_STYLE = 'navbar';
 
   // Google 授权登录，海外版需要配置 Google Client ID
-  const GOOGLE_OAUTH_CLIENT_ID_WEB = 
+  const GOOGLE_OAUTH_CLIENT_ID_WEB =
     appEdition === 'cn'
       ? ''
       : '668197306109-2glguqobqtbm92rt9upnot9rrt0t7bmf.apps.googleusercontent.com';
@@ -111,6 +94,13 @@ export default function getAppConfig(
   const ARMS_ENDPOINT = 'https://hmn73dtabu-default-cn.rum.aliyuncs.com/rum/web/v2';
   const ARMS_ENV = 'prod';
 
+  // 音频文件上传域名（灵矽平台需要能直接访问的公网域名）
+  // 如果不配置，默认使用 BASE_API_URL
+  const UPLOAD_DOMAIN = 'https://jiubaozhinengweir.com/var/www/music';
+
+  //视频存储路径
+  const VIDEO_SERVER_DOMAIN = 'https://wrcfmo.cn/';
+  const VIDEO_STORAGE_PATH = '/static_in/video/';
   return {
     BASE_API_URL,
     SUPPORT_LOGIN_TYPE_WX_MP_PHONE,
@@ -130,13 +120,13 @@ export default function getAppConfig(
     PRIVACY_URL,
     FEEDBACK_EMAIL,
     SHOW_INSTRUCTIONS_TUTORIALS,
-    PROFILE_ENTRY_GROUP_ORDER,
-    SQUARE_LANGUAGE_FILTER_STYLE,
     GOOGLE_OAUTH_CLIENT_ID_WEB,
     ARMS_PID,
     ARMS_ENDPOINT,
     ARMS_ENV,
     APP_PRIMARY_SETUP_MODE,
-    APP_QRCODE_SCAN_SOURCE
+    UPLOAD_DOMAIN,
+    VIDEO_SERVER_DOMAIN,
+    VIDEO_STORAGE_PATH
   };
 }

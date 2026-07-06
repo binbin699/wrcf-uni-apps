@@ -31,11 +31,9 @@
 
     <view class="info-section">
       <text class="info-title">Set Locale</text>
-      <!-- #ifndef MP-WEIXIN -->
       <view class="info-item">
         <text class="info-value" @click="() => setLocale('en')">en</text>
       </view>
-      <!-- #endif -->
       <view class="info-item">
         <text class="info-value" @click="() => setLocale('zh-Hans')">zh-Hans</text>
       </view>

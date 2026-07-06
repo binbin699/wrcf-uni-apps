@@ -11,7 +11,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-PURPLE='\033[38;5;105m'    # 蓝紫色主题色 (灵矽品牌色)
+PURPLE='\033[38;5;105m'    # 蓝紫色主题色 (九宝品牌色)
 CYAN='\033[0;36m'
 BOLD='\033[1m'
 DIM='\033[2m'
@@ -23,253 +23,62 @@ PROJECT_PATH="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # 配置文件路径
 ENV_FILE="${PROJECT_PATH}/.env"
-ENV_DEVELOPMENT_FILE="${PROJECT_PATH}/.env.development"
 MANIFEST_FILE="${PROJECT_PATH}/src/manifest.json"
 CLI_CONFIG_FILE="${PROJECT_PATH}/.cli-path"
+CONFIG_DIR="${SCRIPT_DIR}/config"
 
 # CLI 路径（将在后续函数中自动发现）
 CLI_PATH=""
 
 # 命令行参数变量（可通过参数覆盖）
-ARG_CHANNEL=""
+ARG_CONFIG=""          # --config <目录名>，如 android-cn
 ARG_VERSION=""
 ARG_VERSION_CODE=""
 ARG_ABI=""
+ARG_PACKAGE_NAME=""
 ARG_ANDROID_FORMAT=""
 ARG_TARGET_SDK=""
+ARG_IOS_BUNDLE_ID=""
 ARG_IOS_PROFILE=""
 ARG_IOS_CERT=""
 ARG_IOS_CERT_PASSWORD=""
-ARG_USE_DEV_BASE_API=false
 ARG_YES=false
-SELECTED_CHANNEL=""
-ENV_DEVELOPMENT_BACKUP_FILE=""
-ENV_DEVELOPMENT_RESTORE_NEEDED=false
 
-# 当前打包 channel
-SELECTED_PLATFORM=""
-SELECTED_EDITION=""
-PACKAGE_NAME=""
-IOS_BUNDLE_ID=""
+# 选择的配置（由 select_pack_config() 设置）
+SELECTED_CONFIG=""      # 选择的配置目录名，如 android-cn
+CONFIG_PATH=""          # 完整路径: ${CONFIG_DIR}/${SELECTED_CONFIG}
+SELECTED_PLATFORM=""    # 从目录名推导: android 或 ios
+SELECTED_EDITION=""     # 从目录名推导: cn, intl 等
+PACKAGE_NAME=""         # 从 .pack-config 读取
 
-is_supported_channel() {
-    case "$1" in
-        app-android-cn|app-android-intl|app-ios-cn|app-ios-intl|app-harmony-cn|mp-weixin-cn) return 0 ;;
-        *) return 1 ;;
-    esac
-}
+# 复制配置图标到 unpackage/res/icons/
+# 从 ${CONFIG_PATH}/icons/ 复制到 unpackage/res/icons/
+copy_config_icons() {
+    local src_dir="${CONFIG_PATH}/icons"
+    local dst_dir="${PROJECT_PATH}/unpackage/res/icons"
 
-is_pack_channel() {
-    case "$1" in
-        app-android-cn|app-android-intl|app-ios-cn|app-ios-intl) return 0 ;;
-        *) return 1 ;;
-    esac
-}
+    print_section "图标配置"
 
-set_channel_context() {
-    case "$SELECTED_CHANNEL" in
-        app-android-cn) SELECTED_PLATFORM="android"; SELECTED_EDITION="cn" ;;
-        app-android-intl) SELECTED_PLATFORM="android"; SELECTED_EDITION="intl" ;;
-        app-ios-cn) SELECTED_PLATFORM="ios"; SELECTED_EDITION="cn" ;;
-        app-ios-intl) SELECTED_PLATFORM="ios"; SELECTED_EDITION="intl" ;;
-        *)
-            print_error "cloud-pack 仅支持 app-android/app-ios channel: ${SELECTED_CHANNEL}"
-            exit 1
-            ;;
-    esac
-}
-
-resolve_selected_channel() {
-    local channel="${ARG_CHANNEL:-${CHANNEL:-}}"
-    if [ -n "$channel" ]; then
-        if ! is_supported_channel "$channel"; then
-            print_error "无效 channel: ${channel}"
-            exit 1
-        fi
-        SELECTED_CHANNEL="$channel"
-        set_channel_context
-        return
-    fi
-
-    local channels=()
-    local dir
-    local dir_name
-    for dir in "${PROJECT_PATH}/channels"/*/; do
-        [ -d "$dir" ] || continue
-        dir_name="$(basename "$dir")"
-        if is_supported_channel "$dir_name" && [ -f "${dir}/config.json" ]; then
-            channels+=("$dir_name")
-        fi
-    done
-
-    if [ ${#channels[@]} -eq 0 ]; then
-        print_error "当前仓库没有已应用的 channel 配置，请先执行 config:apply"
-        exit 1
-    fi
-
-    if [ ${#channels[@]} -gt 1 ]; then
-        print_error "当前仓库存在多个 channel，请通过 --channel 指定: ${channels[*]}"
-        exit 1
-    fi
-
-    SELECTED_CHANNEL="${channels[0]}"
-    if ! is_pack_channel "$SELECTED_CHANNEL"; then
-        print_error "当前 channel 不能用于 App 云打包: ${SELECTED_CHANNEL}"
-        exit 1
-    fi
-    set_channel_context
-}
-
-load_pack_identity_from_channel() {
-    local identity_output
-    identity_output=$(CHANNEL="${SELECTED_CHANNEL}" PROJECT_PATH="${PROJECT_PATH}" node --experimental-strip-types --experimental-specifier-resolution=node --input-type=module <<'EOF'
-import { pathToFileURL } from 'node:url';
-
-const { loadBrandConfig } = await import(
-  pathToFileURL(`${process.env.PROJECT_PATH}/scripts/brand/lib/config.ts`).href
-);
-
-const config = loadBrandConfig({
-  channel: process.env.CHANNEL,
-  cwd: process.env.PROJECT_PATH,
-  env: process.env
-});
-
-console.log(config.identity.packageName || '');
-console.log(config.identity.iosBundleId || '');
-EOF
-)
-    PACKAGE_NAME="$(echo "$identity_output" | sed -n '1p')"
-    IOS_BUNDLE_ID="$(echo "$identity_output" | sed -n '2p')"
-
-    if [ "$SELECTED_PLATFORM" == "android" ] && [ -z "$PACKAGE_NAME" ]; then
-        print_error "当前 channel 缺少 identity.packageName: ${SELECTED_CHANNEL}"
-        exit 1
-    fi
-
-    if [ "$SELECTED_PLATFORM" == "ios" ] && [ -z "$IOS_BUNDLE_ID" ]; then
-        print_error "当前 channel 缺少 identity.iosBundleId: ${SELECTED_CHANNEL}"
-        exit 1
-    fi
-}
-
-run_brand_sync() {
-    print_section "品牌配置同步"
-    print_info "CHANNEL: ${SELECTED_CHANNEL}"
-
-    CHANNEL="${SELECTED_CHANNEL}" pnpm --dir "$PROJECT_PATH" brand:sync -- --channel "${SELECTED_CHANNEL}"
-    print_success "brand:sync 同步完成"
-}
-
-run_brand_build() {
-    if [ "$SELECTED_PLATFORM" != "ios" ]; then
+    if [ ! -d "$src_dir" ]; then
+        print_warning "图标目录不存在: ${src_dir}，跳过图标替换"
         return 0
     fi
 
-    print_section "App 构建"
-    print_info "CHANNEL: ${SELECTED_CHANNEL}"
+    # 检查源目录是否有 png 文件
+    local icon_count
+    icon_count=$(find "$src_dir" -maxdepth 1 -name "*.png" 2>/dev/null | wc -l | tr -d ' ')
 
-    rm -rf "${PROJECT_PATH}/dist/build/app" "${PROJECT_PATH}/dist/build/app-plus"
-    CHANNEL="${SELECTED_CHANNEL}" pnpm --dir "$PROJECT_PATH" run "build:brand:${SELECTED_CHANNEL}" -- --skip-sync
-
-    local build_output="${PROJECT_PATH}/dist/build/app"
-    if [ ! -f "${build_output}/manifest.json" ] || [ ! -f "${build_output}/app-service.js" ]; then
-        print_error "App 构建产物不完整: ${build_output}"
-        exit 1
-    fi
-
-    print_success "App 构建产物已生成: ${build_output}"
-}
-
-restore_env_development() {
-    if [ "$ENV_DEVELOPMENT_RESTORE_NEEDED" != true ]; then
+    if [ "$icon_count" -eq 0 ]; then
+        print_warning "图标目录为空 (${src_dir})，跳过图标替换"
         return 0
     fi
 
-    if [ -n "$ENV_DEVELOPMENT_BACKUP_FILE" ] && [ -f "$ENV_DEVELOPMENT_BACKUP_FILE" ]; then
-        cp "$ENV_DEVELOPMENT_BACKUP_FILE" "$ENV_DEVELOPMENT_FILE"
-        rm -f "$ENV_DEVELOPMENT_BACKUP_FILE"
-        ENV_DEVELOPMENT_RESTORE_NEEDED=false
-        print_info "已还原 .env.development"
-    fi
-}
+    # 确保目标目录存在
+    mkdir -p "$dst_dir"
 
-cleanup_on_exit() {
-    restore_env_development
-}
-
-trap cleanup_on_exit EXIT
-
-has_active_dev_base_api() {
-    [ -f "$ENV_DEVELOPMENT_FILE" ] && grep -Eq '^[[:space:]]*(export[[:space:]]+)?VITE_BASE_API_URL[[:space:]]*=' "$ENV_DEVELOPMENT_FILE"
-}
-
-get_dev_base_api_value() {
-    sed -nE 's/^[[:space:]]*(export[[:space:]]+)?VITE_BASE_API_URL[[:space:]]*=[[:space:]]*(.*)$/\2/p' "$ENV_DEVELOPMENT_FILE" | head -1
-}
-
-disable_dev_base_api_for_pack() {
-    ENV_DEVELOPMENT_BACKUP_FILE="$(mktemp)"
-    cp "$ENV_DEVELOPMENT_FILE" "$ENV_DEVELOPMENT_BACKUP_FILE"
-    ENV_DEVELOPMENT_RESTORE_NEEDED=true
-
-    node - "$ENV_DEVELOPMENT_FILE" <<'EOF'
-const fs = require('fs');
-const filePath = process.argv[2];
-const content = fs.readFileSync(filePath, 'utf8');
-const lines = content.split(/\r?\n/);
-let changed = false;
-
-const nextLines = lines.map((line) => {
-  if (/^[ \t]*(export[ \t]+)?VITE_BASE_API_URL[ \t]*=/.test(line)) {
-    changed = true;
-    return `# [cloud-pack disabled] ${line}`;
-  }
-  return line;
-});
-
-if (changed) {
-  fs.writeFileSync(filePath, nextLines.join('\n'));
-}
-EOF
-
-    print_success "已临时屏蔽 .env.development 中的 VITE_BASE_API_URL"
-}
-
-guard_dev_base_api() {
-    if ! has_active_dev_base_api; then
-        return 0
-    fi
-
-    local dev_base_api
-    dev_base_api="$(get_dev_base_api_value)"
-
-    print_step "检查开发环境 API 覆盖"
-    print_warning ".env.development 含 VITE_BASE_API_URL=${dev_base_api}"
-    print_info "默认使用当前 channel 的 endpoints.baseApiUrl"
-
-    if [ "$ARG_USE_DEV_BASE_API" = true ]; then
-        print_warning "已选择沿用 .env.development 的 VITE_BASE_API_URL"
-        return 0
-    fi
-
-    if [ "$ARG_YES" = true ]; then
-        disable_dev_base_api_for_pack
-        return 0
-    fi
-
-    print_option "1" "使用 channel endpoint" "临时屏蔽 .env.development，打包结束自动还原"
-    print_option "2" "沿用 VITE_BASE_API_URL" "保留 .env.development 的覆盖值"
-    read -p "  请选择 [1-2] (默认 1): " choice
-
-    case "$choice" in
-        2)
-            print_warning "本次打包沿用 VITE_BASE_API_URL=${dev_base_api}"
-            ;;
-        *)
-            disable_dev_base_api_for_pack
-            ;;
-    esac
+    # 复制图标文件
+    cp -f "${src_dir}"/*.png "$dst_dir/"
+    print_check "已替换 ${icon_count} 个图标文件 (${SELECTED_CONFIG} → unpackage/res/icons/)"
 }
 
 # 显示帮助信息
@@ -283,41 +92,44 @@ uni-app 云打包脚本
   -h, --help                显示帮助信息
   -y, --yes                 跳过确认提示，直接打包
 
-  --channel <channel>       打包 channel，如 app-android-cn、app-ios-cn
-                            省略时使用当前已 apply 的唯一 channel
+  --config <配置目录>       打包配置目录名 (如 android-cn, ios-intl)
+                            脚本会扫描 scripts/config/ 下的子目录
+                            从目录名推导平台和版本: {platform}-{edition}
   --version <版本号>        版本号，如 1.1.5
   --version-code <代码>     版本代码，如 101050
 
 Android 选项:
   --abi <32|64|both>        架构 (32=armeabi-v7a, 64=arm64-v8a, both=兼容包)
+                            注意: android-cn 固定使用 64 位，此参数对其无效
+  --package-name <包名>     覆盖 .pack-config 中的 Android 包名
   --android-format <apk|aab> 打包格式 (apk=APK包, aab=AAB包用于Google Play)
   --target-sdk <版本号>     Android targetSdkVersion (默认 35)
 
 iOS 选项:
+  --ios-bundle-id <ID>      覆盖 .pack-config 中的 iOS Bundle ID
   --ios-profile <路径>      描述文件路径 (.mobileprovision)
   --ios-cert <路径>         证书文件路径 (.p12)
   --ios-cert-password <密码> 证书私钥密码
-  --use-dev-base-api        沿用 .env.development 中的 VITE_BASE_API_URL
 
 示例:
   # 交互式模式
   $(basename "$0")
 
   # Android 打包（完整参数）
-  $(basename "$0") --channel app-android-cn --version 1.1.5 \\
+  $(basename "$0") --config android-cn --version 1.1.5 \\
     --version-code 101050 --target-sdk 35 -y
 
   # Android AAB 打包（用于 Google Play）
-  $(basename "$0") --channel app-android-intl --version 1.1.5 \\
+  $(basename "$0") --config android-intl --version 1.1.5 \\
     --version-code 101050 --abi 64 --android-format aab -y
 
   # iOS 打包（完整参数）
-  $(basename "$0") --channel app-ios-cn --version 1.1.5 \\
+  $(basename "$0") --config ios-cn --version 1.1.5 \\
     --version-code 101050 --ios-profile ~/cert/app.mobileprovision \\
     --ios-cert ~/cert/app.p12 --ios-cert-password mypassword -y
 
   # 部分参数（其余交互输入）
-  $(basename "$0") --channel app-android-cn --version 1.1.5
+  $(basename "$0") --config android-cn --version 1.1.5
 
 EOF
     exit 0
@@ -334,8 +146,8 @@ parse_args() {
                 ARG_YES=true
                 shift
                 ;;
-            --channel)
-                ARG_CHANNEL="$2"
+            --config)
+                ARG_CONFIG="$2"
                 shift 2
                 ;;
             --version)
@@ -350,12 +162,20 @@ parse_args() {
                 ARG_ABI="$2"
                 shift 2
                 ;;
+            --package-name)
+                ARG_PACKAGE_NAME="$2"
+                shift 2
+                ;;
             --android-format)
                 ARG_ANDROID_FORMAT="$2"
                 shift 2
                 ;;
             --target-sdk)
                 ARG_TARGET_SDK="$2"
+                shift 2
+                ;;
+            --ios-bundle-id)
+                ARG_IOS_BUNDLE_ID="$2"
                 shift 2
                 ;;
             --ios-profile)
@@ -369,10 +189,6 @@ parse_args() {
             --ios-cert-password)
                 ARG_IOS_CERT_PASSWORD="$2"
                 shift 2
-                ;;
-            --use-dev-base-api)
-                ARG_USE_DEV_BASE_API=true
-                shift
                 ;;
             *)
                 print_error "未知参数: $1"
@@ -398,23 +214,6 @@ print_warning() {
 
 print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
-}
-
-is_dcloud_login_error() {
-    local output="$1"
-    echo "$output" | grep -Eqi 'user[[:space:]]+not[[:space:]]+login|not[[:space:]]+login|未登录|请登录|登录失败'
-}
-
-get_dcloud_user_account() {
-    local output="$1"
-    echo "$output" | sed '/^[[:space:]]*$/d;/^[0-9-]*:user info:/d' | head -1
-}
-
-print_dcloud_login_required() {
-    print_error "DCloud 账号未登录，云打包已停止"
-    print_info "请先登录 HBuilderX/DCloud 账号："
-    echo -e "  ${DIM}${CLI_PATH} user login --username <账号> --password <密码>${NC}"
-    print_info "登录完成后重新执行当前打包命令"
 }
 
 # ─── UI Helper Functions ─────────────────────────────────────────
@@ -573,36 +372,6 @@ check_cli() {
     print_check "HBuilderX CLI: ${DIM}${CLI_PATH}${NC}"
 }
 
-check_dcloud_login() {
-    local login_output
-    local dcloud_account
-
-    if login_output=$("$CLI_PATH" user info 2>&1); then
-        if is_dcloud_login_error "$login_output"; then
-            print_dcloud_login_required
-            exit 1
-        fi
-
-        dcloud_account="$(get_dcloud_user_account "$login_output")"
-        if [ -z "$dcloud_account" ]; then
-            print_dcloud_login_required
-            exit 1
-        fi
-
-        print_check "DCloud 账号已登录: ${DIM}${dcloud_account}${NC}"
-        return 0
-    fi
-
-    if is_dcloud_login_error "$login_output"; then
-        print_dcloud_login_required
-        exit 1
-    fi
-
-    print_error "DCloud 登录状态检查失败"
-    echo "$login_output"
-    exit 1
-}
-
 # 检查配置文件是否存在
 check_config_files() {
     if [ ! -f "$ENV_FILE" ]; then
@@ -657,19 +426,102 @@ read_current_config() {
     echo ""
 }
 
-# 读取当前已应用的 channel
-select_pack_channel() {
-    print_step "确认打包 channel"
+# 选择打包配置
+# 扫描 scripts/config/ 目录，动态列出可用配置
+# 从目录名推导: platform (第一个 - 前的部分) 和 edition (剩余部分)
+# 读取 .pack-config 中的 PACKAGE_NAME
+select_pack_config() {
+    print_step "选择打包配置"
 
-    resolve_selected_channel
-    load_pack_identity_from_channel
+    # 扫描 config 目录下的子目录（忽略隐藏目录）
+    local configs=()
+    local dir_name
+    for dir in "${CONFIG_DIR}"/*/; do
+        [ -d "$dir" ] || continue
+        dir_name="$(basename "$dir")"
+        # 目录名必须包含 - 分隔符 (platform-edition)
+        [[ "$dir_name" == *-* ]] || continue
+        configs+=("$dir_name")
+    done
 
-    print_success "Channel: ${SELECTED_CHANNEL} (${SELECTED_PLATFORM} / ${SELECTED_EDITION})"
-    if [ "$SELECTED_PLATFORM" == "android" ]; then
-        print_info "包名: ${PACKAGE_NAME}"
-    else
-        print_info "Bundle ID: ${IOS_BUNDLE_ID}"
+    if [ ${#configs[@]} -eq 0 ]; then
+        print_error "未找到打包配置目录 (scripts/config/*-*/)"
+        echo -e "${RED}请创建配置目录，如 android-cn, ios-intl 等${NC}"
+        exit 1
     fi
+
+    # 如果命令行参数已指定
+    if [ -n "$ARG_CONFIG" ]; then
+        local found=false
+        for cfg in "${configs[@]}"; do
+            if [ "$cfg" == "$ARG_CONFIG" ]; then
+                found=true
+                break
+            fi
+        done
+        if [ "$found" = false ]; then
+            print_error "配置目录不存在: ${ARG_CONFIG}"
+            echo -e "${RED}可用配置: ${configs[*]}${NC}"
+            exit 1
+        fi
+        SELECTED_CONFIG="$ARG_CONFIG"
+        print_info "使用命令行参数: 配置=${SELECTED_CONFIG}"
+    else
+        # 交互式选择
+        local i=1
+        for cfg in "${configs[@]}"; do
+            local platform="${cfg%%-*}"
+            local edition="${cfg#*-}"
+            print_option "$i" "$cfg" "${platform} / ${edition}"
+            i=$((i + 1))
+        done
+        echo ""
+        read -p "  请选择 [1-${#configs[@]}]: " choice
+
+        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#configs[@]} ]; then
+            SELECTED_CONFIG="${configs[$((choice - 1))]}"
+        else
+            print_error "无效选择"
+            exit 1
+        fi
+    fi
+
+    # 设置派生变量
+    CONFIG_PATH="${CONFIG_DIR}/${SELECTED_CONFIG}"
+    SELECTED_PLATFORM="${SELECTED_CONFIG%%-*}"    # 第一个 - 前面的部分
+    SELECTED_EDITION="${SELECTED_CONFIG#*-}"      # 第一个 - 后面的部分
+
+    # 读取 PACKAGE_NAME
+    local config_file="${CONFIG_PATH}/.pack-config"
+    if [ ! -f "$config_file" ]; then
+        print_error "配置文件不存在: ${config_file}"
+        exit 1
+    fi
+
+    PACKAGE_NAME=$(grep "^PACKAGE_NAME=" "$config_file" | cut -d'=' -f2 | tr -d ' ')
+    if [ -z "$PACKAGE_NAME" ]; then
+        print_error "配置文件缺少 PACKAGE_NAME: ${config_file}"
+        exit 1
+    fi
+
+    # 允许 CLI 参数覆盖包名
+    if [ -n "$ARG_PACKAGE_NAME" ]; then
+        PACKAGE_NAME="$ARG_PACKAGE_NAME"
+        print_info "使用命令行参数覆盖包名: ${PACKAGE_NAME}"
+    fi
+
+    # iOS 场景: 允许 CLI 参数覆盖 Bundle ID（否则使用 PACKAGE_NAME）
+    if [ "$SELECTED_PLATFORM" == "ios" ]; then
+        if [ -n "$ARG_IOS_BUNDLE_ID" ]; then
+            IOS_BUNDLE_ID="$ARG_IOS_BUNDLE_ID"
+            print_info "使用命令行参数: Bundle ID=${IOS_BUNDLE_ID}"
+        else
+            IOS_BUNDLE_ID="$PACKAGE_NAME"
+        fi
+    fi
+
+    print_success "配置: ${SELECTED_CONFIG} (${SELECTED_PLATFORM} / ${SELECTED_EDITION})"
+    print_info "包名: ${PACKAGE_NAME}"
 }
 
 # 用户选择版本号
@@ -720,6 +572,13 @@ select_version_code() {
 
 # 用户选择安卓架构 (仅 Android)
 select_android_abi() {
+    # android-cn 固定使用 64 位，不再提供选择
+    if [ "$SELECTED_CONFIG" == "android-cn" ]; then
+        SELECTED_ABI_FILTERS='["arm64-v8a"]'
+        print_info "android-cn: 固定使用 64 位 (arm64-v8a)"
+        return
+    fi
+
     # 如果命令行参数已指定，直接使用
     if [ -n "$ARG_ABI" ]; then
         case $ARG_ABI in
@@ -763,10 +622,10 @@ select_android_abi() {
 
 # 用户选择 Android 打包格式
 select_android_format() {
-    # app-android-cn 固定使用 APK
-    if [ "$SELECTED_CHANNEL" == "app-android-cn" ]; then
+    # android-cn 固定使用 APK，不提供选择
+    if [ "$SELECTED_CONFIG" == "android-cn" ]; then
         SELECTED_ANDROID_FORMAT="apk"
-        print_info "app-android-cn: 固定使用 APK 格式"
+        print_info "android-cn: 固定使用 APK 格式"
         return
     fi
 
@@ -852,10 +711,10 @@ configure_ios_certificate() {
     echo -e "    ${DIM} - 证书私钥密码${NC}"
     echo ""
 
-    # 自动发现 channel 目录下的证书文件作为默认值
+    # 自动发现区域目录下的证书文件作为默认值
     local default_profile=""
     local default_cert=""
-    local region_dir="${PROJECT_PATH}/channels/${SELECTED_CHANNEL}/certs"
+    local region_dir="${CONFIG_PATH}/cert"
 
     if [ -d "$region_dir" ]; then
         # 查找 .mobileprovision 文件（取第一个）
@@ -956,6 +815,16 @@ configure_ios_certificate() {
     print_success "iOS 证书配置完成"
 }
 
+# 更新 .env 文件
+update_env_file() {
+    if [ "$SELECTED_EDITION" != "$CURRENT_EDITION" ]; then
+        print_info "更新 .env 文件..."
+        sed -i.bak "s/^VITE_APP_EDITION=.*/VITE_APP_EDITION=${SELECTED_EDITION}/" "$ENV_FILE"
+        rm -f "${ENV_FILE}.bak"
+        print_success "已更新 VITE_APP_EDITION=${SELECTED_EDITION}"
+    fi
+}
+
 # 更新 manifest.json 文件
 update_manifest_file() {
     print_info "更新 manifest.json 文件..."
@@ -1012,7 +881,7 @@ show_summary() {
     echo ""
     echo -e "  ${PURPLE}┌─── Build Summary ────────────────────────────────────┐${NC}"
     echo -e "  ${PURPLE}│${NC}                                                      ${PURPLE}│${NC}"
-    printf "  ${PURPLE}│${NC}  ${DIM}Channel:${NC}     %-40s ${PURPLE}│${NC}\n" "${SELECTED_CHANNEL}"
+    printf "  ${PURPLE}│${NC}  ${DIM}Config:${NC}      %-40s ${PURPLE}│${NC}\n" "${SELECTED_CONFIG}"
     printf "  ${PURPLE}│${NC}  ${DIM}Version:${NC}     %-40s ${PURPLE}│${NC}\n" "${SELECTED_VERSION} (${SELECTED_VERSION_CODE})"
     printf "  ${PURPLE}│${NC}  ${DIM}Platform:${NC}    %-40s ${PURPLE}│${NC}\n" "${SELECTED_PLATFORM}"
     printf "  ${PURPLE}│${NC}  ${DIM}Edition:${NC}     %-40s ${PURPLE}│${NC}\n" "${SELECTED_EDITION}"
@@ -1078,10 +947,7 @@ extract_download_link() {
         fi
 
         echo ""
-        return 0
     fi
-
-    return 0
 }
 
 # Linux 环境准备（HBuilderX daemon 启动 + TLS 修复）
@@ -1164,7 +1030,6 @@ prepare_linux_env() {
 # 执行云打包
 execute_pack() {
     print_section "Executing Build"
-    export CHANNEL="${SELECTED_CHANNEL}"
 
     # 创建临时文件保存输出
     local temp_output=$(mktemp)
@@ -1251,17 +1116,8 @@ EOF
         rm -f "$temp_output"
         exit 1
     elif [ $exit_code -eq 0 ]; then
-        local pack_output
-        pack_output="$(cat "$temp_output")"
-
-        if is_dcloud_login_error "$pack_output"; then
-            print_dcloud_login_required
-            rm -f "$temp_output"
-            exit 1
-        fi
-
         # 提取并显示下载链接
-        extract_download_link "$pack_output"
+        extract_download_link "$(cat "$temp_output")"
 
         # Android 打包完成后恢复 abiFilters 为兼容配置
         if [ "$SELECTED_PLATFORM" == "android" ]; then
@@ -1302,7 +1158,6 @@ main() {
 
     # 检查环境
     check_cli
-    check_dcloud_login
     check_config_files
 
     # 读取当前配置
@@ -1312,8 +1167,8 @@ main() {
     CURRENT_STEP=0
     # STEP 编号由 print_step 自动递增
 
-    select_pack_channel
-    guard_dev_base_api
+    select_pack_config
+    copy_config_icons
     select_version
     select_version_code
 
@@ -1328,15 +1183,12 @@ main() {
         configure_ios_certificate
     fi
 
-    run_brand_sync
-    load_pack_identity_from_channel
-
     # 显示摘要并确认
     show_summary
 
-    # 更新打包版本与平台参数
+    # 更新配置文件
+    update_env_file
     update_manifest_file
-    run_brand_build
 
     # Linux 环境准备（daemon + TLS 修复）
     prepare_linux_env

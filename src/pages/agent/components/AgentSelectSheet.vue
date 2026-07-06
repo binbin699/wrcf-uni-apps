@@ -4,10 +4,10 @@
     position="bottom"
     :close-on-click-modal="true"
     :safe-area-inset-bottom="false"
-    :root-portal="false"
+    :root-portal="true"
     :duration="0"
     :lazy-render="false"
-    :lock-scroll="true"
+    :lock-scroll="false"
     custom-class="agent-select-sheet-popup"
     custom-style="background: transparent;"
     @close="handleClose"
@@ -19,44 +19,38 @@
         <!-- 选中项指示器背景 -->
         <view class="sheet-indicator"></view>
         <!-- 顶部渐变遮罩 -->
-        <view v-if="shouldRenderScroller" class="sheet-mask sheet-mask--top"></view>
+        <view v-if="shouldRenderPicker" class="sheet-mask sheet-mask--top"></view>
         <!-- 底部渐变遮罩 -->
-        <view v-if="shouldRenderScroller" class="sheet-mask sheet-mask--bottom"></view>
+        <view v-if="shouldRenderPicker" class="sheet-mask sheet-mask--bottom"></view>
 
-        <scroll-view
-          v-if="shouldRenderScroller"
-          class="sheet-scroll-view"
-          scroll-y
-          :scroll-top="scrollTop"
-          :scroll-with-animation="scrollWithAnimation"
-          :show-scrollbar="false"
-          @scroll="handleScroll"
-          @touchstart="handleTouchStart"
-          @touchend="handleTouchEnd"
-          @touchcancel="handleTouchEnd">
-          <view class="sheet-scroll-padding"></view>
-          <view
-            v-for="(option, index) in options"
-            :key="getOptionKey(option, index)"
-            class="sheet-picker-item"
-            :class="{
-              'sheet-picker-item--active': currentIndex === index,
-              'sheet-picker-item--disabled': !!option.disabled
-            }"
-            @click="handleItemClick(index)">
-            <text class="sheet-picker-item-text">
-              {{ option.label }}
-            </text>
-          </view>
-          <view class="sheet-scroll-padding"></view>
-        </scroll-view>
+        <picker-view
+          v-if="shouldRenderPicker"
+          class="sheet-picker-view"
+          :value="pickerValue"
+          :immediate-change="true"
+          indicator-style="height: 80rpx; background: transparent; border-top: none; border-bottom: none; border-width: 0; border-color: transparent;"
+          indicator-class="sheet-picker-indicator"
+          mask-style="background: transparent;"
+          @change="handlePickerChange"
+          @pickstart="handlePickStart"
+          @pickend="handlePickEnd">
+          <picker-view-column>
+            <view
+              v-for="(option, index) in options"
+              :key="getOptionKey(option, index)"
+              class="sheet-picker-item"
+              :class="{ 'sheet-picker-item--disabled': !!option.disabled }">
+              <text class="sheet-picker-item-text">
+                {{ option.label }}
+              </text>
+            </view>
+          </picker-view-column>
+        </picker-view>
       </view>
 
-      <view class="sheet-action-area" @touchmove.stop.prevent="noop">
-        <button class="sheet-confirm-btn" hover-class="none" @click="handleConfirm">
-          {{ confirmText }}
-        </button>
-      </view>
+      <button class="sheet-confirm-btn" hover-class="none" @click="handleConfirm">
+        {{ confirmText }}
+      </button>
     </view>
   </wd-popup>
 </template>
@@ -89,94 +83,22 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>();
 
-const ITEM_HEIGHT_RPX = 80;
-const SCROLL_SETTLE_DELAY = 120;
-
+// picker-view 需要数组格式的 value
+const pickerValue = ref<number[]>([0]);
 // 当前选中的索引
 const currentIndex = ref<number>(0);
 // 是否正在滚动
 const isPicking = ref(false);
-// scroll-view 是否应该渲染（用于强制重新创建滚动容器）
-const shouldRenderScroller = ref(false);
-const scrollTop = ref(0);
-const latestScrollTop = ref(0);
-const scrollWithAnimation = ref(false);
-
+// picker 是否应该渲染（用于强制重新创建原生组件）
+const shouldRenderPicker = ref(false);
+// 弹窗关闭后的延迟销毁定时器
 let closeRenderTimer: ReturnType<typeof setTimeout> | null = null;
-let scrollSettleTimer: ReturnType<typeof setTimeout> | null = null;
 
 function clearCloseRenderTimer() {
   if (closeRenderTimer !== null) {
     clearTimeout(closeRenderTimer);
     closeRenderTimer = null;
   }
-}
-
-function clearScrollSettleTimer() {
-  if (scrollSettleTimer !== null) {
-    clearTimeout(scrollSettleTimer);
-    scrollSettleTimer = null;
-  }
-}
-
-function getItemHeightPx() {
-  const systemInfo = uni.getSystemInfoSync();
-  return (ITEM_HEIGHT_RPX * systemInfo.windowWidth) / 750;
-}
-
-function clampIndex(index: number) {
-  const maxIndex = props.options.length - 1;
-  if (maxIndex < 0) return 0;
-  return Math.min(Math.max(index, 0), maxIndex);
-}
-
-function getIndexByScrollTop(value: number) {
-  const itemHeight = getItemHeightPx();
-  if (itemHeight <= 0) return 0;
-  return clampIndex(Math.round(value / itemHeight));
-}
-
-function syncScrollToIndex(index: number, animated = false) {
-  const selectedIndex = clampIndex(index);
-  const targetScrollTop = selectedIndex * getItemHeightPx();
-  currentIndex.value = selectedIndex;
-  scrollWithAnimation.value = animated;
-
-  if (animated && Math.abs(scrollTop.value - targetScrollTop) < 0.5) {
-    scrollTop.value = latestScrollTop.value;
-    nextTick(() => {
-      scrollTop.value = targetScrollTop;
-    });
-    return;
-  }
-
-  scrollTop.value = targetScrollTop;
-  latestScrollTop.value = targetScrollTop;
-}
-
-function resetScrollToIndex(index: number) {
-  const selectedIndex = clampIndex(index);
-  latestScrollTop.value = selectedIndex * getItemHeightPx();
-  scrollWithAnimation.value = false;
-  currentIndex.value = 0;
-  scrollTop.value = 0;
-
-  nextTick(() => {
-    scrollTop.value = latestScrollTop.value;
-  });
-}
-
-function settleScroll() {
-  clearScrollSettleTimer();
-  syncScrollToIndex(currentIndex.value, true);
-  isPicking.value = false;
-}
-
-function scheduleScrollSettle(delay = SCROLL_SETTLE_DELAY) {
-  clearScrollSettleTimer();
-  scrollSettleTimer = setTimeout(() => {
-    settleScroll();
-  }, delay);
 }
 
 watch(
@@ -187,32 +109,26 @@ watch(
       // 弹窗打开时，重置状态并设置初始选中项
       isPicking.value = false;
       const index = props.selectedIndex ?? 0;
-      resetScrollToIndex(index);
-      // 如果 scroll-view 已经被销毁，需要在下一帧重新创建，确保 scrollTop 先生效
-      if (!shouldRenderScroller.value) {
+      currentIndex.value = index;
+      pickerValue.value = [index];
+      // 如果 picker 已经被销毁，需要在下一帧重新创建，确保 pickerValue 先生效
+      if (!shouldRenderPicker.value) {
         nextTick(() => {
-          shouldRenderScroller.value = true;
-          nextTick(() => {
-            resetScrollToIndex(index);
-          });
+          shouldRenderPicker.value = true;
         });
       } else {
-        // scroll-view 尚未销毁（快速重复打开），先销毁再重建
-        shouldRenderScroller.value = false;
+        // picker 尚未销毁（快速重复打开），先销毁再重建
+        shouldRenderPicker.value = false;
         nextTick(() => {
-          shouldRenderScroller.value = true;
-          nextTick(() => {
-            resetScrollToIndex(index);
-          });
+          shouldRenderPicker.value = true;
         });
       }
     } else {
-      // 弹窗关闭时，延迟销毁 scroll-view 以确保下次打开时重新创建
+      // 弹窗关闭时，延迟销毁 picker 以确保下次打开时重新创建
       clearCloseRenderTimer();
-      clearScrollSettleTimer();
       closeRenderTimer = setTimeout(() => {
         if (!props.visible) {
-          shouldRenderScroller.value = false;
+          shouldRenderPicker.value = false;
         }
         closeRenderTimer = null;
       }, 300);
@@ -223,14 +139,29 @@ watch(
 
 onBeforeUnmount(() => {
   clearCloseRenderTimer();
-  clearScrollSettleTimer();
 });
+
+// 动画完成后再次设置 pickerValue，确保原生组件正确初始化
+function handleAfterEnter() {
+  const index = props.selectedIndex ?? 0;
+  // 使用 nextTick 确保 DOM 更新后再设置值
+  nextTick(() => {
+    // 通过先设置为不同的值再设置回来，强制 picker-view 更新
+    const tempIndex = index === 0 && props.options.length > 1 ? 1 : 0;
+    pickerValue.value = [tempIndex];
+    nextTick(() => {
+      pickerValue.value = [index];
+      currentIndex.value = index;
+    });
+  });
+}
 
 watch(
   () => props.selectedIndex,
   (value) => {
     if (!props.visible && value !== null) {
-      syncScrollToIndex(value, false);
+      currentIndex.value = value;
+      pickerValue.value = [value];
     }
   }
 );
@@ -247,31 +178,19 @@ function handleClose() {
   emit('update:visible', false);
 }
 
-function handleScroll(e: { detail: { scrollTop: number } }) {
+function handlePickerChange(e: { detail: { value: number[] } }) {
+  const newIndex = e.detail.value[0] ?? 0;
+  currentIndex.value = newIndex;
+  pickerValue.value = [newIndex];
+}
+
+function handlePickStart() {
   isPicking.value = true;
-  const nextScrollTop = Number(e.detail.scrollTop || 0);
-  latestScrollTop.value = nextScrollTop;
-  currentIndex.value = getIndexByScrollTop(nextScrollTop);
-  scheduleScrollSettle();
 }
 
-function handleTouchStart() {
-  isPicking.value = true;
-  clearScrollSettleTimer();
-}
-
-function handleTouchEnd() {
-  scheduleScrollSettle(80);
-}
-
-function handleItemClick(index: number) {
-  if (props.options[index]?.disabled) return;
-  clearScrollSettleTimer();
+function handlePickEnd() {
   isPicking.value = false;
-  syncScrollToIndex(index, true);
 }
-
-function noop() {}
 
 function handleConfirm() {
   // 如果还在滚动中，等待滚动结束
@@ -292,10 +211,9 @@ function handleConfirm() {
 
 <style scoped>
 .agent-select-sheet {
-  position: relative;
   background: #ffffff;
   border-radius: 48rpx 48rpx 0 0;
-  padding: 48rpx 40rpx 0;
+  padding: 48rpx 40rpx calc(72rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 
@@ -312,26 +230,21 @@ function handleConfirm() {
 .sheet-picker-wrapper {
   position: relative;
   height: 368rpx;
-  margin: 0 -40rpx;
   overflow: hidden;
 }
 
-.sheet-scroll-view {
+.sheet-picker-view {
   width: 100%;
   height: 100%;
   position: relative;
   z-index: 3;
 }
 
-.sheet-scroll-padding {
-  height: 144rpx;
-}
-
 /* 选中项指示器 - 中间的灰色背景框 */
 .sheet-indicator {
   position: absolute;
-  left: 80rpx;
-  right: 80rpx;
+  left: 40rpx;
+  right: 40rpx;
   top: 50%;
   transform: translateY(-50%);
   height: 80rpx;
@@ -344,8 +257,8 @@ function handleConfirm() {
 /* 渐变遮罩 - 让远离中心的选项逐渐变淡 */
 .sheet-mask {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: -40rpx;
+  right: -40rpx;
   height: 160rpx;
   pointer-events: none;
   z-index: 4;
@@ -366,16 +279,12 @@ function handleConfirm() {
   align-items: center;
   justify-content: center;
   height: 80rpx;
-  padding: 0 80rpx;
+  padding: 0 16rpx;
   box-sizing: border-box;
 }
 
 .sheet-picker-item--disabled {
   opacity: 0.32;
-}
-
-.sheet-picker-item--active .sheet-picker-item-text {
-  color: rgba(0, 0, 0, 0.9);
 }
 
 .sheet-picker-item-text {
@@ -390,20 +299,13 @@ function handleConfirm() {
   white-space: nowrap;
 }
 
-.sheet-action-area {
-  margin: 50rpx -40rpx 0;
-  padding: 0 40rpx calc(72rpx + env(safe-area-inset-bottom));
-}
-
 .sheet-confirm-btn {
-  position: relative;
-  z-index: 6;
   width: 100%;
   height: 88rpx;
+  margin-top: 50rpx;
   border: none;
   border-radius: 24rpx;
-  background: #335cff;
-  background: var(--color-primary, #335cff);
+  background: var(--color-primary);
   color: #ffffff;
   font-size: 28rpx;
   font-weight: 500;
@@ -418,5 +320,46 @@ function handleConfirm() {
 
 .sheet-confirm-btn:active {
   opacity: 0.92;
+}
+</style>
+
+<style>
+/* 通过 indicator-class 去除边框线 */
+.sheet-picker-indicator,
+.agent-select-sheet-popup .sheet-picker-indicator {
+  border-top: none !important;
+  border-bottom: none !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
+.sheet-picker-indicator::before,
+.sheet-picker-indicator::after,
+.agent-select-sheet-popup .sheet-picker-indicator::before,
+.agent-select-sheet-popup .sheet-picker-indicator::after {
+  display: none !important;
+  border: none !important;
+  border-color: transparent !important;
+  height: 0 !important;
+  content: none !important;
+}
+
+/* 覆盖 uni-picker-view-indicator 原生边框 */
+.agent-select-sheet-popup .uni-picker-view-indicator,
+.agent-select-sheet-popup .sheet-picker-view .uni-picker-view-indicator {
+  border-top: none !important;
+  border-bottom: none !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
+}
+
+.agent-select-sheet-popup .uni-picker-view-indicator::before,
+.agent-select-sheet-popup .uni-picker-view-indicator::after {
+  display: none !important;
+  border: none !important;
+  border-color: transparent !important;
+  height: 0 !important;
+  content: none !important;
 }
 </style>

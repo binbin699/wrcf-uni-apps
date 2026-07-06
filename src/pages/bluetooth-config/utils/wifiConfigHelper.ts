@@ -142,11 +142,5 @@ export function getWifiSendErrorMessage(
   if (result.errCode === 10004 || result.errCode === 10006) {
     return $t('bluetooth.connection_lost');
   }
-  if (result.errCode === 1001 || result.errCode === 10012) {
-    return $t('bluetooth.wifi.config_timeout');
-  }
-  if (result.errCode === 10001 && result.errMsg?.includes('auth deny')) {
-    return $t('bluetooth.wifi_config_failed');
-  }
   return $t('bluetooth.wifi_config_failed');
 }

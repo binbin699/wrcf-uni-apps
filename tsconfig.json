@@ -5,7 +5,6 @@
     "strict": true,
     "jsx": "preserve",
     "moduleResolution": "node",
-    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "sourceMap": true,
     "skipLibCheck": true,
@@ -13,7 +12,6 @@
     "allowSyntheticDefaultImports": true,
     "useDefineForClassFields": true,
     "resolveJsonModule": true,
-    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]

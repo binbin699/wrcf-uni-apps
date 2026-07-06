@@ -5,7 +5,6 @@ export type Agent = AgentTemplate & {
   createTime: Date;
   updateTime: Date;
   description: string;
-  summary?: string;
   config: any;
   isPublic: boolean;
   lang: string[];

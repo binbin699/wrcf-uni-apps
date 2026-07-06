@@ -1,4 +1,4 @@
-# Linx-App AI Agent Instructions
+# JiuBao-App AI Agent Instructions
 
 ## 📚 规则模块导航
 
@@ -57,22 +57,6 @@
 - 新增色值时先在 `theme.css` 定义变量，再引用
 - 中性色（黑/白/灰）不受此限制
 
-### 涉及 App UI 或用户可见流程时
-
-**自动参考**: `test/README.md` + `test/flows/**`
-
-涉及 `src/pages/**`、`src/components/**`、`src/pages.json`、路由、Tab、弹窗、表单、用户可见文案、设备管理、智能体管理、登录态相关交互时，完成代码改动后需要评估 Maestro UI 回归测试是否需要同步更新。
-
-最终回复需要说明评估结果：
-
-- 影响已有 flow：更新对应 `test/flows/**`。
-- 新增稳定主流程：新增对应 flow。
-- 涉及扫码、蓝牙、Wi-Fi、声纹、音频、真实硬件状态：记录为专项人工验证项。
-- UI 变动影响选择器或断言文案：同步更新 flow 和 `test/.env.example` 中的测试数据说明。
-- 当前一期 flow 面向中文 App 环境；国际化版本或非中文文案变动需要补充对应 locale 的 flow 或稳定测试标识。
-
-运行前置条件：测试人已用 HBuilderX 将 App 真机运行到 Android 测试机，并停留在已登录后的 App 主界面，底部 TabBar 可见。
-
 ---
 
 ## 🛠️ 可用的技能 (Skills)
@@ -85,9 +69,6 @@
 - **typescript** (`.agents/skills/typescript/`)
   - TypeScript 性能优化
   - 类型系统最佳实践
-- **i18n** (`.agents/skills/i18n/`)
-  - 多语言 locale 维护、术语表、品牌 sync（mengdian / HiKbao）
-  - 修改 `src/locale` 或 `linx-app-brand-configs` 下 locale 时必读
 
 ---
 

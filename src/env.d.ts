@@ -22,21 +22,16 @@ declare const APP_CONFIG: {
   BLE_FILTER_ENABLED: boolean;
   APP_SETUP_MODE: 'qrcode' | 'bluetooth' | 'both';
   APP_PRIMARY_SETUP_MODE: 'qrcode' | 'bluetooth' | 'none';
-  APP_QRCODE_SCAN_SOURCE: 'camera_only' | 'camera_and_album';
   APP_USE_VOICEPRINT: boolean;
   APP_USE_VOICE_CLONE: boolean;
   TERMS_URL: string;
   PRIVACY_URL: string;
   FEEDBACK_EMAIL: string;
   SHOW_INSTRUCTIONS_TUTORIALS: boolean;
-  PROFILE_ENTRY_GROUP_ORDER: string[];
-  /** 智能体广场语言筛选：navbar 左上角下拉；horizontal_bar 搜索框下方下拉选择框 */
-  SQUARE_LANGUAGE_FILTER_STYLE: 'navbar' | 'horizontal_bar';
   GOOGLE_OAUTH_CLIENT_ID_WEB: string;
   ARMS_PID: string;
   ARMS_ENDPOINT: string;
   ARMS_ENV: 'prod' | 'gray' | 'pre' | 'daily' | 'local';
-  MANUALS: Record<string, string>;
 };
 
 // 应用版本号（从 manifest.json 读取）

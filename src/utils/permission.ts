@@ -45,7 +45,6 @@
 import type { NotifyProps } from '@/uni_modules/wot-design-uni/components/wd-notify/types';
 import i18n from '@/locale';
 import { AppInfo } from '@/const';
-import { bleService } from '@/services/ble';
 import { AudioRecorderManager } from '@/utils/audioRecorder';
 
 const $t = i18n.global.t;
@@ -1349,7 +1348,7 @@ async function requestHarmonyPermission(type: PermissionType): Promise<number> {
       }
 
       case PermissionType.BLUETOOTH: {
-        console.log('[权限请求] 鸿蒙请求蓝牙权限：使用 bleService.openAdapter 触发');
+        console.log('[权限请求] 鸿蒙请求蓝牙权限：使用 openBluetoothAdapter 触发');
         const authSetting = uni.getAppAuthorizeSetting();
         if (authSetting.bluetoothAuthorized === 'authorized') {
           console.log('[权限请求] 鸿蒙蓝牙权限已授权');
@@ -1358,24 +1357,23 @@ async function requestHarmonyPermission(type: PermissionType): Promise<number> {
           console.log(
             '[权限请求] 鸿蒙蓝牙权限状态:',
             authSetting.bluetoothAuthorized,
-            '，尝试初始化蓝牙适配器触发系统权限弹窗'
+            '，尝试 openBluetoothAdapter 触发系统权限弹窗'
           );
-          bleService
-            .openAdapter()
-            .then(() => {
+          uni.openBluetoothAdapter({
+            success: () => {
               console.log('[权限请求] 鸿蒙蓝牙适配器初始化成功，权限已授权');
               resolve(1);
-            })
-            .catch((err: { errCode?: number; errMsg?: string; message?: string }) => {
+            },
+            fail: (err: any) => {
               console.log('[权限请求] 鸿蒙蓝牙适配器初始化失败:', err);
-              const errMsg = err?.errMsg || err?.message || '';
-              if (err.errCode === 10001 || errMsg.includes('not available')) {
+              if (err.errCode === 10001) {
                 console.log('[权限请求] 鸿蒙蓝牙未开启');
               }
               const newAuthSetting = uni.getAppAuthorizeSetting();
               console.log('[权限请求] 鸿蒙蓝牙权限重新检查:', newAuthSetting.bluetoothAuthorized);
               resolve(newAuthSetting.bluetoothAuthorized === 'authorized' ? 1 : 0);
-            });
+            }
+          });
         }
         break;
       }

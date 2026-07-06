@@ -14,32 +14,30 @@
     </view>
 
     <view class="page-content" :style="{ paddingTop: statusBarHeight + navContentHeight + 'px' }">
-    <!-- 加载态 -->
-    <view class="loading-state" v-if="loading">
-      <text class="loading-text">{{ $t('device.loading') }}</text>
-    </view>
+
 
     <!-- 设备列表 -->
-    <view class="device-list" v-else-if="deviceList.length > 0">
+    <view class="device-list" v-if="deviceList.length > 0">
       <template v-for="(device, index) in deviceList" :key="device.id">
         <view class="device-item" @click.stop="handleSelectDevice(device)">
           <!-- 左侧：设备信息 -->
           <view class="device-info">
-            <text class="device-name">{{ device.deviceName }}</text>
+            <!-- 设备名 + 绑定标签 -->
+            <view class="device-name-row">
+              <text class="device-name">{{ device.deviceName }}</text>
+              <view class="device-tag" :class="device.agentName ? 'bound' : 'unbound'">
+                <text class="device-tag-text">{{ device.agentName ? $t('device.bound') : $t('device.unbound') }}</text>
+              </view>
+            </view>
             <!-- 详情信息 -->
             <view class="device-details">
               <text class="device-mac">MAC:{{ device.macAddress }}</text>
               <text class="device-detail">{{ $t('device.bound_agent') }}：{{ device.agentName || $t('device.no_agent') }}</text>
             </view>
           </view>
-          <!-- 右侧：设备操作 -->
-          <view class="device-actions">
-            <view class="rename-btn" @click.stop="showEditNamePopup(device)">
-              <image class="rename-icon" src="/static/icons/icon-edit.svg" mode="aspectFit"></image>
-            </view>
-            <view class="delete-btn" @click.stop="deleteDevice(device)">
-              <text class="delete-btn-text">{{ $t('device.delete_device') }}</text>
-            </view>
+          <!-- 右侧：删除按钮 -->
+          <view class="delete-btn" @click.stop="deleteDevice(device)">
+            <text class="delete-btn-text">{{ $t('device.delete_device') }}</text>
           </view>
         </view>
         <!-- 分割线（非最后一项） -->
@@ -107,33 +105,6 @@
       </wd-row>
     </wd-popup>
   </wd-root-portal>
-
-  <!-- 编辑设备名称弹窗 -->
-  <wd-popup v-model="showEditName" position="center" custom-style="background: transparent;">
-    <view class="edit-name-dialog">
-      <view class="edit-name-header">
-        <text class="edit-name-title">{{ $t('device_status.edit_device_name') }}</text>
-        <view class="edit-name-input-wrapper">
-          <input
-            class="edit-name-input"
-            v-model="editDeviceName"
-            :placeholder="$t('device_status.enter_device_name')"
-            maxlength="32" />
-          <view class="edit-name-clear" v-if="editDeviceName" @click="editDeviceName = ''">
-            <image class="clear-icon" src="/static/icons/icon-clear.svg" mode="aspectFit"></image>
-          </view>
-        </view>
-      </view>
-      <view class="edit-name-footer">
-        <view class="edit-name-btn cancel" @click="showEditName = false">
-          <text>{{ $t('common.cancel') }}</text>
-        </view>
-        <view class="edit-name-btn confirm" @click="handleSaveDeviceName">
-          <text>{{ $t('common.confirm') }}</text>
-        </view>
-      </view>
-    </view>
-  </wd-popup>
 </template>
 
 <script setup lang="ts">
@@ -156,9 +127,6 @@ const deviceList = ref<Device[]>([]);
 const loading = ref(false);
 const selectDevice = ref<Device | null>(null);
 const showVoiceprintPopup = ref(false);
-const showEditName = ref(false);
-const editDeviceName = ref('');
-const editingDevice = ref<Device | null>(null);
 const statusBarHeight = ref(44);
 const navContentHeight = ref(44);
 // 音频播放管理器
@@ -291,43 +259,6 @@ function deleteDevice(device: Device) {
     .catch(() => {
       // 用户取消删除
     });
-}
-
-function showEditNamePopup(device: Device) {
-  editingDevice.value = device;
-  editDeviceName.value = device.deviceName || '';
-  showEditName.value = true;
-}
-
-async function handleSaveDeviceName() {
-  const device = editingDevice.value;
-  const deviceName = editDeviceName.value.trim();
-
-  if (!deviceName) {
-    uni.showToast({
-      title: $t('device_status.name_required'),
-      icon: 'none'
-    });
-    return;
-  }
-
-  if (!device) return;
-
-  try {
-    await deviceApi.updateName({
-      id: device.id,
-      deviceName
-    });
-    device.deviceName = deviceName;
-    showEditName.value = false;
-    uni.showToast({
-      title: $t('common.save_success'),
-      icon: 'success'
-    });
-    loadDeviceList();
-  } catch (error) {
-    console.error('[设备管理/saveDeviceName] 失败:', error);
-  }
 }
 
 function handleSelectDevice(device: Device) {
@@ -476,7 +407,7 @@ function unbindVoiceprint() {
 
 .device-item {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: space-between;
 }
 
@@ -486,7 +417,12 @@ function unbindVoiceprint() {
   display: flex;
   flex-direction: column;
   gap: 8rpx;
-  padding-right: 20rpx;
+}
+
+.device-name-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
 }
 
 .device-name {
@@ -494,14 +430,37 @@ function unbindVoiceprint() {
   font-weight: 500;
   color: #212730;
   line-height: 52rpx;
-  white-space: normal;
-  word-break: break-all;
-  overflow-wrap: anywhere;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+}
+
+/* 绑定状态标签 */
+.device-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}
+
+.device-tag.bound {
+  background: var(--color-primary-alpha-10, rgba(51, 92, 255, 0.05));
+}
+
+.device-tag.unbound {
+  background: #f3f4f7;
+}
+
+.device-tag-text {
+  font-size: 24rpx;
+  line-height: 36rpx;
+}
+
+.device-tag.bound .device-tag-text {
+  color: var(--color-primary);
+}
+
+.device-tag.unbound .device-tag-text {
+  color: #60718b;
 }
 
 /* 设备详情文字 */
@@ -522,28 +481,6 @@ function unbindVoiceprint() {
   line-height: 44rpx;
 }
 
-.device-actions {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-between;
-}
-
-.rename-btn {
-  width: 56rpx;
-  height: 56rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.rename-icon {
-  width: 32rpx;
-  height: 32rpx;
-  filter: brightness(0) saturate(100%);
-}
-
 /* 删除按钮（胶囊描边） */
 .delete-btn {
   flex-shrink: 0;
@@ -562,93 +499,6 @@ function unbindVoiceprint() {
   color: var(--color-primary);
   line-height: 40rpx;
   white-space: nowrap;
-}
-
-/* ===== 编辑设备名称弹窗 ===== */
-.edit-name-dialog {
-  width: 700rpx;
-  background: #ffffff;
-  border-radius: 32rpx;
-  overflow: hidden;
-}
-
-.edit-name-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 48rpx 48rpx 0;
-  gap: 32rpx;
-}
-
-.edit-name-title {
-  font-size: 36rpx;
-  font-weight: 500;
-  color: #212730;
-  line-height: 52rpx;
-  text-align: center;
-}
-
-.edit-name-input-wrapper {
-  width: 100%;
-  height: 96rpx;
-  background: #f3f4f7;
-  border: 3rpx solid var(--color-primary);
-  border-radius: 24rpx;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0 32rpx;
-  box-sizing: border-box;
-}
-
-.edit-name-input {
-  flex: 1;
-  height: 100%;
-  font-size: 28rpx;
-  color: #212730;
-  background: transparent;
-}
-
-.edit-name-clear {
-  width: 40rpx;
-  height: 40rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.clear-icon {
-  width: 40rpx;
-  height: 40rpx;
-}
-
-.edit-name-footer {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 40rpx 48rpx 48rpx;
-  gap: 24rpx;
-}
-
-.edit-name-btn {
-  flex: 1;
-  height: 88rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 24rpx;
-  font-size: 28rpx;
-  font-weight: 500;
-}
-
-.edit-name-btn.cancel {
-  background: #f3f4f7;
-  color: #212730;
-}
-
-.edit-name-btn.confirm {
-  background: var(--color-primary);
-  color: #ffffff;
 }
 
 /* 列表分割线 */

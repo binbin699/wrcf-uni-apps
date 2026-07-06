@@ -79,39 +79,6 @@ const videoUrl = ref<string>('');
 const manualUrl = ref<string>('');
 const isLoading = ref<boolean>(false);
 
-function normalizeLocaleCandidates(): string[] {
-  const locale = (uni.getLocale() || 'en').toLowerCase();
-  const candidates = [locale];
-
-  if (locale.includes('-')) {
-    candidates.push(locale.split('-')[0]);
-  }
-
-  if (locale === 'zh' || locale === 'zh-hans' || locale === 'zh-cn') {
-    candidates.unshift('zh-Hans');
-  }
-
-  if (locale === 'zh-hant' || locale === 'zh-tw' || locale === 'zh-hk') {
-    candidates.unshift('zh-Hant');
-  }
-
-  candidates.push('en', 'zh-Hans');
-  return Array.from(new Set(candidates));
-}
-
-function resolveLocalizedContent(source: Record<string, string>): string {
-  const candidates = normalizeLocaleCandidates();
-
-  for (const candidate of candidates) {
-    const value = source[candidate];
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
-  }
-
-  return '';
-}
-
 /**
  * 将 uni.getLocale() 返回值转换为后端期望的语言码格式（如 zh_CN、en_US）
  */
@@ -125,9 +92,6 @@ function getLanguageCode(): string {
     if (locale.startsWith('ko')) return 'ko_KR';
     if (locale.startsWith('ru')) return 'ru_RU';
     if (locale.startsWith('ar')) return 'ar_SA';
-    if (locale.startsWith('th')) return 'th_TH';
-    if (locale.startsWith('es')) return 'es_ES';
-    if (locale.startsWith('fr')) return 'fr_FR';
     if (locale.startsWith('en')) return 'en_US';
     const parts = locale.split('-');
     if (parts.length >= 2) {
@@ -143,13 +107,12 @@ function getLanguageCode(): string {
 async function loadTutorialResource() {
   isLoading.value = true;
   try {
-    const configManualUrl = resolveLocalizedContent(APP_CONFIG.MANUALS);
-    manualUrl.value = configManualUrl;
-
     const languageCode = getLanguageCode();
+	console.log('languageCode: ', languageCode)
     const res = await tutorialApi.getTutorialResource(languageCode);
     videoUrl.value = res.data.tutorialVideoUrl ?? '';
-    manualUrl.value = res.data.manualUrl || configManualUrl || '';
+    manualUrl.value = res.data.manualUrl ?? '';
+	
   } catch (error: unknown) {
     console.error('[help/loadTutorialResource] 获取教程资源失败:', error);
   } finally {

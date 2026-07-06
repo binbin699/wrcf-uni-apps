@@ -57,10 +57,7 @@ import { useI18n } from 'vue-i18n';
 // @ts-ignore
 import { agentApi } from '@/api/index';
 import { useToast } from '@/uni_modules/wot-design-uni';
-import {
-  getRequestErrorMessage,
-  isRequestHandledError
-} from '@/utils/request-feedback';
+import { isRequestHandledError } from '@/utils/request-feedback';
 
 const props = defineProps<{
   modelValue: string;
@@ -80,39 +77,17 @@ const localPrompt = ref(props.modelValue);
 // 一键润色相关状态
 const polishState = ref<'idle' | 'requesting' | 'completed'>('idle');
 const requestingTextIndex = ref(0);
-const elapsedSeconds = ref(0);
 const requestingTexts = [
   $t('create_agent.polish_requesting_1'),
   $t('create_agent.polish_requesting_2')
 ];
 const originalPrompt = ref('');
-let requestingTimer: ReturnType<typeof setInterval> | null = null;
-let elapsedTimer: ReturnType<typeof setInterval> | null = null;
+let requestingTimer: any = null;
 
-const requestingText = computed(() => {
-  const base = requestingTexts[requestingTextIndex.value];
-  if (polishState.value === 'requesting' && elapsedSeconds.value > 0) {
-    return `${base} (${elapsedSeconds.value}s)`;
-  }
-  return base;
-});
+const requestingText = computed(
+  () => requestingTexts[requestingTextIndex.value]
+);
 const canPolish = computed(() => localPrompt.value.trim().length >= 5);
-
-/** 兼容后端多种润色结果字段 */
-function resolveOptimizedPrompt(data: unknown): string {
-  if (!data) return '';
-  if (typeof data === 'string') return data.trim();
-  if (typeof data !== 'object') return '';
-
-  const record = data as Record<string, unknown>;
-  const candidates = [record.prompt, record.optimizedPrompt, record.systemPrompt];
-  for (const value of candidates) {
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
-  }
-  return '';
-}
 
 // 与父组件双向同步
 watch(
@@ -154,45 +129,33 @@ async function handlePolish() {
 
   polishState.value = 'requesting';
   requestingTextIndex.value = 0;
-  elapsedSeconds.value = 0;
 
   if (requestingTimer) clearInterval(requestingTimer);
-  if (elapsedTimer) clearInterval(elapsedTimer);
-  elapsedTimer = setInterval(() => {
-    elapsedSeconds.value += 1;
-  }, 1000);
   requestingTimer = setInterval(() => {
     requestingTextIndex.value =
       (requestingTextIndex.value + 1) % requestingTexts.length;
   }, 2000);
 
   try {
-    const result = await agentApi.optimizePrompt({ prompt: content });
+    const result = await agentApi.optimizePrompt({
+      prompt: content
+    });
 
-    const optimizedPrompt = resolveOptimizedPrompt(result.data);
-    if (result.code === 1000 && optimizedPrompt) {
-      localPrompt.value = optimizedPrompt;
+    if (result.code === 1000 && result.data && result.data.prompt) {
+      localPrompt.value = result.data.prompt;
       polishState.value = 'completed';
-      return;
+    } else {
+      throw new Error(result.message || $t('create_agent.polish_failed'));
     }
-
-    console.error('[一键润色] 响应异常:', result);
-    throw new Error(result.message || $t('create_agent.polish_failed'));
   } catch (error) {
-    const msg = getRequestErrorMessage(error, $t('create_agent.polish_failed'));
-    console.error('[一键润色] 失败:', msg, error);
     if (!isRequestHandledError(error)) {
-      toast.error(msg);
+      toast.error($t('create_agent.polish_failed'));
     }
     polishState.value = 'idle';
   } finally {
     if (requestingTimer) {
       clearInterval(requestingTimer);
       requestingTimer = null;
-    }
-    if (elapsedTimer) {
-      clearInterval(elapsedTimer);
-      elapsedTimer = null;
     }
   }
 }
@@ -206,10 +169,6 @@ onUnmounted(() => {
   if (requestingTimer) {
     clearInterval(requestingTimer);
     requestingTimer = null;
-  }
-  if (elapsedTimer) {
-    clearInterval(elapsedTimer);
-    elapsedTimer = null;
   }
 });
 </script>

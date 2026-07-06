@@ -60,12 +60,8 @@ export async function loadWifiList(
 
   const canScan = isScanSupported();
   if (!canScan) {
-    // iOS / 鸿蒙等不支持扫描的平台，尝试获取当前连接的 WiFi 作为回退
+    // iOS 等不支持扫描的平台，尝试获取当前连接的 WiFi 作为回退
     console.log('平台不支持 WiFi 扫描，尝试获取当前连接的 WiFi');
-    if (!isWifiModuleAvailable()) {
-      isLoadingWifiList.value = false;
-      throw new WifiScanError(WifiScanErrorType.SCAN_NOT_SUPPORTED);
-    }
     try {
       const started = await startWifiSafe();
       if (!started) {
@@ -434,17 +430,8 @@ async function ensureAndroidScanPermissions(): Promise<{ success: boolean, denie
   }
 }
 
-/** 当前运行时是否提供 Wi-Fi 模块 API（鸿蒙 NEXT 等平台可能未接入 uni-wifi） */
-export function isWifiModuleAvailable(): boolean {
-  return typeof uni.startWifi === 'function';
-}
-
 // 安全封装：初始化/关闭 Wi-Fi 模块
 export async function startWifiSafe(): Promise<boolean> {
-  if (!isWifiModuleAvailable()) {
-    console.warn('[WiFi扫描] 当前平台不支持 uni.startWifi，跳过 Wi-Fi 模块初始化');
-    return false;
-  }
   return new Promise<boolean>((resolve) => {
     try {
       console.log('[WiFi扫描] 调用 uni.startWifi');
@@ -466,9 +453,6 @@ export async function startWifiSafe(): Promise<boolean> {
 }
 
 export async function stopWifiSafe(): Promise<void> {
-  if (typeof uni.stopWifi !== 'function') {
-    return;
-  }
   return new Promise<void>((resolve) => {
     try {
       uni.stopWifi({
@@ -571,9 +555,6 @@ export async function getConnectedWifiBestEffort(): Promise<UniApp.WifiInfo | nu
 }
 
 function getConnectedWifiInternal(partialInfo: boolean): Promise<UniApp.WifiInfo | null> {
-  if (typeof uni.getConnectedWifi !== 'function') {
-    return Promise.resolve(null);
-  }
   return new Promise<UniApp.WifiInfo | null>((resolve) => {
     try {
       uni.getConnectedWifi({

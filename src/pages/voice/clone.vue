@@ -94,7 +94,7 @@
       </view>
 
       <!-- 音色名称输入 -->
-      <view class="name-input-card" :class="{ error: voiceNameError }">
+      <view class="name-input-card">
         <text class="input-label">{{ $t('voice_clone.voice_name') }}</text>
         <input
           class="name-input"
@@ -105,9 +105,6 @@
           <wd-icon name="close-fill" size="32rpx" color="#c8c9cc" />
         </view>
       </view>
-      <text v-if="voiceNameError" class="name-error">
-        {{ $t('voice_clone.voice_name_min_length') }}
-      </text>
     </view>
 
     <!-- 底部按钮 -->
@@ -133,17 +130,13 @@
     <view v-if="showRecordPopup" class="record-popup-overlay" @click.self="closeRecordPopup">
       <view class="record-popup">
         <view class="popup-header">
-          <text class="popup-title">{{ $t('voice_clone.record_read_title') }}</text>
+          <text class="popup-title">{{ $t('voice_clone.record_voice_popup_title') }}</text>
           <view class="popup-close" @click="closeRecordPopup">
-            <text class="popup-close-icon">×</text>
+            <wd-icon name="close" size="40rpx" color="#333" />
           </view>
         </view>
 
         <view class="popup-content">
-          <view class="prompt-card">
-            <text class="prompt-text">{{ $t('voice_clone.record_read_prompt') }}</text>
-          </view>
-
           <!-- 波形动画 -->
           <view class="waveform-container">
             <view class="waveform">
@@ -220,19 +213,14 @@ const audioPlayer = ref<AudioPlayerManager | null>(null);
 const audioRecorder = ref<AudioRecorderManager | null>(null);
 
 const supportedAudioFormats = ['mp3', 'wav', 'm4a', 'aac', 'flac'];
-const voiceNameTrimmed = computed(() => voiceName.value.trim());
 
 // 是否可以提交表单
 const canSubmit = computed(() => {
   return (
-    voiceNameTrimmed.value.length >= 3 &&
+    voiceName.value.trim().length >= 3 &&
     (audioFile.value || recordedAudio.value) &&
     !isRecording.value
   );
-});
-
-const voiceNameError = computed(() => {
-  return voiceNameTrimmed.value.length > 0 && voiceNameTrimmed.value.length < 3;
 });
 
 // 获取波形高度（模拟动画）
@@ -301,7 +289,7 @@ function initManagers() {
   // 初始化录音管理器
   // 注意：最长录制时间（duration）与创建音色的有效时长限制不同
   // - 录制时长限制：180秒（可根据需求调整，给用户足够的录制空间）
-  // - 创建音色有效时长：5-120秒（固定限制，在 uploadAndCreateVoice 函数中验证）
+  // - 创建音色有效时长：10-120秒（固定限制，在 uploadAndCreateVoice 函数中验证）
   // 如需修改最长录制时间，只需修改下方 duration 值（单位：毫秒）
   audioRecorder.value = AudioRecorderManager.getInstance(
     {
@@ -813,14 +801,6 @@ async function trainVoice() {
 
 // 上传并创建/更新音色
 async function uploadAndCreateVoice() {
-  if (voiceNameError.value) {
-    uni.showToast({
-      title: $t('voice_clone.voice_name_min_length'),
-      icon: 'none'
-    });
-    return;
-  }
-
   if (!canSubmit.value) {
     uni.showToast({
       title: $t('voice_clone.complete_required_fields'),
@@ -838,12 +818,12 @@ async function uploadAndCreateVoice() {
     return;
   }
 
-  // 验证音频时长（5-120秒）
+  // 验证音频时长（10-120秒）
   // recordDuration 单位是秒，audioDuration 单位是毫秒，统一转换为秒
   const durationInSeconds = recordedAudio.value 
     ? recordDuration.value 
     : Math.round(audioDuration.value / 1000);
-  const minDuration = 5; // 5秒
+  const minDuration = 10; // 10秒
   const maxDuration = 120; // 120秒
   
   console.log('音频时长验证:', durationInSeconds, '秒，范围:', minDuration, '-', maxDuration);
@@ -1241,12 +1221,7 @@ function formatDuration(seconds: number) {
   background: #FFFFFF;
   box-shadow: 0px 4rpx 24rpx rgba(0, 0, 0, 0.1);
   border-radius: 32rpx;
-  border: 2rpx solid transparent;
   margin-bottom: 32rpx;
-
-  &.error {
-    border-color: var(--color-danger);
-  }
 }
 
 .input-label {
@@ -1273,16 +1248,6 @@ function formatDuration(seconds: number) {
 .clear-icon {
   padding: 8rpx;
   flex-shrink: 0;
-}
-
-.name-error {
-  display: block;
-  margin-top: -8rpx;
-  margin-bottom: 32rpx;
-  padding-left: 32rpx;
-  font-size: 24rpx;
-  line-height: 34rpx;
-  color: var(--color-danger);
 }
 
 /* 底部按钮 */
@@ -1312,7 +1277,7 @@ function formatDuration(seconds: number) {
   transition: all 0.25s ease;
 
   &.active {
-    background: var(--color-primary);
+    background: #10b981;
     color: #FFFFFF;
   }
 
@@ -1337,65 +1302,34 @@ function formatDuration(seconds: number) {
 .record-popup {
   width: 100%;
   background: #FFFFFF;
-  border-radius: 40rpx 40rpx 0 0;
-  padding: 36rpx 32rpx 28rpx;
-  padding-bottom: calc(28rpx + env(safe-area-inset-bottom));
-  box-sizing: border-box;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 40rpx 32rpx;
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
 }
 
 .popup-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 28rpx;
+  margin-bottom: 48rpx;
 }
 
 .popup-title {
-  flex: 1;
-  text-align: center;
   font-weight: 600;
-  font-size: 32rpx;
-  line-height: 44rpx;
+  font-size: 36rpx;
+  line-height: 50rpx;
   color: #0E121B;
-  margin-left: 56rpx;
 }
 
 .popup-close {
-  width: 56rpx;
-  height: 56rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.popup-close-icon {
-  font-size: 48rpx;
-  line-height: 1;
-  color: #0E121B;
+  padding: 8rpx;
 }
 
 .popup-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 0 16rpx;
-}
-
-.prompt-card {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 28rpx 24rpx;
-  border: 2rpx solid var(--color-primary-border);
-  border-radius: 28rpx;
-  background: var(--color-primary-tips-bg);
-  margin-bottom: 44rpx;
-}
-
-.prompt-text {
-  display: block;
-  font-size: 28rpx;
-  line-height: 48rpx;
-  color: #3D4657;
+  padding: 40rpx 0;
 }
 
 /* 波形动画 */
@@ -1405,7 +1339,7 @@ function formatDuration(seconds: number) {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 32rpx;
+  margin-bottom: 40rpx;
 }
 
 .waveform {
@@ -1417,9 +1351,9 @@ function formatDuration(seconds: number) {
 }
 
 .wave-bar {
-  width: 5rpx;
-  background: #D5DEFF;
-  border-radius: 5rpx;
+  width: 6rpx;
+  background: #E5E7EB;
+  border-radius: 6rpx;
   transition: all 0.2s;
 
   &.active {
@@ -1438,16 +1372,15 @@ function formatDuration(seconds: number) {
 }
 
 .record-time {
-  font-weight: 400;
-  font-size: 28rpx;
-  line-height: 40rpx;
-  color: #717784;
+  font-weight: 600;
+  font-size: 64rpx;
+  line-height: 90rpx;
+  color: #0E121B;
   font-variant-numeric: tabular-nums;
 }
 
 .popup-action {
-  width: 100%;
-  margin-top: 32rpx;
+  margin-top: 48rpx;
 }
 
 .popup-btn {
@@ -1467,9 +1400,5 @@ function formatDuration(seconds: number) {
   line-height: 44rpx;
   color: #FFFFFF;
   margin: 0 auto;
-}
-
-.popup-btn.stop {
-  background: var(--color-primary);
 }
 </style>

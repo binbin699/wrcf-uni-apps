@@ -70,7 +70,7 @@ See official docs for platform support table: `https://uniapp.dcloud.net.cn/comp
     data() {
       return {
         nbTitle: '标题',
-        titleIcon: '/static/logo.png',
+        titleIcon: '/static/logo1.jpg',
         titleIconRadius: '20px',
         subtitleText: 'subtitleText',
         nbLoading: false,
@@ -112,7 +112,7 @@ See official docs for platform support table: `https://uniapp.dcloud.net.cn/comp
     data() {
       return {
         nbTitle: '标题',
-        titleIcon: '/static/logo.png',
+        titleIcon: '/static/logo1.jpg',
         titleIconRadius: '20px',
         subtitleText: 'subtitleText',
         nbLoading: false,

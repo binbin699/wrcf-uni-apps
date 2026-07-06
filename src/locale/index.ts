@@ -1,59 +1,30 @@
 import { createI18n } from 'vue-i18n';
 import zhHans from './zh-Hans.json';
-// #ifndef MP-WEIXIN
 import en from './en.json';
 import ja from './ja.json';
 import ru from './ru.json';
 import kk from './kk.json';
 import ko from './ko.json';
 import ar from './ar.json';
-import th from './th.json';
-import es from './es.json';
-import fr from './fr.json';
-// #endif
 import { ref, type Ref } from 'vue';
 
 const messages = {
   zh: zhHans,
   'zh-Hans': zhHans,
-  // #ifndef MP-WEIXIN
   en,
   ja,
   ru,
   kk,
   ko,
-  ar,
-  th,
-  es,
-  fr
-  // #endif
+  ar
 };
 
-type supportLang =
-  | 'zh-Hans'
-  // #ifndef MP-WEIXIN
-  | 'en'
-  | 'ja'
-  | 'ru'
-  | 'kk'
-  | 'ko'
-  | 'ar'
-  | 'th'
-  | 'es'
-  | 'fr'
-  // #endif
-;
+type supportLang = 'zh-Hans' | 'en' | 'ja' | 'ru' | 'kk' | 'ko' | 'ar';
 
 // 根据系统语言自动选择
 const systemLocale = uni.getLocale();
-
-function resolveLocale(systemLocale: string): supportLang {
-  // #ifdef MP-WEIXIN
-  return 'zh-Hans';
-  // #endif
-
-  // #ifndef MP-WEIXIN
-  return systemLocale === 'zh-Hans' || systemLocale === 'zh'
+const locale: Ref<supportLang> = ref(
+  systemLocale === 'zh-Hans' || systemLocale === 'zh'
     ? 'zh-Hans'
     : systemLocale === 'ja' || systemLocale === 'ja-JP'
       ? 'ja'
@@ -65,23 +36,8 @@ function resolveLocale(systemLocale: string): supportLang {
             ? 'ko'
             : systemLocale === 'ar' || systemLocale === 'ar-SA'
               ? 'ar'
-              : systemLocale === 'th' || systemLocale === 'th-TH'
-                ? 'th'
-                : systemLocale === 'es' ||
-                    systemLocale === 'es-ES' ||
-                    systemLocale === 'es-MX' ||
-                    systemLocale.startsWith('es-')
-                  ? 'es'
-                  : systemLocale === 'fr' ||
-                      systemLocale === 'fr-FR' ||
-                      systemLocale === 'fr-CA' ||
-                      systemLocale.startsWith('fr-')
-                    ? 'fr'
-                    : 'en';
-  // #endif
-}
-
-const locale: Ref<supportLang> = ref(resolveLocale(systemLocale));
+              : 'en'
+);
 
 console.log('systemLocale', systemLocale, 'locale', locale.value);
 

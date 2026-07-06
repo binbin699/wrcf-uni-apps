@@ -1069,9 +1069,7 @@ export class BleLib {
 			   let descriptors: Array<ble.BLEDescriptor> = [];
 			   let arrayBuffer = new ArrayBuffer(2);
 			   let descV = new Uint8Array(arrayBuffer);
-			   // CCCD: 0x0001=Notification, 0x0002=Indication, 0x0000=关闭
-			   descV[0] = state ? 1 : 0;
-			   descV[1] = 0;
+			   descV[0] = 0; // 以Client Characteristic Configuration描述符为例，表示bit0、bit1均为0，notification和indication均不开启
 			   let descriptor: ble.BLEDescriptor = {
 				   serviceUuid:service,
 			      characteristicUuid: chars,
@@ -1121,8 +1119,7 @@ export class BleLib {
 	 			   let descriptors: Array<ble.BLEDescriptor> = [];
 	 			   let arrayBuffer = new ArrayBuffer(2);
 	 			   let descV = new Uint8Array(arrayBuffer);
-	 			   descV[0] = state ? 1 : 0;
-	 			   descV[1] = 0;
+	 			   descV[0] = 0; // 以Client Characteristic Configuration描述符为例，表示bit0、bit1均为0，notification和indication均不开启
 	 			   let descriptor: ble.BLEDescriptor = {
 	 				   serviceUuid:service,
 	 			      characteristicUuid: chars,

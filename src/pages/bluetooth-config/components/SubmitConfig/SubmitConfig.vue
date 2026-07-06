@@ -242,15 +242,14 @@ export default {
       } catch (error) {
         console.error('配网失败:', error);
 
-        const message = error?.message || '';
-        let errorMessage = message || this.$t('bluetooth.submit.config_failed');
+        // 根据错误类型提供更具体的提示
+        let errorMessage = this.$t('bluetooth.submit.device_timeout');
 
-        if (message.includes('等待配网结果超时') || message.includes('设备响应超时')) {
-          errorMessage = this.wifiConnectionStuck
-            ? this.$t('bluetooth.wifi_timeout_check_password')
-            : this.$t('bluetooth.submit.device_timeout');
-        } else if (message.includes('WiFi') || message.includes('FAIL_CONNECT')) {
-          errorMessage = message;
+        if (error.message && (error.message.includes('timeout') || error.message.includes('超时'))) {
+          // 检查是否可能是WiFi密码错误
+          if (this.wifiConnectionStuck) {
+            errorMessage = this.$t('bluetooth.wifi_timeout_check_password');
+          }
         }
 
         this.configError = errorMessage;
@@ -285,7 +284,7 @@ export default {
       // 跳转到智能体广场，方便用户绑定智能体
       setTimeout(() => {
         uni.switchTab({
-          url: '/pages/square/square'
+          url: '/pages/square/super_square'
         });
       }, 500);
     },

@@ -133,7 +133,7 @@ export default {
   data() {
     return {
       message: 'Hello UniApp',
-      imageUrl: '/static/logo.png'
+      imageUrl: '/static/logo1.jpg'
     }
   },
   methods: {

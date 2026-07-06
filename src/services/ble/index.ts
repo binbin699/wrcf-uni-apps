@@ -104,31 +104,18 @@ function normalizeHarmonyDeviceResult(res: HarmonyScanResult) {
   };
 }
 
-function normalizeHarmonyError(
-  res: { type?: number; message?: string } | undefined,
-  context: 'permission' | 'gatt' = 'gatt'
-) {
+function normalizeHarmonyError(res: { type?: number; message?: string } | undefined) {
   const type = res?.type;
   const message = res?.message || '';
 
-  // 插件中 10001 既可能表示权限问题，也可能表示 GATT 读写失败
   if (type === 10001) {
-    if (context === 'permission') {
-      return { errCode: 10001, errMsg: 'auth deny' };
-    }
-    return {
-      errCode: 10001,
-      errMsg: message || 'GATT operation failed'
-    };
+    return { errCode: 10001, errMsg: 'auth deny' };
   }
   if (type === 10002) {
     return { errCode: 10001, errMsg: 'not available' };
   }
   if (type === 10005) {
     return { errCode: 10002, errMsg: 'invalid device id' };
-  }
-  if (type === 1001) {
-    return { errCode: 1001, errMsg: message || 'notify subscribe failed' };
   }
 
   return {
@@ -328,11 +315,11 @@ const harmonyBleService: BleServiceAdapter = {
     return new Promise((resolve, reject) => {
       lib.reqBtPer((granted: boolean) => {
         if (!granted) {
-          reject(normalizeHarmonyError({ type: 10001, message: 'auth deny' }, 'permission'));
+          reject({ errCode: 10001, errMsg: 'auth deny' });
           return;
         }
         if (!lib.isEnabled()) {
-          reject(normalizeHarmonyError({ type: 10002, message: 'not available' }, 'permission'));
+          reject({ errCode: 10001, errMsg: 'not available' });
           return;
         }
         resolve({ ok: true });
@@ -586,35 +573,29 @@ const harmonyBleService: BleServiceAdapter = {
         deviceId: options.deviceId
       });
       let settled = false;
-      const resolveOnce = (payload: { ok: true }) => {
+      const resolveOnce = (payload: any = { ok: true }) => {
         if (settled) {
           return;
         }
         settled = true;
-        clearTimeout(timeoutId);
         resolve(payload);
       };
-      const rejectOnce = (error: { errCode: number; errMsg: string }) => {
+      const rejectOnce = (error: any) => {
         if (settled) {
           return;
         }
         settled = true;
-        clearTimeout(timeoutId);
         reject(error);
       };
-
-      const timeoutId = setTimeout(() => {
-        rejectOnce({ errCode: 10012, errMsg: 'notify subscribe timeout' });
-      }, 8000);
 
       lib.onNotityBleData(
         serviceId,
         characteristicId,
         true,
-        (res: { type?: number; message?: string; data?: { data?: number[]; serviceId?: string; characteristicsId?: string } }) => {
+        (res: any) => {
           console.log('[bleService:harmony] 通知回调', res);
           if (res?.type === 1000) {
-            resolveOnce({ ok: true });
+            resolveOnce(res);
             return;
           }
 
@@ -634,53 +615,42 @@ const harmonyBleService: BleServiceAdapter = {
           }
         }
       );
+
+      resolveOnce({ ok: true, implicit: true });
     });
   },
 
   write(options: BleWriteOptions) {
     const lib = getHarmonyLib();
-    const serviceId = resolveHarmonyServiceId(options.serviceId);
-    const characteristicId = resolveHarmonyWriteId(options.characteristicId, options.serviceId);
-    const data = arrayBufferToBytes(options.value);
-
-    const attemptWrite = (writeType?: number) =>
-      new Promise((resolve, reject) => {
-        console.log('[bleService:harmony] 写入数据', {
-          requestedServiceId: options.serviceId,
-          requestedCharacteristicId: options.characteristicId,
-          actualServiceId: serviceId,
-          actualCharacteristicId: characteristicId,
-          deviceId: options.deviceId,
-          writeType,
-          bytes: data.map((item) => item.toString(16).padStart(2, '0')).join(' ')
-        });
-        lib.sendData(
-          {
-            serviceId,
-            characteristicId,
-            fenbao: false,
-            data,
-            writeType
-          },
-          (res: { type?: number; message?: string }) => {
-            console.log('[bleService:harmony] 写入回调', res);
-            if (res?.type === 0 || res?.type === undefined) {
-              resolve(res || { ok: true });
-              return;
-            }
-            reject(normalizeHarmonyError(res));
+    return new Promise((resolve, reject) => {
+      const serviceId = resolveHarmonyServiceId(options.serviceId);
+      const characteristicId = resolveHarmonyWriteId(options.characteristicId, options.serviceId);
+      const data = arrayBufferToBytes(options.value);
+      console.log('[bleService:harmony] 写入数据', {
+        requestedServiceId: options.serviceId,
+        requestedCharacteristicId: options.characteristicId,
+        actualServiceId: serviceId,
+        actualCharacteristicId: characteristicId,
+        deviceId: options.deviceId,
+        bytes: data.map((item) => item.toString(16).padStart(2, '0')).join(' ')
+      });
+      lib.sendData(
+        {
+          serviceId,
+          characteristicId,
+          fenbao: false,
+          data
+        },
+        (res: any) => {
+          console.log('[bleService:harmony] 写入回调', res);
+          if (res?.type === 0 || res?.type === undefined) {
+            resolve(res || { ok: true });
+            return;
           }
-        );
-      });
-
-    return attemptWrite()
-      .catch((firstError: { errCode?: number }) => {
-        if (firstError?.errCode !== 10001) {
-          throw firstError;
+          reject(normalizeHarmonyError(res));
         }
-        console.warn('[bleService:harmony] 默认写入失败，尝试 WRITE_NO_RESPONSE');
-        return attemptWrite(1);
-      });
+      );
+    });
   },
 
   onConnectionChange(listener: (payload: BleConnectionChange) => void) {

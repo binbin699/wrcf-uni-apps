@@ -43,7 +43,7 @@
       <view class="devices">
         <BluetoothItem
           v-for="device in deviceList"
-          :key="device.macAddress || device.deviceId"
+          :key="device.deviceId"
           :deviceInfo="device"
           @tap="handleSelectDevice(device)" />
       </view>

@@ -274,22 +274,10 @@ export function generateWavAudio(wifiConfigStr: WiFiConfigStr): Uint8Array<Array
   return wavData;
 }
 
-// 将 ArrayBuffer 转换为 Base64 字符串（兼容无 uni.arrayBufferToBase64 的平台）
-export function ArrayBufferToBase64(arrayBuffer: ArrayBuffer): string {
-  if (typeof uni.arrayBufferToBase64 === 'function') {
-    return uni.arrayBufferToBase64(arrayBuffer);
-  }
-  const bytes = new Uint8Array(arrayBuffer);
-  const chunkSize = 0x8000;
-  let binary = '';
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-  if (typeof btoa === 'function') {
-    return btoa(binary);
-  }
-  throw new Error('当前环境不支持 ArrayBuffer 转 Base64');
+// 将Uint8Array转换为Base64字符串
+export function ArrayBufferToBase64(arrayBuffer: ArrayBuffer) {
+  const base64String = uni.arrayBufferToBase64(arrayBuffer);
+  return base64String;
 }
 
 export function arrayBufferToBase64Url(arrayBuffer: ArrayBuffer) {

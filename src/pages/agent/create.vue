@@ -76,14 +76,6 @@
           </view>
         </view>
 
-        <view class="form-item">
-          <text class="label">{{ $t('create_agent.memory_type') }}</text>
-          <view class="selector-trigger" @click="openMemorySheet">
-            <text class="value-text">{{ selectedMemoryLabel }}</text>
-            <view class="arrow-icon"></view>
-          </view>
-        </view>
-
         <view class="form-item last-item">
           <text class="label">{{ $t('create_agent.voice_type') }}</text>
           <view class="selector-trigger" @click="showVoiceSelector">
@@ -158,15 +150,6 @@
       :confirm-text="$t('common.confirm')"
       @update:visible="languageSheetVisible = $event"
       @confirm="onChatLanguageSheetConfirm" />
-
-    <AgentSelectSheet
-      :visible="memorySheetVisible"
-      :title="$t('create_agent.select_memory_title')"
-      :options="memorySheetOptions"
-      :selected-index="selectedMemoryIndex"
-      :confirm-text="$t('common.confirm')"
-      @update:visible="memorySheetVisible = $event"
-      @confirm="onMemorySheetConfirm" />
   </view>
 </template>
 
@@ -181,13 +164,11 @@ import { onLoad, onShow, onHide } from '@dcloudio/uni-app';
 import type { LLM, Voice } from '@/pages/agent/types';
 import { PageMap, Pages } from '@/utils/route';
 import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
-import { getRequestErrorMessage, isRequestHandledError } from '@/utils/request-feedback';
 import { loadOptions } from './create';
 import { relocalizeLLMOptions } from './llm';
 import {
   getChatLanguageOptions,
   langCodeToVoiceLanguage,
-  backendLangToLangCode,
   type ChatLanguageOption
 } from './lang_opts';
 import AgentPromptPolish from './components/AgentPromptPolish.vue';
@@ -195,25 +176,17 @@ import { useTemplateSelector } from './composables/useTemplateSelector';
 import { applyTemplateLogic } from './composables/useApplyTemplate';
 import AgentTemplateSelector from './components/AgentTemplateSelector.vue';
 import AgentSelectSheet from './components/AgentSelectSheet.vue';
-import {
-  MEM_MODEL_IDS,
-  MEM_MODEL_OPTION_ORDER,
-  buildAgentWritePayload,
-  resolveMemModelId,
-  type AgentFormFields
-} from './mem_model';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
 useGlobalRequestErrorToast(toast);
 
 // 响应式数据
-const formData = ref<AgentFormFields>({
+const formData = ref({
   agentName: '',
   systemPrompt: '',
   ttsVoiceId: '',
   llmModelId: '',
-  memModelId: MEM_MODEL_IDS.NONE,
   langCode: '', // 默认为空，用户必须手动选择
   language: '' // 默认为空
 });
@@ -229,8 +202,6 @@ const voiceOptions = ref<Voice[]>([]);
 const voiceSelectorVisible = ref(false);
 const llmSheetVisible = ref(false);
 const languageSheetVisible = ref(false);
-const memorySheetVisible = ref(false);
-const selectedMemoryIndex = ref(0);
 const statusBarHeight = ref(44);
 const navBarHeight = ref(44);
 
@@ -271,22 +242,6 @@ const chatLanguageSheetOptions = computed(() =>
     label: item.language,
     value: item.langCode
   }))
-);
-
-const memorySheetOptions = computed(() =>
-  MEM_MODEL_OPTION_ORDER.map((id) => ({
-    label:
-      id === MEM_MODEL_IDS.NONE
-        ? $t('create_agent.memory_none')
-        : id === MEM_MODEL_IDS.LONG_TERM
-          ? $t('create_agent.memory_long_term')
-          : $t('create_agent.memory_local_short'),
-    value: id
-  }))
-);
-
-const selectedMemoryLabel = computed(
-  () => memorySheetOptions.value[selectedMemoryIndex.value]?.label ?? ''
 );
 
 // 加载语言选项
@@ -342,8 +297,6 @@ onLoad(async (options: any) => {
     title: $t('create_agent.page_title')
   });
 
-  setSelectedMemory(0);
-
   await loadLanguageOptions();
   await loadLLMOptions();
   await loadVoiceOptions();
@@ -352,19 +305,6 @@ onLoad(async (options: any) => {
 watch(
   () => locale.value,
   async () => {
-    await loadLanguageOptions();
-
-    if (selectedChatLanguageIndex.value !== null) {
-      const selectedLangCode = formData.value.langCode;
-      const matchedIndex = chatLanguageOptions.value.findIndex((item) => item.langCode === selectedLangCode);
-      selectedChatLanguageIndex.value = matchedIndex !== -1 ? matchedIndex : null;
-      if (matchedIndex === -1) {
-        formData.value.language = '';
-      } else {
-        formData.value.language = chatLanguageOptions.value[matchedIndex].language;
-      }
-    }
-
     if (llmOptions.value.length === 0) {
       return;
     }
@@ -437,10 +377,6 @@ async function loadAgentData() {
       const agent = result.data;
       formData.value.agentName = agent.agentName || '';
 
-      const memId = resolveMemModelId(agent);
-      const memIdx = MEM_MODEL_OPTION_ORDER.indexOf(memId);
-      setSelectedMemory(memIdx !== -1 ? memIdx : 0);
-
       // 从config中获取配置信息
       if (agent.config) {
         formData.value.systemPrompt = agent.config.systemPrompt || '';
@@ -455,20 +391,7 @@ async function loadAgentData() {
           }
         }
 
-        const langCodeToUse = agent.config.langCode || agent.languageCode;
-        if (langCodeToUse) {
-          const normalizedLangCode = backendLangToLangCode(langCodeToUse);
-          const langIndex = chatLanguageOptions.value.findIndex(
-            (lang) => lang.langCode === normalizedLangCode
-          );
-          if (langIndex !== -1) {
-            setSelectedChatLanguage(langIndex, { resetVoice: false });
-          } else {
-            selectedChatLanguageIndex.value = null;
-          }
-        }
-
-        // 设置音色选择。模板初始化时在语言之后处理，避免语言回填误清空音色。
+        // 设置音色选择
         if (agent.config.ttsVoiceId && voiceOptions.value.length > 0) {
           const voice = voiceOptions.value.find(
             (v: Voice) => v.voiceId === agent.config.ttsVoiceId || v.id === agent.config.ttsVoiceId
@@ -608,17 +531,15 @@ function setSelectedLLM(index: number) {
   formData.value.llmModelId = llmOptions.value[index].id;
 }
 
-function setSelectedChatLanguage(index: number, options: { resetVoice?: boolean } = {}) {
+function setSelectedChatLanguage(index: number) {
   selectedChatLanguageIndex.value = index;
   const selected = chatLanguageOptions.value[index];
   formData.value.langCode = selected.langCode;
   formData.value.language = selected.language;
 
-  if (options.resetVoice !== false) {
-    // 用户主动切换语言时，重置当前选择的音色，让用户重新选择对应语言的音色
-    selectedVoice.value = null;
-    formData.value.ttsVoiceId = '';
-  }
+  // 语言改变时，重置当前选择的音色，让用户重新选择对应该语言的音色
+  selectedVoice.value = null;
+  formData.value.ttsVoiceId = '';
 }
 
 function onLLMSheetConfirm(index: number) {
@@ -629,21 +550,6 @@ function onLLMSheetConfirm(index: number) {
 function onChatLanguageSheetConfirm(index: number) {
   if (!chatLanguageOptions.value[index]) return;
   setSelectedChatLanguage(index);
-}
-
-function setSelectedMemory(index: number) {
-  const safe = Math.max(0, Math.min(index, MEM_MODEL_OPTION_ORDER.length - 1));
-  selectedMemoryIndex.value = safe;
-  formData.value.memModelId = MEM_MODEL_OPTION_ORDER[safe];
-}
-
-function openMemorySheet() {
-  memorySheetVisible.value = true;
-}
-
-function onMemorySheetConfirm(index: number) {
-  if (index < 0 || index >= MEM_MODEL_OPTION_ORDER.length) return;
-  setSelectedMemory(index);
 }
 
 function handleLLMPickerClick() {
@@ -672,7 +578,7 @@ async function createAgent() {
   creating.value = true;
 
   try {
-    const result = await agentApi.create(buildAgentWritePayload(formData.value));
+    const result = await agentApi.create(formData.value);
 
     if (result.code === 1000) {
       toast.success({
@@ -687,7 +593,6 @@ async function createAgent() {
         systemPrompt: '',
         ttsVoiceId: '',
         llmModelId: '',
-        memModelId: MEM_MODEL_IDS.NONE,
         langCode: '',
         language: ''
       };
@@ -695,23 +600,41 @@ async function createAgent() {
       selectedLLMIndex.value = null;
       selectedLLM.value = null;
       selectedChatLanguageIndex.value = null;
-      setSelectedMemory(0);
 
       // 延迟返回，让用户看到成功提示
       setTimeout(() => {
         uni.navigateBack();
       }, 1500);
     } else {
+      // 后端返回的业务错误（包括数据库拦截）
+      let errorMsg = result.message || $t('智能体名称包含敏感词，请修改后重试');
+
+      // 可选：若错误信息包含“敏感词”，改为更友好的提示
+      if (errorMsg.includes('敏感词') || errorMsg.includes('sensitive')) {
+        errorMsg =  '智能体名称包含敏感词，请修改后重试';
+      }
+
       toast.warning({
-        msg: result.message || $t('create_agent.create_failed'),
+        msg: result.message || $t('智能体名称包含敏感词，请修改后重试'),
         duration: 2000
       });
     }
   } catch (error) {
     console.error('创建智能体失败:', error);
-    if (!isRequestHandledError(error)) {
-      toast.error(getRequestErrorMessage(error, $t('create_agent.create_failed')));
+
+// 捕获网络错误或未知异常
+    let errorMsg = $t('智能体名称包含敏感词，请修改后重试');
+
+
+    // 同样检查敏感词关键词
+    if (errorMsg.includes('敏感词') || errorMsg.includes('sensitive')) {
+      errorMsg = '智能体名称包含敏感词，请修改后重试';
     }
+
+    toast.warning({
+      msg: errorMsg,
+      duration: 2000
+    });
   } finally {
     creating.value = false;
   }
@@ -739,7 +662,6 @@ async function handleApplyTemplate(template: any) {
     selectedLLM,
     selectedChatLanguageIndex,
     selectedVoice,
-    selectedMemoryIndex,
     toast,
     $t
   );
@@ -983,9 +905,9 @@ async function handleApplyTemplate(template: any) {
 
 .use-template-btn {
   font-size: 26rpx;
-  color: var(--color-primary);
+  color: #FFFFFF;
   margin-left: 16rpx;
-  background: var(--color-primary-bg);
+  background: #10b981;
   padding: 8rpx 20rpx;
   border-radius: 12rpx;
   font-weight: 500;
@@ -999,7 +921,7 @@ async function handleApplyTemplate(template: any) {
   width: 100%;
   height: 96rpx;
   border-radius: 24rpx;
-  background: var(--color-primary);
+  background: #059669;
   color: #ffffff !important;
   font-size: 32rpx;
   font-weight: 600;
@@ -1013,13 +935,13 @@ async function handleApplyTemplate(template: any) {
 }
 .create-btn[disabled],
 .create-btn[loading] {
-  background: var(--color-primary-disabled) !important;
+  background: #10b981 !important;
   color: rgba(255, 255, 255, 0.8) !important;
   opacity: 1;
 }
 .create-btn:active {
   transform: scale(0.98);
-  background: var(--color-primary);
+  background: #059669 !important;
   color: #ffffff !important;
 }
 

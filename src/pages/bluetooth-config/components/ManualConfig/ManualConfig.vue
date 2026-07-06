@@ -23,34 +23,13 @@
         <text class="field-label">{{ $t('bluetooth.wifi.wifi_password') }}</text>
         <view class="input-wrapper">
           <input
-            v-show="isPasswordVisible"
             class="input-field"
-            type="text"
-            :value="password"
+            v-model="password"
+            :type="isPasswordVisible ? 'text' : 'password'"
             :placeholder="$t('bluetooth.wifi.input_placeholder')"
             :maxlength="64"
             confirm-type="done"
-            :focus="passwordInputFocus && isPasswordVisible"
-            :cursor="passwordCursor"
             :cursor-spacing="20"
-            @input="handlePasswordInput"
-            @focus="handlePasswordFocus"
-            @blur="handlePasswordBlur"
-            @confirm="handleSubmit" />
-          <input
-            v-show="!isPasswordVisible"
-            class="input-field"
-            type="password"
-            :value="password"
-            :placeholder="$t('bluetooth.wifi.input_placeholder')"
-            :maxlength="64"
-            confirm-type="done"
-            :focus="passwordInputFocus && !isPasswordVisible"
-            :cursor="passwordCursor"
-            :cursor-spacing="20"
-            @input="handlePasswordInput"
-            @focus="handlePasswordFocus"
-            @blur="handlePasswordBlur"
             @confirm="handleSubmit" />
           <view class="toggle-visibility" @click.stop="togglePasswordVisibility">
             <image
@@ -76,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { bluetoothConfigManager, CONFIG_STEPS } from '../../store/bluetoothConfigStore';
 import { configProtocol } from '../../utils/configProtocol';
@@ -97,42 +76,13 @@ const ssid = ref('');
 const password = ref('');
 const isPasswordVisible = ref(false);
 const isSubmitting = ref(false);
-const passwordInputFocus = ref(false);
-const passwordCursor = ref(-1);
 
 // 计算属性
 const canSubmit = computed(() => ssid.value.trim() !== '' && !isSubmitting.value);
 
 // 方法
 function togglePasswordVisibility() {
-  const cursor = passwordCursor.value >= 0 ? passwordCursor.value : password.value.length;
-  passwordInputFocus.value = false;
   isPasswordVisible.value = !isPasswordVisible.value;
-  nextTick(() => {
-    passwordCursor.value = cursor;
-    passwordInputFocus.value = true;
-  });
-}
-
-function handlePasswordInput(event: any) {
-  const nextValue = event?.detail?.value ?? '';
-  password.value = String(nextValue);
-  const cursor = event?.detail?.cursor;
-  passwordCursor.value = typeof cursor === 'number' && cursor >= 0 ? cursor : password.value.length;
-}
-
-function handlePasswordFocus(event: any) {
-  const cursor = event?.detail?.cursor;
-  passwordCursor.value = typeof cursor === 'number' && cursor >= 0 ? cursor : password.value.length;
-}
-
-function handlePasswordBlur(event: any) {
-  const value = event?.detail?.value;
-  if (typeof value === 'string') {
-    password.value = value;
-    passwordCursor.value = value.length;
-  }
-  passwordInputFocus.value = false;
 }
 
 async function handleSubmit() {
@@ -180,8 +130,10 @@ async function handleSubmit() {
     return;
   }
 
-  // BLE 重连后设备侧仍保持当前 BluFi 会话，App 继续使用本地 sequence。
+  // 仅在蓝牙重连后才需要重置序列号和重新初始化协议
+  // 如果连接未断开，序列号必须保持连续，否则设备会报序列号错误(SEQUENCE_ERROR)
   if (bleResult.didReconnect) {
+    bluetoothConfigManager.resetSequence();
     const initResult = await native.safeAsync(() => configProtocol.init(selectedDevice.deviceId));
     if (!initResult.ok) {
       native.hideLoading();

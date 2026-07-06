@@ -20,14 +20,6 @@ export interface SequenceControl {
   current: number;
 }
 
-/** 默认智能体绑定结果 */
-export interface DefaultAgentBindState {
-  bound?: boolean;
-  agentName?: string;
-  reason?: string;
-  [key: string]: unknown;
-}
-
 /** 蓝牙配网状态 */
 export interface BluetoothConfigState {
   currentStep: string;
@@ -40,7 +32,6 @@ export interface BluetoothConfigState {
   isRestarting: boolean;
   restartReason: string | null;
   configOnly: boolean;
-  defaultAgentBind: DefaultAgentBindState | null;
   configCompleted: boolean;
 }
 
@@ -70,7 +61,6 @@ export declare class BluetoothConfigManager {
   setPasswordState(passwordState: Partial<PasswordState>): void;
   setUseLocalName(useLocalName: boolean): void;
   setConfigOnly(configOnly: boolean): void;
-  setDefaultAgentBind(defaultAgentBind: BluetoothConfigState['defaultAgentBind']): void;
   setConfigCompleted(completed: boolean): void;
   isConfigCompleted(): boolean;
   nextStep(): void;

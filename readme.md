@@ -1,26 +1,17 @@
-# 灵矽 AI App / 小程序
+# 九宝智能 App / 小程序
 
 基于 uni-app 框架开发的多平台应用项目，支持微信小程序、Android、iOS、HarmonyOS NEXT 多个平台。
 
-代码仓库：[https://github.com/Qiniu-linx/linx-app](https://github.com/Qiniu-linx/linx-app)
+代码仓库：[https://github.com/Qiniu-JiuBao/JiuBao-app](https://github.com/Qiniu-JiuBao/JiuBao-app)
 
-> **注意**：请使用最新分支（形如 `feat/v1.X.X`，版本号越大越新）。`linx-android-app` 与 `linx-ios-app` 已废弃，请勿使用。
+> **注意**：请使用最新分支（形如 `feat/v1.X.X`，版本号越大越新）。`JiuBao-android-app` 与 `JiuBao-ios-app` 已废弃，请勿使用。
 
 完整文档站点：[https://lingxiwmp.qiniu.com/docs/publish/](https://lingxiwmp.qiniu.com/docs/publish/)
-
-## 无二开用户入口
-
-如果你**不需要做二次开发**，可以直接从脱敏模板开始配置自己的分发渠道和发布参数：
-
-- 模板说明：[templates/readme.md](./templates/readme.md)
-- 说明目录：[templates/](./templates)
-
-这里会告诉你如何选择 `channels`、如何替换自己的 API 地址、AppId、包名、证书和品牌资源。
 
 ## 项目结构
 
 ```
-linx-app
+JiuBao-app
 ├── .env.example              环境变量示例
 ├── app.config.ts             应用功能配置（根据版本和平台返回不同配置）
 ├── vite.config.ts            Vite 构建配置
@@ -32,7 +23,6 @@ linx-app
 │   └── cloud-pack.sh         云打包脚本（支持交互式与命令行模式）
 │
 ├── docs/                     项目内文档
-├── templates/                脱敏配置模板
 │
 └── src/
     ├── App.vue               Vue 主入口
@@ -216,18 +206,22 @@ pnpm build:h5      # H5 生产构建
 
 # 命令行模式
 ./scripts/cloud-pack.sh \
-  --channel app-android-cn \
+  --platform android \
+  --edition cn \
   --version 1.1.5 \
   --version-code 101050 \
   --abi 64 \
+  --package-name com.example.yourapp \
   -y
 
 # Google Play AAB 打包
 ./scripts/cloud-pack.sh \
-  --channel app-android-intl \
+  --platform android \
+  --edition intl \
   --version 1.1.5 \
   --version-code 101050 \
   --abi 64 \
+  --package-name com.example.yourapp \
   --android-format aab \
   -y
 ```
@@ -246,9 +240,12 @@ pnpm build:h5      # H5 生产构建
 ```bash
 # 脚本打包
 ./scripts/cloud-pack.sh \
-  --channel app-ios-cn \
+  --platform ios \
+  --edition cn \
   --version 1.1.5 \
   --version-code 101050 \
+  --ios-region cn \
+  --ios-bundle-id com.example.yourapp \
   --ios-profile ~/certs/app.mobileprovision \
   --ios-cert ~/certs/app.p12 \
   --ios-cert-password yourpassword \
@@ -283,7 +280,7 @@ pnpm build:h5      # H5 生产构建
 | uploadFile 合法域名   | `https://lingxiwmp.qiniu.com` |
 | downloadFile 合法域名 | `https://lingxiwmp.qiniu.com` |
 
-> 如需自建后端，参考 [linx-app-backend 部署文档](https://github.com/Qiniu-linx/linx-app-backend/blob/master/backend/deploy.md)
+> 如需自建后端，参考 [JiuBao-app-backend 部署文档](https://github.com/Qiniu-JiuBao/JiuBao-app-backend/blob/master/backend/deploy.md)
 
 ## 打包脚本参数一览
 
@@ -291,11 +288,15 @@ pnpm build:h5      # H5 生产构建
 | --------------------- | ------------ | --------------------------- |
 | `-h, --help`          | 显示帮助     |                             |
 | `-y, --yes`           | 跳过确认     |                             |
-| `--channel`           | 打包 channel | app-android-cn / app-ios-cn 等 |
+| `--edition`           | 版本类型     | cn / intl / full            |
 | `--version`           | 版本号       | 如 1.1.5                    |
 | `--version-code`      | 版本代码     | 如 101050                   |
+| `--platform`          | 打包平台     | android / ios               |
 | `--abi`               | CPU 架构     | 32 / 64 / both              |
+| `--package-name`      | Android 包名 | com.example.yourapp         |
 | `--android-format`    | 打包格式     | apk / aab                   |
+| `--ios-region`        | iOS 区域     | cn / intl                   |
+| `--ios-bundle-id`     | Bundle ID    | com.example.yourapp         |
 | `--ios-profile`       | 描述文件路径 | ~/certs/app.mobileprovision |
 | `--ios-cert`          | 证书文件路径 | ~/certs/app.p12             |
 | `--ios-cert-password` | 证书密码     |                             |
@@ -303,8 +304,8 @@ pnpm build:h5      # H5 生产构建
 ## 参考文档
 
 - [uni-app 官方文档](https://uniapp.dcloud.net.cn/)（注意：本项目是 uni-app，不是 uni-app-x）
-- [灵矽 App 完整文档站](https://lingxiwmp.qiniu.com/docs/publish/)
-- [后端服务仓库](https://github.com/Qiniu-linx/linx-app-backend)
+- [九宝 App 完整文档站](https://lingxiwmp.qiniu.com/docs/publish/)
+- [后端服务仓库](https://github.com/Qiniu-JiuBao/JiuBao-app-backend)
 - [DCloud 开发者中心](https://dev.dcloud.net.cn/)
 
 ## 提交前检查

@@ -17,6 +17,7 @@ export enum Pages {
   NetConfig = 'net-config',
   MockTest = 'mock-test',
   Square = 'square',
+  Super_square = 'super_square',
   VoiceClone = 'voice-clone',
   VoiceManage = 'voice-manage',
   BindVoiceprint = 'bind-voiceprint',
@@ -67,6 +68,12 @@ export const PageMap = {
     path: 'pages/square/square',
     url: '/pages/square/square',
     title: $t('pages.square'),
+    isTab: true
+  },
+  [Pages.Super_square]: {
+    path: 'pages/square/super_square',
+    url: '/pages/square/super_square',
+    title: $t('pages.super_square'),
     isTab: true
   },
   [Pages.AgentEdit]: {

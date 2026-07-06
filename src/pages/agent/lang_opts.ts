@@ -5,251 +5,6 @@ export interface ChatLanguageOption {
 }
 
 import { languageApi } from '@/api/index';
-import { getLocale } from '@/locale';
-
-type SupportedLocale = 'zh-Hans' | 'en' | 'ja' | 'ru' | 'kk' | 'ko' | 'ar' | 'th' | 'es' | 'fr';
-
-const LANGUAGE_DISPLAY_NAMES: Record<string, Partial<Record<SupportedLocale, string>>> = {
-  ar_SA: {
-    'zh-Hans': '阿拉伯语',
-    en: 'Arabic',
-    ja: 'アラビア語',
-    ru: 'Арабский',
-    kk: 'Араб тілі',
-    ko: '아랍어',
-    ar: 'العربية',
-    th: 'ภาษาอาหรับ',
-    es: 'Árabe',
-    fr: 'Arabe',
-  },
-  bg_BG: {
-    'zh-Hans': '保加利亚语',
-    en: 'Bulgarian',
-    ja: 'ブルガリア語',
-    ru: 'Болгарский',
-    kk: 'Болгар тілі',
-    ko: '불가리아어',
-    ar: 'البلغارية',
-    th: 'ภาษาบัลแกเรีย',
-    es: 'Búlgaro',
-    fr: 'Bulgare',
-  },
-  de_DE: {
-    'zh-Hans': '德语',
-    en: 'German',
-    ja: 'ドイツ語',
-    ru: 'Немецкий',
-    kk: 'Неміс тілі',
-    ko: '독일어',
-    ar: 'الألمانية',
-    th: 'ภาษาเยอรมัน',
-    es: 'Alemán',
-    fr: 'Allemand',
-  },
-  en_US: {
-    'zh-Hans': '英语',
-    en: 'English',
-    ja: '英語',
-    ru: 'Английский',
-    kk: 'Ағылшын тілі',
-    ko: '영어',
-    ar: 'الإنجليزية',
-    th: 'ภาษาอังกฤษ',
-    es: 'Inglés',
-    fr: 'Anglais',
-  },
-  es_ES: {
-    'zh-Hans': '西班牙语',
-    en: 'Spanish',
-    ja: 'スペイン語',
-    ru: 'Испанский',
-    kk: 'Испан тілі',
-    ko: '스페인어',
-    ar: 'الإسبانية',
-    th: 'ภาษาสเปน',
-    es: 'Español',
-    fr: 'Espagnol',
-  },
-  fr_FR: {
-    'zh-Hans': '法语',
-    en: 'French',
-    ja: 'フランス語',
-    ru: 'Французский',
-    kk: 'Француз тілі',
-    ko: '프랑스어',
-    ar: 'الفرنسية',
-    th: 'ภาษาฝรั่งเศส',
-    es: 'Francés',
-    fr: 'Français',
-  },
-  hu_HU: {
-    'zh-Hans': '匈牙利语',
-    en: 'Hungarian',
-    ja: 'ハンガリー語',
-    ru: 'Венгерский',
-    kk: 'Мажар тілі',
-    ko: '헝가리어',
-    ar: 'الهنغارية',
-    th: 'ภาษาฮังการี',
-    es: 'Húngaro',
-    fr: 'Hongrois',
-  },
-  id_ID: {
-    'zh-Hans': '印度尼西亚语',
-    en: 'Indonesian',
-    ja: 'インドネシア語',
-    ru: 'Индонезийский',
-    kk: 'Индонезия тілі',
-    ko: '인도네시아어',
-    ar: 'الإندونيسية',
-    th: 'ภาษาอินโดนีเซีย',
-    es: 'Indonesio',
-    fr: 'Indonésien',
-  },
-  it_IT: {
-    'zh-Hans': '意大利语',
-    en: 'Italian',
-    ja: 'イタリア語',
-    ru: 'Итальянский',
-    kk: 'Итальян тілі',
-    ko: '이탈리아어',
-    ar: 'الإيطالية',
-    th: 'ภาษาอิตาลี',
-    es: 'Italiano',
-    fr: 'Italien',
-  },
-  ja_JP: {
-    'zh-Hans': '日语',
-    en: 'Japanese',
-    ja: '日本語',
-    ru: 'Японский',
-    kk: 'Жапон тілі',
-    ko: '일본어',
-    ar: 'اليابانية',
-    th: 'ภาษาญี่ปุ่น',
-    es: 'Japonés',
-    fr: 'Japonais',
-  },
-  kk_KZ: {
-    'zh-Hans': '哈萨克语',
-    en: 'Kazakh',
-    ja: 'カザフ語',
-    ru: 'Казахский',
-    kk: 'Қазақ тілі',
-    ko: '카자흐어',
-    ar: 'الكازاخية',
-    th: 'ภาษาคาซัค',
-    es: 'Kazajo',
-    fr: 'Kazakh',
-  },
-  ko_KR: {
-    'zh-Hans': '韩语',
-    en: 'Korean',
-    ja: '韓国語',
-    ru: 'Корейский',
-    kk: 'Корей тілі',
-    ko: '한국어',
-    ar: 'الكورية',
-    th: 'ภาษาเกาหลี',
-    es: 'Coreano',
-    fr: 'Coréen',
-  },
-  ms_MY: {
-    'zh-Hans': '马来语',
-    en: 'Malay',
-    ja: 'マレー語',
-    ru: 'Малайский',
-    kk: 'Малай тілі',
-    ko: '말레이어',
-    ar: 'الماليزية',
-    th: 'ภาษามาเลย์',
-    es: 'Malayo',
-    fr: 'Malais',
-  },
-  pt_PT: {
-    'zh-Hans': '葡萄牙语',
-    en: 'Portuguese',
-    ja: 'ポルトガル語',
-    ru: 'Португальский',
-    kk: 'Португал тілі',
-    ko: '포르투갈어',
-    ar: 'البرتغالية',
-    th: 'ภาษาโปรตุเกส',
-    es: 'Portugués',
-    fr: 'Portugais',
-  },
-  ro_RO: {
-    'zh-Hans': '罗马尼亚语',
-    en: 'Romanian',
-    ja: 'ルーマニア語',
-    ru: 'Румынский',
-    kk: 'Румын тілі',
-    ko: '루마니아어',
-    ar: 'الرومانية',
-    th: 'ภาษาโรมาเนีย',
-    es: 'Rumano',
-    fr: 'Roumain',
-  },
-  ru_RU: {
-    'zh-Hans': '俄语',
-    en: 'Russian',
-    ja: 'ロシア語',
-    ru: 'Русский',
-    kk: 'Орыс тілі',
-    ko: '러시아어',
-    ar: 'الروسية',
-    th: 'ภาษารัสเซีย',
-    es: 'Ruso',
-    fr: 'Russe',
-  },
-  th_TH: {
-    'zh-Hans': '泰语',
-    en: 'Thai',
-    ja: 'タイ語',
-    ru: 'Тайский',
-    kk: 'Тай тілі',
-    ko: '태국어',
-    ar: 'التايلاندية',
-    th: 'ภาษาไทย',
-    es: 'Tailandés',
-    fr: 'Thaï',
-  },
-  vi_VN: {
-    'zh-Hans': '越南语',
-    en: 'Vietnamese',
-    ja: 'ベトナム語',
-    ru: 'Вьетнамский',
-    kk: 'Вьетнам тілі',
-    ko: '베트남어',
-    ar: 'الفيتنامية',
-    th: 'ภาษาเวียดนาม',
-    es: 'Vietnamita',
-    fr: 'Vietnamien',
-  },
-  zh_CN: {
-    'zh-Hans': '中文',
-    en: 'Chinese',
-    ja: '中国語',
-    ru: 'Китайский',
-    kk: 'Қытай тілі',
-    ko: '중국어',
-    ar: 'الصينية',
-    th: 'ภาษาจีน',
-    es: 'Chino',
-    fr: 'Chinois',
-  },
-  zh_TW: {
-    'zh-Hans': '繁体中文',
-    en: 'Traditional Chinese',
-    ja: '繁体字中国語',
-    ru: 'Традиционный китайский',
-    kk: 'Дәстүрлі қытай тілі',
-    ko: '번체 중국어',
-    ar: 'الصينية التقليدية',
-    th: 'ภาษาจีนตัวเต็ม',
-    es: 'Chino tradicional',
-  }
-};
 
 // ============ 语言缓存服务（简化版）============
 
@@ -290,10 +45,7 @@ async function ensureCacheLoaded(): Promise<void> {
 
 export async function getChatLanguageOptions(): Promise<ChatLanguageOption[]> {
   await ensureCacheLoaded();
-  return (languageCache || []).map((option) => ({
-    ...option,
-    language: getLocalizedLanguageName(option.langCode, option.language)
-  }));
+  return languageCache || [];
 }
 
 export function langCodeToVoiceLanguage(langCode: string): string {
@@ -386,54 +138,13 @@ export async function initLanguageDisplayNameCache(): Promise<void> {
   await ensureCacheLoaded();
 }
 
-function resolveSupportedLocale(): SupportedLocale {
-  const locale = getLocale();
-  if (
-    locale === 'zh-Hans' ||
-    locale === 'en' ||
-    locale === 'ja' ||
-    locale === 'ru' ||
-    locale === 'kk' ||
-    locale === 'ko' ||
-    locale === 'ar' ||
-    locale === 'th' ||
-    locale === 'es' ||
-    locale === 'fr'
-  ) {
-    return locale;
-  }
-  return 'en';
-}
-
-function resolveLanguageMetaByLangCode(langCode: string): ChatLanguageOption | undefined {
-  if (!langCode || !languageCache) {
-    return undefined;
-  }
-
-  const normalizedLangCode = backendLangToLangCode(langCode);
-
-  return languageCache.find((opt) => opt.langCode === normalizedLangCode);
-}
-
-export function getLocalizedLanguageName(langCode: string, fallback?: string): string {
-  if (!langCode) {
-    return fallback || '';
-  }
-
-  const normalizedLangCode = backendLangToLangCode(langCode);
-  const locale = resolveSupportedLocale();
-  const localized = LANGUAGE_DISPLAY_NAMES[normalizedLangCode]?.[locale];
-
-  if (localized) {
-    return localized;
-  }
-
-  const backendLabel = resolveLanguageMetaByLangCode(normalizedLangCode)?.language;
-  return backendLabel || fallback || normalizedLangCode;
-}
-
 export function getLanguageDisplayNameByLangCode(langCode: string, fallback?: string): string {
-  return getLocalizedLanguageName(langCode, fallback);
+  if (!langCode) return fallback || '';
+  if (languageCache) {
+    const found = languageCache.find((opt) => opt.langCode === langCode);
+    if (found) return found.language;
+  }
+  return fallback || langCode;
 }
 
 export function getLanguageDisplayName(voiceCode: string, fallback?: string): string {
@@ -443,9 +154,7 @@ export function getLanguageDisplayName(voiceCode: string, fallback?: string): st
 
   if (languageCache) {
     const found = languageCache.find((opt) => opt.voiceLanguage === voiceCode);
-    if (found) {
-      return getLocalizedLanguageName(found.langCode, found.language);
-    }
+    if (found) return found.language;
   }
 
   return fallback || voiceCode.toUpperCase();

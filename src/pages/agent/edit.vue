@@ -73,14 +73,6 @@
           </view>
         </view>
 
-        <view class="form-item">
-          <text class="label">{{ $t('create_agent.memory_type') }}</text>
-          <view class="selector-trigger" @click="openMemorySheet">
-            <text class="value-text">{{ selectedMemoryLabel }}</text>
-            <view class="arrow-icon"></view>
-          </view>
-        </view>
-
         <view class="form-item last-item">
           <text class="label">{{ $t('edit_agent.voice_type') }}</text>
           <view class="selector-trigger" @click="showVoiceSelector">
@@ -155,15 +147,6 @@
       :confirm-text="$t('common.confirm')"
       @update:visible="languageSheetVisible = $event"
       @confirm="onChatLanguageSheetConfirm" />
-
-    <AgentSelectSheet
-      :visible="memorySheetVisible"
-      :title="$t('create_agent.select_memory_title')"
-      :options="memorySheetOptions"
-      :selected-index="selectedMemoryIndex"
-      :confirm-text="$t('common.confirm')"
-      @update:visible="memorySheetVisible = $event"
-      @confirm="onMemorySheetConfirm" />
   </view>
 </template>
 
@@ -177,12 +160,7 @@ import { useToast } from '@/uni_modules/wot-design-uni';
 import { onLoad } from '@dcloudio/uni-app';
 import type { LLM, Voice } from '@/pages/agent/types';
 import { relocalizeLLMOptions } from './llm';
-import {
-  getChatLanguageOptions,
-  langCodeToVoiceLanguage,
-  backendLangToLangCode,
-  type ChatLanguageOption
-} from './lang_opts';
+import { getChatLanguageOptions, langCodeToVoiceLanguage, backendLangToLangCode, type ChatLanguageOption } from './lang_opts';
 import AgentPromptPolish from './components/AgentPromptPolish.vue';
 import { useTemplateSelector } from './composables/useTemplateSelector';
 import { applyTemplateLogic } from './composables/useApplyTemplate';
@@ -190,29 +168,19 @@ import AgentTemplateSelector from './components/AgentTemplateSelector.vue';
 import WdIcon from '@/uni_modules/wot-design-uni/components/wd-icon/wd-icon.vue';
 import AgentSelectSheet from './components/AgentSelectSheet.vue';
 import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
-import { getRequestErrorMessage, isRequestHandledError } from '@/utils/request-feedback';
-import {
-  MEM_MODEL_IDS,
-  MEM_MODEL_OPTION_ORDER,
-  buildAgentUpdatePayload,
-  isMemModelId,
-  resolveMemModelId,
-  type AgentFormFields,
-  type MemModelId
-} from './mem_model';
+import { isRequestHandledError } from '@/utils/request-feedback';
 
 const { t: $t, locale } = useI18n();
 const toast = useToast();
 useGlobalRequestErrorToast(toast);
 
 // 响应式数据
-const formData = ref<AgentFormFields>({
+const formData = ref({
   agentName: '',
   systemPrompt: '',
   ttsVoiceId: '',
   llmModelId: '',
-  memModelId: MEM_MODEL_IDS.NONE,
-  langCode: '', // 改为空字符串，由 loadAgentData() 设置
+  langCode: '',      // 改为空字符串，由 loadAgentData() 设置
   language: ''
 });
 
@@ -227,10 +195,6 @@ const voiceOptions = ref<any[]>([]);
 const voiceSelectorVisible = ref(false);
 const llmSheetVisible = ref(false);
 const languageSheetVisible = ref(false);
-const memorySheetVisible = ref(false);
-const selectedMemoryIndex = ref(0);
-/** 进入编辑页时的记忆类型，用于更新时按文档「memModelId 不传则不更新」 */
-const initialMemModelId = ref<MemModelId>(MEM_MODEL_IDS.NONE);
 const statusBarHeight = ref(44);
 const navBarHeight = ref(44);
 
@@ -257,22 +221,6 @@ const chatLanguageSheetOptions = computed(() =>
     label: item.language,
     value: item.langCode
   }))
-);
-
-const memorySheetOptions = computed(() =>
-  MEM_MODEL_OPTION_ORDER.map((id) => ({
-    label:
-      id === MEM_MODEL_IDS.NONE
-        ? $t('create_agent.memory_none')
-        : id === MEM_MODEL_IDS.LONG_TERM
-          ? $t('create_agent.memory_long_term')
-          : $t('create_agent.memory_local_short'),
-    value: id
-  }))
-);
-
-const selectedMemoryLabel = computed(
-  () => memorySheetOptions.value[selectedMemoryIndex.value]?.label ?? ''
 );
 
 // 加载语言选项
@@ -391,7 +339,6 @@ async function handleApplyTemplate(template: any) {
     selectedLLM,
     selectedChatLanguageIndex,
     selectedVoice,
-    selectedMemoryIndex,
     toast,
     $t
   );
@@ -400,17 +347,6 @@ async function handleApplyTemplate(template: any) {
 watch(
   () => locale.value,
   async () => {
-    await loadLanguageOptions();
-
-    if (formData.value.langCode) {
-      const matchedIndex = chatLanguageOptions.value.findIndex(
-        (item) => item.langCode === formData.value.langCode
-      );
-      selectedChatLanguageIndex.value = matchedIndex !== -1 ? matchedIndex : null;
-      formData.value.language =
-        matchedIndex !== -1 ? chatLanguageOptions.value[matchedIndex].language : '';
-    }
-
     if (llmOptions.value.length === 0) {
       return;
     }
@@ -446,11 +382,6 @@ async function loadAgentData() {
       const agent = result.data;
       formData.value.agentName = agent.agentName || '';
 
-      const memId = resolveMemModelId(agent);
-      initialMemModelId.value = memId;
-      const memIdx = MEM_MODEL_OPTION_ORDER.indexOf(memId);
-      setSelectedMemory(memIdx !== -1 ? memIdx : 0);
-
       // 从config中获取配置信息
       if (agent.config) {
         formData.value.systemPrompt = agent.config.systemPrompt || '';
@@ -465,26 +396,7 @@ async function loadAgentData() {
           }
         }
 
-        // 设置对话语言
-        const langCodeToUse = agent.config.langCode || agent.languageCode;
-        if (langCodeToUse) {
-          const normalizedLangCode = backendLangToLangCode(langCodeToUse);
-          formData.value.langCode = normalizedLangCode;
-          formData.value.language = agent.config.language || '中文';
-          const langIndex = chatLanguageOptions.value.findIndex(
-            (lang) => lang.langCode === normalizedLangCode
-          );
-          if (langIndex !== -1) {
-            setSelectedChatLanguage(langIndex, { resetVoice: false });
-          } else {
-            selectedChatLanguageIndex.value = null;
-          }
-        } else {
-          // 如果没有 langCode，设置为 null
-          selectedChatLanguageIndex.value = null;
-        }
-
-        // 设置音色选择。初始化回填时在语言之后处理，避免语言回填误清空音色。
+        // 设置音色选择
         if (agent.config.ttsVoiceId && voiceOptions.value.length > 0) {
           const voice = voiceOptions.value.find(
             (v: any) => v.voiceId === agent.config.ttsVoiceId || v.id === agent.config.ttsVoiceId
@@ -493,6 +405,24 @@ async function loadAgentData() {
             selectedVoice.value = voice;
             formData.value.ttsVoiceId = voice.voiceId || String(voice.id || '');
           }
+        }
+
+        // 设置对话语言
+        if (agent.config.langCode) {
+          const normalizedLangCode = backendLangToLangCode(agent.config.langCode);
+          formData.value.langCode = normalizedLangCode;
+          formData.value.language = agent.config.language || '中文';
+          const langIndex = chatLanguageOptions.value.findIndex(
+            (lang) => lang.langCode === normalizedLangCode
+          );
+          if (langIndex !== -1) {
+            setSelectedChatLanguage(langIndex);
+          } else {
+            selectedChatLanguageIndex.value = null;
+          }
+        } else {
+          // 如果没有 langCode，设置为 null
+          selectedChatLanguageIndex.value = null;
         }
       }
     } else {
@@ -613,17 +543,15 @@ function handleLLMPickerClick() {
   }
 }
 
-function setSelectedChatLanguage(index: number, options: { resetVoice?: boolean } = {}) {
+function setSelectedChatLanguage(index: number) {
   selectedChatLanguageIndex.value = index;
   const selected = chatLanguageOptions.value[index];
   formData.value.langCode = selected.langCode;
   formData.value.language = selected.language;
-
-  if (options.resetVoice !== false) {
-    // 用户主动切换语言时，重置当前选择的音色，让用户重新选择对应语言的音色
-    selectedVoice.value = null;
-    formData.value.ttsVoiceId = '';
-  }
+  
+  // 语言改变时，重置当前选择的音色，让用户重新选择对应该语言的音色
+  selectedVoice.value = null;
+  formData.value.ttsVoiceId = '';
 }
 
 function onLLMSheetConfirm(index: number) {
@@ -634,21 +562,6 @@ function onLLMSheetConfirm(index: number) {
 function onChatLanguageSheetConfirm(index: number) {
   if (!chatLanguageOptions.value[index]) return;
   setSelectedChatLanguage(index);
-}
-
-function setSelectedMemory(index: number) {
-  const safe = Math.max(0, Math.min(index, MEM_MODEL_OPTION_ORDER.length - 1));
-  selectedMemoryIndex.value = safe;
-  formData.value.memModelId = MEM_MODEL_OPTION_ORDER[safe];
-}
-
-function openMemorySheet() {
-  memorySheetVisible.value = true;
-}
-
-function onMemorySheetConfirm(index: number) {
-  if (index < 0 || index >= MEM_MODEL_OPTION_ORDER.length) return;
-  setSelectedMemory(index);
 }
 
 function openLLMSheet() {
@@ -666,19 +579,14 @@ async function updateAgent() {
   if (!canUpdate.value) return;
 
   updating.value = true;
-  uni.showLoading({ title: $t('edit_agent.updating'), mask: true });
 
   try {
-    const payload = buildAgentUpdatePayload(formData.value, initialMemModelId.value);
     const result = await agentApi.updateConfig({
       agentId: agentId.value,
-      ...payload
+      ...formData.value
     });
 
     if (result.code === 1000) {
-      initialMemModelId.value = isMemModelId(formData.value.memModelId)
-        ? formData.value.memModelId
-        : MEM_MODEL_IDS.NONE;
       toast.success({
         msg: $t('edit_agent.update_success'),
         duration: 2000,
@@ -697,11 +605,8 @@ async function updateAgent() {
     }
   } catch (error) {
     console.error('更新智能体失败:', error);
-    if (!isRequestHandledError(error)) {
-      toast.error(getRequestErrorMessage(error, $t('edit_agent.update_failed')));
-    }
+    // 不再显示toast，因为request.ts已经处理了
   } finally {
-    uni.hideLoading();
     updating.value = false;
   }
 }

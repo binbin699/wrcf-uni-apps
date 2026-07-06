@@ -4,8 +4,6 @@
  */
 
 import i18n from '@/locale';
-import { AppInfo } from '@/const';
-
 const $t = i18n.global.t;
 
 export interface AudioItem {
@@ -195,15 +193,16 @@ export class AudioPlayerManager {
         throw new Error('音频源不能为空');
       }
 
-      // 本地绝对路径补充 file://（iOS / 鸿蒙 InnerAudioContext 需要）
+      // iOS 平台处理：如果路径是本地绝对路径且不含协议，补充 file://
+      // 这在某些 iOS 版本的小程序/APP 环境下对事件触发至关重要
       let finalSrc = audioObj.src;
       // #ifdef APP-PLUS || APP-HARMONY
-      const needsFileProtocol =
-        (uni.getSystemInfoSync().platform === 'ios' || AppInfo.isHarmonyApp()) &&
+      if (
+        uni.getSystemInfoSync().platform === 'ios' &&
         finalSrc.startsWith('/') &&
-        !finalSrc.startsWith('file://');
-      if (needsFileProtocol) {
-        finalSrc = `file://${finalSrc}`;
+        !finalSrc.startsWith('file://')
+      ) {
+        finalSrc = 'file://' + finalSrc;
       }
       // #endif
 
@@ -308,14 +307,15 @@ export class AudioPlayerManager {
     if (audio) {
       const audioObj: AudioItem = typeof audio === 'string' ? { src: audio } : audio;
 
+      // 同样进行路径标准化，确保比较时的准确性
       let normalizedSrc = audioObj.src;
       // #ifdef APP-PLUS || APP-HARMONY
-      const needsFileProtocol =
-        (uni.getSystemInfoSync().platform === 'ios' || AppInfo.isHarmonyApp()) &&
+      if (
+        uni.getSystemInfoSync().platform === 'ios' &&
         normalizedSrc.startsWith('/') &&
-        !normalizedSrc.startsWith('file://');
-      if (needsFileProtocol) {
-        normalizedSrc = `file://${normalizedSrc}`;
+        !normalizedSrc.startsWith('file://')
+      ) {
+        normalizedSrc = 'file://' + normalizedSrc;
       }
       // #endif
 

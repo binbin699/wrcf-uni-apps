@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { IAuthLoginRes } from '@/api/types/login';
 import { loginApi } from '@/api/login';
-import { isAuthFailureError } from '@/utils/auth-error';
 
 /**
  * Token存储键名
@@ -24,7 +23,6 @@ export const useTokenStore = defineStore(
     const tokenExpires = ref<number>(0);
     const refreshTokenExpires = ref<number>(0);
     const isRefreshing = ref<boolean>(false);
-    let sessionReadyPromise: Promise<boolean> | null = null;
 
     // 计算属性
     const isLoggedIn = computed(() => {
@@ -135,54 +133,20 @@ export const useTokenStore = defineStore(
       isRefreshing.value = true;
 
       try {
+        console.log('开始刷新token...');
         const authData = await loginApi.refreshToken(refreshToken.value);
 
         setTokens(authData);
+        console.log('token刷新成功');
 
         return true;
       } catch (error) {
         console.error('token刷新失败:', error);
-        if (isAuthFailureError(error)) {
-          clearTokens();
-        }
+        clearTokens();
         return false;
       } finally {
         isRefreshing.value = false;
       }
-    };
-
-    /**
-     * 确保当前会话可用。
-     * App 冷启动时先恢复本地凭证；若 access token 已过期但 refresh token 仍有效，
-     * 则优先静默刷新，避免首批业务请求直接撞到 401。
-     */
-    const ensureSessionReady = async (): Promise<boolean> => {
-      if (sessionReadyPromise) {
-        return sessionReadyPromise;
-      }
-
-      sessionReadyPromise = (async () => {
-        restoreTokens();
-
-        if (!accessToken.value) {
-          return false;
-        }
-
-        if (!isTokenExpired.value) {
-          return true;
-        }
-
-        if (!canRefreshToken.value) {
-          clearTokens();
-          return false;
-        }
-
-        return refreshAccessToken();
-      })().finally(() => {
-        sessionReadyPromise = null;
-      });
-
-      return sessionReadyPromise;
     };
 
     /**
@@ -244,7 +208,6 @@ export const useTokenStore = defineStore(
       setTokens,
       clearTokens,
       refreshAccessToken,
-      ensureSessionReady,
       getValidAccessToken,
       preRefreshToken,
       restoreTokens

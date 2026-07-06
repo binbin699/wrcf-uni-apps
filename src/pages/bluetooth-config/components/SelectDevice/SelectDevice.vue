@@ -40,7 +40,7 @@
         <view class="device-list-inner">
           <view
             v-for="device in deviceList"
-            :key="device.macAddress || device.deviceId"
+            :key="device.deviceId"
             class="device-card"
             @click="handleSelectDevice(device)">
             <view class="device-icon">
@@ -96,8 +96,6 @@ import {
   resetBluetooth,
   searchBluetoothDevices,
   dedupeDeviceList,
-  dedupeDeviceListByMacAddress,
-  normalizeMacAddressKey,
   filterValidDevices,
   normalizeDeviceList,
   connectBluetoothDevice
@@ -107,7 +105,7 @@ import { AppInfo } from '@/const';
 
 export default {
   name: 'SelectDevice',
-  inject: ['notify', 'toast', 'isLeavingBluetoothPage'],
+  inject: ['notify', 'toast'],
   data() {
     return {
       deviceList: null,
@@ -120,8 +118,7 @@ export default {
       _showNotify: null,
       _closeNotify: null,
       _filterRegex: null,
-      _isUnmounted: false,
-      _scanSeq: 0
+      _isUnmounted: false
     };
   },
   computed: {
@@ -164,10 +161,6 @@ export default {
     /**
      * 获取空状态文本
      */
-    isLeavingPage() {
-      return typeof this.isLeavingBluetoothPage === 'function' && this.isLeavingBluetoothPage();
-    },
-
     getEmptyText() {
       if (this.isLoadingDevices) {
         return this.$t('bluetooth.select_device.scanning_placeholder');
@@ -242,22 +235,13 @@ export default {
     /**
      * 开始设备扫描
      */
-    dismissPermissionNotify() {
-      if (typeof this._closeNotify === 'function') {
-        this._closeNotify();
-      }
-    },
-
     async startDeviceScan() {
-      if (this._isUnmounted || this.isLeavingPage()) return;
-
-      const scanId = ++this._scanSeq;
+      if (this._isUnmounted) return;
 
       // 重置连接状态
       this.deviceList = null;
       this.allScannedDevices = [];
       this.isLoadingDevices = true;
-      this.dismissPermissionNotify();
       this.isConnecting = false;
       this.isConnected = false;
       this.connectionError = null;
@@ -271,12 +255,10 @@ export default {
             show: this._showNotify,
             close: this._closeNotify
           });
-          if (this._isUnmounted || scanId !== this._scanSeq) return;
+          if (this._isUnmounted) return;
           if (!permissionResult.granted) {
             // 权限请求工具已经显示了相应的提示
-            if (scanId === this._scanSeq) {
-              this.isLoadingDevices = false;
-            }
+            this.isLoadingDevices = false;
             return;
           }
 
@@ -289,12 +271,10 @@ export default {
               },
               true
             );
-            if (this._isUnmounted || scanId !== this._scanSeq) return;
+            if (this._isUnmounted) return;
             if (!locationResult.granted) {
               // 权限请求工具已经显示了相应的提示
-              if (scanId === this._scanSeq) {
-                this.isLoadingDevices = false;
-              }
+              this.isLoadingDevices = false;
               return;
             }
           }
@@ -308,9 +288,9 @@ export default {
           ? initBluetooth().then(() => {
             this.isFirstScan = false;
           })
-          : resetBluetooth();
+          : (AppInfo.isHarmonyApp() ? initBluetooth() : resetBluetooth());
         await Promise.all([initPromise, this.fetchFilterRegex()]);
-        if (this._isUnmounted || scanId !== this._scanSeq) return;
+        if (this._isUnmounted) return;
 
         // 搜索设备
         const devices = await searchBluetoothDevices();
@@ -319,8 +299,7 @@ export default {
         // 先对所有设备做去重和MAC规范化（不做名称过滤）
         const allValid = filterValidDevices(devices, this.useLocalName);
         const allDeduped = dedupeDeviceList(allValid);
-        const [allNormalizedRaw] = normalizeDeviceList(allDeduped, this.useLocalName);
-        const allNormalized = dedupeDeviceListByMacAddress(allNormalizedRaw);
+        const [allNormalized] = normalizeDeviceList(allDeduped, this.useLocalName);
         allNormalized.sort((a, b) => (b.RSSI || -100) - (a.RSSI || -100));
         this.allScannedDevices = allNormalized;
 
@@ -329,15 +308,14 @@ export default {
           const filtered = filterValidDevices(devices, this.useLocalName, this._filterRegex);
           console.log('蓝牙-正则过滤后的设备:', filtered);
           const deduped = dedupeDeviceList(filtered);
-          const [normalizedRaw] = normalizeDeviceList(deduped, this.useLocalName);
-          const normalized = dedupeDeviceListByMacAddress(normalizedRaw);
+          const [normalized] = normalizeDeviceList(deduped, this.useLocalName);
           normalized.sort((a, b) => (b.RSSI || -100) - (a.RSSI || -100));
           this.deviceList = normalized;
         } else {
           this.deviceList = allNormalized;
         }
 
-        if (this._isUnmounted || scanId !== this._scanSeq) return;
+        if (this._isUnmounted) return;
 
         if (this.deviceList.length === 0 && this.allScannedDevices.length === 0) {
           uni.showToast({
@@ -348,7 +326,7 @@ export default {
         }
       } catch (error) {
         console.error('扫描设备失败:', error);
-        if (this._isUnmounted || scanId !== this._scanSeq) return;
+        if (this._isUnmounted) return;
 
         if (String(error).includes('bluetooth')) {
           uni.showToast({
@@ -368,7 +346,7 @@ export default {
         }
         this.deviceList = [];
       } finally {
-        if (!this._isUnmounted && scanId === this._scanSeq) {
+        if (!this._isUnmounted) {
           this.isLoadingDevices = false;
         }
       }
@@ -379,11 +357,27 @@ export default {
      * @param {Object} device - 选中的设备
      */
     handleSelectDevice(device) {
-      if (this.isLeavingPage()) return;
-
       console.log('选择设备:', device);
 
-      // 已绑定设备也允许进入后续蓝牙配网流程，不再拦截（不重复调用绑定接口，见 startConnection）
+      // 获取当前状态
+      const state = bluetoothConfigManager.getState();
+      const selectedMac = (device.macAddress || device.deviceId || '').toLowerCase();
+
+      // 检查当前设备是否已绑定（仅在非 configOnly 模式下检查）
+      if (!state.configOnly && selectedMac) {
+        const isDeviceBound = this._devices.some(
+          (_device) => (_device.macAddress || '').toLowerCase() === selectedMac
+        );
+
+        if (isDeviceBound) {
+          uni.showToast({
+            title: this.$t('bluetooth.select_device.device_bound'),
+            icon: 'none',
+            duration: 2000
+          });
+          return;
+        }
+      }
 
       // 保存选中的设备
       bluetoothConfigManager.setSelectedDevice(device);
@@ -394,24 +388,6 @@ export default {
     /**
      * 获取按钮文本
      */
-    /**
-     * 当前选中设备是否已在用户设备列表中绑定（与 loadUserDevices 的 MAC 比对）
-     */
-    isSelectedDeviceAlreadyBound(device) {
-      const state = bluetoothConfigManager.getState();
-      if (state.configOnly || !device) {
-        return false;
-      }
-      const selectedKey = normalizeMacAddressKey(device.macAddress || device.deviceId || '');
-      if (!selectedKey) {
-        return false;
-      }
-      return this._devices.some((_device) => {
-        const boundKey = normalizeMacAddressKey(_device.macAddress || '');
-        return boundKey !== '' && boundKey === selectedKey;
-      });
-    },
-
     getButtonText() {
       if (this.isLoadingDevices) {
         return this.$t('bluetooth.select_device.scan_button_loading');
@@ -425,8 +401,6 @@ export default {
      * @param {Object} device - 要连接的设备
      */
     async startConnection(device) {
-      if (this.isLeavingPage()) return;
-
       if (!device) {
         console.error('没有选中的设备');
         return;
@@ -458,12 +432,8 @@ export default {
         // 根据连接结果构建提示信息
         let successMsg = this.$t('bluetooth.select_device.connection_success');
         if (!bluetoothConfigManager.getState().configOnly) {
-          if (this.isSelectedDeviceAlreadyBound(connectedDevice)) {
-            bluetoothConfigManager.setDefaultAgentBind(null);
-          } else {
-            const result = await this.registerDevice(connectedDevice);
-            successMsg = this.buildBindSuccessMessage(result);
-          }
+          const result = await this.registerDevice(connectedDevice);
+          successMsg = this.buildBindSuccessMessage(result);
         }
         // 显示连接成功提示
         uni.hideLoading();
@@ -497,12 +467,8 @@ export default {
           // 根据连接结果构建提示信息
           let successMsg = this.$t('bluetooth.select_device.connection_success');
           if (!bluetoothConfigManager.getState().configOnly) {
-            if (this.isSelectedDeviceAlreadyBound(connectedDevice)) {
-              bluetoothConfigManager.setDefaultAgentBind(null);
-            } else {
-              const result = await this.registerDevice(connectedDevice);
-              successMsg = this.buildBindSuccessMessage(result);
-            }
+            const result = await this.registerDevice(connectedDevice);
+            successMsg = this.buildBindSuccessMessage(result);
           }
           // 显示连接成功提示
           if (!bluetoothConfigManager.getState().configOnly && this.toast?.success) {

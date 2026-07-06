@@ -229,7 +229,7 @@
       </view>
 
     </view>
-    
+
     <!-- 配网操作指引弹窗 -->
     <view v-if="showGuidePopup" class="guide-modal-overlay" @click.stop>
       <view class="guide-modal">
@@ -237,7 +237,7 @@
           <view class="guide-notice">
             <text>{{ $t('net_config.guide_notice') }}</text>
           </view>
-          
+
           <view class="guide-section">
             <view class="guide-section-title">
               <text class="guide-number">1</text>
@@ -245,7 +245,7 @@
             </view>
             <text class="guide-desc">{{ $t('net_config.guide_soundwave_desc') }}</text>
           </view>
-          
+
           <view class="guide-section">
             <view class="guide-section-title">
               <text class="guide-number">2</text>
@@ -259,7 +259,7 @@
         </view>
       </view>
     </view>
-    
+
     <!-- 反扫二维码配网弹窗 -->
     <wd-popup v-model="showReverseQrPopup" position="center" :close-on-click-modal="true" custom-style="border-radius: 16px; overflow: hidden;">
       <view class="reverse-qr-popup">
@@ -274,13 +274,13 @@
             <!-- 显示生成的二维码图片 -->
             <image v-if="reverseQrImage" class="qrcode-image" :src="reverseQrImage" mode="widthFix" />
             <!-- 用于生成二维码的canvas组件，只在有值时渲染确保每次重新创建 -->
-            <l-qrcode 
+            <l-qrcode
               v-if="reverseQrValue"
               useCanvasToTempFilePath
               @success="handleReverseQrSuccess"
               class="qrcode-canvas"
-              :value="reverseQrValue" 
-              size="400rpx" 
+              :value="reverseQrValue"
+              size="400rpx"
               color="#000000"
               bgColor="#ffffff"
               :marginSize="2"
@@ -326,25 +326,16 @@ import {
   WiFiConfigStr
 } from '@/utils/wifiConfig';
 import { AudioPlayerManager } from '@/utils/audioPlayer';
-import { ArrayBufferToBase64, arrayBufferToBase64Url, generateWavAudio } from '@/utils/soundWave';
+import { ArrayBufferToBase64, generateWavAudio } from '@/utils/soundWave';
 import { type FileInfo, ConfigWifiMethod, methodOptions, methodName } from './types';
 import { pageOptions, onMethodChange, isPlaying, callOnLoad, callOnUnload } from './store';
 import { PageMap, Pages } from '@/utils/route';
 import AudioRecorderManager from '@/utils/audioRecorder';
 import { useUserStore } from '@/store';
 import type { Device as UserDevice } from '../device/types';
-import {
-  getWifiList,
-  WifiScanError,
-  WifiScanErrorType,
-  startWifiSafe,
-  stopWifiSafe,
-  getConnectedWifiBestEffort,
-  isWifiModuleAvailable
-} from '@/utils/wifi';
+import { getWifiList, WifiScanError, WifiScanErrorType, startWifiSafe, stopWifiSafe, getConnectedWifiBestEffort } from '@/utils/wifi';
 import {
   requestCameraAndAlbumPermission,
-  requestCameraPermission,
   requestLocationPermission,
   checkPermissionStatus,
   openPermissionSetting,
@@ -361,7 +352,6 @@ const message = useMessage();
 const { showNotify, closeNotify } = useNotify();
 const { t: $t, locale } = useI18n();
 const userStore = useUserStore();
-const isQrcodeScanCameraOnly = () => APP_CONFIG.APP_QRCODE_SCAN_SOURCE === 'camera_only';
 
 type WifiDisplayItem = {
   key: string;
@@ -466,7 +456,7 @@ function goDeviceManage() {
   console.log('goDeviceManage');
   // 跳转到广场页面，以便触发第二步引导
   uni.switchTab({
-    url: PageMap[Pages.Square].url
+    url: PageMap[Pages.Super_square].url
   });
 }
 
@@ -498,7 +488,7 @@ async function handleScanQr() {
   if (isIOS) {
     // 先检查权限状态
     const permissionStatus = await checkPermissionStatus(PermissionType.CAMERA);
-    
+
     if (permissionStatus === PermissionStatus.DENIED) {
       // 权限已被拒绝，引导用户去设置
       uni.showModal({
@@ -519,7 +509,6 @@ async function handleScanQr() {
     uni.scanCode({
       scanType: ['qrCode'],
       autoZoom: false,
-      ...(isQrcodeScanCameraOnly() ? { onlyFromCamera: true } : {}),
       success: handleScanQrSuccess,
       fail: (err: any) => {
         if (err.errMsg === 'scanCode:fail cancel') {
@@ -545,23 +534,21 @@ async function handleScanQr() {
     return;
   }
 
-  const notify = {
+  // 非 iOS 平台：使用合并的预请求弹窗同时请求相机和相册权限
+  const permissionResult = await requestCameraAndAlbumPermission({
     show: showNotify,
     close: closeNotify
-  };
-  const permissionResult = isQrcodeScanCameraOnly()
-    ? await requestCameraPermission(notify, true)
-    : (await requestCameraAndAlbumPermission(notify, true)).camera;
-  if (!permissionResult.granted) {
+  }, true);
+  if (!permissionResult.camera.granted) {
     // 权限请求工具已经显示了相应的提示，返回上一页
     uni.navigateBack();
     return;
   }
+  // 相册权限是可选的，不影响扫码流程
 
   uni.scanCode({
     scanType: ['qrCode'],
     autoZoom: false,
-    ...(isQrcodeScanCameraOnly() ? { onlyFromCamera: true } : {}),
     success: handleScanQrSuccess,
     fail: (err) => {
       // 扫码取消或失败，返回上一页
@@ -765,7 +752,7 @@ async function startWifiScan(rescan: boolean = false) {
 
   // 注意：NEARBY_WIFI_DEVICES 权限的请求已统一在 wifi.ts 的 ensureAndroidScanPermissions 中处理
   // 这里不再重复请求，避免权限被永久拒绝后无法恢复
-  
+
   if (wifiScanTimer) {
     clearTimeout(wifiScanTimer);
   }
@@ -836,7 +823,7 @@ function handleErrorAction() {
   switch (wifiScanErrorInfo.value.actionType) {
     case 'wifi':
     case 'location':
-      // 跳转到系统设置      
+      // 跳转到系统设置
       // #ifdef APP-ANDROID
       try {
         // @ts-ignore
@@ -984,17 +971,8 @@ async function handleStepToConnectWifi(): Promise<boolean> {
   const wifiString = genWiFiStr(wifiConfig);
   console.log('genWiFiStr:', wifiString);
 
-  try {
-    generateWave(wifiString);
-    return true;
-  } catch (error) {
-    console.error('[配网] 生成声波失败:', error);
-    toast.warning({
-      msg: $t('net_config.wave_file_save_failed'),
-      duration: 2000
-    });
-    return false;
-  }
+  await generateWave(wifiString);
+  return true;
 }
 
 function checkWifiConfig(): boolean {
@@ -1122,7 +1100,7 @@ function cleanupOldFilesForApp(
   // #ifdef APP-PLUS || APP-HARMONY
   dirEntry.createReader().readEntries(
     function (entries: any[]) {
-      const filesToDelete = entries.filter(
+      let filesToDelete = entries.filter(
         (entry) => entry.isFile && entry.name.startsWith(prefix) && entry.name !== currentFileName
       );
 
@@ -1174,7 +1152,7 @@ function writeFileForApp(
     };
 
     writer.onerror = function (e: PlusIoFileEvent) {
-      console.error('保存失败:', e != null ? String(e) : 'unknown');
+      console.error('保存失败:', e.toString());
       toast.warning({
         msg: $t('net_config.wave_file_save_failed'),
         duration: 2000
@@ -1188,228 +1166,28 @@ function writeFileForApp(
   // #endif
 }
 
-/** 鸿蒙 NEXT 等环境下 plus.io 文件 API 可能不完整 */
-function canUsePlusIoFileApis(): boolean {
-  // #ifdef APP-PLUS || APP-HARMONY
-  if (typeof plus === 'undefined' || plus.io == null) {
-    return false;
-  }
-  const privateDoc = plus.io.PRIVATE_DOC;
-  if (privateDoc != null && typeof plus.io.requestFileSystem === 'function') {
-    return true;
-  }
-  return typeof plus.io.resolveLocalFileSystemURL === 'function';
-  // #endif
-  // #ifndef APP-PLUS || APP-HARMONY
-  // eslint-disable-next-line no-unreachable -- uni-app 条件编译会保留当前平台对应分支
-  return false;
-  // #endif
-}
-
-function canUseUniFileSystemManager(): boolean {
-  return typeof uni.canIUse === 'function' && uni.canIUse('getFileSystemManager');
-}
-
-function getAppWaveStorageRoot(): string {
-  const env = (uni as UniNamespace.Uni & { env?: { USER_DATA_PATH?: string; CACHE_PATH?: string } })
-    .env;
-  const fromEnv = env?.USER_DATA_PATH || env?.CACHE_PATH || '';
-  if (fromEnv) {
-    return fromEnv;
-  }
-  // 鸿蒙 NEXT 等 App 平台无 uni.env，使用应用私有文档目录
-  if (AppInfo.isApp()) {
-    return '_doc';
-  }
-  return '';
-}
-
-/** 鸿蒙等平台 InnerAudioContext 需要可访问的本地文件路径 */
-function normalizeAudioPlayPath(filePath: string): string {
-  if (!filePath || filePath.startsWith('data:') || filePath.startsWith('http')) {
-    return filePath;
-  }
-  if (AppInfo.isHarmonyApp() && filePath.startsWith('/') && !filePath.startsWith('file://')) {
-    return `file://${filePath}`;
-  }
-  return filePath;
-}
-
-function cleanupOldWaveFilesForUniFs(fsm: UniApp.FileSystemManager, dir: string, prefix: string) {
-  try {
-    fsm.readdirSync(dir).forEach((file: string) => {
-      if (file.startsWith(prefix)) {
-        fsm.unlinkSync(`${dir}/${file}`);
-      }
-    });
-  } catch {
-    // 目录不存在或读取失败时忽略
-  }
-}
-
-function toWaveArrayBuffer(data: Uint8Array<ArrayBuffer>): ArrayBuffer {
-  if (data.byteOffset === 0 && data.byteLength === data.buffer.byteLength) {
-    return data.buffer;
-  }
-  return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
-}
-
-function resolveWavePlayPath(filePath: string): string {
-  // #ifdef APP-PLUS || APP-HARMONY
-  if (typeof plus !== 'undefined' && plus.io?.convertLocalFileSystemURL) {
-    try {
-      return normalizeAudioPlayPath(plus.io.convertLocalFileSystemURL(filePath));
-    } catch {
-      // 转换失败时使用原路径
-    }
-  }
-  // #endif
-  return normalizeAudioPlayPath(filePath);
-}
-
-/** 鸿蒙 NEXT：使用 uni.getFileSystemManager 写入本地目录 */
-function generateWaveForAppWithUniFs(
-  wifiConfigStr: WiFiConfigStr,
-  arrayBuffer: Uint8Array<ArrayBuffer>
-) {
-  const root = getAppWaveStorageRoot();
-  if (!root) {
-    console.warn('[配网] 无可用存储路径，回退为内存 data URL');
-    generateWaveForAppInMemory(arrayBuffer);
-    return;
-  }
-
-  const fsm = uni.getFileSystemManager();
-  const { dir, filePrefix: prefix, filePath } = constructFileInfo(root, wifiConfigStr);
-  const waveBuffer = toWaveArrayBuffer(arrayBuffer);
-
-  try {
-    fsm.accessSync(dir);
-  } catch {
-    fsm.mkdirSync(dir, true);
-  }
-
-  try {
-    fsm.accessSync(filePath);
-    pageOptions.value.audioUrl = resolveWavePlayPath(filePath);
-    console.log('[配网] 声波文件已存在:', pageOptions.value.audioUrl);
-    return;
-  } catch {
-    cleanupOldWaveFilesForUniFs(fsm, dir, prefix);
-  }
-
-  const onWriteSuccess = () => {
-    pageOptions.value.audioUrl = resolveWavePlayPath(filePath);
-    console.log('[配网] 声波文件写入成功:', pageOptions.value.audioUrl);
-  };
-
-  const onWriteFail = (err: unknown) => {
-    console.error('[配网] 声波文件写入失败，尝试内存 data URL:', err);
-    generateWaveForAppInMemory(arrayBuffer);
-  };
-
-  fsm.writeFile({
-    filePath,
-    data: waveBuffer,
-    success: onWriteSuccess,
-    fail: () => {
-      fsm.writeFile({
-        filePath,
-        data: ArrayBufferToBase64(waveBuffer),
-        encoding: 'base64',
-        success: onWriteSuccess,
-        fail: onWriteFail
-      });
-    }
-  });
-}
-
-/** 最后兜底：data URL（鸿蒙 InnerAudioContext 通常不支持，仅作备用） */
-function generateWaveForAppInMemory(arrayBuffer: Uint8Array<ArrayBuffer>) {
-  pageOptions.value.audioUrl = arrayBufferToBase64Url(arrayBuffer.buffer);
-  console.warn('[配网] 使用 data URL 音频（部分平台可能无法播放）');
-}
-
-function saveWaveForAppWithoutPlusIo(
-  wifiConfigStr: WiFiConfigStr,
-  arrayBuffer: Uint8Array<ArrayBuffer>
-) {
-  if (canUseUniFileSystemManager()) {
-    generateWaveForAppWithUniFs(wifiConfigStr, arrayBuffer);
-    return;
-  }
-  generateWaveForAppInMemory(arrayBuffer);
-}
-
-/** App 私有文档目录：Android/iOS 使用 plus.io；鸿蒙 NEXT 常无完整 plus.io 文件 API */
-function openAppWifiConfigDir(
-  onSuccess: (dirEntry: PlusIoDirectoryEntry) => void,
-  onError: (error: unknown) => void
-) {
-  // #ifdef APP-PLUS || APP-HARMONY
-  const privateDoc =
-    typeof plus !== 'undefined' && plus.io != null ? plus.io.PRIVATE_DOC : undefined;
-
-  if (privateDoc != null && typeof plus.io.requestFileSystem === 'function') {
-    plus.io.requestFileSystem(
-      privateDoc,
-      (fs) => {
-        fs.root!.getDirectory(
-          'wifi_config',
-          { create: true, exclusive: false },
-          onSuccess,
-          onError
-        );
-      },
-      onError
-    );
-    return;
-  }
-
-  if (typeof plus.io.resolveLocalFileSystemURL === 'function') {
-    plus.io.resolveLocalFileSystemURL(
-      '_doc/',
-      (docEntry) => {
-        docEntry.getDirectory(
-          'wifi_config',
-          { create: true, exclusive: false },
-          onSuccess,
-          onError
-        );
-      },
-      onError
-    );
-    return;
-  }
-
-  onError(new Error('plus.io 文件 API 不可用'));
-  // #endif
-}
-
 function generateWaveForApp(wifiConfigStr: WiFiConfigStr, arrayBuffer: Uint8Array<ArrayBuffer>) {
   // #ifdef APP-PLUS || APP-HARMONY
-  if (!canUsePlusIoFileApis()) {
-    saveWaveForAppWithoutPlusIo(wifiConfigStr, arrayBuffer);
-    return;
-  }
-
   const {
     filePrefix: prefix,
     fileName,
     filePath
-  } = constructFileInfo('_doc', wifiConfigStr);
+  } = constructFileInfo(plus.io.PRIVATE_DOC.toString(), wifiConfigStr);
 
-  openAppWifiConfigDir(
-    (dirEntry) => {
+  plus.io.requestFileSystem(plus.io.PRIVATE_DOC, function (fs) {
+    fs.root!.getDirectory('wifi_config', { create: true, exclusive: false }, function (dirEntry) {
+      // 检查目标文件是否已存在
       dirEntry.getFile(
         fileName,
         { create: false },
         function (fileEntry: PlusIoFileEntry) {
+          // 文件已存在，直接使用
           const playablePath = plus.io.convertLocalFileSystemURL(fileEntry.toURL());
           console.log('文件已存在，直接使用:', playablePath);
           pageOptions.value.audioUrl = playablePath;
         },
         function () {
+          // 文件不存在，先清理同前缀的旧文件，然后创建新文件
           cleanupOldFilesForApp(dirEntry, prefix, fileName, function () {
             dirEntry.getFile(fileName, { create: true }, function (fileEntry: PlusIoFileEntry) {
               writeFileForApp(fileEntry, arrayBuffer, filePath);
@@ -1417,20 +1195,8 @@ function generateWaveForApp(wifiConfigStr: WiFiConfigStr, arrayBuffer: Uint8Arra
           });
         }
       );
-    },
-    (error) => {
-      console.error('[配网] 打开应用文档目录失败，尝试 uni 文件系统:', error);
-      try {
-        saveWaveForAppWithoutPlusIo(wifiConfigStr, arrayBuffer);
-      } catch (fallbackError) {
-        console.error('[配网] 声波文件保存回退失败:', fallbackError);
-        toast.warning({
-          msg: $t('net_config.wave_file_save_failed'),
-          duration: 2000
-        });
-      }
-    }
-  );
+    });
+  });
   // #endif
 }
 
@@ -1590,7 +1356,7 @@ function updateNavigationTitle() {
  */
 async function handleFactoryQrClick() {
   console.log('Reverse QR config clicked');
-  
+
   // 检查WiFi配置是否完整
   if (!wifiConfig.ssid.trim()) {
     toast.warning({
@@ -1599,10 +1365,10 @@ async function handleFactoryQrClick() {
     });
     return;
   }
-  
+
   // 生成 WiFi 配置字符串
   const wifiString = genWiFiStr(wifiConfig, false);
-  
+
   // 只有当 WiFi 配置改变时才重新生成二维码
   if (reverseQrValue.value !== wifiString) {
     reverseQrImage.value = null;
@@ -1610,7 +1376,7 @@ async function handleFactoryQrClick() {
     await nextTick();
     reverseQrValue.value = wifiString;
   }
-  
+
   showReverseQrPopup.value = true;
 }
 
@@ -1635,30 +1401,29 @@ onLoad((options) => {
   callOnLoad();
   initAudioManager();
   fromAddDevice.value = options?.fromAddDevice === '1';
-  
+
   // 检测是否是 iOS 平台
   const systemInfo = uni.getSystemInfoSync();
   isIOS.value = systemInfo.platform === 'ios';
   isHarmony.value = AppInfo.isHarmonyApp() || AppInfo.isHarmonyRom();
-  
-  // iOS / 鸿蒙设备自动展开手动配置并尝试获取当前连接的 WiFi（需平台提供 Wi-Fi API）
+
+  // iOS / 鸿蒙设备自动展开手动配置并尝试获取当前连接的 WiFi
   if (isManualOnlyPlatform.value) {
     showManualConfig.value = true;
-    if (isWifiModuleAvailable()) {
-      startWifiSafe().then((success) => {
-        if (success) {
-          getConnectedWifiBestEffort().then((wifi) => {
-            console.log('getConnectedWifi success', wifi);
-            if (wifi && wifi.SSID && !wifiConfig.ssid) {
-              wifiConfig.ssid = wifi.SSID;
-            }
-            stopWifiSafe();
-          });
-        }
-      });
-    }
+    startWifiSafe().then((success) => {
+      if (success) {
+        getConnectedWifiBestEffort().then((wifi) => {
+          console.log('getConnectedWifi success', wifi);
+          if (wifi && wifi.SSID && !wifiConfig.ssid) {
+            wifiConfig.ssid = wifi.SSID;
+          }
+          // 获取完后可以关闭模块，节省资源
+          stopWifiSafe();
+        });
+      }
+    });
   }
-  
+
   // 如果有保存的WiFi配置，预填充表单
   const savedConfig = getWiFiConfig();
   if (savedConfig.ssid) {
@@ -1666,7 +1431,7 @@ onLoad((options) => {
     wifiConfig.password = savedConfig.password;
     setSecurityType(savedConfig.security);
   }
-  
+
   // 如果是从"我的"页面扫码成功后跳转过来，直接显示配网页面
   if (options?.bound === '1') {
     deviceBound.value = true;
@@ -1676,7 +1441,7 @@ onLoad((options) => {
     }
     return;
   }
-  
+
   // 否则开始扫码绑定设备
   handleScanQr();
 });
@@ -1750,11 +1515,11 @@ watch(
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
-  
+
   .section-title {
     margin-bottom: 0;
   }
-  
+
   .wifi-band-tip {
     font-size: 12px;
     color: #FA8C16;
@@ -2066,7 +1831,7 @@ watch(
 .footer-actions {
   display: flex;
   gap: 12px;
-  
+
   :deep(.wd-button) {
     flex: 1;
   }
@@ -2233,37 +1998,37 @@ watch(
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.3);
-  
+
   .guide-content {
     padding: 40rpx 32rpx 24rpx;
     max-height: 70vh;
     overflow-y: auto;
-    
+
     .guide-notice {
       padding: 20rpx 24rpx;
       background-color: #FFF7E6;
       border-radius: 12rpx;
       margin-bottom: 32rpx;
-      
+
       text {
         font-size: 30rpx;
         color: #FA8C16;
         line-height: 1.6;
       }
     }
-    
+
     .guide-section {
       margin-bottom: 32rpx;
-      
+
       &:last-child {
         margin-bottom: 0;
       }
-      
+
       .guide-section-title {
         display: flex;
         align-items: center;
         margin-bottom: 16rpx;
-        
+
         .guide-number {
           width: 44rpx;
           height: 44rpx;
@@ -2278,14 +2043,14 @@ watch(
           margin-right: 16rpx;
           flex-shrink: 0;
         }
-        
+
         .guide-label {
           font-size: 34rpx;
           font-weight: 600;
           color: #333;
         }
       }
-      
+
       .guide-desc {
         font-size: 30rpx;
         color: #666;
@@ -2294,11 +2059,11 @@ watch(
       }
     }
   }
-  
+
   .guide-actions {
     display: flex;
     border-top: 1rpx solid #f0f0f0;
-    
+
     .guide-btn {
       flex: 1;
       height: 100rpx;
@@ -2310,11 +2075,11 @@ watch(
       border: none;
       border-radius: 0;
       background: transparent;
-      
+
       &::after {
         border: none;
       }
-      
+
       &:active {
         background: #f0f7ff;
       }
@@ -2326,36 +2091,36 @@ watch(
 .reverse-qr-popup {
   width: 600rpx;
   background-color: #fff;
-  
+
   .popup-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 32rpx;
     border-bottom: 1px solid #f0f0f0;
-    
+
     .popup-title {
       font-size: 36rpx;
       font-weight: 600;
       color: #333;
     }
-    
+
     .popup-close {
       padding: 8rpx;
       color: #999;
-      
+
       &:active {
         opacity: 0.7;
       }
     }
   }
-  
+
   .popup-content {
     padding: 32rpx;
     display: flex;
     flex-direction: column;
     align-items: center;
-    
+
     .qr-container {
       position: relative;
       padding: 24rpx;
@@ -2367,12 +2132,12 @@ watch(
       align-items: center;
       min-width: 400rpx;
       min-height: 400rpx;
-      
+
       .qrcode-image {
         width: 400rpx;
         height: 400rpx;
       }
-      
+
       .qrcode-canvas {
         // #ifdef APP-PLUS || APP-HARMONY
         position: absolute;
@@ -2385,31 +2150,31 @@ watch(
         // #endif
       }
     }
-    
+
     .wifi-info-display {
       width: 100%;
       margin-top: 32rpx;
       padding: 24rpx;
       background-color: #f8f9fa;
       border-radius: 12rpx;
-      
+
       .info-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 8rpx 0;
-        
+
         &:not(:last-child) {
           border-bottom: 1px solid #e9ecef;
           padding-bottom: 16rpx;
           margin-bottom: 8rpx;
         }
-        
+
         .info-label {
           font-size: 28rpx;
           color: #666;
         }
-        
+
         .info-value {
           font-size: 28rpx;
           color: #333;
@@ -2417,7 +2182,7 @@ watch(
         }
       }
     }
-    
+
     .popup-tips {
       margin-top: 24rpx;
       padding: 20rpx;
@@ -2425,7 +2190,7 @@ watch(
       border-radius: 8rpx;
       width: 100%;
       box-sizing: border-box;
-      
+
       text {
         font-size: 24rpx;
         color: #d48806;

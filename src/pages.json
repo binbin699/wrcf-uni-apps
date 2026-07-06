@@ -1,14 +1,5 @@
 {
   "pages": [
-    // #ifdef MP-WEIXIN
-    {
-      "path": "pages/mp-landing/mp-landing",
-      "style": {
-        "navigationBarTitleText": "",
-        "navigationStyle": "custom"
-      }
-    },
-    // #endif
     {
       "path": "pages/login/login",
       "style": {
@@ -17,6 +8,13 @@
         "app-plus": {
           "bounce": "none"
         }
+      }
+    },
+    {
+      "path": "pages/mp-landing/mp-landing",
+      "style": {
+        "navigationBarTitleText": "",
+        "navigationStyle": "custom"
       }
     },
     {
@@ -73,6 +71,18 @@
       }
     },
     {
+      "path": "video/play",
+      "style": {
+        "navigationBarTitleText": "玩法视频"
+      }
+    },
+    {
+      "path": "video/strategy",
+      "style": {
+        "navigationBarTitleText": "九宝攻略"
+      }
+    },
+    {
       "path": "pages/profile/profile",
       "style": {
         "navigationBarTitleText": "%pages.profile%",
@@ -111,6 +121,16 @@
     {
       "path": "pages/square/square",
       "style": {
+        "navigationBarTitleText": "%square.bind_devices%",
+        "navigationStyle": "custom",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
+      "path": "pages/square/super_square",
+      "style": {
         "navigationBarTitleText": "%pages.square%",
         "navigationStyle": "custom",
         "app-plus": {
@@ -131,11 +151,13 @@
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "%index.my_agents%",
+        "navigationStyle": "custom",
         "app-plus": {
           "bounce": "none"
         }
       }
     }
+
   ],
   "subPackages": [
     {
@@ -230,6 +252,12 @@
         "pagePath": "pages/square/square",
         "iconPath": "static/tab-square.png",
         "selectedIconPath": "static/tab-square-active.png",
+        "text": "%square.bind_devices%"
+      },
+      {
+        "pagePath": "pages/square/super_square",
+        "iconPath": "static/tab-square.png",
+        "selectedIconPath": "static/tab-square-active.png",
         "text": "%tabbar.square%"
       },
       {
@@ -239,5 +267,15 @@
         "text": "%tabbar.profile%"
       }
     ]
-  }
+  },
+	"condition" : { //模式配置，仅开发期间生效
+		"current": 0, //当前激活的模式(list 的索引项)
+		"list": [
+			{
+				"name": "", //模式名称
+				"path": "", //启动页面，必选
+				"query": "" //启动参数，在页面的onLoad函数里面得到
+			}
+		]
+	}
 }
