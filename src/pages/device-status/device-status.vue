@@ -197,7 +197,6 @@
             </view>
           </scroll-view>
           <view class="tips-loading" v-else-if="tipsLoading">
-<!--            <text class="tips-loading-text">加载中...</text>-->
           </view>
           <view class="tips-empty" v-else>
             <text class="tips-empty-text">暂无玩法提示</text>
@@ -301,32 +300,35 @@ const displayTips = computed(() => {
 
 // 加载玩法提示
 const loadGameTips = async () => {
-  if (tipsLoading.value) return; // 防止重复加载
-
+  if (tipsLoading.value) return;
   tipsLoading.value = true;
   try {
     const res = await gameTipApi.getAllTips();
     console.log('[玩法提示] 完整响应:', res);
 
-    if (res && res.code === 200 && res.data && Array.isArray(res.data)) {
-      allTips.value = res.data;
+    // 兼容多种成功码：200、1000、0 等
+    const isSuccess = res && (res.code === 200 || res.code === 1000 || res.code === 0);
+    let tipsData: string[] = [];
+
+    if (isSuccess && res.data && Array.isArray(res.data)) {
+      tipsData = res.data;
+    } else if (Array.isArray(res)) {
+      tipsData = res;
+    } else {
+      // 如果都不是，尝试直接取 res 作为数组（某些接口直接返回数组）
+      tipsData = Array.isArray(res) ? res : [];
+    }
+
+    if (tipsData.length > 0) {
+      allTips.value = tipsData;
       currentTipIndex.value = 0;
       console.log('[玩法提示] 加载成功，共', allTips.value.length, '条提示');
-    } else if (res && res.code === 1000 && res.data && Array.isArray(res.data)) {
-      allTips.value = res.data;
-      currentTipIndex.value = 0;
-      console.log('[玩法提示] 加载成功(code:1000)，共', allTips.value.length, '条提示');
-    } else if (res && Array.isArray(res)) {
-      allTips.value = res;
-      currentTipIndex.value = 0;
-      console.log('[玩法提示] 加载成功(直接数组)，共', allTips.value.length, '条提示');
     } else {
-      console.warn('[玩法提示] 数据格式异常:', res);
+      console.warn('[玩法提示] 数据为空或格式异常，使用默认提示');
       allTips.value = getDefaultTips();
       currentTipIndex.value = 0;
     }
   } catch (error) {
-    console.error('[玩法提示] 加载失败:', error);
     allTips.value = getDefaultTips();
     currentTipIndex.value = 0;
   } finally {

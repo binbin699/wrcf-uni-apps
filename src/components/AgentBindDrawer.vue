@@ -405,7 +405,7 @@ export default {
       } catch (error) {
         console.error('扫码流程异常', error);
       }
-    ,
+    },
 
     // 添加设备（根据 setupMode 调用对应方法）
     handleAddDevice() {

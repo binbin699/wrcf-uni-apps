@@ -108,13 +108,6 @@
           :loading="creating">
           {{ creating ? $t('create_agent.creating') : $t('create_agent.create') }}
         </button>
-        <!-- <button 
-          class="cancel-btn" 
-          hover-class="none"
-          @click="handleCancel"
-          :disabled="creating">
-          {{ $t('common.cancel') }}
-        </button> -->
       </view>
 
       <!-- Spacer for bottom balance -->
@@ -711,7 +704,7 @@ async function createAgent() {
       }
 
       toast.warning({
-        msg: result.message || $t('create_agent.create_failed'),
+        // msg: result.message || $t('create_agent.create_failed'),
         msg: result.message || $t('智能体名称包含敏感词，请修改后重试'),
         duration: 2000
       });
@@ -726,8 +719,6 @@ async function createAgent() {
     // 同样检查敏感词关键词
     if (errorMsg.includes('敏感词') || errorMsg.includes('sensitive')) {
       errorMsg = '智能体名称包含敏感词，请修改后重试';
-    if (!isRequestHandledError(error)) {
-      toast.error(getRequestErrorMessage(error, $t('create_agent.create_failed')));
     }
 
     toast.warning({
@@ -739,9 +730,6 @@ async function createAgent() {
   }
 }
 
-function handleCancel() {
-  uni.navigateBack();
-}
 
 // 返回上一页
 function handleBack() {

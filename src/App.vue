@@ -76,7 +76,7 @@ async function bootstrapApp() {
 
   userStore.initUserState();
   applyLocaleResources();
-});
+
 
 onShow(() => {
   // #ifdef APP-PLUS
@@ -138,7 +138,7 @@ function initArmsMonitoring() {
     console.error('[ARMS] 监控初始化失败:', error?.message || error);
   }
   // #endif
-}
+}}
 </script>
 <style>
 @import './styles/index.css';

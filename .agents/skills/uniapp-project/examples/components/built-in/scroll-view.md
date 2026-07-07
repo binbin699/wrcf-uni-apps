@@ -209,7 +209,7 @@ export default {
     >
       {{ item.name }}
     </view>
-    <view v-if="loading" class="loading">加载中...</view>
+<!--    <view v-if="loading" class="loading">加载中...</view>-->
   </scroll-view>
 </template>
 

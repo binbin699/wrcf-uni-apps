@@ -136,7 +136,7 @@ export const agentApi = {
 
   // 优化提示词（九宝平台AI处理需要较长时间，设置60秒超时，禁用默认loading）
   optimizePrompt(data) {
-    return request.post('/app/agent/optimize-prompt', data, { timeout: 60000, showLoading: false });
+    return request.post('/app/agent/optimize-prompt', data, { timeout: 60000 });
   }
 };
 

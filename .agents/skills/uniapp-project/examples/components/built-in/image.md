@@ -235,7 +235,7 @@ export default {
         :class="{ 'hidden': !imageLoaded }"
         class="main-image"
       ></image>
-      <view v-if="loading" class="loading">加载中...</view>
+<!--      <view v-if="loading" class="loading">加载中...</view>-->
     </view>
   </view>
 </template>

@@ -143,15 +143,14 @@
         </text>
       </view>
     </scroll-view>
-
     <!-- 设备绑定抽屉 -->
     <AgentBindDrawer
-      :visible="showBindDrawer"
-      :agent="selectedAgent"
-      @update:visible="showBindDrawer = $event"
-      @success="handleBindSuccess"
-      @error="handleBindError"
-      @cancel="handleBindCancel" />
+        :visible="showBindDrawer"
+        :agent="selectedAgent"
+        @update:visible="showBindDrawer = $event"
+        @success="handleBindSuccess"
+        @error="handleBindError"
+        @cancel="handleBindCancel" />
 
     <view v-if="showSquareGuidePrompt" class="square-guide-popup" @click.stop>
       <view class="square-guide-content">
@@ -167,90 +166,6 @@
         </view>
       </view>
     </view>
-
-    <!-- 新引导系统：蒙层提示（首次进入时显示） -->
-    <view v-if="showOverlayGuide" class="overlay-guide" @click.stop>
-      <view class="overlay-guide-mask"></view>
-      <view class="overlay-guide-card">
-        <!-- 背景光晕效果 -->
-        <view class="overlay-guide-bg">
-          <view class="overlay-guide-ellipse ellipse-1"></view>
-          <view class="overlay-guide-ellipse ellipse-2"></view>
-          <view class="overlay-guide-ellipse ellipse-3"></view>
-          <view class="overlay-guide-ellipse ellipse-4"></view>
-        </view>
-        <view class="overlay-guide-content">
-          <view class="overlay-guide-title">{{ $t('guide.overlay_title') }}</view>
-          <rich-text class="overlay-guide-desc" :nodes="$t('guide.overlay_desc')"></rich-text>
-          <view class="overlay-guide-illustration">
-            <image src="/static/guide-illustration.png" mode="aspectFit" class="illustration-img" />
-            <!-- 指向绑定按钮的箭头 -->
-            <image
-              src="/static/icons/arrow-pointer.svg"
-              mode="aspectFit"
-              class="illustration-arrow" />
-          </view>
-          <view class="overlay-guide-btn" @click.stop="handleOverlayDismiss">
-            <text class="overlay-guide-btn-text">{{ $t('guide.overlay_action') }}</text>
-          </view>
-        </view>
-        <!-- 三角形箭头 -->
-        <view class="overlay-guide-arrow"></view>
-      </view>
-    </view>
-
-    <!-- 新引导系统：第二个蒙层提示（点击第一个蒙层"知道了"后显示） -->
-    <view v-if="showSecondOverlay" class="second-overlay" @click.stop>
-      <!-- 蒙层 -->
-      <view class="second-overlay-mask"></view>
-      <!-- 绑定按钮高亮区域（在蒙层之上） -->
-      <view
-        v-if="highlightPosition && filteredAgents.length > 0"
-        class="second-overlay-highlight"
-        :style="{
-          top: highlightPosition.top - 8 + 'px',
-          left: highlightPosition.left - 8 + 'px'
-        }"
-        @click="handleGuideBindClick(filteredAgents[0], 0)">
-        <button class="config-btn primary highlight-btn">
-          <text class="btn-text">{{ $t('square.bind_device') }}</text>
-        </button>
-      </view>
-      <!-- 信息条 -->
-      <view
-        class="second-overlay-card"
-        :style="
-          highlightPosition
-            ? { top: highlightPosition.top + highlightPosition.height + 20 + 'px' }
-            : {}
-        ">
-        <!-- 背景光晕效果 -->
-        <view class="second-overlay-bg">
-          <view class="second-overlay-ellipse ellipse-1"></view>
-          <view class="second-overlay-ellipse ellipse-2"></view>
-          <view class="second-overlay-ellipse ellipse-3"></view>
-          <view class="second-overlay-ellipse ellipse-4"></view>
-        </view>
-      </view>
-      <!-- 三角形箭头 -->
-      <view
-        class="second-overlay-arrow"
-        :style="
-          highlightPosition
-            ? {
-                left: highlightPosition.left + highlightPosition.width / 2 - 12 + 'px',
-                top: highlightPosition.top + highlightPosition.height + 14 + 'px'
-              }
-            : {}
-        "></view>
-    </view>
-
-    <!-- 信息提示条（固定在底部tab上方） -->
-    <view v-if="showInfoBar" class="info-bar">
-      <image src="/static/icons/bell.svg" class="info-bar-icon" />
-      <rich-text class="info-bar-text" :nodes="$t('guide.info_bar_text')"></rich-text>
-    </view>
-
     <!-- 自定义 TabBar -->
     <CustomTabBar :current="2" />
   </view>
@@ -499,22 +414,7 @@ async function handleOverlayDismiss() {
   }
 }
 
-/**
- * 关闭第二个蒙层提示（点击"知道了"按钮）
- * - 第二个蒙层消失
- * - 信息提示条出现
- */
-function handleSecondOverlayDismiss() {
-  showSecondOverlay.value = false;
-  showInfoBar.value = true;
-}
 
-/**
- * 关闭信息提示条
- */
-function handleInfoBarDismiss() {
-  showInfoBar.value = false;
-}
 
 // 生命周期钩子
 onLoad(() => {

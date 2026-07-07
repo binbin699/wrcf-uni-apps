@@ -200,17 +200,10 @@ export class AudioPlayerManager {
       // 本地绝对路径补充 file://（iOS / 鸿蒙 InnerAudioContext 需要）
       let finalSrc = audioObj.src;
       // #ifdef APP-PLUS || APP-HARMONY
-      if (
-        uni.getSystemInfoSync().platform === 'ios' &&
-      const needsFileProtocol =
-        (uni.getSystemInfoSync().platform === 'ios' || AppInfo.isHarmonyApp()) &&
-        finalSrc.startsWith('/') &&
-        !finalSrc.startsWith('file://')
-      ) {
+      const systemInfo = uni.getSystemInfoSync();
+      const isIosOrHarmony = systemInfo.platform === 'ios' || AppInfo.isHarmonyApp();
+      if (isIosOrHarmony && finalSrc.startsWith('/') && !finalSrc.startsWith('file://')) {
         finalSrc = 'file://' + finalSrc;
-        !finalSrc.startsWith('file://');
-      if (needsFileProtocol) {
-        finalSrc = `file://${finalSrc}`;
       }
       // #endif
 

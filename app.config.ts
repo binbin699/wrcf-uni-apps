@@ -25,8 +25,8 @@ export default function getAppConfig(
   } else {
     // App 端根据版本选择服务器
     BASE_API_URL =
-      // appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
-      appEdition === 'intl' ? 'http://36.134.119.145:8000' : 'http://36.134.119.145:8000';
+      appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
+      // appEdition === 'intl' ? 'http://36.134.119.145:8000' : 'http://36.134.119.145:8000';
   }
 
   // 是否支持微信小程序手机号登录
@@ -142,7 +142,7 @@ export default function getAppConfig(
     ARMS_ENDPOINT,
     ARMS_ENV,
     APP_PRIMARY_SETUP_MODE,
-    APP_QRCODE_SCAN_SOURCE
+    // APP_QRCODE_SCAN_SOURCE,
     UPLOAD_DOMAIN,
     VIDEO_SERVER_DOMAIN,
     VIDEO_STORAGE_PATH

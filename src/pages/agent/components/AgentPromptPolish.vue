@@ -57,7 +57,6 @@ import { useI18n } from 'vue-i18n';
 // @ts-ignore
 import { agentApi } from '@/api/index';
 import { useToast } from '@/uni_modules/wot-design-uni';
-import { isRequestHandledError } from '@/utils/request-feedback';
 import {
   getRequestErrorMessage,
   isRequestHandledError
@@ -88,12 +87,12 @@ const requestingTexts = [
 ];
 const originalPrompt = ref('');
 let requestingTimer: any = null;
-let requestingTimer: ReturnType<typeof setInterval> | null = null;
+// let requestingTimer: ReturnType<typeof setInterval> | null = null;
 let elapsedTimer: ReturnType<typeof setInterval> | null = null;
 
-const requestingText = computed(
-  () => requestingTexts[requestingTextIndex.value]
-);
+// const requestingText = computed(
+//   () => requestingTexts[requestingTextIndex.value]
+// );
 const requestingText = computed(() => {
   const base = requestingTexts[requestingTextIndex.value];
   if (polishState.value === 'requesting' && elapsedSeconds.value > 0) {
@@ -175,7 +174,7 @@ async function handlePolish() {
     const result = await agentApi.optimizePrompt({
       prompt: content
     });
-    const result = await agentApi.optimizePrompt({ prompt: content });
+    // const result = await agentApi.optimizePrompt({ prompt: content });
 
     if (result.code === 1000 && result.data && result.data.prompt) {
       localPrompt.value = result.data.prompt;

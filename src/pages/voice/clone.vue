@@ -94,7 +94,7 @@
       </view>
 
       <!-- 音色名称输入 -->
-      <view class="name-input-card" :class="{ error: voiceNameError }">
+    <view class="name-input-card" :class="{ error: voiceNameError }">
       <view class="name-input-card">
         <text class="input-label">{{ $t('voice_clone.voice_name') }}</text>
         <input
@@ -106,9 +106,11 @@
           <wd-icon name="close-fill" size="32rpx" color="#c8c9cc" />
         </view>
       </view>
-      <text v-if="voiceNameError" class="name-error">
-        {{ $t('voice_clone.voice_name_min_length') }}
-      </text>
+    </view>
+
+        <text v-if="voiceNameError" class="name-error">
+          {{ $t('voice_clone.voice_name_min_length') }}
+        </text>
     </view>
 
     <!-- 底部按钮 -->

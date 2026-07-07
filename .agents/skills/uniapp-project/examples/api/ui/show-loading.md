@@ -21,10 +21,10 @@ uni.showLoading({
 ### 示例 1: 基本加载提示
 
 ```javascript
-uni.showLoading({
-  title: '加载中...',
-  mask: true
-})
+// uni.showLoading({
+//   title: '加载中...',
+//   mask: true
+// })
 
 // 操作完成后隐藏
 setTimeout(() => {
