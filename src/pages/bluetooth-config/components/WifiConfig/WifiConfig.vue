@@ -209,6 +209,14 @@ async function startWifiScan() {
     return;
   }
 
+  const initResult = await native.safeAsync(() => configProtocol.init(selectedDevice.deviceId));
+  if (!initResult.ok) {
+    console.error('[WifiConfig] 协议初始化失败:', initResult.errMsg);
+    native.toast($t('bluetooth.wifi.init_failed'));
+    isLoadingWifi.value = false;
+    return;
+  }
+
   console.log('[WifiConfig] 开始扫描WiFi网络');
   const result = await native.safeAsync(() => configProtocol.getWifiList(selectedDevice.deviceId));
 
@@ -216,6 +224,7 @@ async function startWifiScan() {
     console.error('[WifiConfig] WiFi扫描失败:', result.errMsg);
     uni.hideLoading();
     uni.hideToast();
+    configProtocol.reset();
     native.toast($t('bluetooth.wifi.scan_failed'));
     isLoadingWifi.value = false;
     return;
@@ -356,8 +365,9 @@ async function handleConnect() {
     return;
   }
 
-  // BLE 重连后设备侧仍保持当前 BluFi 会话，App 继续使用本地 sequence。
+  // 仅在蓝牙重连后才需要重置序列号和重新初始化协议
   if (bleResult.didReconnect) {
+    bluetoothConfigManager.resetSequence();
     const initResult = await native.safeAsync(() => configProtocol.init(selectedDevice.deviceId));
     if (!initResult.ok) {
       native.hideLoading();

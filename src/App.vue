@@ -35,7 +35,6 @@ function applyLocaleResources() {
   try {
     uni.setTabBarItem({ index: 0, text: $t('tabbar.agent') });
     uni.setTabBarItem({ index: 1, text: $t('tabbar.create') });
-    uni.setTabBarItem({ index: 2, text: $t('tabbar.square') });
     uni.setTabBarItem({ index: 3, text: $t('tabbar.profile') });
   } catch (error) {
     console.warn('Failed to update tab bar text', error);
@@ -75,9 +74,9 @@ async function bootstrapApp() {
   // 在用户实际使用蓝牙功能时才请求（带预请求弹窗说明）
   // requestBluetoothPermissionsForAndroid12();
 
-  await userStore.initUserState();
+  userStore.initUserState();
   applyLocaleResources();
-}
+});
 
 onShow(() => {
   // #ifdef APP-PLUS

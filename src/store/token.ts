@@ -135,9 +135,11 @@ export const useTokenStore = defineStore(
       isRefreshing.value = true;
 
       try {
+        console.log('开始刷新token...');
         const authData = await loginApi.refreshToken(refreshToken.value);
 
         setTokens(authData);
+        console.log('token刷新成功');
 
         return true;
       } catch (error) {
@@ -145,6 +147,7 @@ export const useTokenStore = defineStore(
         if (isAuthFailureError(error)) {
           clearTokens();
         }
+        clearTokens();
         return false;
       } finally {
         isRefreshing.value = false;

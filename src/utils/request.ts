@@ -235,6 +235,7 @@ class Request {
       });
     }
 
+
     return new Promise<RequestResponse<T>>((resolve, reject) => {
       console.log('request', this.baseURL + options.url, options.data);
       uni.request({

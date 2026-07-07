@@ -30,15 +30,15 @@ test/reports
 .hbuilderx
 
 # 证书和签名文件（安全敏感，需手动放置）
-channels/*/certs/*.p12
-channels/*/certs/*.mobileprovision
-channels/*/certs/*.cer
-channels/*/certs/*.pem
-channels/*/certs/*.key
-channels/*/certs/*.pfx
-channels/*/certs/*.keystore
-channels/*/certs/*.jks
-channels/*/certs/*.certSigningRequest
+scripts/config/*/cert/*.p12
+scripts/config/*/cert/*.mobileprovision
+scripts/config/*/cert/*.cer
+scripts/config/*/cert/*.pem
+scripts/config/*/cert/*.key
+scripts/config/*/cert/*.pfx
+scripts/config/*/cert/*.keystore
+scripts/config/*/cert/*.jks
+scripts/config/*/cert/*.certSigningRequest
 
 # AI Agent files
 .cli-path

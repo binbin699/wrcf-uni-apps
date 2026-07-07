@@ -1,8 +1,8 @@
 {
   "privacy": {
     "title": "利用規約とプライバシーポリシー",
-    "message": "Linx AIへようこそ！<br/><br/>サービスをご利用になる前に、以下の規約をお読みいただき、同意してください：<a href=\"https://www.qiniu.com/agreements/user-agreement\">《利用規約》</a>と<a href=\"https://www.qiniu.com/agreements/privacy-right\">《プライバシーポリシー》</a><br/><br/><font color=\"#335CFF\">「同意する」</font>をクリックすると、上記の規約を読み、同意したことになります。同意されない場合、サービスを提供することができません。",
-    "messageIntro": "Linx AIへようこそ！\n\nサービスをご利用になる前に、以下の規約をお読みいただき、同意してください：",
+    "message": "JiuBao AIへようこそ！<br/><br/>サービスをご利用になる前に、以下の規約をお読みいただき、同意してください：<a href=\"http://47.114.109.136:8008/user-agreement.html\">《利用規約》</a>と<a href=\"http://47.114.109.136:8008/privacy-policy.html\">《プライバシーポリシー》</a><br/><br/><font color=\"#335CFF\">「同意する」</font>をクリックすると、上記の規約を読み、同意したことになります。同意されない場合、サービスを提供することができません。",
+    "messageIntro": "JiuBao AIへようこそ！\n\nサービスをご利用になる前に、以下の規約をお読みいただき、同意してください：",
     "termsLink": "《利用規約》",
     "and": "と",
     "privacyLink": "《プライバシーポリシー》",
@@ -14,17 +14,17 @@
     "buttonRefuse": "同意しない",
     "second": {
       "title": "ご確認ください",
-      "message": "Linx AIを続けてご利用いただくには、<a href=\"https://www.qiniu.com/agreements/user-agreement\">《利用規約》</a>と<a href=\"https://www.qiniu.com/agreements/privacy-right\">《プライバシーポリシー》</a>に同意する必要があります。同意されない場合、アプリを終了します。",
-      "messageIntro": "Linx AIを続けてご利用いただくには、",
+      "message": "JiuBao AIを続けてご利用いただくには、<a href=\"http://47.114.109.136:8008/user-agreement.html\">《利用規約》</a>と<a href=\"http://47.114.109.136:8008/privacy-policy.html\">《プライバシーポリシー》</a>に同意する必要があります。同意されない場合、アプリを終了します。",
+      "messageIntro": "JiuBao AIを続けてご利用いただくには、",
       "messageFooter": "に同意する必要があります。同意されない場合、アプリを終了します。",
       "buttonAccept": "同意して続ける",
       "buttonRefuse": "アプリを終了"
     }
   },
   "app": {
-    "name": "Linx AI",
-    "description": "Linx AIデバイス管理",
-    "global_title": "Linx AI管理",
+    "name": "JiuBao AI",
+    "description": "JiuBao AIデバイス管理",
+    "global_title": "JiuBao AI管理",
     "location_permission_desc": "Wi-Fi設定と周辺ネットワークのスキャンに使用します"
   },
   "pages": {
@@ -54,8 +54,8 @@
     "profile": "マイページ"
   },
   "login": {
-    "app_name": "Linx AI",
-    "app_desc": "Linx AIデバイス管理",
+    "app_name": "JiuBao AI",
+    "app_desc": "JiuBao AIデバイス管理",
     "phone_login": "電話番号でログイン",
     "account_login": "既存アカウントでログイン",
     "account_label": "アカウント",
@@ -120,7 +120,7 @@
     "get_templates_failed": "テンプレートエージェントの取得に失敗しました"
   },
   "welcome": {
-    "guide_title": "Linxへようこそ！\nデバイスを追加して始めましょう",
+    "guide_title": "JiuBaoへようこそ！\nデバイスを追加して始めましょう",
     "setup_qrcode": "スキャンで追加",
     "setup_bluetooth": "Bluetoothで追加",
     "skip_for_now": "後で",
@@ -311,7 +311,7 @@
     "notice_section_1_item_4": "• これが企業/組織アカウントまたは未成年者のアカウントの場合、必要な保護者の確認と公式文書の確認を完了してください。",
     "notice_section_2_title": "II. 削除後の権利とデータ",
     "notice_section_2_intro": "アカウントが削除されると、以下の不可逆的な結果が生じます：",
-    "notice_section_2_item_1": "• Linx AI製品または関連サービスにログインできなくなります。同じメール/電話で再登録すると、元のアカウントとは関係のない新しいアカウントが作成されます。",
+    "notice_section_2_item_1": "• JiuBao AI製品または関連サービスにログインできなくなります。同じメール/電話で再登録すると、元のアカウントとは関係のない新しいアカウントが作成されます。",
     "notice_section_2_item_2": "• すべてのアカウントデータは永久に削除または匿名化されます（個人情報保護法に準拠）。個人プロファイル、取引記録、ポイント、会員資格、クーポンなどを含みますが、これらに限定されず、回復することはできません。",
     "notice_section_2_item_3": "• フォローしているすべての公式アカウントと友人関係は自動的に削除され、他の人はこのアカウントを通じてあなたに連絡することができなくなります。",
     "notice_section_2_item_4": "• 削除前の法的責任と行動記録は、アカウント削除によって免除または軽減されることはありません。",

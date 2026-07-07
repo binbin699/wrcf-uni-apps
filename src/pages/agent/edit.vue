@@ -465,6 +465,17 @@ async function loadAgentData() {
           }
         }
 
+        // 设置音色选择
+        if (agent.config.ttsVoiceId && voiceOptions.value.length > 0) {
+          const voice = voiceOptions.value.find(
+            (v: any) => v.voiceId === agent.config.ttsVoiceId || v.id === agent.config.ttsVoiceId
+          );
+          if (voice && (voice.voiceId || voice.id)) {
+            selectedVoice.value = voice;
+            formData.value.ttsVoiceId = voice.voiceId || String(voice.id || '');
+          }
+        }
+
         // 设置对话语言
         const langCodeToUse = agent.config.langCode || agent.languageCode;
         if (langCodeToUse) {

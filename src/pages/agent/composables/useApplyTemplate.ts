@@ -5,7 +5,15 @@ import { MEM_MODEL_OPTION_ORDER, resolveMemModelId, type AgentFormFields } from 
 
 export async function applyTemplateLogic(
   template: any,
-  formData: Ref<AgentFormFields>,
+  // formData: Ref<AgentFormFields>,
+  formData: Ref<{
+    agentName: string;
+    systemPrompt: string;
+    langCode: string;
+    language: string;
+    llmModelId: string;
+    ttsVoiceId: string;
+  }>,
   llmOptions: Ref<any[]>,
   chatLanguageOptions: Ref<ChatLanguageOption[]>,
   voiceOptions: Ref<any[]>,
@@ -92,3 +100,4 @@ export async function applyTemplateLogic(
     toast.close();
   }
 }
+

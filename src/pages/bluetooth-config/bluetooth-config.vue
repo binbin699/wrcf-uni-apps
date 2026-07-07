@@ -24,6 +24,9 @@
           {{ state.configOnly ? $t('bluetooth.wifi_config_title') : $t('bluetooth.title') }}
         </text>
         <view class="nav-right">
+          <button v-if="showSkipConfig" class="nav-skip-btn" @click="handleSkipConfig">
+            {{ $t('common.skip_config') }}
+          </button>
           <!-- #ifndef MP-WEIXIN -->
           <!-- 非小程序平台显示刷新按钮，避免与小程序原生按钮重叠 -->
           <view class="nav-restart" @click="handleRestart">
@@ -88,10 +91,12 @@ const isLeavingPage = ref(false);
 const leavePageGuardTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const state = ref(bluetoothConfigManager.state);
 const statusBarHeight = ref(44);
+const fromAddDevice = ref(false);
 const BLE_LEAVE_CLEANUP_TIMEOUT = 1200;
 const LEAVE_PAGE_GUARD_TIMEOUT = 3000;
 const showSkipConfig = computed(
   () =>
+    fromAddDevice.value &&
     !state.value.configOnly &&
     state.value.defaultAgentBind !== null &&
     state.value.currentStep !== CONFIG_STEPS.SELECT_DEVICE &&
@@ -120,6 +125,7 @@ watch(
 // 生命周期钩子
 onLoad((options) => {
   console.log('BluetoothConfig 页面加载', options);
+  fromAddDevice.value = options?.fromAddDevice === '1';
 
   // 检测设备类型
   const systemInfo = uni.getSystemInfoSync();
@@ -175,6 +181,9 @@ onUnload(() => {
   // 移除事件监听器
   uni.$off('connectionLost', handleConnectionLost);
 
+  // 清理蓝牙资源
+  cleanupBluetooth();
+
   // 重置配网协议状态
   configProtocol.reset();
 
@@ -195,123 +204,29 @@ function onStoreStateChange(newState: any) {
   state.value = newState;
 }
 
-function withTimeout(task: Promise<unknown>, timeoutMs: number, onTimeout?: () => void) {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-  return Promise.race([
-    task,
-    new Promise<void>((resolve) => {
-      timeoutId = setTimeout(() => {
-        timeoutId = null;
-        onTimeout?.();
-        resolve();
-      }, timeoutMs);
-    })
-  ]).finally(() => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-  });
-}
-
-let leaveCleanupPromise: Promise<void> | null = null;
-
-function cleanupBluetoothBeforeLeave() {
-  if (!AppInfo.isApp()) {
-    return Promise.resolve();
-  }
-
-  if (leaveCleanupPromise) {
-    return leaveCleanupPromise;
-  }
-
-  leaveCleanupPromise = cleanupBluetooth()
-    .catch((error) => {
-      console.log('离开页面前清理蓝牙资源失败(可忽略):', error);
-    })
-    .finally(() => {
-      leaveCleanupPromise = null;
-    });
-
-  return leaveCleanupPromise;
-}
-
-function clearLeavePageGuard() {
-  if (leavePageGuardTimer.value) {
-    clearTimeout(leavePageGuardTimer.value);
-    leavePageGuardTimer.value = null;
-  }
-}
-
-function resetLeavePageGuard() {
-  clearLeavePageGuard();
-  isLeavingPage.value = false;
-}
-
-/** 离开配网页：先导航，蓝牙清理放后台（避免 onBackPress 拦截后长时间无法返回） */
-function navigateBackFromConfig() {
-  const pages = getCurrentPages();
-  if (pages.length <= 1) {
-    uni.switchTab({ url: PageMap[Pages.Profile].url });
-    return;
-  }
-  uni.navigateBack({
-    fail: (err) => {
-      console.warn('[蓝牙] navigateBack 失败，跳转 Profile:', err);
-      uni.switchTab({ url: PageMap[Pages.Profile].url });
-    }
-  });
-}
-
-function leaveBluetoothConfig(navigate: () => void) {
-  if (isLeavingPage.value) {
-    console.log('[蓝牙] 正在离开页面，忽略重复返回');
-    return;
-  }
-
-  isLeavingPage.value = true;
-  clearLeavePageGuard();
-  leavePageGuardTimer.value = setTimeout(() => {
-    console.warn(`[蓝牙] 离开页面守卫超时（${LEAVE_PAGE_GUARD_TIMEOUT}ms），重置状态`);
-    resetLeavePageGuard();
-  }, LEAVE_PAGE_GUARD_TIMEOUT);
-
-  try {
-    navigate();
-  } catch (error) {
-    console.error('[蓝牙] 页面导航失败:', error);
-  }
-
-  void cleanupBluetoothBeforeLeave();
-}
-
-/**
- * 处理返回
- * @returns 是否拦截系统默认返回（步骤内回退需拦截；离开页面由 navigate 自行处理）
- */
-function handleBack(): boolean {
-  if (isLeavingPage.value) {
-    console.log('[蓝牙] 正在离开页面，忽略重复返回');
-    return true;
-  }
-
+function handleBack() {
   // 如果配网已完成，跳转到智能体广场方便用户绑定智能体
   if (state.value.configCompleted) {
-    console.log('配网已完成，跳转智能体广场');
-    leaveBluetoothConfig(() => {
-      uni.switchTab({
-        url: '/pages/square/square'
-      });
+    console.log('配网已完成，跳转智能体角色');
+    uni.switchTab({
+      url: '/pages/square/super_square'
     });
-    return true;
+    return;
   }
 
   if (state.value.currentStep === CONFIG_STEPS.SELECT_DEVICE) {
     // 第一步，返回上一页
-    leaveBluetoothConfig(() => {
-      navigateBackFromConfig();
-    });
-    return true;
+    try {
+      uni.navigateBack();
+    } catch (error: any) {
+      if (error.errMsg.includes('cannot navigate back at first page')) {
+        uni.navigateTo({
+          url: PageMap[Pages.Profile].url
+        });
+      } else {
+        console.log('返回上一页失败:', error);
+      }
+    }
   } else if (state.value.currentStep === CONFIG_STEPS.SELECT_WIFI) {
     // 从WiFi选择页返回设备选择页，需要断开蓝牙连接并重置状态
     console.log('从WiFi页返回设备扫描页，断开蓝牙并重置状态');
@@ -319,14 +234,15 @@ function handleBack(): boolean {
     // 断开当前蓝牙连接
     const selectedDevice = state.value.selectedDevice;
     if (selectedDevice && selectedDevice.deviceId) {
-      bleService
-        .disconnect(selectedDevice.deviceId)
-        .then(() => {
+      uni.closeBLEConnection({
+        deviceId: selectedDevice.deviceId,
+        success: () => {
           console.log('蓝牙连接已断开');
-        })
-        .catch((error) => {
+        },
+        fail: (error) => {
           console.log('断开蓝牙连接失败(可忽略):', error);
-        });
+        }
+      });
     }
 
     // 重置配网协议状态
@@ -357,10 +273,8 @@ function handleBack(): boolean {
 }
 
 function handleSkipConfig() {
-  leaveBluetoothConfig(() => {
-    uni.switchTab({
-      url: PageMap[Pages.Square].url
-    });
+  uni.switchTab({
+    url: PageMap[Pages.Super_square].url
   });
 }
 
@@ -406,38 +320,16 @@ function handleConnectionLost(event: any) {
 
   // 自动重新开始配网流程
   setTimeout(() => {
-    if (isLeavingPage.value) {
-      return;
-    }
     bluetoothConfigManager.restartConfig(event.reason || $t('bluetooth.connection_disconnected'));
   }, 1000);
 }
 
 async function cleanupBluetooth() {
   try {
-    await withTimeout(
-      bleService.stopScan(),
-      BLE_LEAVE_CLEANUP_TIMEOUT,
-      () => console.log(`[蓝牙] 停止扫描超时（${BLE_LEAVE_CLEANUP_TIMEOUT}ms），后台继续清理`)
-    );
+    await uni.stopBluetoothDevicesDiscovery();
+    await uni.closeBluetoothAdapter();
   } catch (error) {
-    console.log('[蓝牙] 停止扫描失败(可忽略):', error);
-  }
-
-  // Harmony 插件在页面内 close/dispose 容易阻塞主线程，与 resetBluetooth 策略保持一致
-  if (AppInfo.isHarmonyApp()) {
-    console.log('[蓝牙] Harmony 离开页面仅停止扫描，跳过 closeAdapter');
-    return;
-  }
-
-  try {
-    await withTimeout(
-      bleService.closeAdapter(),
-      BLE_LEAVE_CLEANUP_TIMEOUT,
-      () => console.log(`[蓝牙] 关闭蓝牙适配器超时（${BLE_LEAVE_CLEANUP_TIMEOUT}ms），后台清理结束`)
-    );
-  } catch (error) {
-    console.log('[蓝牙] 关闭蓝牙适配器失败(可忽略):', error);
+    console.log('清理蓝牙资源失败:', error);
   }
 }
 </script>

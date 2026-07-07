@@ -147,9 +147,12 @@ async function loadTutorialResource() {
     manualUrl.value = configManualUrl;
 
     const languageCode = getLanguageCode();
+	console.log('languageCode: ', languageCode)
     const res = await tutorialApi.getTutorialResource(languageCode);
     videoUrl.value = res.data.tutorialVideoUrl ?? '';
     manualUrl.value = res.data.manualUrl || configManualUrl || '';
+    manualUrl.value = res.data.manualUrl ?? '';
+
   } catch (error: unknown) {
     console.error('[help/loadTutorialResource] 获取教程资源失败:', error);
   } finally {

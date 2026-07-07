@@ -372,6 +372,18 @@ export class ConfigProtocol {
           rejectListenerSetup(error);
         });
 
+      if (AppInfo.isHarmonyApp()) {
+        setTimeout(() => {
+          if (this.isClosing) {
+            return;
+          }
+          if (!settled) {
+            console.log('鸿蒙蓝牙通知注册进入兜底放行');
+            resolveListenerSetup();
+          }
+        }, 300);
+      }
+
       // 只注册一次数据监听器（这个监听器是全局的，不需要每次都注册）
       if (!this._dataListenerRegistered) {
         this._dataListenerRegistered = true;
@@ -525,6 +537,8 @@ export class ConfigProtocol {
                 code: 'PROTOCOL_ERROR'
               };
               this.deliverConfigResult(errorResult);
+              this.configResult = errorResult;
+              this.emit('config-result', errorResult);
               return;
             }
 
@@ -1178,6 +1192,7 @@ export class ConfigProtocol {
     this._dataListenerRegistered = false;
     this._connectionListener = null;
     this._dataListener = null;
+    this.configResultPromise = null;
     this.deviceId = null;
     console.log('蓝牙配网协议已关闭');
   }

@@ -1,8 +1,8 @@
 {
   "privacy": {
     "title": "Terms of Service & Privacy Policy",
-    "message": "Welcome to Linx AI!<br/><br/>Before using our services, please read and agree to the following agreements: <a href=\"https://www.qiniu.com/agreements/user-agreement\">User Agreement</a> and <a href=\"https://www.qiniu.com/agreements/privacy-right\">Privacy Policy</a><br/><br/>By clicking <font color=\"#335CFF\">\"Agree\"</font>, you confirm that you have read and agree to the above agreements. If you do not agree, we will not be able to provide services to you.",
-    "messageIntro": "Welcome to Linx AI!\n\nBefore using our services, please read and agree to the following agreements:",
+    "message": "Welcome to JiuBao AI!<br/><br/>Before using our services, please read and agree to the following agreements: <a href=\"http://47.114.109.136:8008/user-agreement.html\">User Agreement</a> and <a href=\"http://47.114.109.136:8008/privacy-policy.html\">Privacy Policy</a><br/><br/>By clicking <font color=\"#335CFF\">\"Agree\"</font>, you confirm that you have read and agree to the above agreements. If you do not agree, we will not be able to provide services to you.",
+    "messageIntro": "Welcome to JiuBao AI!\n\nBefore using our services, please read and agree to the following agreements:",
     "termsLink": "User Agreement",
     "and": " and ",
     "privacyLink": "Privacy Policy",
@@ -14,17 +14,17 @@
     "buttonRefuse": "Disagree",
     "second": {
       "title": "Notice",
-      "message": "You need to agree to the <a href=\"https://www.qiniu.com/agreements/user-agreement\">User Agreement</a> and <a href=\"https://www.qiniu.com/agreements/privacy-right\">Privacy Policy</a> to continue using Linx AI, otherwise the app will exit.",
+      "message": "You need to agree to the <a href=\"http://47.114.109.136:8008/user-agreement.html\">User Agreement</a> and <a href=\"http://47.114.109.136:8008/privacy-policy.html\">Privacy Policy</a> to continue using JiuBao AI, otherwise the app will exit.",
       "messageIntro": "You need to agree to the ",
-      "messageFooter": " to continue using Linx AI, otherwise the app will exit.",
+      "messageFooter": " to continue using JiuBao AI, otherwise the app will exit.",
       "buttonAccept": "Agree & Continue",
       "buttonRefuse": "Exit App"
     }
   },
   "app": {
-    "name": "Linx AI",
-    "description": "Linx AI Device Binding Management",
-    "global_title": "Linx AI Management",
+    "name": "JiuBao AI",
+    "description": "JiuBao AI Device Binding Management",
+    "global_title": "JiuBao AI Management",
     "location_permission_desc": "Used for Wi-Fi setup and scanning nearby networks"
   },
   "pages": {
@@ -54,8 +54,8 @@
     "profile": "Profile"
   },
   "login": {
-    "app_name": "Linx AI",
-    "app_desc": "Linx AI Device Binding Management",
+    "app_name": "JiuBao AI",
+    "app_desc": "JiuBao AI Device Binding Management",
     "phone_login": "Quick Phone Login",
     "account_login": "Sign in to Existing Account",
     "account_label": "Account",
@@ -120,7 +120,7 @@
     "get_templates_failed": "Failed to get template agents"
   },
   "welcome": {
-    "guide_title": "Welcome to Linx!\nAdd your device to start",
+    "guide_title": "Welcome to JiuBao!\nAdd your device to start",
     "setup_qrcode": "Scan to add",
     "setup_bluetooth": "Add via Bluetooth",
     "skip_for_now": "Skip for now",
@@ -311,7 +311,7 @@
     "notice_section_1_item_4": "• If this is a corporate/organization account or minor's account, complete required guardian confirmation and official documentation verification.",
     "notice_section_2_title": "II. Rights and Data After Deletion",
     "notice_section_2_intro": "Once your account is deleted, you will experience the following irreversible consequences:",
-    "notice_section_2_item_1": "• You will no longer be able to log in to Linx AI products or related services. Re-registering with the same email/phone will create a new account with no connection to the original.",
+    "notice_section_2_item_1": "• You will no longer be able to log in to JiuBao AI products or related services. Re-registering with the same email/phone will create a new account with no connection to the original.",
     "notice_section_2_item_2": "• All account data will be permanently deleted or anonymized (in compliance with Personal Information Protection Law), including but not limited to personal profile, transaction records, points, memberships, vouchers, etc., and cannot be recovered.",
     "notice_section_2_item_3": "• All followed official accounts and friend relationships will be automatically removed, and others will not be able to contact you through this account.",
     "notice_section_2_item_4": "• Legal responsibilities and behavior records prior to deletion will not be waived or reduced due to account deletion.",

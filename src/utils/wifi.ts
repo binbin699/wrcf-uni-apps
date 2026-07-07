@@ -60,6 +60,7 @@ export async function loadWifiList(
 
   const canScan = isScanSupported();
   if (!canScan) {
+    // iOS 等不支持扫描的平台，尝试获取当前连接的 WiFi 作为回退
     // iOS / 鸿蒙等不支持扫描的平台，尝试获取当前连接的 WiFi 作为回退
     console.log('平台不支持 WiFi 扫描，尝试获取当前连接的 WiFi');
     if (!isWifiModuleAvailable()) {

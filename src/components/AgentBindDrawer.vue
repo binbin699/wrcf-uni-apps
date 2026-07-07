@@ -96,6 +96,7 @@ import {
   PermissionStatus,
   openPermissionSetting
 } from '@/utils/permission';
+import { AppInfo } from '@/const';
 
 const isQrcodeScanCameraOnly = () => APP_CONFIG.APP_QRCODE_SCAN_SOURCE === 'camera_only';
 
@@ -184,7 +185,7 @@ export default {
             message: this.$t('agent_bind_drawer.bind_success')
           };
         } else {
-          if (res.message.includes('设备已存在灵矽平台')) {
+          if (res.message.includes('设备已存在九宝平台')) {
             return {
               success: false,
               message: this.$t('agent_bind_drawer.device_exist')
@@ -211,7 +212,7 @@ export default {
           error?.message || error?.errMsg || (typeof error === 'string' ? error : '');
 
         // 处理特定错误
-        if (errorMsg.includes('设备已存在灵矽平台')) {
+        if (errorMsg.includes('设备已存在九宝平台')) {
           return {
             success: false,
             message: this.$t('agent_bind_drawer.device_exist')
@@ -308,12 +309,13 @@ export default {
             return;
           }
         } else {
-          const permissionResult = isQrcodeScanCameraOnly()
-            ? await requestCameraPermission(undefined, true)
-            : (await requestCameraAndAlbumPermission(undefined, true)).camera;
-          if (!permissionResult.granted) {
+          // 非 iOS 平台：使用合并的预请求弹窗同时请求相机和相册权限
+          const permissionResult = await requestCameraAndAlbumPermission(undefined, true);
+          if (!permissionResult.camera.granted) {
+            // 如果相机权限被拒绝，终止流程
             return;
           }
+          // 相册权限是可选的，不影响扫码流程
         }
 
         // 扫码
@@ -322,88 +324,88 @@ export default {
           autoZoom: false,
           ...(isQrcodeScanCameraOnly() ? { onlyFromCamera: true } : {}),
           success: async (res) => {
+            console.log('【扫码原始结果】:', res.result);
+
             // 解析二维码数据
             let qrcodeData;
             try {
               qrcodeData = JSON.parse(res.result);
+              console.log('【解析成功】:', qrcodeData);
             } catch (error) {
-              console.error('JSON解析错误:', error);
-              uni.showToast({
-                title: this.$t('net_config.invalid_qr'),
-                icon: 'none',
-                duration: 2000
-              });
+              console.error('【JSON解析失败】:', error, res.result);
+              uni.showToast({ title: '二维码格式错误', icon: 'none' });
               return;
             }
 
-            // 检查 m 字段是否存在
-            if (!qrcodeData || !qrcodeData.m) {
-              uni.showToast({
-                title: this.$t('net_config.invalid_qr'),
-                icon: 'none',
-                duration: 2000
-              });
+            const { m, s, v } = qrcodeData || {};
+            if (!m) {
+              uni.showToast({ title: '二维码缺少MAC地址', icon: 'none' });
               return;
             }
+            if (!v) {
+              uni.showToast({ title: '二维码不支持（缺少v）', icon: 'none' });
+              return;
+            }
+            if (!v.startsWith('cf-')) {
+              uni.showToast({ title: '仅支持CF设备', icon: 'none' });
+              return;
+            }
+
+            const requestData = { m, s, v };
+            console.log('【准备请求数据】:', requestData);
 
             try {
-              uni.showLoading({ title: this.$t('net_config.binding_device') });
+              uni.showLoading({ title: '绑定中...' });
+              const result = await deviceApi.bindByQrcode(requestData);
+              uni.hideLoading();
 
-              // 调用绑定设备接口
-              const result = await deviceApi.bindByQrcode({ m: qrcodeData.m });
               if (result && result.code === 1000) {
-                console.log('设备绑定成功', result);
+                uni.showToast({ title: '绑定成功', icon: 'success', duration: 1500 });
+
+                // 处理默认智能体提示
+                const bind = result?.data?.defaultAgentBind;
+                if (bind) {
+                  let agentMsg = '';
+                  if (bind.bound && bind.agentName) {
+                    agentMsg = `已绑定智能体：${bind.agentName}`;
+                  } else if (bind.reason === 'no_match') {
+                    agentMsg = '未匹配到默认智能体';
+                  } else if (bind.reason === 'error') {
+                    agentMsg = '智能体绑定失败';
+                  }
+                  if (agentMsg) {
+                    setTimeout(() => {
+                      uni.showToast({ title: agentMsg, icon: 'none', duration: 2000 });
+                    }, 1500);
+                  }
+                }
+
+                // 跳转
+                setTimeout(() => {
+                  uni.navigateTo({
+                    url: PageMap[Pages.NetConfig].url + '?bound=1&fromAddDevice=1'
+                  });
+                }, 3000);
               } else {
-                throw new Error(result?.message || this.$t('net_config.device_bind_fail'));
+                throw new Error(result?.message || '绑定失败');
               }
-
-              uni.hideLoading();
-
-              uni.showToast({
-                title: this.$t('net_config.device_bind_success'),
-                icon: 'success',
-                duration: 1500
-              });
-
-              // 追加默认智能体绑定结果提示
-              const bind = result?.data?.defaultAgentBind;
-              if (bind) {
-                let agentMsg = '';
-                if (bind.bound && bind.agentName) {
-                  agentMsg = this.$t('device.default_agent_bound').replace('{name}', bind.agentName);
-                } else if (bind.reason === 'no_match') {
-                  agentMsg = this.$t('device.default_agent_no_match');
-                } else if (bind.reason === 'error') {
-                  agentMsg = this.$t('device.default_agent_bind_failed');
-                }
-                if (agentMsg) {
-                  setTimeout(() => {
-                    uni.showToast({ title: agentMsg, icon: 'none', duration: 2000 });
-                  }, 1500);
-                }
-              }
-
-              // 绑定成功，跳转到配网页面
-              setTimeout(() => {
-                uni.navigateTo({
-                  url: PageMap[Pages.NetConfig].url + '?bound=1&fromAddDevice=1'
-                });
-              }, 3000);
             } catch (error) {
-              console.error('设备绑定失败:', error);
               uni.hideLoading();
+              console.error('【绑定异常】:', error);
+              uni.showToast({ title: error?.message || '绑定失败', icon: 'none' });
             }
           },
           fail: (err) => {
             if (err.errMsg !== 'scanCode:fail cancel') {
-              console.error('扫码失败:', err);
+              console.error('【扫码失败】:', err);
+              uni.showToast({ title: '扫码失败', icon: 'none' });
             }
           }
         });
       } catch (error) {
         console.error('扫码流程异常', error);
       }
-    },
+    ,
 
     // 添加设备（根据 setupMode 调用对应方法）
     handleAddDevice() {

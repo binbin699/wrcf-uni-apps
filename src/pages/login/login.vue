@@ -12,14 +12,14 @@
     <view class="main-content">
       <!-- Logo和应用信息 -->
       <view class="header">
-        <view class="logo-container">
-          <view class="logo">
-            <image src="/static/logo.jpg" alt="" class="logo-img"></image>
-          </view>
-        </view>
+<!--        <view class="logo-container">-->
+<!--          <view class="logo">-->
+<!--            <image src="/static/logo.jpg" alt="" class="logo-img"></image>-->
+<!--          </view>-->
+<!--        </view>-->
         <view class="app-info">
-          <text class="app-name">{{ $t('login.app_name') }}</text>
-          <text class="app-desc">{{ $t('login.app_desc') }}</text>
+<!--          <text class="app-name">{{ $t('login.app_name') }}</text>-->
+<!--          <text class="app-desc">{{ $t('login.app_desc') }}</text>-->
         </view>
       </view>
 
@@ -180,6 +180,20 @@
           </view>
         </view>
 
+        <view class="agreement-section">
+          <checkbox-group @change="onAgreementChange">
+            <label class="agreement-label">
+              <checkbox :checked="isAgree" color="#8FD3F4" />
+              <text class="agreement-text">
+                已阅读并同意
+                <a href="http://47.114.109.136:8008/user-agreement.html" class="agreement-link">《九宝用户协议》</a>
+                和
+                <a href="http://47.114.109.136:8008/privacy-policy.html" class="agreement-link">《隐私政策》</a>
+              </text>
+            </label>
+          </checkbox-group>
+        </view>
+
         <view class="modal-actions">
           <button class="cancel-btn" @click="closePasswordModal">{{ $t('login.cancel') }}</button>
           <button
@@ -300,13 +314,9 @@ const showSmsModal = ref(false);
 
 // 生命周期钩子
 onLoad(async () => {
-  await userStore.initUserState();
-
   // 如果已登录，直接跳转
   if (userStore.isLoggedIn) {
-    if (userStore.userId <= 0) {
-      await userStore.fetchUserInfo();
-    }
+    await userStore.fetchUserInfo();
     redirectToHome();
     return;
   }
@@ -402,6 +412,15 @@ async function handleAppleLogin() {
  * 请求 WeChat OAuth（App端）
  */
 async function handleWxAppLogin() {
+  console.log('=== 开始微信登录 ===');
+  console.log('平台:', process.env.UNI_PLATFORM);
+  console.log('isLoading:', userStore.isLoading);
+  // ⚠️ 防止重复点击
+  if (userStore.isLoading) {
+    console.warn('微信登录正在处理中，请勿重复点击');
+    return;
+  }
+
   const isSuccess = await userStore.wxAppLogin();
   if (isSuccess) {
     handleLoginSuccess();
@@ -501,6 +520,16 @@ function togglePasswordVisibility() {
 }
 
 async function submitPasswordLogin() {
+
+  // 新增：协议勾选校验
+  if (!isAgree.value) {
+    uni.showToast({
+      title: '请先同意用户协议和隐私政策',
+      icon: 'none'
+    });
+    return; // 直接返回，阻止后续登录请求
+  }
+
   // 表单验证
   if (!passwordForm.value.unionid) {
     toast.warning({ msg: $t('login.please_enter_unionid'), duration: 3000 });
@@ -602,6 +631,25 @@ function openSmsModal() {
   showSmsModal.value = true;
 }
 
+// 新增协议同意状态
+const isAgree = ref(false);
+
+// 协议变更处理
+function onAgreementChange(e: any) {
+  isAgree.value = e.detail.value.length > 0;
+}
+
+// 登录提交时校验
+async function handleLoginSubmit() {
+  if (!isAgree.value) {
+    uni.showToast({
+      title: '请先同意用户协议和隐私政策',
+      icon: 'none'
+    });
+    return;
+  }
+}
+
 /**
  * 处理短信登录提交
  */
@@ -613,7 +661,7 @@ async function handleSmsLoginSubmit(data: { phone: string; ticket: string; code:
       ticket: data.ticket,
       smsCode: data.code
     });
-    
+
     // 实际登录逻辑
     if (!success) {
       if (userStore.loginError) {
@@ -631,6 +679,36 @@ async function handleSmsLoginSubmit(data: { phone: string; ticket: string; code:
 </script>
 
 <style>
+
+/* 新增协议区域样式 */
+.agreement-section {
+  margin-top: 24rpx;
+  display: flex;
+  align-items: flex-start;
+}
+
+.agreement-label {
+  display: flex;
+  align-items: center;
+  font-size: 20rpx;
+  color: #666;
+  line-height: 1.5;
+}
+
+.agreement-label checkbox {
+  transform: scale(0.8); /* 缩小到 80% */
+  margin-right: 8rpx;
+}
+
+.agreement-text {
+  margin-left: 16rpx;
+}
+
+.agreement-link {
+  color: #8FD3F4;
+  text-decoration: underline;
+}
+
 /* iOS 橡皮筋效果修复 - 页面背景 */
 page {
   background: linear-gradient(
@@ -648,14 +726,11 @@ page {
   height: 100vh;
   min-height: 100vh;
   position: relative;
-  /* 根据Figma设计稿 - 三色线性渐变背景，60%透明度 */
-  background-color: #ffffff;
-  background-image: linear-gradient(
-    180deg,
-    rgba(161, 140, 209, 0.6) 0%,      /* #A18CD1 紫色 60% */
-    rgba(143, 211, 244, 0.6) 50%,     /* #8FD3F4 浅蓝色 60% */
-    rgba(251, 194, 235, 0.6) 100%     /* #FBC2EB 粉色 60% */
-  );
+  /* 使用静态背景图片 */
+  background-image: url('/static/strategy/opening_animation.9.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -667,6 +742,7 @@ page {
   padding-bottom: env(safe-area-inset-bottom);
   box-sizing: border-box;
 }
+
 
 /* Logo水印背景 - 使用SVG mask实现纯白色镂空效果 */
 .login-container::before {
@@ -680,9 +756,9 @@ page {
   opacity: 0.15;
   /* 纯白色背景 */
   background: #ffffff;
-  /* 使用品牌 logo 作为遮罩 */
-  -webkit-mask: url('/static/logo.png') no-repeat center;
-  mask: url('/static/logo.png') no-repeat center;
+  /* 使用SVG作为遮罩，眼睛部分会镂空 */
+  -webkit-mask: url('/static/logo-watermark.svg') no-repeat center;
+  mask: url('/static/logo-watermark.svg') no-repeat center;
   -webkit-mask-size: contain;
   mask-size: contain;
   z-index: 1;
@@ -784,6 +860,7 @@ page {
   align-items: center;
   width: 100%;
   gap: 32rpx;
+  margin-top: 860rpx;
 }
 
 .login-btn {
@@ -1058,5 +1135,12 @@ page {
   font-size: 24rpx;
   text-align: center;
   margin-top: 16rpx;
+}
+.login-btn.sms,
+.login-btn.wx,
+.login-btn.email,
+.login-btn.password {
+  background: rgba(255, 255, 255, 0.28);  /* 你想要的半透明色 */
+  color: #ffffff;
 }
 </style>

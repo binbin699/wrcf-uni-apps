@@ -34,63 +34,10 @@
           </view>
         </view>
         <view :class="`wd-message-box__actions ${messageState.showCancelButton ? 'wd-message-box__flex' : 'wd-message-box__block'}`">
-          <wd-button
-            v-if="messageState.showCancelButton"
-            :custom-class="customCancelProps.customClass"
-            :custom-style="customCancelProps.customStyle"
-            :plain="customCancelProps.plain"
-            :round="customCancelProps.round"
-            :disabled="customCancelProps.disabled"
-            :hairline="customCancelProps.hairline"
-            :block="customCancelProps.block"
-            :type="customCancelProps.type"
-            :size="customCancelProps.size"
-            :icon="customCancelProps.icon"
-            :class-prefix="customCancelProps.classPrefix"
-            :loading="customCancelProps.loading"
-            :loading-color="customCancelProps.loadingColor"
-            :open-type="customCancelProps.openType"
-            :hover-stop-propagation="customCancelProps.hoverStopPropagation"
-            :lang="customCancelProps.lang"
-            :session-from="customCancelProps.sessionFrom"
-            :send-message-title="customCancelProps.sendMessageTitle"
-            :send-message-path="customCancelProps.sendMessagePath"
-            :send-message-img="customCancelProps.sendMessageImg"
-            :app-parameter="customCancelProps.appParameter"
-            :show-message-card="customCancelProps.showMessageCard"
-            :button-id="customCancelProps.buttonId"
-            :scope="customCancelProps.scope"
-            @click="toggleModal('cancel')"
-          >
+          <wd-button v-bind="customCancelProps" v-if="messageState.showCancelButton" @click="toggleModal('cancel')">
             {{ messageState.cancelButtonText || translate('cancel') }}
           </wd-button>
-          <wd-button
-            :custom-class="customConfirmProps.customClass"
-            :custom-style="customConfirmProps.customStyle"
-            :plain="customConfirmProps.plain"
-            :round="customConfirmProps.round"
-            :disabled="customConfirmProps.disabled"
-            :hairline="customConfirmProps.hairline"
-            :block="customConfirmProps.block"
-            :type="customConfirmProps.type"
-            :size="customConfirmProps.size"
-            :icon="customConfirmProps.icon"
-            :class-prefix="customConfirmProps.classPrefix"
-            :loading="customConfirmProps.loading"
-            :loading-color="customConfirmProps.loadingColor"
-            :open-type="customConfirmProps.openType"
-            :hover-stop-propagation="customConfirmProps.hoverStopPropagation"
-            :lang="customConfirmProps.lang"
-            :session-from="customConfirmProps.sessionFrom"
-            :send-message-title="customConfirmProps.sendMessageTitle"
-            :send-message-path="customConfirmProps.sendMessagePath"
-            :send-message-img="customConfirmProps.sendMessageImg"
-            :app-parameter="customConfirmProps.appParameter"
-            :show-message-card="customConfirmProps.showMessageCard"
-            :button-id="customConfirmProps.buttonId"
-            :scope="customConfirmProps.scope"
-            @click="toggleModal('confirm')"
-          >
+          <wd-button v-bind="customConfirmProps" @click="toggleModal('confirm')">
             {{ messageState.confirmButtonText || translate('confirm') }}
           </wd-button>
         </view>

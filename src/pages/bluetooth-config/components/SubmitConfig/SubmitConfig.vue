@@ -285,7 +285,7 @@ export default {
       // 跳转到智能体广场，方便用户绑定智能体
       setTimeout(() => {
         uni.switchTab({
-          url: '/pages/square/square'
+          url: '/pages/square/super_square'
         });
       }, 500);
     },

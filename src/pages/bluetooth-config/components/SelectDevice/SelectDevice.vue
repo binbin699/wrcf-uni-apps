@@ -384,6 +384,25 @@ export default {
       console.log('选择设备:', device);
 
       // 已绑定设备也允许进入后续蓝牙配网流程，不再拦截（不重复调用绑定接口，见 startConnection）
+      // 获取当前状态
+      const state = bluetoothConfigManager.getState();
+      const selectedMac = (device.macAddress || device.deviceId || '').toLowerCase();
+
+      // 检查当前设备是否已绑定（仅在非 configOnly 模式下检查）
+      if (!state.configOnly && selectedMac) {
+        const isDeviceBound = this._devices.some(
+          (_device) => (_device.macAddress || '').toLowerCase() === selectedMac
+        );
+
+        if (isDeviceBound) {
+          uni.showToast({
+            title: this.$t('bluetooth.select_device.device_bound'),
+            icon: 'none',
+            duration: 2000
+          });
+          return;
+        }
+      }
 
       // 保存选中的设备
       bluetoothConfigManager.setSelectedDevice(device);

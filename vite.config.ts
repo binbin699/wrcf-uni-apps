@@ -1,26 +1,22 @@
 import { defineConfig, UserConfig, loadEnv } from 'vite';
 import uni from '@dcloudio/vite-plugin-uni';
+import getAppConfig from './app.config';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { loadBrandConfig, resolveChannel, toLegacyAppConfig } from './scripts/brand/lib/config';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // 1. 加载环境变量（从 .env 文件）
-  const env = {
-    ...loadEnv(mode, process.cwd(), ''),
-    ...process.env
-  };
+  const env = loadEnv(mode, process.cwd(), '');
   const isDev = env.VITE_USER_NODE_ENV === 'development';
-  const brand = env.BRAND || 'linx';
-  const channel = resolveChannel(env, __dirname);
-  const resolvedBrandConfig = loadBrandConfig({
-    brand,
-    channel,
-    cwd: __dirname,
-    env
-  });
-  const appConfig = toLegacyAppConfig(resolvedBrandConfig);
+
+  // 2. 获取 .env 中的版本配置
+  const appEdition = env.VITE_APP_EDITION || 'cn';
+  // 云打包的方式都可以正常拿到 UNI_UTS_PLATFORM，本地打包拿不到值，需要手动处理
+  const platform = env.UNI_UTS_PLATFORM || 'app-android';
+
+  // 3. 根据版本获取应用配置
+  const appConfig = getAppConfig(platform as any, appEdition as any);
 
   // 4. 读取 manifest.json 中的版本号
   let appVersion = '1.0.0';
@@ -33,9 +29,13 @@ export default defineConfig(({ mode }) => {
     console.warn('Failed to read version from manifest.json:', e);
   }
 
-  // 4. 如果开发环境且环境变量中配置了 BASE_API_URL，则使用环境变量中的值，优先级高于品牌配置中的值
+  // 4. 如果开发环境且环境变量中配置了 BASE_API_URL，则使用环境变量中的值，优先级高于 app.config.ts 中的值
   if (isDev && env.VITE_BASE_API_URL) {
     appConfig.BASE_API_URL = env.VITE_BASE_API_URL;
+  }
+
+  if (env.VITE_UPLOAD_DOMAIN) {
+    appConfig.UPLOAD_DOMAIN = env.VITE_UPLOAD_DOMAIN;
   }
 
   const config: UserConfig = {

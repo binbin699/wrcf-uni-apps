@@ -329,10 +329,12 @@ const harmonyBleService: BleServiceAdapter = {
       lib.reqBtPer((granted: boolean) => {
         if (!granted) {
           reject(normalizeHarmonyError({ type: 10001, message: 'auth deny' }, 'permission'));
+          reject({ errCode: 10001, errMsg: 'auth deny' });
           return;
         }
         if (!lib.isEnabled()) {
           reject(normalizeHarmonyError({ type: 10002, message: 'not available' }, 'permission'));
+          reject({ errCode: 10001, errMsg: 'not available' });
           return;
         }
         resolve({ ok: true });
@@ -634,6 +636,8 @@ const harmonyBleService: BleServiceAdapter = {
           }
         }
       );
+
+      resolveOnce({ ok: true, implicit: true });
     });
   },
 

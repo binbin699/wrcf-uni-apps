@@ -103,8 +103,15 @@ const { t: $t } = useI18n();
 // 使用用户store
 const userStore = useUserStore();
 
-// 默认头像
-const defaultAvatar = computed(() => '/static/vx.jpg');
+// 根据登录类型获取默认头像
+// 微信登录（有外部头像URL）→ vx.jpg
+// 游客登录、邮箱登录、其他登录 → logo1.jpg
+const defaultAvatar = computed(() => {
+  // 判断是否是微信登录：微信登录的用户通常有外部头像 URL
+  const avatar = userStore.avatar;
+  const isWechatLogin = avatar && (avatar.startsWith('http://') || avatar.startsWith('https://'));
+  return isWechatLogin ? '/static/vx.jpg' : '/static/logo1.jpg';
+});
 
 // 最终显示的头像（用户头像 > 默认头像）
 const displayAvatar = computed(() => {
@@ -120,21 +127,15 @@ function sendFeedbackEmail() {
   const email = APP_CONFIG.FEEDBACK_EMAIL;
   if (!email) return;
 
-  openFeedbackMail(email, $t('profile.feedback_subject'), {
-    onCopied: () => {
-      toast.warning({
-        msg: $t('profile.feedback_open_failed'),
-        duration: 3000
-      });
-    },
-    onOpenFailed: (feedbackEmail) => {
-      uni.showModal({
-        title: $t('profile.feedback'),
-        content: feedbackEmail,
-        showCancel: false
-      });
-    }
-  });
+  // 使用 mailto: 协议打开邮件客户端
+  // #ifdef APP-PLUS
+  plus.runtime.openURL(
+    `mailto:${email}?subject=${encodeURIComponent($t('profile.feedback_subject'))}`
+  );
+  // #endif
+  // #ifndef APP-PLUS
+  window.location.href = `mailto:${email}?subject=${encodeURIComponent($t('profile.feedback_subject'))}`;
+  // #endif
 }
 
 const hiddenClickCount = ref<number>(0);
@@ -166,11 +167,6 @@ interface MenuItem {
   title: string;
   icon: string;
   handleClick: () => void;
-}
-
-interface MenuGroupDef {
-  id: ProfileEntryGroupId;
-  itemIds: string[];
 }
 
 const showVoicePrint = computed(() => {
@@ -249,14 +245,14 @@ const menuItems = computed(() => {
             })
         }
       : undefined,
-    APP_CONFIG.SHOW_INSTRUCTIONS_TUTORIALS
-      ? {
-          id: 'instructions_tutorials',
-          title: $t('profile.instructions_tutorials'),
-          icon: '/static/icons/instructions.svg',
-          handleClick: () => uni.navigateTo({ url: '/pages/profile/help' })
-        }
-      : undefined,
+    // APP_CONFIG.SHOW_INSTRUCTIONS_TUTORIALS
+    //   ? {
+    //       id: 'instructions_tutorials',
+    //       title: $t('profile.instructions_tutorials'),
+    //       icon: '/static/icons/instructions.svg',
+    //       handleClick: () => uni.navigateTo({ url: '/pages/profile/help' })
+    //     }
+    //   : undefined,
     APP_CONFIG.TERMS_URL
       ? {
           id: 'user_agreement',
@@ -295,67 +291,21 @@ const menuItems = computed(() => {
 });
 
 // 菜单分组定义
-const defaultGroupDefs: MenuGroupDef[] = [
-  {
-    id: 'device_management',
-    itemIds: ['device_management']
-  },
-  {
-    id: 'qrcode_setup',
-    itemIds: ['net_config', 'wifi_config_qrcode']
-  },
-  {
-    id: 'bluetooth_setup',
-    itemIds: ['bluetooth_config', 'wifi_config_bluetooth']
-  },
-  {
-    id: 'voice',
-    itemIds: ['voice_manage', 'voice_clone']
-  },
-  {
-    id: 'instructions_tutorials',
-    itemIds: ['instructions_tutorials']
-  },
-  {
-    id: 'legal',
-    itemIds: ['user_agreement', 'privacy_policy']
-  },
-  {
-    id: 'feedback',
-    itemIds: ['feedback']
-  }
+const groupDefs: string[][] = [
+  ['device_management'],
+  ['net_config', 'wifi_config_qrcode'],
+  ['bluetooth_config', 'wifi_config_bluetooth'],
+  ['voice_manage', 'voice_clone'],
+  // ['instructions_tutorials'],
+  ['user_agreement', 'privacy_policy'],
+  ['feedback']
 ];
-
-const groupOrder = computed(() => {
-  const configuredOrder = APP_CONFIG.PROFILE_ENTRY_GROUP_ORDER || [];
-  const groupMap = new Map(defaultGroupDefs.map((group) => [group.id, group]));
-  const orderedGroups: MenuGroupDef[] = [];
-  const seen = new Set<ProfileEntryGroupId>();
-
-  for (const groupId of configuredOrder) {
-    const group = groupMap.get(groupId as ProfileEntryGroupId);
-    if (!group || seen.has(group.id)) {
-      continue;
-    }
-    orderedGroups.push(group);
-    seen.add(group.id);
-  }
-
-  for (const group of defaultGroupDefs) {
-    if (seen.has(group.id)) {
-      continue;
-    }
-    orderedGroups.push(group);
-  }
-
-  return orderedGroups;
-});
 
 const menuGroups = computed(() => {
   const items = menuItems.value;
   const groups: MenuItem[][] = [];
-  for (const def of groupOrder.value) {
-    const group = def.itemIds
+  for (const def of groupDefs) {
+    const group = def
       .map((id) => items.find((item) => item.id === id))
       .filter((item): item is MenuItem => !!item);
     if (group.length > 0) {
@@ -506,7 +456,10 @@ function goDeleteAccount() {
   flex-direction: column;
   box-sizing: border-box;
   position: relative;
-  background: linear-gradient(180deg, var(--color-primary-bg) 18.68%, #ffffff 124.53%);
+  background-image: url('@/img/bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow: hidden;
 }
 
