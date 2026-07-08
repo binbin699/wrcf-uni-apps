@@ -513,18 +513,18 @@ export async function connectBluetoothDevice(deviceId) {
     const servicesResult = await getServicesWithRetry(deviceId);
     console.log('获取到的服务:', servicesResult.services);
 
-    // 仅探测目标服务的特征值，避免在 iOS 上枚举无关服务导致流程挂起
+    // 仅探测目标服务的特征值
     await withBluetoothTimeout(
-      () => bleService.getCharacteristics(deviceId, servicesResult.targetService.uuid),
-      BLE_OPERATION_TIMEOUT.GET_CHARACTERISTICS,
-      $t('bluetooth.submit.device_timeout')
+        () => bleService.getCharacteristics(deviceId, servicesResult.targetService.uuid),
+        BLE_OPERATION_TIMEOUT.GET_CHARACTERISTICS,
+        $t('bluetooth.submit.device_timeout')
     );
     console.log('目标服务特征值获取成功:', servicesResult.targetService.uuid);
 
     requestPreferredMTU(deviceId);
 
-    // 等待所有特性处理完成
-    await Promise.all(characteristicPromises);
+    // 删除无效的 Promise.all 行
+    // await Promise.all(characteristicPromises);   // 已删除
 
     console.log('蓝牙设备连接并配置完成');
   } catch (error) {

@@ -95,7 +95,7 @@
 
       <!-- 音色名称输入 -->
     <view class="name-input-card" :class="{ error: voiceNameError }">
-      <view class="name-input-card">
+<!--      <view class="name-input-card">-->
         <text class="input-label">{{ $t('voice_clone.voice_name') }}</text>
         <input
           class="name-input"
@@ -103,9 +103,9 @@
           :placeholder="$t('voice_clone.voice_name_placeholder')"
           :maxlength="20" />
         <view v-if="voiceName" class="clear-icon" @click="voiceName = ''">
-          <wd-icon name="close-fill" size="32rpx" color="#c8c9cc" />
+          <wd-icon name="close-fill" size="38rpx" color="#c8c9cc" />
         </view>
-      </view>
+<!--      </view>-->
     </view>
 
         <text v-if="voiceNameError" class="name-error">
@@ -141,7 +141,6 @@
           <text class="popup-title">{{ $t('voice_clone.record_voice_popup_title') }}</text>
           <view class="popup-close" @click="closeRecordPopup">
             <wd-icon name="close" size="40rpx" color="#333" />
-            <text class="popup-close-icon">×</text>
           </view>
         </view>
 

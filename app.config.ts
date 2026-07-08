@@ -25,8 +25,8 @@ export default function getAppConfig(
   } else {
     // App 端根据版本选择服务器
     BASE_API_URL =
-      appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
-      // appEdition === 'intl' ? 'http://36.134.119.145:8000' : 'http://36.134.119.145:8000';
+      // appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
+      appEdition === 'intl' ? 'http://36.134.119.145:8000' : 'http://36.134.119.145:8000';
   }
 
   // 是否支持微信小程序手机号登录
