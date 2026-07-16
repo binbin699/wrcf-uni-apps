@@ -41,13 +41,6 @@ uni.showToast({
 
 ### 示例 3: 加载提示
 
-```javascript
-// uni.showToast({
-//   title: '加载中...',
-//   icon: 'loading',
-//   duration: 2000
-// })
-```
 
 ### 示例 4: 无图标提示
 

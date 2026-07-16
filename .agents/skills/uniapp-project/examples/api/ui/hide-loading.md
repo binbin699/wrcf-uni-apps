@@ -18,17 +18,9 @@ uni.hideLoading()
 
 ### 示例 1: 基本使用
 
-```javascript
-// 显示加载
-// uni.showLoading({
-//   title: '加载中...'
-// })
 
-// 隐藏加载
-setTimeout(() => {
-  uni.hideLoading()
-}, 2000)
-```
+
+
 
 ### 示例 2: 网络请求中使用
 

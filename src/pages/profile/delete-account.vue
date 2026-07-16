@@ -98,8 +98,6 @@ function handleSubmit() {
       }
 
       isSubmitting.value = true;
-      toast.loading({ msg: $t('common.loading'), duration: 0, cover: true });
-
       try {
         await userStore.delAccount();
         toast.close();

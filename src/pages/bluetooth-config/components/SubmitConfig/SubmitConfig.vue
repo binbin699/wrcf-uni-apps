@@ -80,9 +80,6 @@
     <!-- 底部操作按钮 -->
     <view class="bottom-action">
       <!-- 配网中 -->
-      <view v-if="isSubmitting" class="action-hint">
-        <text>{{ $t('common.loading') }}</text>
-      </view>
 
       <!-- 成功状态 -->
       <button v-else-if="isConfigSuccess" class="action-btn success" @click="finishConfig">

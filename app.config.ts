@@ -27,7 +27,7 @@ export default function getAppConfig(
     BASE_API_URL =
       // appEdition === 'intl' ? 'http://192.168.0.35:8001' : 'http://192.168.0.35:8001';
       appEdition === 'intl' ? 'http://36.134.119.145:8000' : 'http://36.134.119.145:8000';
-  }
+  } 
 
   // 是否支持微信小程序手机号登录
   const SUPPORT_LOGIN_TYPE_WX_MP_PHONE = appEdition === 'cn' || appEdition === 'full';

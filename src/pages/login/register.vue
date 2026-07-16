@@ -73,9 +73,10 @@
               <checkbox :checked="isAgree" color="#8FD3F4" />
               <text class="agreement-text">
                 已阅读并同意
-                <a href="http://47.114.109.136:8008/user-agreement.html" class="agreement-link">《九宝用户协议》</a>
+                <!-- 使用 text 标签 + @click.stop，与 profile 页面行为一致 -->
+                <text class="agreement-link" @click.stop="openTerms('user')">《九宝用户协议》</text>
                 和
-                <a href="http://47.114.109.136:8008/privacy-policy.html" class="agreement-link">《隐私政策》</a>
+                <text class="agreement-link" @click.stop="openTerms('privacy')">《隐私政策》</text>
               </text>
             </label>
           </checkbox-group>
@@ -137,20 +138,29 @@ const canRegister = computed(() => {
 // 新增协议同意状态
 const isAgree = ref(false);
 
+// ========== ✨ 修改点：新增 openExternal 和 openTerms 方法（与 profile 页面一致） ==========
+function openExternal(src: string) {
+  const encoded = encodeURIComponent(src);
+  uni.navigateTo({ url: '/pages/webview/webview?src=' + encoded });
+}
+
+function openTerms(type: 'user' | 'privacy') {
+  const urlMap = {
+    user: APP_CONFIG.TERMS_URL,
+    privacy: APP_CONFIG.PRIVACY_URL
+  };
+  const url = urlMap[type];
+  if (url) {
+    openExternal(url);
+  } else {
+    toast.warning({ msg: '协议地址未配置', duration: 2000 });
+  }
+}
+// ========== 修改点结束 ==========
+
 // 协议变更处理
 function onAgreementChange(e: any) {
   isAgree.value = e.detail.value.length > 0;
-}
-
-// 登录提交时校验
-async function handleLoginSubmit() {
-  if (!isAgree.value) {
-    uni.showToast({
-      title: '请先同意用户协议和隐私政策',
-      icon: 'none'
-    });
-    return;
-  }
 }
 
 // 方法
@@ -163,7 +173,6 @@ function toggleConfirmPassword() {
 }
 
 async function handleRegister() {
-
   if (!isAgree.value) {
     toast.warning({
       msg: '请先阅读并同意用户协议和隐私政策',

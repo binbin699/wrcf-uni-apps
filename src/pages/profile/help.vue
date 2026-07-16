@@ -190,8 +190,6 @@ function openManual() {
     return;
   }
 
-  uni.showLoading({ title: $t('common.loading'), mask: true });
-
   uni.downloadFile({
     url: manualUrl.value,
     success: (res) => {

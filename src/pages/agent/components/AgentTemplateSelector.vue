@@ -21,10 +21,8 @@
           <view class="bottom-spacer"></view>
         </scroll-view>
         <scroll-view scroll-y class="template-list">
-          <view v-if="loading" class="loading-state">
-            <text>{{ $t('common.loading') }}</text>
-          </view>
-          <view v-else-if="filteredTemplates.length === 0" class="empty-state">
+
+          <view v-if="filteredTemplates.length === 0" class="empty-state">
             <text>{{ $t('square.no_agents') }}</text>
           </view>
           <view 

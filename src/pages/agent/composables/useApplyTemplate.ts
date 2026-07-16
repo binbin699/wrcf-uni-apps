@@ -30,7 +30,7 @@ export async function applyTemplateLogic(
 
   // 加载详细数据并填入剩余字段
   try {
-    toast.loading($t('common.loading'));
+    // toast.loading($t('common.loading'));
     // 使用 agentId 获取智能体详情
     const result = await agentApi.getInfo(template.agentId);
     if (result.code === 1000 && result.data) {

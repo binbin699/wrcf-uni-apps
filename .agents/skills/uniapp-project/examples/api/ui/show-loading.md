@@ -10,21 +10,14 @@
 
 ## 基础用法
 
-```javascript
-uni.showLoading({
-  title: '加载中...'
-})
-```
+
 
 ## 完整示例
 
 ### 示例 1: 基本加载提示
 
 ```javascript
-// uni.showLoading({
-//   title: '加载中...',
-//   mask: true
-// })
+
 
 // 操作完成后隐藏
 setTimeout(() => {
@@ -35,10 +28,6 @@ setTimeout(() => {
 ### 示例 2: 网络请求时显示加载
 
 ```javascript
-uni.showLoading({
-  title: '加载中...',
-  mask: true
-})
 
 uni.request({
   url: 'https://api.example.com/data',

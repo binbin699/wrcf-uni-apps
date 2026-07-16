@@ -147,7 +147,7 @@ export function useDeviceScan(options?: { toast?: any; showNotify?: any; closeNo
             setTimeout(() => {
               uni.navigateTo({
                 url:
-                  PageMap[Pages.NetConfig].url +
+                  PageMap[Pages.BluetoothConfig].url +
                   `?bound=1${callbacks?.fromAddDevice ? '&fromAddDevice=1' : ''}`,
                 complete: () => {
                   isNavigating.value = false;

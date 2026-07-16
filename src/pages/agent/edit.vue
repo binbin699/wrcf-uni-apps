@@ -51,8 +51,7 @@
         <view class="form-item">
           <text class="label">{{ $t('edit_agent.llm_type') }}</text>
           <view class="selector-trigger" @click="openLLMSheet">
-            <text v-if="loadingLLMs">{{ $t('common.loading') }}</text>
-            <text v-else-if="selectedLLM" class="value-text">
+            <text v-if="selectedLLM" class="value-text">
               {{ selectedLLM.displayName || selectedLLM.name }}
             </text>
             <text v-else-if="llmOptions.length === 0" class="placeholder-text">
@@ -66,8 +65,7 @@
         <view class="form-item">
           <text class="label">{{ $t('create_agent.chat_language') }}</text>
           <view class="selector-trigger" @click="openLanguageSheet">
-            <text v-if="loadingLanguages">{{ $t('common.loading') }}</text>
-            <text v-else-if="selectedChatLanguage" class="value-text">{{ selectedChatLanguage.language }}</text>
+            <text v-if="selectedChatLanguage" class="value-text">{{ selectedChatLanguage.language }}</text>
             <text v-else class="placeholder-text">{{ $t('create_agent.select_chat_language') }}</text>
             <view class="arrow-icon"></view>
           </view>
@@ -84,8 +82,7 @@
         <view class="form-item last-item">
           <text class="label">{{ $t('edit_agent.voice_type') }}</text>
           <view class="selector-trigger" @click="showVoiceSelector">
-            <text v-if="loadingVoices">{{ $t('common.loading') }}</text>
-            <text v-else-if="selectedVoice" class="value-text">{{ selectedVoice.voiceName || selectedVoice.name }}</text>
+            <text v-if="selectedVoice" class="value-text">{{ selectedVoice.voiceName || selectedVoice.name }}</text>
             <text v-else-if="voiceOptions.length === 0" class="placeholder-text">
               {{ $t('edit_agent.voice_load_failed') }}
             </text>
