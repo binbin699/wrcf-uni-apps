@@ -169,9 +169,7 @@ import VoiceSelector from '@/components/VoiceSelector.vue';
 import { useToast } from '@/uni_modules/wot-design-uni';
 import { onLoad, onShow, onHide } from '@dcloudio/uni-app';
 import type { LLM, Voice } from '@/pages/agent/types';
-import { PageMap, Pages } from '@/utils/route';
 import { useGlobalRequestErrorToast } from '@/composables/useGlobalRequestErrorToast';
-import { getRequestErrorMessage, isRequestHandledError } from '@/utils/request-feedback';
 import { loadOptions } from './create';
 import { relocalizeLLMOptions } from './llm';
 import {
@@ -234,9 +232,7 @@ const {
   openTemplateModal,
   selectTemplateCategory
 } = useTemplateSelector(formData, $t, toast);
-const navContentStyle = computed(() => ({
-  height: `${navBarHeight.value * 2}rpx`
-}));
+
 
 // 对话语言选项
 const chatLanguageOptions = ref<ChatLanguageOption[]>([]);
@@ -687,9 +683,17 @@ async function createAgent() {
       selectedChatLanguageIndex.value = null;
       setSelectedMemory(0);
 
-      // 延迟返回，让用户看到成功提示
+
+      // 3. 延迟跳转到第二个页面
+      // 使用 switchTab 因为目标页面是 TabBar 页面
       setTimeout(() => {
-        uni.navigateBack();
+        const fatherId = 7;
+
+        // 2. 将 id 存入全局变量 globalData.fatherId
+        getApp().globalData.fatherId = fatherId;
+        uni.switchTab({
+          url: '/pages/index/index' // 跳转到智能体绑定页
+        });
       }, 1500);
     } else {
       // 后端返回的业务错误（包括数据库拦截）
@@ -930,10 +934,7 @@ async function handleApplyTemplate(template: any) {
   caret-color: var(--color-primary-caret);
   border: none;
 }
-.input-placeholder {
-  color: #c0c4cc;
-  font-size: 28rpx;
-}
+
 
 /* textarea 样式已在 AgentPromptPolish 组件中定义 */
 
@@ -1030,30 +1031,4 @@ async function handleApplyTemplate(template: any) {
   color: #ffffff !important;
 }
 
-.cancel-btn {
-  width: 100%;
-  height: 96rpx;
-  border-radius: 24rpx;
-  background: var(--color-primary-secondary-bg);
-  color: var(--color-primary-secondary-text);
-  font-size: 32rpx;
-  font-weight: 600;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.cancel-btn::after {
-  border: none;
-}
-.cancel-btn[disabled] {
-  background: var(--color-primary-disabled-bg) !important;
-  color: var(--color-primary-disabled-text) !important;
-  opacity: 1;
-}
-.cancel-btn:active {
-  transform: scale(0.98);
-  background: var(--color-primary-secondary-bg);
-  color: var(--color-primary-secondary-text) !important;
-}
 </style>

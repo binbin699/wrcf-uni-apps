@@ -1,3 +1,4 @@
+<!--用户私有数据-->
 <template>
   <wd-toast />
   <view class="home-container">
@@ -72,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 // @ts-ignore
 import { agentApi } from '@/api/index';
@@ -154,13 +155,6 @@ onPageScroll((e: { scrollTop: number }) => {
   handleScroll(e);
 });
 
-// onShareAppMessage(() => {
-//   console.log('page share');
-//   return {
-//     title: '分享标题',
-//     path: '/pages/index/index'
-//   };
-// });
 
 async function loadAgentList(showLoading = false) {
   if (showLoading) {
@@ -323,21 +317,6 @@ function requireLoginForBind(action: PendingBindAction): boolean {
   return true;
 }
 
-async function handleStartSetup() {
-  if (!requireLoginForBind('qrcode')) {
-    return;
-  }
-  await scanAndBind({ fromAddDevice: true });
-}
-
-function handleBluetoothSetup() {
-  if (!requireLoginForBind('bluetooth')) {
-    return;
-  }
-  uni.navigateTo({
-    url: PageMap[Pages.BluetoothConfig].url + '?fromAddDevice=1'
-  });
-}
 </script>
 
 <style lang="scss" scoped>

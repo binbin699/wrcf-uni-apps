@@ -82,7 +82,7 @@
       <!-- 配网中 -->
 
       <!-- 成功状态 -->
-      <button v-else-if="isConfigSuccess" class="action-btn success" @click="finishConfig">
+      <button v-if="isConfigSuccess" class="action-btn success" @click="finishConfig">
         <text>{{ $t('bluetooth.submit.finish') }}</text>
       </button>
 

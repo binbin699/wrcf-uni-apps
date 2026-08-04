@@ -12,14 +12,7 @@
     <view class="main-content">
       <!-- Logo和应用信息 -->
       <view class="header">
-<!--        <view class="logo-container">-->
-<!--          <view class="logo">-->
-<!--            <image src="/static/logo.jpg" alt="" class="logo-img"></image>-->
-<!--          </view>-->
-<!--        </view>-->
         <view class="app-info">
-<!--          <text class="app-name">{{ $t('login.app_name') }}</text>-->
-<!--          <text class="app-desc">{{ $t('login.app_desc') }}</text>-->
         </view>
       </view>
 
@@ -660,16 +653,6 @@ function onAgreementChange(e: any) {
   isAgree.value = e.detail.value.length > 0;
 }
 
-// 登录提交时校验
-async function handleLoginSubmit() {
-  if (!isAgree.value) {
-    uni.showToast({
-      title: '请先同意用户协议和隐私政策',
-      icon: 'none'
-    });
-    return;
-  }
-}
 
 /**
  * 处理短信登录提交
@@ -919,22 +902,6 @@ page {
   cursor: not-allowed;
 }
 
-/* .login-btn::before {
-  content: '';
-  position: absolute;
-  left: 0rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 96rpx;
-  height: 96rpx;
-  margin-right: 16rpx;
-  background-size: 56rpx 56rpx;
-  border-radius: 50%;
-} */
-
-/* .login-btn.wx::before {
-  background: white url('/static/icons/WeChat.svg') no-repeat center center;
-} */
 
 .login-btn.google {
   background: rgba(255, 255, 255, 0.92);
@@ -1150,13 +1117,7 @@ page {
   background: #e0e0e0;
 }
 
-/* 自动注册提示文字 */
-.register-tip {
-  color: #ffffff;
-  font-size: 24rpx;
-  text-align: center;
-  margin-top: 16rpx;
-}
+
 .login-btn.sms,
 .login-btn.wx,
 .login-btn.email,
